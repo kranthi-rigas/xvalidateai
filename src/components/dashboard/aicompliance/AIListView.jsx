@@ -1,0 +1,962 @@
+import React, { useState, useEffect, useRef } from "react";
+import EditProjectModal from "./EditProjectModal";
+import DeleteConfirmModal from "../../common/DeleteConfirmModal";
+import ActionsMenu from "../../common/ActionsMenu";
+import ListTable, { Td, LinkStyle } from "../../common/ListTable";
+import RefreshButton from "../../common/RefreshButton";
+import AwsButton from "../../common/AwsButton";
+import ApproveRejectModal from "./ApproveRejectModal";
+import {
+  updateComplianceProject,
+  getComplianceProjectDetails,
+  deleteComplianceProject,
+} from "../../../apiIntegration/compliance";
+import { RiErrorWarningLine } from "react-icons/ri";
+import { PiWarningCircleBold } from "react-icons/pi";
+import { RxCrossCircled } from "react-icons/rx";
+import { GrStatusGood } from "react-icons/gr";
+import PageLoader from "../../common/PageLoader";
+import usePageLoader from "@/data/usePageLoader";
+
+export default function AIListView({
+  projects,
+  setShowCreateModal,
+  setOpenedProject,
+  refreshProjects,
+}) {
+  const [hover, setHover] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
+  const pageLoading = usePageLoader([projects]);
+
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [liveProjects, setLiveProjects] = useState([]);
+
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
+
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const rolesRaw = userInfo?.roles ?? [];
+  const roles = Array.isArray(rolesRaw)
+    ? rolesRaw.map((r) => String(r).toUpperCase())
+    : String(rolesRaw).toUpperCase().split(",");
+
+  const isAdmin = roles.includes("ADMIN");
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
+  const [deleteError, setDeleteError] = useState("");
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editProjectData, setEditProjectData] = useState(null);
+
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalAction, setApprovalAction] = useState(null); // approve | reject
+  const [activeProject, setActiveProject] = useState(null);
+
+  const isRequested = (row) => row.status === "requested";
+
+  /* ---------- Add columnWidths state ---------- */
+  const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
+    name: 220,
+    description: 180,
+    status: 170,
+    assessment_status: 150,
+    score: 120,
+    lastScanDate: 180,
+    requested_by: 220,
+    approved_by: 220,
+  });
+
+  const resizingCol = useRef(null);
+
+  const startResize = (key, e) => {
+    resizingCol.current = {
+      key,
+      startX: e.clientX,
+      startWidth: columnWidths[key],
+    };
+  };
+
+  const handleResize = (e) => {
+    if (!resizingCol.current) return;
+    const { key, startX, startWidth } = resizingCol.current;
+    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
+    setColumnWidths((prev) => ({ ...prev, [key]: newWidth }));
+  };
+
+  useEffect(() => {
+    setLiveProjects(projects || []);
+  }, [projects]);
+
+  useEffect(() => {
+    const POLLABLE_STATUSES = [
+      "approved_for_scan",
+      "scan_in_progress",
+      "queued",
+    ];
+
+    const pollableProjects = liveProjects.filter(
+      (p) =>
+        POLLABLE_STATUSES.includes(p.status) ||
+        ["queued", "in_progress"].includes(p.assessment_status),
+    );
+
+    if (pollableProjects.length === 0) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const results = await Promise.all(
+          pollableProjects.map(async (p) => {
+            try {
+              return await getComplianceProjectDetails(p.project_id);
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        const updates = results.filter(Boolean);
+        if (!updates.length) return;
+
+        setLiveProjects((prev) =>
+          prev.map((p) => {
+            const updated = updates.find((u) => u.project_id === p.project_id);
+            return updated ? { ...p, ...updated } : p;
+          }),
+        );
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [liveProjects]);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleResize);
+    window.addEventListener("mouseup", () => (resizingCol.current = null));
+    return () => window.removeEventListener("mousemove", handleResize);
+  }, []);
+
+  //STATUS LABEL MAPPER
+  const getAssessmentStatusLabel = (row) => {
+    // Instructor requested scan
+    if (
+      row.status === "requested" &&
+      row.assessment_status === "not_applicable"
+    ) {
+      return "requested for scan";
+    }
+
+    // Normal formatting fallback
+    return row.status ? row.status.replace(/_/g, " ") : "-";
+  };
+
+  /* ---------- Search ---------- */
+  const filtered = (liveProjects || [])
+    .filter((p) => (p.name || "").toLowerCase().includes(search.toLowerCase()))
+    .map((p) => ({ ...p, __isSelected: selected.includes(p.project_id) }));
+
+  /* ---------- Sorting ---------- */
+  const requestSort = (key) => {
+    let dir = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") dir = "desc";
+    setSortConfig({ key, direction: dir });
+  };
+
+  /* ---------- Selection ---------- */
+  const toggleSelect = (id) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const toggleSelectAll = (checked) =>
+    setSelected(checked ? filtered.map((x) => x.project_id) : []);
+
+  //status helper
+  const isPendingAssessment = (row) => row.status === "pending_assessment";
+  const formatStatusLabel = (status = "") => status.replace(/_/g, " ");
+
+  function WhiteTooltip({ text, children }) {
+    const [show, setShow] = useState(false);
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+    const ref = useRef(null);
+
+    const handleEnter = () => {
+      if (!ref.current) return;
+
+      const rect = ref.current.getBoundingClientRect();
+
+      setPos({
+        top: rect.top + rect.height / 2, // vertically centered
+        left: rect.right + 10, // 🔥 RIGHT SIDE + gap
+      });
+
+      setShow(true);
+    };
+
+    return (
+      <>
+        <span
+          ref={ref}
+          onMouseEnter={handleEnter}
+          onMouseLeave={() => setShow(false)}
+          style={{ display: "inline-block" }}
+        >
+          {children}
+        </span>
+
+        {show && text && (
+          <div
+            style={{
+              position: "fixed",
+              top: pos.top,
+              left: pos.left,
+              transform: "translateY(-50%)",
+              background: "#FFFFFF",
+              color: "#111827",
+              border: "1px solid #D1D5DB",
+              borderRadius: 6,
+              padding: "6px 10px",
+              fontSize: 12,
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+              zIndex: 10000,
+              pointerEvents: "none",
+            }}
+          >
+            {text}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /* ---------- Columns ---------- */
+  const columns = [
+    {
+      key: "checkbox",
+      label: "",
+      width: 60,
+      sortable: false,
+      resizable: false,
+
+      // ⭐ Select-all only active if there are rows
+      allSelected: filtered.length > 0 && selected.length === filtered.length,
+
+      // ⭐ Toggle all
+      onToggleAll: (checked) =>
+        setSelected(checked ? filtered.map((p) => p.project_id) : []),
+    },
+
+    { key: "name", label: "Tool Name", sortable: true, resizable: true },
+    {
+      key: "description",
+      label: "Description",
+      sortable: false,
+      resizable: true,
+    },
+
+    {
+      key: "status",
+      label: "Tool Status",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "assessment_status",
+      label: "Scan Status",
+      sortable: true,
+      resizable: true,
+    },
+
+    { key: "score", label: "Score", sortable: true, resizable: true },
+    {
+      key: "lastScanDate",
+      label: "Last Scan",
+      sortable: true,
+      resizable: true,
+      sortKey: "last_scanned_time",
+    },
+    {
+      key: "requested_by",
+      label: "Requested By",
+      sortable: false,
+      resizable: true,
+    },
+    {
+      key: "approved_by",
+      label: "Scan Approved By",
+      sortable: false,
+      resizable: true,
+    },
+  ];
+
+  //score icon helper
+  // ⭐ SCORE ICON HELPER (Enterprise / AWS style)
+  const getScoreIconUI = (score) => {
+    const s = Number(score) || 0;
+
+    if (s < 20)
+      return {
+        Icon: RxCrossCircled,
+        color: "#DC2626", // red
+        label: "Critical Risk",
+      };
+
+    if (s < 40)
+      return {
+        Icon: RiErrorWarningLine,
+        color: "#EA580C", // orange
+        label: "High Risk",
+      };
+
+    if (s < 60)
+      return {
+        Icon: PiWarningCircleBold,
+        color: "#EAB308", // yellow
+        label: "Medium Risk",
+      };
+
+    if (s < 80)
+      return {
+        Icon: GrStatusGood,
+        color: "#22C55E", // light green
+        label: "Low Risk",
+      };
+
+    return {
+      Icon: GrStatusGood,
+      color: "#16A34A", // dark green
+      label: "Excellent",
+    };
+  };
+
+  /* ---------- Cell renderer ---------- */
+  // Measure text width exactly like the browser does
+  const measureTextWidth = (text, font = "14px Amazon Ember") => {
+    const canvas =
+      measureTextWidth.canvas ||
+      (measureTextWidth.canvas = document.createElement("canvas"));
+    const ctx = canvas.getContext("2d");
+    ctx.font = font;
+    return ctx.measureText(text).width;
+  };
+
+  // Should show tooltip only if truncated in actual pixels
+  const shouldShowTooltip = (value, key) => {
+    if (!value) return false;
+
+    const max = columnWidths[key] - 24; // padding + ellipsis space
+    const textWidth = measureTextWidth(value);
+
+    return textWidth > max;
+  };
+
+  const renderCell = (row, key) => {
+    if (key === "checkbox")
+      return (
+        <input
+          type="checkbox"
+          checked={selected.includes(row.project_id)}
+          onChange={() => toggleSelect(row.project_id)}
+        />
+      );
+
+    /* ------------------- NAME ------------------- */
+    if (key === "name") {
+      const text = row.name || "";
+
+      const isPendingAssessment = row.status === "pending_assessment";
+      const isRequested = row.status === "requested";
+
+      // 🔐 BLOCK CONDITIONS
+      const blockedByAssessment = isPendingAssessment;
+      const isBlocked = blockedByAssessment;
+
+      let tooltipText = "";
+
+      if (blockedByAssessment) {
+        tooltipText =
+          "Assessment is currently in progress. Please try again later.";
+      }
+
+      const nameContent = (
+        <span
+          style={{
+            ...LinkStyle,
+            cursor: isBlocked ? "default" : "pointer",
+            pointerEvents: isBlocked ? "none" : "auto",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: columnWidths.name - 20,
+            display: "inline-block",
+          }}
+        >
+          {text}
+        </span>
+      );
+
+      if (isBlocked) {
+        return <WhiteTooltip text={tooltipText}>{nameContent}</WhiteTooltip>;
+      }
+
+      // ✅ ADMIN or allowed users
+      return (
+        <span
+          onClick={() => setOpenedProject(row)}
+          style={{
+            ...LinkStyle,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: columnWidths.name - 20,
+            display: "inline-block",
+          }}
+        >
+          {text}
+        </span>
+      );
+    }
+
+    /* ------------------- DESCRIPTION ------------------- */
+    if (key === "description") {
+      const text = row.description || "";
+      const showTip = shouldShowTooltip(text, "description");
+
+      return (
+        <span
+          style={{
+            display: "inline-block",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: columnWidths.description - 20,
+            cursor: showTip ? "pointer" : "default",
+          }}
+          title={showTip ? text : ""}
+        >
+          {text}
+        </span>
+      );
+    }
+
+    if (key === "status") {
+      const text = getAssessmentStatusLabel(row);
+
+      return (
+        <span
+          style={{
+            display: "inline-block",
+            maxWidth: columnWidths.status - 20,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            cursor: "default",
+            color: "#374151",
+            fontWeight: text === "Requested for Scan" ? 600 : 400, // subtle emphasis
+          }}
+          title={text}
+        >
+          {text}
+        </span>
+      );
+    }
+
+    if (key === "assessment_status") {
+      const text = row.assessment_status
+        ? formatStatusLabel(row.assessment_status)
+        : "-";
+
+      return (
+        <span
+          style={{
+            display: "inline-block",
+            maxWidth: columnWidths.assessment_status - 20,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            cursor: "default",
+            color: "#374151",
+          }}
+          title={text}
+        >
+          {text}
+        </span>
+      );
+    }
+    if (key === "score") {
+      if (row.score == null) return "-";
+
+      const { Icon, color, label } = getScoreIconUI(row.score);
+
+      return (
+        <div
+          title={label}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <Icon size={18} color={color} />
+          <span style={{ color }}>{row.score}</span>
+        </div>
+      );
+    }
+
+    if (key === "lastScanDate")
+      return (
+        <span style={{ cursor: "default" }}>
+          {row.last_scanned_time
+            ? new Date(row.last_scanned_time).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
+            : "Pending"}
+        </span>
+      );
+
+    /* ------------------- REQUESTED BY ------------------- */
+    if (key === "requested_by") {
+      const r = row.requested_by;
+      if (!r) return "-";
+
+      const fullName = `${r.first_name || ""} ${r.last_name || ""}`.trim();
+      const email = r.email || "";
+      const country = r.country || "";
+
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            maxWidth: columnWidths.requested_by - 20,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+          }}
+          title={`${fullName}\n${email}\n${country}`}
+        >
+          {/* Name */}
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#111827",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {fullName || "—"}
+          </span>
+
+          {/* Email */}
+          <span
+            style={{
+              fontSize: 12,
+              color: "#6B7280",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {email}
+          </span>
+        </div>
+      );
+    }
+    /* ------------------- APPROVED BY ------------------- */
+    if (key === "approved_by") {
+      const a = row.approved_by;
+      const requester = row.requested_by;
+
+      // ✅ Admin created → show "-"
+      if (!a && requester?.roles?.includes("ADMIN")) {
+        return <span>-</span>;
+      }
+
+      // ✅ Not approved yet (non-admin created)
+      if (!a) {
+        return (
+          <span
+            style={{
+              fontSize: 13,
+              color: "#9CA3AF",
+              fontStyle: "italic",
+            }}
+          >
+            Pending
+          </span>
+        );
+      }
+
+      // ✅ Approved by someone
+      const fullName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
+      const email = a.email || "";
+
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            maxWidth: columnWidths.approved_by - 20,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#111827",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {fullName || "—"}
+          </span>
+
+          <span
+            style={{
+              fontSize: 12,
+              color: "#6B7280",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {email}
+          </span>
+        </div>
+      );
+    }
+
+    return row[key] ?? "";
+  };
+
+  //helper for delete disabled
+  const isDeleteDisabledForProject = (project) =>
+    project.assessment_status === "scan_in_progress";
+
+  const actionItems = (() => {
+    if (selected.length === 0) return [];
+
+    // ================= MULTI SELECT =================
+    if (selected.length > 1) {
+      const anyScanInProgress = selected.some((id) => {
+        const p = projects.find((x) => x.project_id === id);
+        return p?.assessment_status === "scan_in_progress";
+      });
+
+      return [
+        {
+          key: "delete",
+          label: "Delete",
+          danger: true,
+          disabled: anyScanInProgress,
+        },
+      ];
+    }
+
+    // ================= SINGLE SELECT =================
+    const project = projects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    const deleteDisabled = project.assessment_status === "scan_in_progress";
+
+    // ================= ADMIN =================
+    if (isAdmin) {
+      return [
+        { key: "scan_approve", label: "Approve for Scan" },
+        { key: "scan_reject", label: "Reject for Scan" },
+        { key: "approve", label: "Approve for Usage" },
+        { key: "reject", label: "Reject for Usage" },
+        { key: "edit", label: "Edit" },
+        {
+          key: "delete",
+          label: "Delete",
+          danger: true,
+          disabled: deleteDisabled,
+        },
+      ];
+    }
+
+    // ================= NON-ADMIN =================
+    return [
+      { key: "edit", label: "Edit" },
+      {
+        key: "delete",
+        label: "Delete",
+        danger: true,
+        disabled: deleteDisabled,
+      },
+    ];
+  })();
+
+  if (pageLoading) {
+    return <PageLoader loading={true} />;
+  }
+  return (
+    <div>
+      {/* TOP BAR */}
+
+      <div
+        className="d-flex flex-wrap justify-between items-center y-gap-10"
+        style={{
+          marginBottom: 20,
+          gap: 12,
+        }}
+      >
+        <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 420 }}>
+          <input
+            type="text"
+            placeholder="Find tool by name…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-100"
+            style={{
+              padding: "10px 16px",
+              borderRadius: 999,
+              border: "1px solid #D1D5DB",
+              background: "#F9FAFB",
+              fontSize: 14,
+              height: 40,
+              fontFamily: "Amazon Ember, sans-serif",
+            }}
+          />
+        </div>
+
+        <div className="d-flex flex-wrap items-center" style={{ gap: 8 }}>
+          <RefreshButton
+            onRefresh={async () => {
+              setSelected([]); // 🔥 clear checkbox state
+              setTableLoading(true);
+              await refreshProjects(); // 🔥 backend API call
+              setTableLoading(false);
+            }}
+            setTableLoading={setTableLoading}
+          />
+
+          <ActionsMenu
+            selected={selected}
+            items={actionItems}
+            onSelect={(key) => {
+              const project = projects.find(
+                (p) => p.project_id === selected[0],
+              );
+              if (!project) return;
+
+              setActiveProject(project);
+
+              if (
+                key === "scan_approve" ||
+                key === "scan_reject" ||
+                key === "approve" ||
+                key === "reject"
+              ) {
+                setApprovalAction(key);
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "edit") {
+                setEditProjectData(project);
+                setShowEditModal(true);
+              }
+
+              if (key === "delete") {
+                // 🔒 FINAL GUARD
+                if (project.assessment_status === "scan_in_progress") {
+                  return;
+                }
+
+                setPendingDeleteIds(selected);
+                setShowDeleteModal(true);
+              }
+            }}
+          />
+
+          <AwsButton
+            label="+ Tool Assessment"
+            onClick={() => setShowCreateModal(true)}
+          />
+        </div>
+      </div>
+
+      {/* ---------- Table ---------- */}
+      <div
+        style={{
+          position: "relative",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        <ListTable
+          columns={columns}
+          data={filtered}
+          rowKey="project_id"
+          renderCell={renderCell}
+          sortConfig={sortConfig}
+          onSort={requestSort}
+          columnWidths={columnWidths}
+          startResize={startResize}
+          tableBodyStyle={{
+            opacity: tableLoading ? 0 : 1,
+            pointerEvents: tableLoading ? "none" : "auto",
+            filter: tableLoading ? "blur(3px)" : "none",
+            transition: "opacity 0.2s ease",
+          }}
+        />
+        {tableLoading && (
+          <div className="table-refresh-overlay">
+            <div className="table-spinner"></div>
+          </div>
+        )}
+      </div>
+
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <EditProjectModal
+          project={editProjectData}
+          setShowEditModal={setShowEditModal}
+          refreshProjects={refreshProjects}
+        />
+      )}
+
+      {/* DELETE MODAL */}
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          onClose={() => {
+            setShowDeleteModal(false);
+            setDeleteError("");
+          }}
+          error={deleteError}
+          onConfirm={async () => {
+            try {
+              for (let id of pendingDeleteIds) {
+                await deleteComplianceProject(id);
+              }
+              setShowDeleteModal(false);
+              setSelected([]);
+              refreshProjects();
+            } catch (err) {
+              setDeleteError(err.message || "Delete failed");
+            }
+          }}
+          title="Delete Tool"
+          message="Are you sure you want to delete the selected tool(s)?"
+        />
+      )}
+      {showApprovalModal && activeProject && (
+        <ApproveRejectModal
+          title={
+            approvalAction === "scan_approve"
+              ? "Approve Tool for Scan"
+              : approvalAction === "scan_reject"
+                ? "Reject Tool for Scan"
+                : approvalAction === "approve"
+                  ? "Approve Tool for Usage"
+                  : "Reject Tool for Usage"
+          }
+          actionLabel={
+            approvalAction === "scan_approve"
+              ? "Approve for Scan"
+              : approvalAction === "scan_reject"
+                ? "Reject for Scan"
+                : approvalAction === "approve"
+                  ? "Approve for Usage"
+                  : "Reject for Usage"
+          }
+          onClose={() => setShowApprovalModal(false)}
+          onConfirm={async (comment) => {
+            let payload = {};
+
+            switch (approvalAction) {
+              case "scan_approve":
+                payload = {
+                  action: "scan_approve",
+                  status: "approved_for_scan",
+                };
+                break;
+
+              case "scan_reject":
+                payload = {
+                  action: "scan_reject",
+                  status: "rejected_for_scan",
+                };
+                break;
+
+              case "approve":
+                payload = {
+                  action: "approve", // ✅ as requested
+                  status: "approved_for_usage",
+                };
+                break;
+
+              case "reject":
+                payload = {
+                  action: "reject", // ✅ as requested
+                  status: "rejected_for_usage",
+                };
+                break;
+
+              default:
+                return;
+            }
+
+            await updateComplianceProject(activeProject.project_id, {
+              ...payload,
+              comment,
+            });
+
+            setShowApprovalModal(false);
+            setSelected([]);
+            refreshProjects();
+          }}
+        />
+      )}
+
+      {/* ---------- Pagination (Static) ---------- */}
+      <div
+        style={{
+          marginTop: 20,
+          display: "flex",
+          justifyContent: "center",
+          gap: 12,
+        }}
+      >
+        <button style={pgBtn}>{"<"}</button>
+        <span style={pageTag}>1</span>
+        <button style={pgBtn}>{">"}</button>
+      </div>
+    </div>
+  );
+}
+
+const pgBtn = {
+  padding: "6px 12px",
+  borderRadius: 999,
+  background: "#F3F4F6",
+  border: "1px solid #D1D5DB",
+  cursor: "pointer",
+};
+
+const pageTag = {
+  padding: "6px 12px",
+  borderRadius: 999,
+  background: "#EEF2FF",
+};

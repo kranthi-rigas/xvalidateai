@@ -1,0 +1,37 @@
+
+
+
+/* ================================
+   MY COURSES PAGE STYLES (mobile responsive)
+   ================================ */
+
+   @media (max-width: 40em) {
+  /* main container */
+  .dropdown-mobile-wrap {
+    flex-wrap: nowrap !important;
+    width: 100%;
+    gap: 0.5rem !important;
+  }
+
+  /* remove auto sizing from col-auto effect */
+  .dropdown-mobile-wrap > div {
+    flex: 1 1 50%;
+    min-width: 0;
+  }
+
+  /* actual clickable button */
+  .dropdown__button {
+    width: 100%;
+    flex: 1;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* icon spacing fix */
+  .dropdown__button .icon {
+    margin-left: auto !important;
+  }
+}

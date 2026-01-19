@@ -1,0 +1,225 @@
+/* 404 Page Styles */
+.error-page-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #F7F8FA 0%, #DFDFDF 186.99%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.error-page-container {
+  position: relative;
+  width: 100%;
+  max-width: 1920px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Background decorative elements */
+.error-background {
+  position: absolute;
+  width: 857.63px;
+  height: 572.01px;
+  left: 50%;
+  top: 160px;
+  transform: translateX(-50%);
+  opacity: 0.42;
+  z-index: 1;
+}
+
+/* 404 Numbers */
+.error-numbers {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 40px;
+  z-index: 10;
+}
+
+.error-number-4-left,
+.error-number-4-right {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 200px;
+  line-height: 300px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #1D1D1D;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.error-number-4-left {
+  transform: rotate(-15deg);
+}
+
+.error-number-4-right {
+  transform: rotate(15deg);
+}
+
+.error-number-0 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 300px;
+  line-height: 450px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #1D1D1D;
+}
+
+/* Illustration */
+.error-illustration {
+  position: absolute;
+  width: 173.96px;
+  height: 229.81px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.illustration-object {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(88.28deg, #34254C 1.15%, #51397F 98.2%);
+  border-radius: 10px;
+  position: relative;
+}
+
+/* Content Section */
+.error-content {
+  position: relative;
+  text-align: center;
+  z-index: 10;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.error-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 44px;
+  color: #1D1D1D;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.error-description {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #646464;
+  margin-bottom: 40px;
+}
+
+/* CTA Button */
+.error-cta-button {
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 35px;
+  gap: 10px;
+  background: #4075FB;
+  border-radius: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.error-cta-button:hover {
+  background: #3461d9;
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 12px rgba(64, 117, 251, 0.3);
+}
+
+.error-cta-button span {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .error-number-4-left,
+  .error-number-4-right {
+    font-size: 150px;
+    line-height: 225px;
+  }
+  
+  .error-number-0 {
+    font-size: 220px;
+    line-height: 330px;
+  }
+}
+
+@media (max-width: 768px) {
+  .error-numbers {
+    gap: 20px;
+  }
+  
+  .error-number-4-left,
+  .error-number-4-right {
+    font-size: 100px;
+    line-height: 150px;
+  }
+  
+  .error-number-0 {
+    font-size: 150px;
+    line-height: 225px;
+  }
+  
+  .error-title {
+    font-size: 28px;
+    line-height: 36px;
+  }
+  
+  .error-description {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  
+  .error-content {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-number-4-left,
+  .error-number-4-right {
+    font-size: 60px;
+    line-height: 90px;
+  }
+  
+  .error-number-0 {
+    font-size: 90px;
+    line-height: 135px;
+  }
+  
+  .error-title {
+    font-size: 24px;
+    line-height: 32px;
+  }
+  
+  .error-cta-button {
+    padding: 12px 28px;
+  }
+  
+  .error-cta-button span {
+    font-size: 14px;
+  }
+}

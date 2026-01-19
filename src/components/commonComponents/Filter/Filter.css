@@ -1,0 +1,37 @@
+.filter-select {
+  width: 220px;
+  appearance: none;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #CBCBCB;
+  background-color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-dark-9);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23667085' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.label {
+  padding: 0.6rem;
+  border-radius: 12px;
+  background-color: var(--color-white);
+  display: inline-flex;
+  gap: 8px;
+  flex-direction: column;
+  color: var(--color-dark-9);
+}
+
+.filter-select:hover {
+  border-color: #98a2b3;
+}
+
+.filter-select:focus {
+  border-color: #2e90fa;
+  box-shadow: 0 0 0 3px rgba(46, 144, 250, 0.15);
+}

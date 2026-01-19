@@ -1,0 +1,157 @@
+/* =============================================
+   AI COMPLIANCE PAGE RESPONSIVE STYLES
+   ============================================= */
+
+/* Main dashboard content container */
+@media (max-width: 48rem) {
+  .dashboard__content.bg-light-4 {
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 30rem) {
+  .dashboard__content.bg-light-4 {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Rounded card styling for compliance page */
+.rounded-16.border-light.bg-white {
+  border: 1px solid #E5E7EB;
+}
+
+/* Refresh button responsive */
+@media (max-width: 30rem) {
+  .refresh-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+  }
+  
+  .refresh-btn .refresh-icon {
+    font-size: 14px !important;
+  }
+}
+
+/* Pagination buttons responsive */
+@media (max-width: 30rem) {
+  .dashboard__content.bg-light-4 button[style*="borderRadius: 999"] {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Pagination responsive */
+@media (max-width: 30rem) {
+  div[style*="marginTop: 20"][style*="justifyContent: \"center\""] {
+    margin-top: 1rem !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* =============================================
+   PROJECT DETAILS PAGE RESPONSIVE STYLES
+   ============================================= */
+
+/* Make the content layout stack on mobile */
+@media (max-width: 768px) {
+  /* Stack left details and right gauge vertically */
+  div[style*="display: flex"][style*="justifyContent: space-between"][style*="gap: 40"] {
+    flex-direction: column !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+  }
+  
+  /* Make left details full width on mobile */
+  div[style*="display: flex"][style*="justifyContent: space-between"][style*="gap: 40"] > div[style*="width: 75%"],
+  div[style*="display: flex"][style*="justifyContent: space-between"][style*="gap: 40"] > div[style*="width: \"75%\""] {
+    width: 100% !important;
+  }
+  
+  /* Make gauge container responsive */
+  div[style*="display: flex"][style*="justifyContent: space-between"][style*="gap: 40"] > div[style*="width: 320"],
+  div[style*="display: flex"][style*="justifyContent: space-between"][style*="gap: 40"] > div[style*="maxWidth: 320"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+  
+  /* Scale down the large gauge on mobile */
+  div[style*="width: 260"][style*="height: 200"] {
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+  
+  /* Make the large gauge SVG responsive */
+  div[style*="width: 260"][style*="height: 200"] svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further scale down on smaller phones */
+  div[style*="width: 260"][style*="height: 200"] {
+    transform: scale(0.7);
+    transform-origin: center;
+  }
+}
+
+/* Evaluation Table Card - Make gauge section responsive */
+@media (max-width: 768px) {
+  /* Stack title/description and gauge vertically */
+  div[style*="display: flex"][style*="justifyContent: space-between"] > div:has(+ div[style*="gap: 30"]) {
+    width: 100% !important;
+    margin-bottom: 16px;
+  }
+  
+  /* Stack the right section (divider + gauge) */
+  div[style*="display: flex"][style*="gap: 30"][style*="alignItems: center"] {
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Hide the vertical divider on mobile */
+  div[style*="display: flex"][style*="gap: 30"] > div[style*="width: 1"][style*="background: #E2E8F0"] {
+    display: none !important;
+  }
+  
+  /* Center the small gauge */
+  div[style*="display: flex"][style*="gap: 30"] > div:last-child {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 12px;
+  }
+}
+
+/* Small Gauge (ScoreGaugeSmall) responsive */
+@media (max-width: 480px) {
+  /* Scale down the small gauge slightly on very small screens */
+  div[style*="width: 120"][style*="height: 90"] {
+    transform: scale(0.9);
+  }
+}
+
+/* Table responsive on mobile */
+@media (max-width: 640px) {
+  div[style*="overflowX: auto"] table {
+    font-size: 13px !important;
+  }
+  
+  div[style*="overflowX: auto"] table th,
+  div[style*="overflowX: auto"] table td {
+    padding: 10px 8px !important;
+  }
+}
+
+/* Project title responsive */
+@media (max-width: 480px) {
+  h1[style*="fontSize: 28"][style*="textAlign: center"] {
+    font-size: 22px !important;
+  }
+}
+

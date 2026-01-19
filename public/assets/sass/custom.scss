@@ -1,0 +1,959 @@
+
+
+.tabActive{
+    color: var(--color-purple-1) !important;
+    font-weight: 500;
+    background-color: var(--color-purple-3);
+    
+}
+
+
+.mobileMenu{
+    padding: 16px 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 300px);
+    box-sizing: border-box;
+    overflow-y: scroll;
+    row-gap: 15px;
+    margin: 40px 0px;
+    @media (min-width:1200px) {
+        display: none;
+    }
+    .link{
+        padding: 6px 7px;
+        font-size: 17px;
+        transition: 0.3s;
+        margin: 4px 0px;
+        &:hover{
+            background-color: #fcfcfc;
+        }
+
+    }
+    i{
+        transition: 0.4;
+        &.active{
+            transform: rotate(90deg);
+        }
+
+    }
+
+    .submenuOne{
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        // row-gap: 8px;
+        .title{
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 7px;
+            
+            cursor: pointer;
+            
+            span{
+                font-size: 19px;
+                font-weight: 500;
+                
+
+            }
+           
+        }
+        .toggle{
+            display: flex;
+            flex-direction: column;
+            padding: 0px 7px;
+            row-gap: 2px;
+            height: 0px;
+            overflow: hidden;
+            opacity: 0;
+            transition: 0.3s;
+           
+            &.active{
+                height: fit-content;
+                opacity: 1;
+                
+            }
+            
+            .submenuTwo{
+                display: flex;
+                flex-direction: column;
+                padding: 1px 7px;
+                // .title{
+                //     span{
+        
+                //     }
+                //     i{
+        
+                //     }
+                // }
+                .toggle{
+                    display: flex;
+                    flex-direction: column;
+                    padding: 6px 7px;
+                    .link{
+                        padding: 6px 7px;
+        
+                    }
+
+        
+                }
+                
+
+            }
+
+        }
+
+    }
+
+}
+
+
+.swiper-pagination-bullet {
+    background-color: var(--color-purple-1) !important;
+  }
+
+.customSized{
+    @media (max-width:575px) {
+        font-size: 35px;
+        
+    }
+}
+
+.customizedHeroBackground{
+
+
+
+.swiper-wrapper-two{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.swiper-pointer-events{
+    width: 100% !important;
+    height: 100%  !important;
+}
+.customedBg{
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    width: 100%;
+    height: 100% !important;
+    padding-top: 0 !important;
+}
+.swiper-slide{
+    padding-top: 0 !important;
+    height: 100% !important;
+    padding-bottom: 0 !important;
+}
+.hightFull{
+    height: 100% !important;
+}}
+
+
+.pagination-testimonial{
+    &>*{
+        background-color: #fff !important;
+        opacity: 1 !important;
+    }
+    --swiper-pagination-color: white !important;
+    .swiper-pagination-bullet-active {
+        
+        
+        background-color: var(--color-purple-1) !important ;
+        
+      }
+}
+.pagination-white-dot{
+    &>*{
+        background-color: #fff !important;
+        opacity: 1 !important;
+    }
+    --swiper-pagination-color: white !important;
+    .swiper-pagination-bullet-active {
+        
+        
+        background-color: var(--color-purple-1) !important ;
+        
+      }
+}
+.custom-transition {
+    transition: 0.5s;
+  }
+.scaleOne{
+    // transform: scale(1) !important;
+}
+
+.whiteBg {
+    background-color: var(--white) !important;
+}
+.is-in-view{
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+}
+
+.activeMenu{
+    color: var(--color-purple-1) !important;
+    
+}
+.inActiveMenu{
+    &:hover{
+        color: var(--color-purple-1) !important;
+
+    }
+   
+}
+.inActiveMenuTwo{
+    
+}
+.inActiveMegaMenu {
+    color: var(--color-dark-1) !important;
+    &:hover{
+        color: var(--color-dark-1) !important;
+        
+    }
+}
+.cartProductCount{
+    position: absolute;
+   transform: translateX(17px)  translateY(-17px);
+    height: 20px;
+    width: 20px;
+    font-size: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+  
+    background-color: crimson;
+    color: white;
+
+}
+
+.modal{
+    /* The Modal (background) */
+    box-sizing: border-box;
+
+    display: none;
+    position: fixed;
+    z-index: 100;
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 60px;
+    overflow: auto;
+    background-color: black;
+
+  
+  /* Modal Content */
+  .modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    width: 90%;
+    height: 100%;
+    max-width: 1200px;
+    box-sizing: border-box;
+  }
+  
+  /* The Close Button */
+  .close {
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 35px;
+    font-weight: bold;
+    box-sizing: border-box;
+    &:hover{
+        color: #999;
+    text-decoration: none;
+    cursor: pointer;
+
+    }
+
+  }
+  
+ 
+  
+  .mySlides {
+    display: none;
+    height: 70%;
+    box-sizing: border-box;
+    margin: auto auto;
+  }
+  
+  .cursor {
+    cursor: pointer;
+  }
+  
+  /* Next & previous buttons */
+  .prev,
+  .next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    padding: 16px;
+    margin-top: -50px;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    transition: 0.6s ease;
+    border-radius: 0 3px 3px 0;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+    &:hover{
+        background-color: rgba(0, 0, 0, 0.8);
+        
+    }
+  }
+  
+  /* Position the "next button" to the right */
+  .next {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+   
+  }
+  
+  /* On hover, add a black background color with a little bit see-through */
+  
+  
+  /* Number text (1/3 etc) */
+  .numbertext {
+    color: #000;
+    font-size: 12px;
+    padding: 8px 12px;
+    position: absolute;
+    top: 0;
+  }
+  
+  img {
+    margin-bottom: -4px;
+  }
+  
+  .caption-container {
+    text-align: center;
+    background-color: black;
+    padding: 2px 16px;
+    color: white;
+  }
+  
+  .demo {
+    opacity: 0.6;
+  }
+  
+  .active,
+  .demo {
+    &:hover{opacity: 1;}
+    
+  }
+  
+  
+  img.hover-shadow {
+    transition: 0.3s;
+  }
+  
+  .hover-shadow {
+    &:hover{
+         box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    }
+   
+  }
+}
+.marginCustom{
+
+    @media (max-width:990px) {
+        margin-top: 50px !important;
+    }
+    @media (max-width:400px) {
+        margin-top: 80px !important;
+    }
+}
+
+.cursor{
+    cursor: pointer !important;
+}
+.fc-view-harness{
+    max-width: 100%;
+    overflow-x: scroll;
+    .fc-scrollgrid-liquid{
+        min-width: 800px;
+    }
+}
+
+.break-content{
+    width: 100% !important;
+   
+    overflow: hidden !important;
+    white-space: wrap !important;
+}
+.react-calendar__navigation__next2-button{
+    display: none !important;
+}
+.react-calendar__navigation__prev2-button{
+    display: none !important;
+}
+.contactMap{
+    pointer-events: none !important;
+}
+.linkCustom{
+    text-decoration: none !important;
+    color:inherit !important;
+    &:hover{
+        color: var(--color-purple-1) !important;
+    }
+
+}
+.linkCustomTwo{
+    text-decoration: none;
+}
+
+.logo {
+    max-width: 180px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.image-styles {
+    background-image: url('/assets/img/login/login_image.jpeg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 30px;
+    display: flex;
+    margin: 50px 80px;
+}
+
+.auth-form {
+    background: #FFFFFF80;
+    box-shadow: 4px 4px 10px 0px #00000026;
+    border: 1px solid #FFFFFF;
+    border-radius: 30px;
+    position: relative;
+    margin: 70px 50px;
+    margin-left: 280px;
+}
+
+.sign-up {
+    background: #FFFFFF80;
+    box-shadow: 4px 4px 10px 0px #00000026;
+    border: 1px solid #FFFFFF;
+    border-radius: 30px;
+    margin-right: 15px;
+    margin-right: 15px;
+}
+
+.main-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔐 Auth pages with glass background (Verify / Forgot / Reset) */
+/* 🔐 Verify / Forgot / Reset background */
+/* ===============================
+   AUTH BACKGROUND (VERIFY / FORGOT / RESET)
+   =============================== */
+.auth-bg {
+  min-height: calc(100svh - 4rem);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+
+  /* soft glass background */
+  background: linear-gradient(
+    180deg,
+    rgba(245, 247, 251, 0.95),
+    rgba(245, 247, 251, 0.9)
+  );
+}
+
+/* ===============================
+   GLASS CARD
+   =============================== */
+.email-form {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border-radius: 1.75rem;
+  padding: 2.25rem 2rem;
+  max-width: 28rem;
+  width: 100%;
+
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+
+  text-align: center;
+}
+
+/* ===============================
+   ERROR TEXT (VISIBLE)
+   =============================== */
+.auth-error-text {
+  color: #dc2626;        
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+/* ===============================
+   TITLE COLORS
+   =============================== */
+.email-form h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.email-form h3.error {
+  color: #dc2626;
+}
+/* ===============================
+   REDIRECT LOADER
+   =============================== */
+
+.redirect-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.redirect-text {
+  font-size: 0.95rem;
+  color: #374151;
+}
+/* Subtext under headings */
+.auth-subtext {
+  font-size: 1rem;
+  color: #5b6472;
+  line-height: 1.5;
+}
+
+/* Form spacing */
+.form-group {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Label */
+.form-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: black;
+  margin-bottom: 0.5rem;
+}
+
+/* Premium input */
+.email-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.email-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Success text */
+.text-success {
+  color: #16a34a;
+}
+
+.mt-16 {
+  margin-top: 1rem;
+}
+
+.mt-24 {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  /* ================= RESET & OVERFLOW ================= */
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ================= BACKGROUND ================= */
+  .image-styles {
+    background-image: url('/assets/img/login/login_image.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100svh - 4rem);
+    max-width: 100vw;
+    margin: 0;
+  }
+
+  /* ================= AUTH CARD ================= */
+  .auth-form {
+    background: rgba(255, 255, 255, 0.6);
+    border: none;
+    box-shadow: none;
+    max-width: 320px;
+    margin: 1.25rem auto;
+    padding: 0.875rem 0.75rem;
+    border-radius: 1.125rem;
+    margin-left: 1.563rem;
+    margin-right: 1.563rem;
+    margin: 1.25rem auto;
+    padding: 0.875rem 0.75rem;
+    margin-left: 1.563rem;
+    margin-right: 1.563rem;
+    position: static !important;
+  }
+
+  /* ================= TEXT ================= */
+  .auth-form h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-form p,
+  .auth-form label {
+    font-size: 0.813rem;
+    margin-bottom: 0.063rem;
+    font-size: 0.813rem;
+    margin-bottom: 0.063rem;
+    line-height: 1.2;
+  }
+
+  /* ================= UNIVERSAL INPUT STYLE ================= */
+  .auth-form input,
+  .auth-form select,
+  .auth-form textarea {
+    width: 100%;
+    min-height: 2.75rem;          
+    font-size: 0.75rem;           
+    padding: 0.75rem 0.875rem;
+    min-height: 2.75rem;          
+    font-size: 0.75rem;           
+    padding: 0.75rem 0.875rem;
+    box-sizing: border-box;
+    border-radius: 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  /* ================================================= */
+  /* ================= SIGNUP LAYOUT ================= */
+  /* ================================================= */
+  .sign-up {
+    background: #FFFFFF80;
+    box-shadow: 0.25rem 0.25rem 0.625rem 0rem #00000026;
+    border: 0.063rem solid #FFFFFF;
+    border-radius: 1.125rem;
+    margin-left: 1.563rem;
+    margin-right: 1.563rem;
+    box-shadow: 0.25rem 0.25rem 0.625rem 0rem #00000026;
+    border: 0.063rem solid #FFFFFF;
+    border-radius: 1.125rem;
+    margin-left: 1.563rem;
+    margin-right: 1.563rem;
+    position: static !important;
+    overflow: visible !important;
+}
+
+  .sign-up .contact-form {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+    margin: 0rem;
+    overflow: visible !important;
+  }
+
+  .sign-up .contact-form .col-lg-6 {
+    width: 50%;
+    padding: 0rem 0.25rem;
+    padding: 0rem 0.25rem;
+  }
+
+  .sign-up .contact-form .col-12 {
+    width: 100%;
+    padding: 0rem 0.25rem;
+  }
+  .sign-up label {
+    display: block;
+    min-height: 2rem; /* forces equal label height */
+    line-height: 1.1;
+  }
+  .sign-up .react-select__menu {
+    position: absolute !important;
+    width: 100% !important;
+    margin-top: 0.25rem;
+    z-index: 20;
+  }
+  .sign-up .react-select__option {
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+  .sign-up .react-select__option > div {
+    flex-wrap: nowrap;
+  }
+
+  .sign-up .react-select__option span {
+    flex: 1;
+    overflow: visible;
+  }
+  .sign-up .react-select__menu-list {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  /* Make control a proper flex row */
+  .sign-up .react-select__control {
+    display: flex !important;
+    align-items: center !important;
+  }
+  /* Value container should take remaining space */
+  .sign-up .react-select__value-container {
+    flex: 1 !important;
+    min-width: 0 !important;          /* 🔑 critical */
+    overflow: hidden !important;
+  }
+  /* Single value (flag + text) */
+  .sign-up .react-select__single-value {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Country name text */
+  .sign-up .react-select__single-value span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Move clear (×) + dropdown arrow to far right */
+  .sign-up .react-select__indicators {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;     /* 🔥 pushes right */
+  }
+
+  /* Reduce clear icon size (mobile friendly) */
+  .sign-up .react-select__clear-indicator {
+    padding: 0 0.25rem !important;
+  }
+
+  /* Dropdown arrow */
+  .sign-up .react-select__dropdown-indicator {
+    padding: 0 0.25rem !important;
+  }
+
+  /* ================================================= */
+  /* ================= PHONE INPUT =================== */
+  /* ================================================= */
+
+  .sign-up input[disabled] {
+    height: 2.75rem !important;
+    width: 4rem !important;
+    font-size: 1rem !important;
+    height: 2.75rem !important;
+    width: 4rem !important;
+    font-size: 1rem !important;
+    text-align: center;
+    padding: 0rem !important;
+    padding: 0rem !important;
+  }
+
+  .sign-up input[placeholder="Phone number"] {
+    flex: 1;
+    min-width: 0;               /* 🔑 prevents overflow */
+    max-width: 100%;
+    box-sizing: border-box; 
+  }
+
+  /* ================= SAFETY ================= */
+  .form-page__content,
+  .auth-form {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+.sign-up input,
+  .sign-up select,
+  .sign-up textarea,
+  .sign-up [class*="control"] {
+    height: 2.8rem !important;
+    min-height: 2.8rem !important;
+    font-size: 0.9rem !important;
+    height: 2.8rem !important;
+    min-height: 2.8rem !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* ============================= */
+  /* 🔥 PHONE INPUT FIX */
+  /* ============================= */
+
+  .sign-up .d-flex {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .sign-up input[disabled] {
+    width: 3.5rem !important;
+    min-width: 3.5rem;
+    max-width: 3.5rem;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .md\:py-25 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+  .sign-up *,
+.sign-up *::before,
+.sign-up *::after {
+  box-sizing: border-box;
+}
+
+}
+
+
+/* Dashboard content padding */
+@media (max-width: 991px) {
+  .dashboard__content {
+    padding: 1.5rem 1rem !important;
+  }
+  
+  /* Center page titles on mobile */
+  .dashboard__content .row {
+    justify-content: center !important;
+  }
+  
+  .dashboard__content .col-auto {
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  .dashboard__content h1,
+  .dashboard__content h2,
+  .dashboard__content h3,
+  .dashboard__content .text-30 {
+    text-align: center !important;
+  }
+}
+
+/* Administration page mobile responsiveness */
+@media (max-width: 768px) {
+  /* Reduce header padding on mobile */
+  .dashboard__content .pb-50 {
+    padding-bottom: 30px !important;
+  }
+  
+  /* Make tabs horizontally scrollable */
+  .tabs__controls {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding: 15px !important;
+    gap: 15px !important;
+  }
+  
+  /* Hide scrollbar for cleaner look */
+  .tabs__controls::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .tabs__controls::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  
+  /* Adjust tab button sizing for mobile */
+  .tabs__button {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+  }
+  
+  /* Reduce content padding */
+  .tabs__content {
+    padding: 20px 15px !important;
+  }
+  
+  /* Adjust grid gaps for mobile */
+  .tabs__content .row {
+    row-gap: 30px !important;
+    column-gap: 20px !important;
+  }
+  
+  /* Ensure sections stack properly on mobile */
+  .tabs__content .w-1\/5,
+  .tabs__content .xl\:w-1\/4,
+  .tabs__content .lg\:w-1\/3,
+  .tabs__content .md\:w-1\/2,
+  .tabs__content .sm\:w-1\/1 {
+    width: 100% !important;
+  }
+  
+  /* Adjust heading sizes */
+  .tabs__content h4 {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further reduce spacing on very small screens */
+  .tabs__controls {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+  
+  .tabs__button {
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+  }
+  
+  .tabs__content {
+    padding: 15px 10px !important;
+  }
+  
+  .dashboard__content .rounded-16 {
+    border-radius: 8px !important;
+  }
+}

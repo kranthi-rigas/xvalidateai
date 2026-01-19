@@ -1,0 +1,77 @@
+/**
+    Become an Instructor css
+**/
+
+ .instructor-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    margin-top: 1%;
+    padding-bottom: 2%;
+ }
+
+ .instructor-form-styles {
+    border: 1px solid #EDEDED;
+    box-shadow: 0px 2px 10px 0px #00000014;
+    border-radius: 30px;
+    padding: 50px;
+    position: relative;
+    overflow: hidden;
+    background-color: #FFFFFF;
+ }
+
+ .instructor-submit-block {
+    display: inline-flex;
+    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+ }
+
+ /* Make required asterisk red */
+.required-label::after {
+  content: " *";
+  color: red;
+}
+
+/* Container */
+.custom-file-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+/* "Choose File" button */
+.file-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+}
+
+.file-icon {
+  font-size: 18px;
+}
+
+/* Hide the actual input */
+.hidden-file-input {
+  display: none;
+}
+
+/* File name text */
+.file-name {
+  color: #777;
+  font-size: 14px;
+}

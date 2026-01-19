@@ -1,0 +1,20 @@
+.ai-cards-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--text-lg);
+}
+
+.ai-bar-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--text-lg);
+}
+
+.normal-container-styles {
+    border-radius: var(--space-6);
+    background-color: var(--color-white);
+    box-shadow: 0px 2px 10px 0px var(--color-shadow);
+    padding: var(--space-5);
+    border: 1px solid var(--color-light-5);
+    margin-bottom: var(--space-6);
+}

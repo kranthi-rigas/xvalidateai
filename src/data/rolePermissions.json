@@ -1,0 +1,49 @@
+{
+    "ADMIN": [
+        "dashboard",
+        "ai_compliance",
+        "organization",
+        "courses",
+        "mock_tests",
+        "create_mock_test",
+        "become_instructor",
+        "review_instructors",
+        "settings",
+        "administration",
+        "assignment",
+        "grades"
+    ],
+    "INSTRUCTOR": [
+        "dashboard",
+        "ai_compliance",
+        "courses",
+        "mock_tests",
+        "create_mock_test",
+        "become_instructor",
+        "settings",
+        "assignment",
+        "grades"
+    ],
+    "STUDENT": [
+        "dashboard",
+        "ai_compliance",
+        "organization",
+        "courses",
+        "mock_tests",
+        "create_mock_test",
+        "become_instructor",
+        "review_instructors",
+        "settings",
+        "administration",
+        "assignment",
+        "grades"
+    ],
+    "PARENT": [
+        "dashboard",
+        "courses",
+        "mock_tests",
+        "become_instructor",
+        "settings"
+    ]
+
+}

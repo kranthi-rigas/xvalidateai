@@ -1,0 +1,165 @@
+import React, { useState, memo } from "react";
+import { updatePassword } from "../../../apiIntegration/auth";
+
+/* ===========================
+   PASSWORD FIELD (MEMOIZED)
+=========================== */
+const PasswordField = memo(
+  ({ label, name, value, type, onChange, onToggle, placeholder }) => {
+    return (
+      <div className="col-md-7">
+        <label className="text-16 fw-500 mb-10">{label}</label>
+
+        <div className="password-wrapper">
+          <input
+            required
+            type={type}
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+          />
+
+          <button type="button" className="password-toggle" onClick={onToggle}>
+            {type === "password" ? "Show" : "Hide"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+);
+
+/* ===========================
+   MAIN PASSWORD COMPONENT
+=========================== */
+export default function Password({ activeTab }) {
+  const [form, setForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+
+  const [show, setShow] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const passwordsMatch =
+    form.new_password &&
+    form.confirm_password &&
+    form.new_password === form.confirm_password;
+
+  /* ---------- HANDLERS ---------- */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setError("");
+  };
+
+  const toggleShow = (key) => {
+    setShow((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!passwordsMatch) {
+      setError("New password and confirm password do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await updatePassword({
+        password: form.current_password,
+        new_password: form.new_password,
+      });
+
+      // ✅ IMMEDIATELY logout & redirect
+      localStorage.clear();
+      sessionStorage.clear();
+
+      window.location.replace("/login"); // ⬅️ IMPORTANT
+    } catch (err) {
+      // ✅ Ignore token errors AFTER password change
+      if (
+        err.message?.toLowerCase().includes("token") ||
+        err.message?.toLowerCase().includes("expired")
+      ) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/login");
+        return;
+      }
+
+      setError(err.message || "Failed to update password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------- UI ---------- */
+
+  return (
+    <div
+      className={`tabs__pane -tab-item-2 ${activeTab == 2 ? "is-active" : ""}`}
+    >
+      <form onSubmit={handleSubmit} className="contact-form row y-gap-30">
+        <PasswordField
+          label="Current password"
+          name="current_password"
+          value={form.current_password}
+          type={show.current ? "text" : "password"}
+          onChange={handleChange}
+          onToggle={() => toggleShow("current")}
+          placeholder="Current password"
+        />
+
+        <PasswordField
+          label="New password"
+          name="new_password"
+          value={form.new_password}
+          type={show.new ? "text" : "password"}
+          onChange={handleChange}
+          onToggle={() => toggleShow("new")}
+          placeholder="New password"
+        />
+
+        <PasswordField
+          label="Confirm New Password"
+          name="confirm_password"
+          value={form.confirm_password}
+          type={show.confirm ? "text" : "password"}
+          onChange={handleChange}
+          onToggle={() => toggleShow("confirm")}
+          placeholder="Confirm new password"
+        />
+
+        {/* LIVE PASSWORD MATCH MESSAGE */}
+        {form.confirm_password && !passwordsMatch && (
+          <div className="col-md-7 text-red-1 text-14">
+            Passwords do not match
+          </div>
+        )}
+
+        {error && <div className="col-md-7 text-red-1 text-14">{error}</div>}
+
+        <div className="col-12">
+          <button
+            disabled={loading || !passwordsMatch}
+            className="button -md -purple-1 text-white"
+          >
+            {loading ? "Saving..." : "Save Password"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

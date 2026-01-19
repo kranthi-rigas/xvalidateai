@@ -1,0 +1,58 @@
+/* Plan Status Badge Styles */
+.plan-badge-free,
+.plan-badge-premium,
+.plan-badge-enterprise {
+  font-weight: 600;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1199px) {
+  .plan-badge-free,
+  .plan-badge-premium,
+  .plan-badge-enterprise {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    margin-left: 10px !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .plan-badge-free span,
+  .plan-badge-premium span,
+  .plan-badge-enterprise span {
+    display: none;
+  }
+  
+  .plan-badge-free,
+  .plan-badge-premium,
+  .plan-badge-enterprise {
+    width: 50px;
+    height: 50px;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 50% !important;
+  }
+}
+
+/* Animation for hover effects */
+.plan-badge-free:hover,
+.plan-badge-premium:hover,
+.plan-badge-enterprise:hover {
+  text-decoration: none;
+}
+
+/* Accessibility improvements */
+.plan-badge-free:focus,
+.plan-badge-premium:focus,
+.plan-badge-enterprise:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Hide login/signup when logged in with plan badge */
+.header-right__buttons.with-plan .button:not(.plan-badge-free):not(.plan-badge-premium):not(.plan-badge-enterprise) {
+  display: none;
+}

@@ -1,0 +1,101 @@
+.auth-animate {
+  animation: fadeSlideIn 0.6s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form input,
+.sign-up input {
+  transition: all 0.25s ease;
+  border-radius: 10px;
+}
+
+.auth-form input:focus,
+.sign-up input:focus {
+  border-color: #576aff;
+  box-shadow: 0 0 0 3px rgba(87, 106, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.auth-form,
+.sign-up {
+  transition: all 0.3s ease;
+}
+
+.auth-form:hover,
+.sign-up:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.auth-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.auth-card:has(.react-select__menu) {
+  transform: none !important;
+}
+
+.auth-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--text-xl);
+}
+
+.footer-links {
+  font-size: var(--text-md);
+  color: var(--color-blue) !important;
+  font-weight: 400;
+}
+
+.disabled-link {
+  pointer-events: none;
+  color: gray !important;
+}
+
+.password-view {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-miss-match {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #dc3545;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.password-match {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #28a745;
+  font-size: 18px;
+  font-weight: bold;
+}
