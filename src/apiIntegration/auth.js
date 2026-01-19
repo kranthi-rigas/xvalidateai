@@ -1,5 +1,5 @@
 // src/api/auth.js
-export const API_BASE_URL = "https://dev-api.academy51.com";
+export const API_BASE_URL = "https://api.myacademy51.com";
 
 async function fetchWithAuth(url, options = {}) {
   const accessToken = localStorage.getItem("access_token");
