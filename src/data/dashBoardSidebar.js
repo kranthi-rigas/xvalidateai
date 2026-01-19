@@ -8,6 +8,19 @@ export const sidebarItems = [
     permission: "dashboard",
     requiredPlan: null,
   },
+  
+ /*{
+    id: 3,
+    href: "/dashboard/aianalytics",
+    src: "/dashboardSideBarIcons/dashboard.svg",
+    active_src: "/dashboardSideBarIcons/dashboard_active.png",
+    // src: "/dashboardSideBarIcons/analytics.svg",
+    // active_src: "/dashboardSideBarIcons/analytics_active.png",
+    text: "Home",
+    permission: "ai_compliance",
+    requiredPlan: null,
+  },
+  */
   {
     id: 2,
     href: "/dashboard/aicompliance",
@@ -17,17 +30,7 @@ export const sidebarItems = [
     permission: "ai_compliance",
     requiredPlan: null,
   },
-  {
-    id: 3,
-    href: "/dashboard/aianalytics",
-    src: "/dashboardSideBarIcons/chart-pie.svg",
-    active_src: "/dashboardSideBarIcons/chart-pie_active.svg",
-    // src: "/dashboardSideBarIcons/analytics.svg",
-    // active_src: "/dashboardSideBarIcons/analytics_active.png",
-    text: "AI Analytics",
-    permission: "ai_compliance",
-    requiredPlan: null,
-  },
+  
   {
     id: 4,
     src: "/dashboardSideBarIcons/organization.svg",
@@ -41,7 +44,7 @@ export const sidebarItems = [
       { id: "organizations", iconClass: "text-20 icon-person-3", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
     ],
   },
-  {
+  /*{
     id: 5,
     href: "/dashboard/courses",
     src: "/dashboardSideBarIcons/courses.svg",
@@ -74,6 +77,7 @@ export const sidebarItems = [
     iconClass: "text-20 icon-message",
     text: "Messages",
   },*/
+  /*
   {
     id: 9,
     href: "/dashboard/becomeinstructor",
@@ -92,6 +96,7 @@ export const sidebarItems = [
     permission: "review_instructors",
     requiredPlan: null,
   },
+  
   /*{
     id: 11,
     href: "/dshb-listing",
@@ -113,6 +118,7 @@ export const sidebarItems = [
     permission: "settings",
     requiredPlan: null,
   },
+  /*
   {
     id: 14,
     href: "/dashboard/administration",
@@ -166,6 +172,7 @@ export const sidebarItems = [
     text: "Forums",
     iconClass: "text-20 icon-access",
   },*/
+  /*
   {
     id: 20,
     href: "/dashboard/grades",

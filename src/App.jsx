@@ -195,7 +195,7 @@ function App() {
               <Route path="/not-authorized" element={<NotAuthorized />} />
               {/*dashboard nested route*/}
               <Route path="dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardPage />} />
+                <Route index element={<AIDashboardPage />} />
                 <Route path="courses" element={<DshbCoursesPage />} />
                 <Route path="mocktest" element={<DshbMockTestPage />} />
                 <Route
@@ -269,7 +269,7 @@ function App() {
                 />
                 <Route path="pricing" element={<DshbPricingPage />} />
                 <Route path="pricing/billing" element={<DshbBillingPage />} />
-                
+
                 {/* Dashboard 404 - catches unmatched dashboard routes */}
                 <Route path="*" element={<DashboardNotFoundPage />} />
               </Route>
