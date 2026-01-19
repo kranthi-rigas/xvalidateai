@@ -45,7 +45,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
   useOutsideClick(
     notificationRef,
     () => setIsOnNotification(false),
-    isOnNotification
+    isOnNotification,
   );
 
   useEffect(() => {
@@ -277,95 +277,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                   </div>*/}
 
                   {/* --- Header Actions --- */}
-                  <div className="d-flex items-center sm:d-none">
-                    {/* <div className="relative">
-                      <button
-                        onClick={() => handleFullScreenToggle()}
-                        className="d-flex text-light-1 items-center justify-center size-50 rounded-16 -hover-dshb-header-light"
-                      >
-                        <i className="text-24 icon icon-maximize"></i>
-                      </button>
-                    </div> */}
-
-                    {/* Cart */}
-                    <div className="relative">
-                      <div ref={cartButtonRef}>
-                        <CartToggle
-                          isOpen={isCartOpen}
-                          onToggle={() => setCartOpen((prev) => !prev)}
-                          allClasses="d-flex items-center text-light-1 justify-center size-50 rounded-16 -hover-dshb-header-light"
-                        />
-                      </div>
-                    </div>
-
-                    <div ref={messageRef} className="relative">
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setMessageOpen((p) => !p);
-                        }}
-                        className="d-flex items-center text-light-1 justify-center size-50 rounded-16 -hover-dshb-header-light"
-                      >
-                        <i className="text-24 icon icon-email"></i>
-                      </a>
-
-                      {messageOpen && (
-                        <div className="toggle-element -is-el-visible js-msg-toggle">
-                          {/* Messages dropdown */}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Notifications */}
-                    <div ref={notificationRef} className="relative">
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsOnNotification((pre) => !pre);
-                        }}
-                        className="d-flex items-center text-light-1 justify-center size-50 rounded-16 -hover-dshb-header-light"
-                      >
-                        <i className="text-24 icon icon-notification"></i>
-                      </a>
-
-                      <div
-                        className={`toggle-element js-notif-toggle ${
-                          isOnNotification ? "-is-el-visible" : ""
-                        }`}
-                      >
-                        <div className="toggle-bottom -notifications bg-white shadow-4 border-light rounded-8 mt-10">
-                          <div className="py-30 px-30">
-                            <div className="y-gap-40">
-                              {notifications.map((elm, i) => (
-                                <div
-                                  key={i}
-                                  className={`d-flex items-center ${
-                                    i !== 0
-                                      ? "border-top-light -dark-border-top-light-5"
-                                      : ""
-                                  }`}
-                                >
-                                  <div className="shrink-0">
-                                    <img src={elm.imageSrc} alt="image" />
-                                  </div>
-                                  <div className="ml-12">
-                                    <h4 className="text-15 lh-1 fw-500 -dark-text-dark-1">
-                                      {elm.heading}
-                                    </h4>
-                                    <div className="text-13 lh-1 mt-10">
-                                      {elm.time} Hours Ago
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <div className="d-flex items-center sm:d-none"></div>
 
                   {/* --- Plan Status Badge (hidden on mobile) --- */}
                   <div className="d-flex items-center ml-10 d-none-mobile">
