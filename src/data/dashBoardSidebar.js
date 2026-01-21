@@ -144,7 +144,7 @@ export const sidebarItems = [
     src: "/dashboardSideBarIcons/banknote.svg",
     active_src: "/dashboardSideBarIcons/banknote_active.svg",
     requiredPlan: null,
-  },
+  },/*
   {
     id: 17,
     href: "/dashboard/pricing",
