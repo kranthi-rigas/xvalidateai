@@ -9,8 +9,8 @@ export default function DashboardNotFound() {
     };
 
     return (
-        <div className="row justify-center ">
-            <div className="rounded-16 bg-white ">
+        <div className="w-100" style={{ width: "100%" }}>
+            <div className="rounded-16 bg-white" style={{ width: "100%", maxWidth: "100%" }}>
                 <div className="py-60 px-40">
                     <div className="text-center">
                         {/* 404 Illustration */}
@@ -34,7 +34,7 @@ export default function DashboardNotFound() {
                                 {/* <i className="icon-arrow-left mr-10"></i> */}
                                 Back to Home
                             </button>
-                            
+
                         </div>
 
                         {/* Helpful Links */}

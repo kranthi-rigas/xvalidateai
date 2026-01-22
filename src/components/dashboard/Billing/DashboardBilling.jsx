@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
+import { useContextElement } from "@/context/Context";
 
 export default function DashboardBilling() {
   const navigate = useNavigate();
   const location = useLocation();
   const plan = location.state?.plan || null;
   const show = useToast();
+  const { refreshUserPlan } = useContextElement();
 
   const [formData, setFormData] = useState({
     billingAddress: "",
@@ -19,6 +21,19 @@ export default function DashboardBilling() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [voucherData, setVoucherData] = useState(null); // Store verified voucher data
+
+  // Reset form state when navigating to this page (when location changes)
+  useEffect(() => {
+    setFormData({
+      billingAddress: "",
+      voucherCode: "",
+    });
+    setErrors({});
+    setVoucherApplied(false);
+    setVoucherData(null);
+    setIsSubmitting(false);
+    setIsApplyingVoucher(false);
+  }, [location.key]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,11 +85,10 @@ export default function DashboardBilling() {
       const response = await verifyVoucher(formData.voucherCode.trim());
 
       // Handle successful voucher verification
-      if (response && response.valid)
-      {
+      if (response && response.valid) {
         setVoucherApplied(true);
         setVoucherData(response);
-    }
+      }
     } catch (error) {
       // Handle voucher verification error
       setErrors((prev) => ({
@@ -131,8 +145,9 @@ export default function DashboardBilling() {
           { type: "success" }
         );
 
-        // Full page refresh to reload all data
-        //window.location.href = "/dashboard/pricing";
+        // Refresh user plan in Context and localStorage, then navigate
+        await refreshUserPlan();
+        navigate("/dashboard/pricing");
       } else {
         // Process regular payment without voucher
         console.log("Processing payment:", {
@@ -186,9 +201,8 @@ export default function DashboardBilling() {
                     rows="4"
                     value={formData.billingAddress}
                     onChange={handleChange}
-                    className={`form-control ${
-                      errors.billingAddress ? "is-invalid" : ""
-                    }`}
+                    className={`form-control ${errors.billingAddress ? "is-invalid" : ""
+                      }`}
                     placeholder="Enter your complete billing address including street, city, state, and postal code"
                     style={{
                       border: errors.billingAddress
@@ -294,6 +308,11 @@ export default function DashboardBilling() {
 
                 {/* Submit Button */}
                 <div className="d-flex gap-15 mt-40">
+                  {!voucherApplied && (
+                    <div className="text-14 text-orange-1 mb-10 w-100">
+                      ⚠️ Please apply a valid voucher code to complete your purchase
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => navigate("/dashboard/pricing")}
@@ -309,9 +328,26 @@ export default function DashboardBilling() {
                   </button>
                   <button
                     type="submit"
-                    className="button -purple-1 text-white px-40 py-15"
-                    style={{ borderRadius: "8px" }}
-                    disabled={isSubmitting || !plan}
+                    className={`button px-40 py-15 ${isSubmitting || !plan || !voucherApplied
+                      ? ""
+                      : "-purple-1 text-white"
+                      }`}
+                    style={{
+                      borderRadius: "8px",
+                      backgroundColor:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "#9e9e9e"
+                          : undefined,
+                      color:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "#F0F8FF"
+                          : undefined,
+                      cursor:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "not-allowed"
+                          : "pointer",
+                    }}
+                    disabled={isSubmitting || !plan || !voucherApplied}
                   >
                     {isSubmitting ? "Processing..." : "Complete Purchase"}
                   </button>
@@ -352,11 +388,10 @@ export default function DashboardBilling() {
                       <span className="text-16 text-dark-1">
                         {plan.price === null || plan.price === 0
                           ? "N/A"
-                          : `$${
-                              typeof plan.price === "number"
-                                ? plan.price.toFixed(2)
-                                : plan.price
-                            }`}
+                          : `$${typeof plan.price === "number"
+                            ? plan.price.toFixed(2)
+                            : plan.price
+                          }`}
                       </span>
                     </div>
                     {voucherApplied && voucherData && (
@@ -368,8 +403,8 @@ export default function DashboardBilling() {
                           <span className="text-16 " style={{ color: "#06A022" }}>
                             {plan.price !== null && voucherData.price !== null
                               ? `-$${(plan.price - voucherData.price).toFixed(
-                                  2
-                                )}`
+                                2
+                              )}`
                               : "N/A"}
                           </span>
                         </div>
@@ -394,11 +429,10 @@ export default function DashboardBilling() {
                         const total = calculateTotal();
                         return total === null || total === 0
                           ? "N/A"
-                          : `$${
-                              typeof total === "number"
-                                ? total.toFixed(2)
-                                : total
-                            }`;
+                          : `$${typeof total === "number"
+                            ? total.toFixed(2)
+                            : total
+                          }`;
                       })()}
                     </span>
                   </div>

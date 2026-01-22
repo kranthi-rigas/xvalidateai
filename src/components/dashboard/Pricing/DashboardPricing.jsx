@@ -1,6 +1,7 @@
 import { Padding } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
-import { getUserPlan, PLAN_HIERARCHY } from "@/utils/planAccess";
+import { PLAN_HIERARCHY } from "@/utils/planAccess";
+import { useContextElement } from "@/context/Context";
 
 const pricingPlans = [
   {
@@ -72,7 +73,9 @@ const pricingPlans = [
 export default function DashboardPricing() {
   const navigate = useNavigate();
 
-  const currentPlan = getUserPlan();
+  // Use userPlan from Context for reactive updates after checkout
+  const { userPlan } = useContextElement();
+  const currentPlan = userPlan || "free";
 
   // Helper to check if a plan is below current plan
   const isPlanBelowCurrent = (planId) => {
@@ -100,7 +103,7 @@ export default function DashboardPricing() {
   };
 
 
-  
+
   return (
     <div className="dashboard__content bg-light-4">
       <div className="row pb-50 mb-10">
@@ -319,11 +322,10 @@ export default function DashboardPricing() {
                                   </span>
                                 )}
                                 <span
-                                  className={`text-14 ${
-                                    feature.included
+                                  className={`text-14 ${feature.included
                                       ? "text-dark-1"
                                       : "text-light-1"
-                                  }`}
+                                    }`}
                                   style={{
                                     textDecoration: feature.included
                                       ? "none"
