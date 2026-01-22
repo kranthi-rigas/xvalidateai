@@ -17,6 +17,52 @@ import { RxCrossCircled } from "react-icons/rx";
 import { GrStatusGood } from "react-icons/gr";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
+import useToast from "../../../hooks/useToast";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+
+const STATUS_BADGE_MAP = {
+  pending_assessment: {
+    bg: "#FEF3C7",
+    color: "#92400E",
+    border: "#FDE68A",
+  },
+  requested: {
+    bg: "#E0F2FE",
+    color: "#075985",
+    border: "#7DD3FC",
+  },
+  approved_for_scan: {
+    bg: "#DCFCE7",
+    color: "#166534",
+    border: "#86EFAC",
+  },
+  rejected_for_scan: {
+    bg: "#FEE2E2",
+    color: "#991B1B",
+    border: "#FCA5A5",
+  },
+  scan_in_progress: {
+    bg: "#E0E7FF",
+    color: "#3730A3",
+    border: "#A5B4FC",
+  },
+  completed: {
+    bg: "#ECFDF5",
+    color: "#065F46",
+    border: "#6EE7B7",
+  },
+  approved_for_usage: {
+    bg: "#DCFCE7",
+    color: "#14532D",
+    border: "#86EFAC",
+  },
+  rejected_for_usage: {
+    bg: "#FEE2E2",
+    color: "#7F1D1D",
+    border: "#FCA5A5",
+  },
+};
 
 export default function AIListView({
   projects,
@@ -55,6 +101,10 @@ export default function AIListView({
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalAction, setApprovalAction] = useState(null); // approve | reject
   const [activeProject, setActiveProject] = useState(null);
+
+  const show = useToast();
+  const [approvalError, setApprovalError] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
 
   const isRequested = (row) => row.status === "requested";
 
@@ -298,6 +348,22 @@ export default function AIListView({
     },
   ];
 
+  //Settings icon helper
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((c) => c.key),
+  );
+
+  const toggleColumn = (key) =>
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+
+  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
+
   //score icon helper
   // ⭐ SCORE ICON HELPER (Enterprise / AWS style)
   const getScoreIconUI = (score) => {
@@ -449,19 +515,47 @@ export default function AIListView({
     }
 
     if (key === "status") {
-      const text = getAssessmentStatusLabel(row);
+      const label = getAssessmentStatusLabel(row);
+      const style =
+        STATUS_BADGE_MAP[row.status] || STATUS_BADGE_MAP.pending_assessment;
+
+      return (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 600,
+            background: style.bg,
+            color: style.color,
+            border: `1px solid ${style.border}`,
+            whiteSpace: "nowrap",
+            maxWidth: columnWidths.status - 20,
+          }}
+          title={label}
+        >
+          {label}
+        </span>
+      );
+    }
+
+    if (key === "assessment_status") {
+      const text = row.assessment_status
+        ? formatStatusLabel(row.assessment_status)
+        : "-";
 
       return (
         <span
           style={{
             display: "inline-block",
-            maxWidth: columnWidths.status - 20,
+            maxWidth: columnWidths.assessment_status - 20,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
             cursor: "default",
             color: "#374151",
-            fontWeight: text === "Requested for Scan" ? 600 : 400, // subtle emphasis
           }}
           title={text}
         >
@@ -469,7 +563,6 @@ export default function AIListView({
         </span>
       );
     }
-
     if (key === "assessment_status") {
       const text = row.assessment_status
         ? formatStatusLabel(row.assessment_status)
@@ -794,6 +887,10 @@ export default function AIListView({
             label="+ Tool Assessment"
             onClick={() => setShowCreateModal(true)}
           />
+          <AwsSettingsIconButton
+            onClick={() => setShowPreferences(true)}
+            title="Preferences"
+          />
         </div>
       </div>
 
@@ -806,8 +903,8 @@ export default function AIListView({
         }}
       >
         <ListTable
-          columns={columns}
-          data={filtered}
+          columns={visibleCols}
+          data={filtered.slice(0, pageSize)}
           rowKey="project_id"
           renderCell={renderCell}
           sortConfig={sortConfig}
@@ -863,6 +960,7 @@ export default function AIListView({
       )}
       {showApprovalModal && activeProject && (
         <ApproveRejectModal
+          hasError={approvalError}
           title={
             approvalAction === "scan_approve"
               ? "Approve Tool for Scan"
@@ -881,7 +979,10 @@ export default function AIListView({
                   ? "Approve for Usage"
                   : "Reject for Usage"
           }
-          onClose={() => setShowApprovalModal(false)}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setApprovalError(false);
+          }}
           onConfirm={async (comment) => {
             let payload = {};
 
@@ -892,41 +993,68 @@ export default function AIListView({
                   status: "approved_for_scan",
                 };
                 break;
-
               case "scan_reject":
                 payload = {
                   action: "scan_reject",
                   status: "rejected_for_scan",
                 };
                 break;
-
               case "approve":
-                payload = {
-                  action: "approve", // ✅ as requested
-                  status: "approved_for_usage",
-                };
+                payload = { action: "approve", status: "approved_for_usage" };
                 break;
-
               case "reject":
-                payload = {
-                  action: "reject", // ✅ as requested
-                  status: "rejected_for_usage",
-                };
+                payload = { action: "reject", status: "rejected_for_usage" };
                 break;
-
               default:
                 return;
             }
 
-            await updateComplianceProject(activeProject.project_id, {
-              ...payload,
-              comment,
-            });
+            try {
+              await updateComplianceProject(activeProject.project_id, {
+                ...payload,
+                comment,
+              });
 
-            setShowApprovalModal(false);
-            setSelected([]);
-            refreshProjects();
+              // ✅ SUCCESS
+              setApprovalError(false);
+              setShowApprovalModal(false);
+              setSelected([]);
+              refreshProjects();
+            } catch (err) {
+              // 🔴 402 – Insufficient credits
+              const message =
+                err?.response?.data?.message ||
+                "Insufficient credits to run this scan.";
+
+              // 🔔 Toast (5 seconds)
+              show(message, { type: "error", duration: 10000 });
+
+              // 🔴 Highlight modal
+              setApprovalError(true);
+
+              // ⏱ AUTO-CLOSE modal after toast disappears
+              setTimeout(() => {
+                setApprovalError(false);
+                setShowApprovalModal(false);
+              }, 5000);
+            }
           }}
+        />
+      )}
+
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
         />
       )}
 
