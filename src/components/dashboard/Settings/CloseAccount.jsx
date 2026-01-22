@@ -6,7 +6,8 @@ export default function CloseAccount({ activeTab }) {
   };
   return (
     <div
-      className={`tabs__pane -tab-item-5 ${activeTab == 5 ? "is-active" : ""} `}
+      // className={`tabs__pane -tab-item-5 ${activeTab == 5 ? "is-active" : ""} `}
+      className={`tabs__pane -tab-item-5 ${activeTab == 3 ? "is-active" : ""} `}
     >
       <form onSubmit={handleSubmit} className="contact-form row y-gap-30">
         <div className="col-12">
