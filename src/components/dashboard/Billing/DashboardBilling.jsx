@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
@@ -21,6 +21,19 @@ export default function DashboardBilling() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [voucherData, setVoucherData] = useState(null); // Store verified voucher data
+
+  // Reset form state when navigating to this page (when location changes)
+  useEffect(() => {
+    setFormData({
+      billingAddress: "",
+      voucherCode: "",
+    });
+    setErrors({});
+    setVoucherApplied(false);
+    setVoucherData(null);
+    setIsSubmitting(false);
+    setIsApplyingVoucher(false);
+  }, [location.key]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -295,6 +308,11 @@ export default function DashboardBilling() {
 
                 {/* Submit Button */}
                 <div className="d-flex gap-15 mt-40">
+                  {!voucherApplied && (
+                    <div className="text-14 text-orange-1 mb-10 w-100">
+                      ⚠️ Please apply a valid voucher code to complete your purchase
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => navigate("/dashboard/pricing")}
@@ -310,9 +328,26 @@ export default function DashboardBilling() {
                   </button>
                   <button
                     type="submit"
-                    className="button -purple-1 text-white px-40 py-15"
-                    style={{ borderRadius: "8px" }}
-                    disabled={isSubmitting || !plan}
+                    className={`button px-40 py-15 ${isSubmitting || !plan || !voucherApplied
+                      ? ""
+                      : "-purple-1 text-white"
+                      }`}
+                    style={{
+                      borderRadius: "8px",
+                      backgroundColor:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "#9e9e9e"
+                          : undefined,
+                      color:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "#F0F8FF"
+                          : undefined,
+                      cursor:
+                        isSubmitting || !plan || !voucherApplied
+                          ? "not-allowed"
+                          : "pointer",
+                    }}
+                    disabled={isSubmitting || !plan || !voucherApplied}
                   >
                     {isSubmitting ? "Processing..." : "Complete Purchase"}
                   </button>
