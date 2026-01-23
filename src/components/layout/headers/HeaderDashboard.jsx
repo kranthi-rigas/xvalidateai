@@ -8,6 +8,7 @@ import CartToggle from "../component/CartToggle";
 import PlanStatusBadge from "../component/PlanStatusBadge";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
+import DashboardBreadcrumb from "@/components/dashboard/DashboardBreadcrumb";
 
 export default function HeaderDashboard({ collapsed, setCollapsed }) {
   const [messageOpen, setMessageOpen] = useState(false);
@@ -234,7 +235,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
     <>
       <header className="header -dashboard js-header">
         <div className="header-inner">
-          <div className="py-20 px-30">
+          <div className="pt-10 px-20">
             <div className="row justify-between items-center mobile-header-layout">
               {/* --- Mobile Hamburger Menu --- */}
               <div className="col-auto d-none-desktop mobile-hamburger">
@@ -495,6 +496,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
           </div>
           <Messages setMessageOpen={setMessageOpen} messageOpen={messageOpen} />
         </div>
+        <DashboardBreadcrumb />
       </header>
 
       {/* Profile Dropdown Overlay for Mobile */}

@@ -362,16 +362,11 @@
   border-top: none;
   border-radius: 0 0 1.875rem 1.875rem;
   padding: 0;
-  width: calc(100% -  24.3rem);
-  margin-left: 2.8em;
   margin-right: 0;
   margin-top: 0;
-  position: fixed;
   top: 5.35em;
   z-index: 99;
-  box-shadow: 0 0.3125rem 0.9375rem rgba(0, 0, 0, 0.1);
-  /* transition: all 0.01s ease; */
-  /* transition: all 0.5s cubic-bezier(0.215, 0.61, 0.355, 1); */
+  box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.15);
   will-change: width, margin-left;
 }
 
@@ -521,13 +516,6 @@
   .dashboard-breadcrumb-content::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
   }
-}
-
-/* Breadcrumb when sidebar is collapsed */
-.dashboard.-is-sidebar-hidden .dashboard-breadcrumb-bar {
-  width: calc(100% - 8.3em);
-  margin-left: 2.7em;
-  margin-right: 0;
 }
 
 /* =============================================
@@ -684,11 +672,3 @@
       top: 3em !important;
     }
   }
-  /* animation speed match */
-  .header.-dashboard,
-.dashboard-breadcrumb-bar {
-  transition:
-    margin-left 0.3s ease,
-    width 0.3s ease,
-    padding-left 0.3s ease;
-}

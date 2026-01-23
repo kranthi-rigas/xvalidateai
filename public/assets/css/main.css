@@ -8524,12 +8524,11 @@ h1, h2, h3, h4, h5, h6 {
 .header.-dashboard {
   position: fixed;
   top: 0;
-  width: calc(100% - 18.2rem - 2.8em);
-  margin-left: 18.2rem;
+  width: calc(100% - 2.8em);
   background-color: #F7F8FB;
-  padding-left: 3rem;
+  padding-left: 21rem;
   z-index: 100;
-  transition: padding-left 0.25s ease, margin-left 0.25s ease, width 0.25s ease;
+  transition: all 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
 .header.-dashboard .header-inner {
