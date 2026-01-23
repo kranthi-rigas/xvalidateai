@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { login, fetchUserProfile } from "../../apiIntegration/auth.js";
 import { Button, GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
+import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
