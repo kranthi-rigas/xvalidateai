@@ -30,6 +30,15 @@ export const sidebarItems = [
     permission: "ai_compliance",
     requiredPlan: null,
   },
+    {
+        id: 23,
+        href: "/dashboard/ailiteracy",
+        src: "/dashboardSideBarIcons/ai_compliance.svg",
+        active_src: "/dashboardSideBarIcons/ai_compliance_active.png",
+        text: "AI Literacy",
+        permission: "ai_literacy",
+        requiredPlan: null,
+    },
   
   {
     id: 4,
@@ -128,15 +137,7 @@ export const sidebarItems = [
         // permission: "pricing",
     },
 
-    {
-    id: 23,
-    href: "/dashboard/ailiteracy",
-    src: "/dashboardSideBarIcons/ai_compliance.svg",
-    active_src: "/dashboardSideBarIcons/ai_compliance_active.png",
-    text: "AI Literacy",
-    permission: "ai_literacy",
-    requiredPlan: null,
-  },
+
   
 
 
