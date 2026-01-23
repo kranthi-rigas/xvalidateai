@@ -31,7 +31,7 @@ export default function AIDashboard() {
 
     const evaluationColumns = useMemo(() => [
         { key: "tool_name", label: "Tool", sortable: false },
-        { key: "developer", label: "Developer", sortable: false },
+        { key: "developer", label: "Vendor", sortable: false },
         { key: "url", label: "URL", sortable: false },
         { key: "overall_score", label: "Overall", sortable: false },
         { key: "recommendation", label: "Recommendation", sortable: false },
@@ -42,7 +42,7 @@ export default function AIDashboard() {
 
     const highRiskColumns = useMemo(() => [
         { key: "project_name", label: "Tool", sortable: true, width: 180 },
-        { key: "developer", label: "Developer", sortable: true, width: 220 },
+        { key: "developer", label: "Vendor", sortable: true, width: 220 },
         { key: "overall_score", label: "Overall Score", sortable: true, width: 120 },
         { key: "privacy_safety", label: "Privacy Score", sortable: true, width: 120 },
         { key: "high_risk_reason", label: "Risk Reasons", sortable: false, width: 300 },
@@ -177,7 +177,7 @@ export default function AIDashboard() {
         });
         return {
             labels: Object.keys(normalizedData),
-            datasets: [{ data: Object.values(normalizedData), backgroundColor: ['#304FFD', '#FFD240', '#FF965D', '#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'], borderWidth: 2, borderColor: '#fff' }]
+            datasets: [{ data: Object.values(normalizedData), backgroundColor: ['#304FFD', '#FFD240', '#00A86B', '#FF965D', '#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'], borderWidth: 2, borderColor: '#fff' }]
         };
     }, [dashboardAnalytics]);
 
@@ -201,7 +201,7 @@ export default function AIDashboard() {
     };
 
     const privacyRiskScatterData = useMemo(() => {
-        const getColor = (score) => score >= 80 ? '#27ae60' : score >= 60 ? '#304FFD' : score >= 40 ? '#f39c12' : '#e74c3c';
+        const getColor = (score) => score >= 80 ? '#00A86B' : score >= 60 ? '#304FFD' : score >= 40 ? '#f39c12' : '#e74c3c';
         const tools = dashboardAnalytics?.tool_kpis || [];
         return {
             datasets: [{
@@ -245,7 +245,7 @@ export default function AIDashboard() {
     };
 
     const overallScoreScatterData = useMemo(() => {
-        const colorMap = { 'Approved': '#27ae60', 'Approved with limitations': '#304FFD', 'Restricted': '#f39c12', 'Do not use': '#e74c3c', 'Not Recommended': '#e74c3c', 'Rejected': '#e74c3c', 'Not Assessed': '#95a5a6' };
+        const colorMap = { 'Approved': '#00A86B', 'Approved with limitations': '#304FFD', 'Restricted': '#f39c12', 'Do not use': '#e74c3c', 'Not Recommended': '#e74c3c', 'Rejected': '#e74c3c', 'Not Assessed': '#95a5a6' };
         const tools = dashboardAnalytics?.tool_kpis || [];
         const groupedData = {};
         tools.forEach(tool => {
@@ -299,7 +299,7 @@ export default function AIDashboard() {
         fetchDashboardAnalytics().then(setDashboardAnalytics).catch((err) => console.error("Dashboard error:", err));
     }, []);
 
-    const getGaugeColor = (value) => value >= 80 ? "#22c55e" : value >= 60 ? '#304FFD' : value >= 40 ? "#f59e0b" : "#ef4444";
+    const getGaugeColor = (value) => value >= 80 ? "#00A86B" : value >= 60 ? '#304FFD' : value >= 40 ? "#f59e0b" : "#ef4444";
     const handleSort = (key) => setSortConfig((prev) => ({ key, direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc" }));
 
     const renderHighRiskCell = (row, key) => {
@@ -391,6 +391,7 @@ export default function AIDashboard() {
             {/* MODAL */}
             {isModalOpen && selectedPillar && (
                 <Modal title={`Tools - ${selectedPillar.replace(/_/g, " ")}`} onClose={() => { setIsModalOpen(false); setSelectedPillar(null); }}>
+
                     <table className="table table-bordered">
                         <thead><tr><th>Tool</th><th>Score</th><th>Recommendation</th><th>High Risk</th></tr></thead>
                         <tbody>{filteredTools.map((tool) => (<tr key={tool.project_id}><td>{tool.tool_name}</td><td>{tool[selectedPillar]}</td><td>{tool.recommendation}</td><td>{tool.high_risk ? <span className="text-danger">Yes</span> : <span className="text-success">No</span>}</td></tr>))}</tbody>
@@ -416,7 +417,7 @@ export default function AIDashboard() {
 
             {/* TABLES */}
             {highRiskList.length > 0 && (
-                <div className="normal-container-styles" style={{ backgroundColor: "#fff3cd", borderLeft: "4px solid #f59e0b", padding: "20px" }}>
+                <div className="normal-container-styles" style={{ backgroundColor: "#fff3cd", padding: "20px" }}>
                     <h4 className="d-flex mb-20 justify-center" style={{ color: "#92400e" }}>High-Risk Tools Requiring Immediate Attention</h4>
                     <ListTable columns={highRiskColumns} data={highRiskList} rowKey="project_id" renderCell={renderHighRiskCell} sortConfig={sortConfig} onSort={handleSort} />
                 </div>
