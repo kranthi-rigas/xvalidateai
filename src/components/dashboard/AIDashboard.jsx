@@ -104,34 +104,107 @@ export default function AIDashboard() {
         }
     };
 
-    const complianceChartData = useMemo(() => ({
-        labels: (dashboardAnalytics?.distributions?.compliance || []).map(d => d.name),
-        datasets: [{
-            label: 'Tools',
-            data: (dashboardAnalytics?.distributions?.compliance || []).map(d => d.value),
-            backgroundColor: '#FF965D',
-            borderRadius: 6
-        }]
-    }), [dashboardAnalytics]);
+    const complianceChartData = useMemo(() => {
+        const raw = dashboardAnalytics?.distributions?.compliance || [];
+
+        const normalizeStatus = (name) => {
+            const n = name.toLowerCase();
+            if (n.includes("partial")) return "partial";
+            if (n.includes("claimed")) return "claimed";
+            if (n.includes("not")) return "notVerified";
+            return "full";
+        };
+
+        const normalizeStandard = (name) =>
+            name
+                .replace(/- partial.*/i, "")
+                .replace(/- not.*/i, "")
+                .replace(/- claimed.*/i, "")
+                .trim();
+
+        const grouped = {};
+
+        raw.forEach(({ name, value }) => {
+            const standard = normalizeStandard(name);
+            const status = normalizeStatus(name);
+
+            if (!grouped[standard]) {
+                grouped[standard] = {
+                    full: 0,
+                    partial: 0,
+                    claimed: 0,
+                    notVerified: 0
+                };
+            }
+
+            grouped[standard][status] += value;
+        });
+
+        const standards = Object.keys(grouped);
+
+        return {
+            labels: standards,
+            datasets: [
+                {
+                    label: "Full Compliance",
+                    data: standards.map(s => grouped[s].full),
+                    backgroundColor: "#00A86B"
+                },
+                {
+                    label: "Partial Compliance",
+                    data: standards.map(s => grouped[s].partial),
+                    backgroundColor: "#304FFD"
+                },
+                {
+                    label: "Claimed",
+                    data: standards.map(s => grouped[s].claimed),
+                    backgroundColor: "#9B8AFB"
+                },
+                {
+                    label: "Not Verified",
+                    data: standards.map(s => grouped[s].notVerified),
+                    backgroundColor: "#FF965D"
+                }
+            ]
+        };
+    }, [dashboardAnalytics]);
+
 
     const complianceChartOptions = {
-        indexAxis: 'y',
+        indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    afterLabel: (context) => {
-                        const complianceType = context.label;
-                        const tools = dashboardAnalytics?.tool_kpis || [];
-                        const matchingTools = tools.filter(t => t.compliance_followed?.includes(complianceType));
-                        return ['', 'Tools:', ...matchingTools.map(t => `  • ${t.tool_name}`)];
-                    }
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "Number of Tools",
+                    font: { weight: "bold" }
+                }
+            },
+            y: {
+                stacked: true,
+                ticks: {
+                    font: { size: 12 }
                 }
             }
         },
-        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: {
+                    usePointStyle: true
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) =>
+                        `${ctx.dataset.label}: ${ctx.raw}`
+                }
+            }
+        }
     };
 
     const recommendationChartData = useMemo(() => {
@@ -253,6 +326,7 @@ export default function AIDashboard() {
             if (!groupedData[rec]) groupedData[rec] = [];
             groupedData[rec].push({ x: tool.overall_score, y: tool.instructional_impact_score, label: tool.tool_name });
         });
+        console.log(groupedData)
         return {
             datasets: Object.keys(groupedData).map(rec => ({
                 label: rec,
@@ -402,16 +476,38 @@ export default function AIDashboard() {
             {/* CHARTS */}
             <div className="normal-container-styles">
                 <br/>
+                <h4 className="d-flex mb-20 justify-center" > Compliance Distribution</h4>
+                <hr/>
+                <br/>
+                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div style={{ height: '450px' }}>
+                        <Bar data={complianceChartData} options={complianceChartOptions} />
+                    </div>
+                </div>
+            </div>
+            <div className="normal-container-styles">
+                <br/>
+                <h4 className="d-flex mb-20 justify-center" > Overall Score Distribution</h4>
+                <hr/>
+                <br/>
+                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div style={{ height: '450px' }}>
+                        <Scatter data={overallScoreScatterData} options={overallScoreScatterOptions} />
+                    </div>
+                </div>
+            </div>
+            <div className="normal-container-styles">
+                <br/>
                 <h4 className="d-flex mb-20 justify-center" > Scores & Coverage Distribution</h4>
                 <hr/>
                 <br/>
                 <div className="row">
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Compliance Standards Coverage</h3><div style={{ height: '300px' }}><Bar data={complianceChartData} options={complianceChartOptions} /></div></div></div>
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Intended Users Distribution</h3><div style={{ height: '300px' }}><Doughnut data={gradeLevelChartData} options={gradeLevelChartOptions} /></div></div></div>
+                </div>
+                <div className="row">
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Overall Score Distribution</h3><div style={{ height: '300px' }}><Scatter data={overallScoreScatterData} options={overallScoreScatterOptions} /></div></div></div>
+                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Intended Users Distribution</h3><div style={{ height: '300px' }}><Doughnut data={gradeLevelChartData} options={gradeLevelChartOptions} /></div></div></div>
                 </div>
             </div>
 
