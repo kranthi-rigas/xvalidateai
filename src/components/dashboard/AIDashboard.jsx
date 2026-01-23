@@ -346,7 +346,6 @@ export default function AIDashboard() {
                             <div>
                                 <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Total Tools</div>
                                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.total_projects ?? 0}</div>
-                                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '5px' }}>Under assessment</div>
                             </div>
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7L12 12L22 7L12 2Z" /><path d="M2 17L12 22L22 17" /><path d="M2 12L12 17L22 12" /></svg>
                         </div>
@@ -356,7 +355,6 @@ export default function AIDashboard() {
                             <div>
                                 <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>High-Risk Tools</div>
                                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.high_risk_count ?? 0}</div>
-                                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '5px' }}>Require attention</div>
                             </div>
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                         </div>
@@ -366,7 +364,6 @@ export default function AIDashboard() {
                             <div>
                                 <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Approved Tools</div>
                                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.approved_count ?? 0}</div>
-                                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '5px' }}>Ready for deployment</div>
                             </div>
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                         </div>
@@ -376,7 +373,6 @@ export default function AIDashboard() {
                             <div>
                                 <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Rejected Tools</div>
                                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.rejected_count ?? 0}</div>
-                                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '5px' }}>Require remediation</div>
                             </div>
                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
                         </div>
@@ -404,6 +400,10 @@ export default function AIDashboard() {
 
             {/* CHARTS */}
             <div className="normal-container-styles">
+                <br/>
+                <h4 className="d-flex mb-20 justify-center" > Scores & Coverage Distribution</h4>
+                <hr/>
+                <br/>
                 <div className="row">
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
