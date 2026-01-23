@@ -90,7 +90,7 @@ import LessonSinglePage2 from "./pages/aboutCourses/lesson-single-2";
 import NotAuthorized from "./pages/NotAuthorized";
 // import NotFoundPage from "./pages/not-found";
 import DashboardNotFoundPage from "./pages/dashboard/dshb-notfound";
-import PricingPage from "./pages/others/pricing";
+//import PricingPage from "./pages/others/pricing";
 import DshbPricingPage from "./pages/dashboard/dshb-pricing";
 import DshbBillingPage from "./pages/dashboard/dshb-billing";
 import ScrollTopBehaviour from "./components/common/ScrollTopBehaviour";
@@ -136,7 +136,6 @@ function App() {
               <Route path="home-8" element={<HomePage8 />} />
               <Route path="home-9" element={<HomePage9 />} />
               <Route path="home-10" element={<HomePage10 />} />
-
               <Route path="courses-list-1" element={<CourseListPage1 />} />
               <Route path="courses-list-2" element={<CourseListPage2 />} />
               <Route path="courses-list-3" element={<CourseListPage3 />} />
@@ -145,7 +144,6 @@ function App() {
               <Route path="courses-list-6" element={<CourseListPage6 />} />
               <Route path="courses-list-7" element={<CourseListPage7 />} />
               <Route path="courses-list-8" element={<CourseListPage8 />} />
-
               <Route path="courses/:id" element={<CourseSinglePage1 />} />
               <Route
                 path="courses-single-2/:id"
@@ -167,14 +165,11 @@ function App() {
                 path="courses-single-6/:id"
                 element={<CourseSinglePage6 />}
               />
-
               <Route path="course-cart" element={<CourseCartPage />} />
               <Route path="course-checkout" element={<CourseCheckoutPage />} />
               {/* <Route path='courses-single-5/:id' element={<CourseSinglePage6 />} /> */}
-
               <Route path="lesson-single-1" element={<LessonSinglePage1 />} />
               <Route path="lesson-single-2" element={<LessonSinglePage2 />} />
-
               <Route
                 path="instructors-list-1"
                 element={<InstractorListPage1 />}
@@ -183,12 +178,10 @@ function App() {
                 path="instructors-list-2"
                 element={<InstractorListPage2 />}
               />
-
               <Route
                 path="instructors/:id"
                 element={<InstractorSinglePage />}
               />
-
               <Route
                 path="instructor-become"
                 element={<InstractoBacomePage />}
@@ -272,30 +265,24 @@ function App() {
                 <Route path="pricing" element={<DshbPricingPage />} />
                 <Route path="pricing/billing" element={<DshbBillingPage />} />
               </Route>
-
               <Route path="event-list-1" element={<EventListPage1 />} />
               <Route path="event-list-2" element={<EventListPage2 />} />
               <Route path="events/:id" element={<EventSingPage />} />
               <Route path="event-cart" element={<EventCartPage />} />
               <Route path="event-checkout" element={<EventCheckoutPage />} />
-
               <Route path="blog-list-1" element={<BlogListpage1 />} />
               <Route path="blog-list-2" element={<BlogListpage2 />} />
               <Route path="blog-list-3" element={<BlogListpage3 />} />
               <Route path="blogs/:id" element={<BlogdetailsPage />} />
-
               <Route path="about-1" element={<AboutPage1 />} />
-
               <Route path="contact-1" element={<ContactPage1 />} />
               <Route path="contact-2" element={<ContactPage2 />} />
-
               <Route path="shop-cart" element={<ShopCartPage />} />
               <Route path="shop-checkout" element={<ShopCheckoutPage />} />
               <Route path="shop-list" element={<ShopListPage />} />
               <Route path="shop-order" element={<ShopOrderPage />} />
               <Route path="shop/:id" element={<ShopdetailsPage />} />
 
-              <Route path="pricing" element={<PricingPage />} />
               <Route path="not-found" element={<DashboardNotFoundPage />} />
               <Route path="*" element={<DashboardNotFoundPage />} />
               <Route path="terms" element={<TermsPage />} />
