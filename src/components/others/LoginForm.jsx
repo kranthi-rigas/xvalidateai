@@ -24,42 +24,43 @@ export default function LoginForm() {
     document.querySelector(".form-page__content")?.scrollTo(0, 0);
   }, []);
 
-  // 🔐 OAuth Configuration
-  const CONFIG = {
-    GOOGLE_CLIENT_ID:
-      "343142475532-f4532rcc537clc4n2ogroog95i740jnt.apps.googleusercontent.com",
-    REDIRECT_URI: `https://app.myacademy51.com/login/google`,
-    SCOPE: "openid profile email",
-    RESPONSE_TYPE: "code",
-  };
+  //Refresh helper
+  useLayoutEffect(() => {
+    // Reset browser scroll
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
-  // Generate random state (for CSRF protection)
+    // Reset auth containers
+    document.querySelector(".main-content")?.scrollTo(0, 0);
+    document.querySelector(".image-styles")?.scrollTo(0, 0);
+    document.querySelector(".form-page__content")?.scrollTo(0, 0);
+  }, []);
+
+  // 🔐 OAuth Configuration
   const generateState = () =>
     Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15);
 
-  // 🔹 Google OAuth Handler
-  const handleGoogleSignup = () => {
-    setLoading(true);
+  // 🔹 Google OAuth Handler (LOGIN)
+  const handleGoogleLogin = () => {
+    setLoading(true); // 👈 login uses setLoading
+
     const state = generateState();
     sessionStorage.setItem("oauth_state", state);
 
     const params = new URLSearchParams({
-      client_id: CONFIG.GOOGLE_CLIENT_ID,
-      redirect_uri: CONFIG.REDIRECT_URI,
-      response_type: CONFIG.RESPONSE_TYPE,
-      scope: CONFIG.SCOPE,
+      client_id: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+      redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
+      response_type: GOOGLE_OAUTH_CONFIG.RESPONSE_TYPE,
+      scope: GOOGLE_OAUTH_CONFIG.SCOPE,
       state,
       include_granted_scopes: "true",
       prompt: "select_account",
     });
 
-    // Redirect user to Google's OAuth consent screen
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
-
-  // Small alias so either handleGoogleLogin or handleGoogleSignup works in your code
-  const handleGoogleLogin = () => handleGoogleSignup();
 
   // Handle Redirect After OAuth
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function LoginForm() {
         atob(base64)
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
+          .join(""),
       );
       return JSON.parse(jsonPayload);
     } catch (e) {

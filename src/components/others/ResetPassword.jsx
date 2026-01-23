@@ -172,7 +172,7 @@ export default function ResetPassword() {
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">
             <div className="d-flex items-center h-100 text-white">
-              Academy 51 © {new Date().getFullYear()}. All rights reserved.
+              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
             </div>
           </div>
         </div>

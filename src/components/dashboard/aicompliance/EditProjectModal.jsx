@@ -117,6 +117,8 @@ export default function EditProjectModal({
   const [saving, setSaving] = useState(false);
   const show = useToast();
 
+  const [creditError, setCreditError] = useState(false);
+
   const fieldRefs = {
     projectName: useRef(null),
     description: useRef(null),
@@ -189,9 +191,29 @@ export default function EditProjectModal({
       setShowEditModal(false);
       refreshProjects?.();
     } catch (err) {
-      show(err.message || "Failed to update tool", { type: "error" });
-    } finally {
-      setSaving(false);
+      console.error("Edit project error:", err);
+
+      const rawMessage = err?.response?.data?.message || err?.message || "";
+
+      const isInsufficientCredits =
+        rawMessage.toLowerCase().includes("insufficient") ||
+        rawMessage.toLowerCase().includes("credit") ||
+        err?.response?.status === 402;
+
+      const message = isInsufficientCredits
+        ? "Insufficient credits to run this scan."
+        : "Failed to update tool. Please try again.";
+
+      // 🔔 Toast only
+      show(message, { type: "error", duration: 5000 });
+
+      // 🔴 Modal visual feedback only
+      setCreditError(true);
+
+      // ⏱ Remove error state after toast
+      setTimeout(() => {
+        setCreditError(false);
+      }, 5000);
     }
   };
 
@@ -230,7 +252,17 @@ export default function EditProjectModal({
   return (
     <>
       <div style={overlay} onClick={() => setShowEditModal(false)}>
-        <div style={modal} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{
+            ...modal,
+            ...(creditError && {
+              border: "2px solid #DC2626",
+              boxShadow: "0 0 0 4px rgba(220,38,38,0.25)",
+              animation: "shake 0.35s",
+            }),
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <h2 style={{ marginBottom: 10, fontWeight: 700 }}>Edit Tool</h2>
 
           {renderField(
@@ -380,3 +412,16 @@ const toastStyle = {
   borderRadius: 999,
   boxShadow: "0 12px 40px rgba(22,163,74,0.5)",
 };
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
+    }
+  `;
+  document.head.appendChild(style);
+}

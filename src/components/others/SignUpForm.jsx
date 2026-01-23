@@ -6,6 +6,7 @@ import CountrySelect from "../common/CountrySelect";
 import PhoneInput from "../common/PhoneInput";
 import { Button, GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
+import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
 export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -85,13 +86,6 @@ export default function SignUpForm() {
   const show = useToast();
 
   // 🔐 OAuth Configuration
-  const CONFIG = {
-    GOOGLE_CLIENT_ID:
-      "801741037631-asfpma8d5i3d7do4nfne16jho2bh8d2h.apps.googleusercontent.com", // ← replace this with your real Google client ID
-    REDIRECT_URI: `https://app.academy51.com/login/google`, // or your deployed URL
-    SCOPE: "openid profile email",
-    RESPONSE_TYPE: "code",
-  };
 
   // Generate random state (for CSRF protection)
   const generateState = () =>
@@ -105,16 +99,15 @@ export default function SignUpForm() {
     sessionStorage.setItem("oauth_state", state);
 
     const params = new URLSearchParams({
-      client_id: CONFIG.GOOGLE_CLIENT_ID,
-      redirect_uri: CONFIG.REDIRECT_URI,
-      response_type: CONFIG.RESPONSE_TYPE,
-      scope: CONFIG.SCOPE,
+      client_id: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+      redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
+      response_type: GOOGLE_OAUTH_CONFIG.RESPONSE_TYPE,
+      scope: GOOGLE_OAUTH_CONFIG.SCOPE,
       state,
       include_granted_scopes: "true",
       prompt: "select_account",
     });
 
-    // Redirect user to Google's OAuth consent screen
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
 
@@ -149,7 +142,7 @@ export default function SignUpForm() {
         atob(base64)
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
+          .join(""),
       );
       return JSON.parse(jsonPayload);
     } catch (e) {
@@ -291,8 +284,8 @@ export default function SignUpForm() {
                         borderColor: passwordsMismatch
                           ? "#dc3545"
                           : passwordsMatch
-                          ? "#28a745"
-                          : "",
+                            ? "#28a745"
+                            : "",
                       }}
                     />
                     {/* Tick mark when passwords match */}
@@ -362,19 +355,23 @@ export default function SignUpForm() {
               <div className="col-12">
                 <p className="text-13 text-center mt-10 lh-14 text-dark-1">
                   By creating an account, you agree to our{" "}
-                  <Link
-                    to="/terms"
+                  <a
+                    href="https://myacademy51.com/terms-of-use/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`footer-links ${loading ? "disabled-link" : ""}`}
                   >
-                    Terms of Service
-                  </Link>{" "}
+                    Terms of Use
+                  </a>{" "}
                   and{" "}
-                  <Link
-                    to="/privacy-policy"
+                  <a
+                    href="https://myacademy51.com/privacy-policy/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`footer-links ${loading ? "disabled-link" : ""}`}
                   >
                     Privacy Policy
-                  </Link>
+                  </a>
                   .
                 </p>
               </div>
