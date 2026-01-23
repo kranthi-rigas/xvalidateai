@@ -235,7 +235,7 @@ export const applyInstructor = async (formData, token) => {
 export async function updatePassword({ password, new_password }) {
   const accessToken = localStorage.getItem("access_token");
 
-  const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+  const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
