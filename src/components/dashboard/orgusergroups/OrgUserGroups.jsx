@@ -16,6 +16,8 @@ import {
 import useToast from "../../../hooks/useToast";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { hasOrganization } from "@/data/orgGuard";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 
 export default function OrgUserGroups() {
   const [groups, setGroups] = useState(null);
@@ -45,6 +47,9 @@ export default function OrgUserGroups() {
   const [deleteError, setDeleteError] = useState("");
 
   const show = useToast();
+
+  // Preferences modal
+  const [showPreferences, setShowPreferences] = useState(false);
 
   // ----------------------------------------------------
   // SAFE NAME NORMALIZER
@@ -335,6 +340,22 @@ export default function OrgUserGroups() {
     return row[key] || "-";
   };
 
+  // Table preferences
+  const [pageSize, setPageSize] = useState(25);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  // Column visibility
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((c) => c.key),
+  );
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
+
   // ----------------------------------------------------
   // UI
   // ----------------------------------------------------
@@ -411,6 +432,10 @@ export default function OrgUserGroups() {
                   setShowCreateGroupModal(true);
                 }}
               />
+              <AwsSettingsIconButton
+                onClick={() => setShowPreferences(true)}
+                title="Preferences"
+              />
             </OrgRequiredWrapper>
           </div>
         </div>
@@ -426,8 +451,8 @@ export default function OrgUserGroups() {
         >
           <div style={{ position: "relative" }}>
             <ListTable
-              columns={columns}
-              data={filtered}
+              columns={visibleCols}
+              data={filtered.slice(0, pageSize)}
               rowKey="group_id"
               renderCell={renderCell}
               sortConfig={sortConfig}
@@ -463,6 +488,22 @@ export default function OrgUserGroups() {
           <CreateGroupModal
             onClose={() => setShowCreateGroupModal(false)}
             onCreate={handleCreateGroup}
+          />
+        )}
+
+        {showPreferences && (
+          <TablePreferencesModal
+            open={showPreferences}
+            onClose={() => setShowPreferences(false)}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            wrapLines={wrapLines}
+            setWrapLines={setWrapLines}
+            stripedRows={stripedRows}
+            setStripedRows={setStripedRows}
+            columns={columns}
+            visibleColumns={visibleColumns}
+            toggleColumn={toggleColumn}
           />
         )}
 

@@ -3,6 +3,8 @@ import ActionsMenu from "../../common/ActionsMenu";
 import ListTable, { Td } from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import AwsButton from "../../common/AwsButton";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 
 export default function MockTestListView({
   allExams = [],
@@ -35,10 +37,12 @@ export default function MockTestListView({
   });
 
   const resizingCol = useRef(null);
+  // Preferences modal
+  const [showPreferences, setShowPreferences] = useState(false);
 
   /* ---------- Search ---------- */
   const filtered = allExams.filter((x) =>
-    (x.title || "").toLowerCase().includes(search.toLowerCase())
+    (x.title || "").toLowerCase().includes(search.toLowerCase()),
   );
 
   /* ---------- Sorting ---------- */
@@ -65,7 +69,7 @@ export default function MockTestListView({
   /* ---------- Selection ---------- */
   const toggleSelect = (id) =>
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
   const toggleSelectAll = (checked) =>
@@ -236,6 +240,21 @@ export default function MockTestListView({
 
     return row[key] ?? "";
   };
+  // Table preferences
+  const [pageSize, setPageSize] = useState(25);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  // Column visibility
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((c) => c.key),
+  );
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
 
   return (
     <div>
@@ -300,13 +319,17 @@ export default function MockTestListView({
           />
 
           <AwsButton label="+ Create Mock Test" onClick={createMockTest} />
+          <AwsSettingsIconButton
+            onClick={() => setShowPreferences(true)}
+            title="Preferences"
+          />
         </div>
       </div>
       {/* ---------- Table ---------- */}
       <div style={{ position: "relative" }}>
         <ListTable
-          columns={columns}
-          data={sorted}
+          columns={visibleCols}
+          data={sorted.slice(0, pageSize)}
           rowKey="exam_id"
           renderCell={renderCell}
           sortConfig={sortConfig}
@@ -320,6 +343,22 @@ export default function MockTestListView({
           </div>
         )}
       </div>
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
+        />
+      )}
+
       {/* ---------- Pagination (Static) ---------- */}
       <div
         style={{

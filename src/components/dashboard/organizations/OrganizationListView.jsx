@@ -7,9 +7,10 @@ import { useNavigate, Link } from "react-router-dom";
 import OrganizationDetails from "./OrganizationDetails";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
-
 import { getOrganizations } from "../../../apiIntegration/organization"; // you will create these APIs
 import ReviewOrganizationModal from "./ReviewOrganizationModal";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 
 export default function OrganizationListView({ setShowCreateModal }) {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function OrganizationListView({ setShowCreateModal }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [activeOrg, setActiveOrg] = useState(null);
   const pageLoading = usePageLoader([organizations]);
+  const [showPreferences, setShowPreferences] = useState(false);
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -289,6 +291,10 @@ export default function OrganizationListView({ setShowCreateModal }) {
               label="+ Create Organization"
               onClick={() => navigate("/dashboard/createorganization")}
             />
+            <AwsSettingsIconButton
+              onClick={() => setShowPreferences(true)}
+              title="Preferences"
+            />
           </div>
         </div>
 
@@ -322,6 +328,23 @@ export default function OrganizationListView({ setShowCreateModal }) {
               setSelected([]);
               loadOrganizations();
             }}
+          />
+        )}
+
+        {showPreferences && (
+          <TablePreferencesModal
+            open={showPreferences}
+            onClose={() => setShowPreferences(false)}
+            /* These are REQUIRED props */
+            pageSize={10}
+            setPageSize={() => {}}
+            wrapLines={false}
+            setWrapLines={() => {}}
+            stripedRows={false}
+            setStripedRows={() => {}}
+            columns={columns}
+            visibleColumns={columns.map((c) => c.key)}
+            toggleColumn={() => {}}
           />
         )}
 

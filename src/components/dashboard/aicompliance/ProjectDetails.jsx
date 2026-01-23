@@ -939,70 +939,68 @@ function UsageSummaryTable({ project }) {
   ];
 
   return (
-    <div
-      style={{
-        marginTop: 30,
-        border: "1px solid #E5E7EB",
-        borderRadius: 10,
-        overflow: "hidden",
-        background: "#FFFFFF",
-      }}
-    >
-      <table
+    <>
+      {/* ✅ SECTION TITLE — EXACTLY LIKE UI */}
+      <h2 style={sectionTitleStyle}>Assessment Summary</h2>
+
+      <div
         style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
+          marginTop: 16,
+          border: "1px solid #E5E7EB",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "#FFFFFF",
         }}
       >
-        <tbody>
-          {rows.map((row, index) => (
-            <tr
-              key={index}
-              style={{
-                borderBottom:
-                  index !== rows.length - 1 ? "1px solid #E5E7EB" : "none",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#F8FAFC")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "#FFFFFF")
-              }
-            >
-              {/* LEFT LABEL */}
-              <td
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+          }}
+        >
+          <tbody>
+            {rows.map((row, index) => (
+              <tr
+                key={index}
                 style={{
-                  width: 220,
-                  padding: "14px 16px",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  color: "#0F172A",
-                  background: "#F9FAFB",
-                  verticalAlign: "top",
+                  borderBottom:
+                    index !== rows.length - 1 ? "1px solid #E5E7EB" : "none",
                 }}
               >
-                {row.label}
-              </td>
+                {/* LEFT LABEL */}
+                <td
+                  style={{
+                    width: 220,
+                    padding: "14px 16px",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    color: "#0F172A",
+                    background: "#F9FAFB",
+                    verticalAlign: "top",
+                  }}
+                >
+                  {row.label}
+                </td>
 
-              {/* RIGHT VALUE */}
-              <td
-                style={{
-                  padding: "14px 16px",
-                  fontSize: 15,
-                  color: "#334155",
-                  lineHeight: "24px",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {row.value || "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                {/* RIGHT VALUE */}
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    fontSize: 15,
+                    color: "#334155",
+                    lineHeight: "24px",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {row.value || "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
