@@ -111,11 +111,12 @@ export default function AIListView({
   /* ---------- Add columnWidths state ---------- */
   const [columnWidths, setColumnWidths] = useState({
     checkbox: 60,
-    name: 220,
+    name: 190,
     description: 180,
-    status: 170,
+    status: 180,
     assessment_status: 150,
-    score: 120,
+    score: 100,
+    recommendation: 190,
     lastScanDate: 180,
     requested_by: 220,
     approved_by: 220,
@@ -306,12 +307,6 @@ export default function AIListView({
     },
 
     { key: "name", label: "Tool Name", sortable: true, resizable: true },
-    {
-      key: "description",
-      label: "Description",
-      sortable: false,
-      resizable: true,
-    },
 
     {
       key: "status",
@@ -327,6 +322,18 @@ export default function AIListView({
     },
 
     { key: "score", label: "Score", sortable: true, resizable: true },
+    {
+      key: "recommendation",
+      label: "Recommendation",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: false,
+      resizable: true,
+    },
     {
       key: "lastScanDate",
       label: "Last Scan",
@@ -401,6 +408,74 @@ export default function AIListView({
       Icon: GrStatusGood,
       color: "#16A34A", // dark green
       label: "Excellent",
+    };
+  };
+
+  //Recommendation helper
+  const getRecommendationUI = (row) => {
+    const rec = (row.recommendation || "").toLowerCase();
+    const assessment = (row.assessment_status || "").toLowerCase();
+
+    // 🔴 Error case
+    if (assessment === "error" || assessment === "failed") {
+      return {
+        label: "Error",
+        bg: "#FEE2E2",
+        color: "#991B1B",
+        border: "#FCA5A5",
+      };
+    }
+
+    // ⏳ Pending (scan not started)
+    if (
+      !assessment ||
+      assessment === "not_applicable" ||
+      assessment === "queued"
+    ) {
+      return {
+        label: "Pending",
+        bg: "#F3F4F6",
+        color: "#374151",
+        border: "#E5E7EB",
+      };
+    }
+
+    // ❌ Not Recommended
+    if (rec === "not recommended") {
+      return {
+        label: "Not Recommended",
+        bg: "#FEE2E2",
+        color: "#991B1B",
+        border: "#FCA5A5",
+      };
+    }
+
+    // ⚠️ Approved with limitations
+    if (rec === "approved with limitations") {
+      return {
+        label: "Approved with limitations",
+        bg: "#FEF3C7",
+        color: "#92400E",
+        border: "#FDE68A",
+      };
+    }
+
+    // ✅ Approved
+    if (rec === "approved") {
+      return {
+        label: "Approved",
+        bg: "#DCFCE7",
+        color: "#166534",
+        border: "#86EFAC",
+      };
+    }
+
+    // 🔹 Default fallback
+    return {
+      label: "-",
+      bg: "#F3F4F6",
+      color: "#374151",
+      border: "#E5E7EB",
     };
   };
 
@@ -607,6 +682,31 @@ export default function AIListView({
       );
     }
 
+    if (key === "recommendation") {
+      const ui = getRecommendationUI(row);
+
+      return (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 600,
+            background: ui.bg,
+            color: ui.color,
+            border: `1px solid ${ui.border}`,
+            whiteSpace: "nowrap",
+            maxWidth: columnWidths.recommendation - 20,
+          }}
+          title={ui.label}
+        >
+          {ui.label}
+        </span>
+      );
+    }
+
     if (key === "lastScanDate")
       return (
         <span style={{ cursor: "default" }}>
@@ -738,6 +838,7 @@ export default function AIListView({
       );
     }
 
+    if (key === "recommendation") return null;
     return row[key] ?? "";
   };
 

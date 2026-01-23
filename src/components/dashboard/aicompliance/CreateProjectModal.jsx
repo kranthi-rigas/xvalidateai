@@ -18,7 +18,7 @@ function renderField(
   placeholder = "",
   required = false,
 ) {
-  const hasError = (touched[name] || submitted) && !!errors[name];
+  const hasError = touched[name] && !!errors[name];
   const [focused, setFocused] = useState(false);
 
   const baseStyle = {
@@ -125,6 +125,8 @@ export default function CreateProjectModal({
   const [animate, setAnimate] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
+  const [creditError, setCreditError] = useState(false);
+
   /* ---------- FIELD REFS (FOR SCROLL) ---------- */
   const fieldRefs = {
     projectName: useRef(null),
@@ -165,7 +167,6 @@ export default function CreateProjectModal({
     if (name === "url") {
       let updatedValue = value.trim();
 
-      // If user typed a domain without protocol
       if (
         updatedValue &&
         !/^https?:\/\//i.test(updatedValue) &&
@@ -175,10 +176,13 @@ export default function CreateProjectModal({
       }
 
       setForm((prev) => ({ ...prev, url: updatedValue }));
-      return;
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    setForm((prev) => ({ ...prev, [name]: value }));
+    // ✅ CLEAR ERROR + TOUCHED when typing
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setTouched((prev) => ({ ...prev, [name]: false }));
   };
 
   const handleBlur = (e) => {
@@ -227,9 +231,31 @@ export default function CreateProjectModal({
       setShowCreateModal(false);
       refreshProjects?.();
     } catch (err) {
-      show(err.message || "Something went wrong", { type: "error" });
-    } finally {
-      setSaving(false);
+      console.error("Create project error:", err);
+
+      const rawMessage = err?.response?.data?.message || err?.message || "";
+
+      // 🔥 FORCE OVERRIDE BACKEND MESSAGE
+      const isInsufficientCredits =
+        rawMessage.toLowerCase().includes("insufficient") ||
+        rawMessage.toLowerCase().includes("credit");
+
+      const message = isInsufficientCredits
+        ? "Insufficient credits to run this scan."
+        : "Something went wrong. Please try again.";
+
+      // 🔔 Toast
+      show(message, { type: "error", duration: 5000 });
+
+      // 🔴 Modal error UI
+      setCreditMessage(message);
+      setCreditError(true);
+
+      // ⏱ Auto-close
+      setTimeout(() => {
+        setCreditError(false);
+        setShowCreateModal(false);
+      }, 5000);
     }
   };
 
@@ -237,7 +263,15 @@ export default function CreateProjectModal({
     <>
       <div style={overlay} onClick={() => setShowCreateModal(false)}>
         <div
-          style={{ ...modal, ...(animate ? modalAnimate : modalStart) }}
+          style={{
+            ...modal,
+            ...(animate ? modalAnimate : modalStart),
+            ...(creditError && {
+              border: "2px solid #DC2626",
+              boxShadow: "0 0 0 4px rgba(220,38,38,0.25)",
+              animation: "shake 0.35s",
+            }),
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           <h2 style={{ marginBottom: 10, fontWeight: 700 }}>Assess Tool</h2>
@@ -377,3 +411,17 @@ const toastStyle = {
   borderRadius: 999,
   boxShadow: "0 12px 40px rgba(22,163,74,0.5)",
 };
+/* ================= SHAKE ANIMATION ================= */
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @keyframes shake {
+      0% { transform: translateX(0) translateY(-40px); }
+      25% { transform: translateX(-4px) translateY(-40px); }
+      50% { transform: translateX(4px) translateY(-40px); }
+      75% { transform: translateX(-2px) translateY(-40px); }
+      100% { transform: translateX(0) translateY(-40px); }
+    }
+  `;
+  document.head.appendChild(style);
+}

@@ -11,6 +11,7 @@ import { getOrganizations } from "../../../apiIntegration/organization"; // you 
 import ReviewOrganizationModal from "./ReviewOrganizationModal";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import CreateOrganizationModal from "./CreateOrganization";
 
 export default function OrganizationListView({ setShowCreateModal }) {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function OrganizationListView({ setShowCreateModal }) {
   const [activeOrg, setActiveOrg] = useState(null);
   const pageLoading = usePageLoader([organizations]);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -289,8 +291,9 @@ export default function OrganizationListView({ setShowCreateModal }) {
 
             <AwsButton
               label="+ Create Organization"
-              onClick={() => navigate("/dashboard/createorganization")}
+              onClick={() => setShowCreateOrgModal(true)}
             />
+
             <AwsSettingsIconButton
               onClick={() => setShowPreferences(true)}
               title="Preferences"
@@ -326,6 +329,16 @@ export default function OrganizationListView({ setShowCreateModal }) {
             onSuccess={() => {
               setShowReviewModal(false);
               setSelected([]);
+              loadOrganizations();
+            }}
+          />
+        )}
+        {/* ===== CREATE ORGANIZATION MODAL ===== */}
+        {showCreateOrgModal && (
+          <CreateOrganizationModal
+            setShowCreateModal={setShowCreateOrgModal}
+            onSuccess={() => {
+              setShowCreateOrgModal(false);
               loadOrganizations();
             }}
           />
