@@ -1,8 +1,9 @@
 import { coursesData } from "@/data/courses";
 import { events } from "@/data/events";
 import { productData } from "@/data/products";
+import { fetchUserProfile } from "@/apiIntegration/auth";
 import React from "react";
-import { useContext, useState } from "react";
+import { useContext, useState, useCallback } from "react";
 const dataContext = React.createContext();
 export const useContextElement = () => {
   return useContext(dataContext);
@@ -18,6 +19,33 @@ export default function Context({ children }) {
   const [userPlan, setUserPlan] = useState("free");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
+
+  // Function to refresh user plan from API and update localStorage + Context
+  const refreshUserPlan = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const userData = await fetchUserProfile(token);
+      if (userData) {
+        // Update localStorage with fresh user data
+        localStorage.setItem("user_info", JSON.stringify(userData));
+
+        // Update Context state
+        const userPlanType = userData?.plan?.plan_type || "free";
+        const credits = userData?.plan?.credits_remaining || 0;
+        
+        setUserPlan(userPlanType.toLowerCase());
+        setUserCredits(credits);
+        setIsLoggedIn(true);
+
+        console.log("🔄 refreshUserPlan: Updated plan to", userPlanType, "with", credits, "credits");
+      }
+    } catch (error) {
+      console.error("Error refreshing user plan:", error);
+    }
+  }, []);
+
   const addCourseToCart = (id) => {
     if (!cartCourses.filter((elm) => elm.id == id)[0]) {
       const item = {
@@ -84,6 +112,7 @@ export default function Context({ children }) {
     setIsLoggedIn,
     userCredits,
     setUserCredits,
+    refreshUserPlan,
   };
   return (
     <dataContext.Provider value={contextElement}>

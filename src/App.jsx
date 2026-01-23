@@ -88,7 +88,7 @@ import InstractorSinglePage from "./pages/aboutCourses/instructors";
 import LessonSinglePage1 from "./pages/aboutCourses/lesson-single-1";
 import LessonSinglePage2 from "./pages/aboutCourses/lesson-single-2";
 import NotAuthorized from "./pages/NotAuthorized";
-import NotFoundPage from "./pages/not-found";
+// import NotFoundPage from "./pages/not-found";
 import DashboardNotFoundPage from "./pages/dashboard/dshb-notfound";
 import PricingPage from "./pages/others/pricing";
 import DshbPricingPage from "./pages/dashboard/dshb-pricing";
@@ -269,9 +269,6 @@ function App() {
                 />
                 <Route path="pricing" element={<DshbPricingPage />} />
                 <Route path="pricing/billing" element={<DshbBillingPage />} />
-
-                {/* Dashboard 404 - catches unmatched dashboard routes */}
-                <Route path="*" element={<DashboardNotFoundPage />} />
               </Route>
 
               <Route path="event-list-1" element={<EventListPage1 />} />
@@ -297,8 +294,8 @@ function App() {
               <Route path="shop/:id" element={<ShopdetailsPage />} />
 
               <Route path="pricing" element={<PricingPage />} />
-              <Route path="not-found" element={<NotFoundPage />} />
-              <Route path="*" element={<NotFoundPage />} />
+              <Route path="not-found" element={<DashboardNotFoundPage />} />
+              <Route path="*" element={<DashboardNotFoundPage />} />
               <Route path="terms" element={<TermsPage />} />
               <Route path="help-center" element={<HelpCenterPage />} />
               <Route path="auth" element={<AuthPage />} />
