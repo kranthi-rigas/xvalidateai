@@ -107,6 +107,7 @@ import ForgotPassword from "./components/others/ForgotPassword";
 import ResetPassword from "./components/others/ResetPassword";
 import VerifyEmail from "./components/others/VerifyEmail";
 import AIDashboardPage from "./pages/dashboard/dshb-aianalytics";
+import AILiteracyPage from "./pages/dashboard/dashboard-ailiteracy";
 
 function App() {
   useEffect(() => {
@@ -251,6 +252,7 @@ function App() {
                 <Route path="calendar" element={<DshbCalenderPage />} />
                 <Route path="dashboard" element={<DshbDashboardPage />} />
                 <Route path="aianalytics" element={<AIDashboardPage />} />
+                <Route path="ailiteracy" element={<AILiteracyPage />} />
                 <Route path="forums" element={<DshbForumsPage />} />
                 <Route path="grades" element={<DshbGradesPage />} />
                 <Route path="messages" element={<DshbMessagesPage />} />

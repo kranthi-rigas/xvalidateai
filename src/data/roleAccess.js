@@ -1,6 +1,6 @@
 import rolePermissions from "@/data/rolePermissions.json";
 
-const ROLE_PRIORITY = ["ADMIN", "INSTRUCTOR", "STUDENT", "PARENT"];
+const ROLE_PRIORITY = ["ADMIN", "AUDITOR", "ANALYST"];
 
 export function resolvePermissionsFromRoles(
   roles = [],

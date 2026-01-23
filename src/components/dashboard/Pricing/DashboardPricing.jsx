@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
 import { useContextElement } from "@/context/Context";
+import PageLoader from "@/components/common/PageLoader";
 
 export default function DashboardBilling() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function DashboardBilling() {
   const plan = location.state?.plan || null;
   const show = useToast();
   const { refreshUserPlan } = useContextElement();
+  const [pageLoading, setPageLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     billingAddress: "",
@@ -21,6 +23,14 @@ export default function DashboardBilling() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [voucherData, setVoucherData] = useState(null); // Store verified voucher data
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 300); // same smooth delay
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Reset form state when navigating to this page (when location changes)
   useEffect(() => {
@@ -173,6 +183,10 @@ export default function DashboardBilling() {
       setIsSubmitting(false);
     }
   };
+
+  if (pageLoading) {
+    return <PageLoader loading={true} />;
+  }
 
   return (
     <div className="dashboard__content">

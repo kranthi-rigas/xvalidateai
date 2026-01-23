@@ -113,8 +113,8 @@ export default function AIListView({
     checkbox: 60,
     name: 190,
     description: 180,
-    status: 180,
-    assessment_status: 150,
+    status: 200,
+    assessment_status: 120,
     score: 100,
     recommendation: 190,
     lastScanDate: 180,
@@ -193,6 +193,13 @@ export default function AIListView({
     return () => window.removeEventListener("mousemove", handleResize);
   }, []);
 
+  // 🔤 Convert snake_case / lowercase to Title Case
+  const toTitleCase = (value = "") =>
+    value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
   //STATUS LABEL MAPPER
   const getAssessmentStatusLabel = (row) => {
     // Instructor requested scan
@@ -200,11 +207,10 @@ export default function AIListView({
       row.status === "requested" &&
       row.assessment_status === "not_applicable"
     ) {
-      return "requested for scan";
+      return "Requested For Scan";
     }
 
-    // Normal formatting fallback
-    return row.status ? row.status.replace(/_/g, " ") : "-";
+    return row.status ? toTitleCase(row.status) : "-";
   };
 
   /* ---------- Search ---------- */
@@ -618,7 +624,7 @@ export default function AIListView({
 
     if (key === "assessment_status") {
       const text = row.assessment_status
-        ? formatStatusLabel(row.assessment_status)
+        ? toTitleCase(row.assessment_status)
         : "-";
 
       return (
@@ -638,28 +644,7 @@ export default function AIListView({
         </span>
       );
     }
-    if (key === "assessment_status") {
-      const text = row.assessment_status
-        ? formatStatusLabel(row.assessment_status)
-        : "-";
 
-      return (
-        <span
-          style={{
-            display: "inline-block",
-            maxWidth: columnWidths.assessment_status - 20,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            cursor: "default",
-            color: "#374151",
-          }}
-          title={text}
-        >
-          {text}
-        </span>
-      );
-    }
     if (key === "score") {
       if (row.score == null) return "-";
 
@@ -874,11 +859,29 @@ export default function AIListView({
 
     // ================= ADMIN =================
     if (isAdmin) {
-      return [
-        { key: "scan_approve", label: "Approve for Scan" },
-        { key: "scan_reject", label: "Reject for Scan" },
-        { key: "approve", label: "Approve for Usage" },
-        { key: "reject", label: "Reject for Usage" },
+      const actions = [];
+
+      // 🔹 Scan approval stage
+      if (project.status === "requested") {
+        actions.push(
+          { key: "scan_approve", label: "Approve for Scan" },
+          { key: "scan_reject", label: "Reject for Scan" },
+        );
+      }
+
+      // 🔹 Usage approval stage (after scan is fully completed)
+      if (
+        project.status === "scan_completed" &&
+        project.assessment_status === "completed"
+      ) {
+        actions.push(
+          { key: "approve", label: "Approve for Usage" },
+          { key: "reject", label: "Reject for Usage" },
+        );
+      }
+
+      // 🔹 Common admin actions
+      actions.push(
         { key: "edit", label: "Edit" },
         {
           key: "delete",
@@ -886,7 +889,9 @@ export default function AIListView({
           danger: true,
           disabled: deleteDisabled,
         },
-      ];
+      );
+
+      return actions;
     }
 
     // ================= NON-ADMIN =================

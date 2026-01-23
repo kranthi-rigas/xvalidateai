@@ -127,6 +127,19 @@ export const sidebarItems = [
         requiredPlan: null,
         // permission: "pricing",
     },
+
+    {
+    id: 23,
+    href: "/dashboard/ailiteracy",
+    src: "/dashboardSideBarIcons/ai_compliance.svg",
+    active_src: "/dashboardSideBarIcons/ai_compliance_active.png",
+    text: "AI Literacy",
+    permission: "ai_literacy",
+    requiredPlan: null,
+  },
+  
+
+
   /*
   {
     id: 14,

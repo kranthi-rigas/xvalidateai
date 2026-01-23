@@ -12,6 +12,7 @@ import ReviewOrganizationModal from "./ReviewOrganizationModal";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import CreateOrganizationModal from "./CreateOrganization";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 
 export default function OrganizationListView({ setShowCreateModal }) {
   const navigate = useNavigate();
@@ -24,7 +25,8 @@ export default function OrganizationListView({ setShowCreateModal }) {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [activeOrg, setActiveOrg] = useState(null);
-  const pageLoading = usePageLoader([organizations]);
+  const [pageLoading, setPageLoading] = useState(true);
+
   const [showPreferences, setShowPreferences] = useState(false);
   const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
 
@@ -79,18 +81,33 @@ export default function OrganizationListView({ setShowCreateModal }) {
   }, []);
 
   /* ---------- FETCH DATA ---------- */
-  const loadOrganizations = async () => {
+  const loadOrganizations = async ({ showPageLoader = false } = {}) => {
     try {
+      if (showPageLoader) setPageLoading(true);
+      else setTableLoading(true);
+
       const res = await getOrganizations();
       setOrganizations(res.organizations || []);
     } catch (err) {
       console.error("Error loading organizations:", err);
+    } finally {
+      if (showPageLoader) setPageLoading(false);
+      else setTableLoading(false);
     }
   };
 
   useEffect(() => {
-    loadOrganizations();
+    loadOrganizations({ showPageLoader: true });
   }, []);
+
+  // ---------- ADMIN CHECK ----------
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+
+  const roles = Array.isArray(userInfo.roles)
+    ? userInfo.roles
+    : String(userInfo.roles || "").split(",");
+
+  const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
   /* ---------- SEARCH ---------- */
   const filtered = (organizations || [])
@@ -289,10 +306,18 @@ export default function OrganizationListView({ setShowCreateModal }) {
               }}
             />
 
-            <AwsButton
-              label="+ Create Organization"
-              onClick={() => setShowCreateOrgModal(true)}
-            />
+            <OrgRequiredWrapper
+              disabled={!isAdmin}
+              message="Only admin users can create an organization"
+            >
+              <AwsButton
+                label="+ Create Organization"
+                onClick={() => {
+                  if (!isAdmin) return;
+                  setShowCreateOrgModal(true);
+                }}
+              />
+            </OrgRequiredWrapper>
 
             <AwsSettingsIconButton
               onClick={() => setShowPreferences(true)}
