@@ -21,6 +21,7 @@ import useToast from "../../../hooks/useToast";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import CreditInfoNote from "./CreditInfoNote";
 
 const STATUS_BADGE_MAP = {
   pending_assessment: {
@@ -749,7 +750,7 @@ export default function AIListView({
               fontStyle: "italic",
             }}
           >
-            Pending
+            N/A
           </span>
         );
       }
@@ -839,7 +840,7 @@ export default function AIListView({
     if (isAdmin) {
       const actions = [];
 
-      if (project.status === "requested_for_scan") {
+      if (project.status === "requested") {
         actions.push(
           { key: "scan_approve", label: "Approve for Scan" },
           { key: "scan_reject", label: "Reject for Scan" },
@@ -1099,7 +1100,7 @@ export default function AIListView({
           /* 🔐 AUDITOR UX FIXES */
           hideCredits={
             approvalAction === "request_scan" ||
-            approvalAction === "cancel_request"
+            approvalAction === "scan_reject"
           }
           hideComment={approvalAction === "cancel_request"}
           onClose={() => {

@@ -63,10 +63,10 @@ export default function ApproveRejectModal({
           />
         </div>
 
-        {/* ===== CREDITS NOTE (ADMIN ONLY) ===== */}
+        {/* 🔴 Credit info BELOW buttons */}
         {!hideCredits && (
-          <div style={{ padding: "0 24px 18px" }}>
-            <CreditInfoNote text="Each assessment consumes 10 credits" />
+          <div style={{ padding: "0 24px 20px 24px" }}>
+            <CreditInfoNote />
           </div>
         )}
       </div>
