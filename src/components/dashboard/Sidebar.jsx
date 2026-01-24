@@ -57,7 +57,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       if (parsedUser) {
         const { role, permissions } = resolvePermissionsFromRoles(
           parsedUser.roles || [],
-          parsedUser.permissions || []
+          parsedUser.permissions || [],
         );
 
         const enrichedUser = {
@@ -156,9 +156,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     })
     .filter(Boolean);
 
-  // 🔥 DEBUG: Log filtered sidebar
-  console.log("🔍 Sidebar Debug - Filtered items:", filteredSidebar);
-
   return (
     <div
       className={`sidebar -dashboard ${
@@ -242,7 +239,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                   title={
                     isParentLocked
                       ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan
+                          item.requiredPlan,
                         )} plan`
                       : ""
                   }
@@ -285,7 +282,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                   title={
                     isParentLocked
                       ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan
+                          item.requiredPlan,
                         )} plan`
                       : ""
                   }
@@ -343,7 +340,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                         title={
                           isChildLocked
                             ? `Requires ${getRequiredPlanName(
-                                child.requiredPlan
+                                child.requiredPlan,
                               )} plan`
                             : ""
                         }

@@ -3,7 +3,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
 import HeaderDashboard from "@/components/layout/headers/HeaderDashboard";
 import Preloader from "@/components/common/Preloader";
-import DashboardBreadcrumb from "@/components/dashboard/DashboardBreadcrumb";
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -51,7 +50,6 @@ export default function DashboardLayout() {
             <div
               className={`dashboard__main ${collapsed ? "-is-collapsed" : ""}`}
             >
-              <DashboardBreadcrumb />
               <div
                 key={location.pathname}
                 className="dashboard-page-transition"

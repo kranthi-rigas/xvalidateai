@@ -50,13 +50,16 @@ const safeRenderCell = (renderCell, row, key) => {
     if (React.isValidElement(value)) return value;
 
     // Allow primitive display values
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
-      return value;
-    }
+      if (typeof value === "string") {
+          if (value.includes("http")) {
+              return <a href={value}>{value}</a>;
+          }
+          return value;
+      }
+
+      if (typeof value === "number" || typeof value === "boolean") {
+          return value;
+      }
 
     // Everything else (Symbol, object, function, etc.)
     return "";

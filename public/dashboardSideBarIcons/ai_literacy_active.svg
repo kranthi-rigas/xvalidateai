@@ -1,0 +1,29 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- Book outer shape -->
+    <path d="M6 3H23.5C25.43 3 27 4.57 27 6.5V25C27 26.1 26.1 27 25 27H7.5C6.12 27 5 25.88 5 24.5V4.2C5 3.54 5.54 3 6 3Z"
+          stroke="#576AFF" stroke-width="2" stroke-linejoin="round"/>
+
+    <!-- Book spine -->
+    <path d="M8.8 3V27"
+          stroke="#576AFF" stroke-width="2"/>
+
+    <!-- AI label box -->
+    <rect x="11.2" y="8" width="9" height="7.5" rx="1.6"
+          stroke="#576AFF" stroke-width="2"/>
+
+    <!-- AI text -->
+    <text x="15.7" y="13.4"
+          text-anchor="middle"
+          font-size="5"
+          font-weight="600"
+          font-family="Arial, Helvetica, sans-serif"
+          fill="#576AFF">
+        AI
+    </text>
+
+    <!-- Content lines -->
+    <path d="M11.5 18.5H20.5M11.5 21.5H20.5"
+          stroke="#576AFF" stroke-width="1.8" stroke-linecap="round"/>
+
+</svg>

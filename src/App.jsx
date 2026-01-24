@@ -126,81 +126,10 @@ function App() {
           <Routes>
             <Route path="/">
               <Route index element={<AuthPage />} />
-              <Route path="home-1" element={<HomePage1 />} />
-              <Route path="home-2" element={<HomePage2 />} />
-              <Route path="home-3" element={<HomePage3 />} />
-              <Route path="home-4" element={<HomePage4 />} />
-              <Route path="home-5" element={<HomePage5 />} />
-              <Route path="home-6" element={<HomePage6 />} />
-              <Route path="home-7" element={<HomePage7 />} />
-              <Route path="home-8" element={<HomePage8 />} />
-              <Route path="home-9" element={<HomePage9 />} />
-              <Route path="home-10" element={<HomePage10 />} />
-              <Route path="courses-list-1" element={<CourseListPage1 />} />
-              <Route path="courses-list-2" element={<CourseListPage2 />} />
-              <Route path="courses-list-3" element={<CourseListPage3 />} />
-              <Route path="courses-list-4" element={<CourseListPage4 />} />
-              <Route path="courses-list-5" element={<CourseListPage5 />} />
-              <Route path="courses-list-6" element={<CourseListPage6 />} />
-              <Route path="courses-list-7" element={<CourseListPage7 />} />
-              <Route path="courses-list-8" element={<CourseListPage8 />} />
-              <Route path="courses/:id" element={<CourseSinglePage1 />} />
-              <Route
-                path="courses-single-2/:id"
-                element={<CourseSinglePage2 />}
-              />
-              <Route
-                path="courses-single-3/:id"
-                element={<CourseSinglePage3 />}
-              />
-              <Route
-                path="courses-single-4/:id"
-                element={<CourseSinglePage4 />}
-              />
-              <Route
-                path="courses-single-5/:id"
-                element={<CourseSinglePage5 />}
-              />
-              <Route
-                path="courses-single-6/:id"
-                element={<CourseSinglePage6 />}
-              />
-              <Route path="course-cart" element={<CourseCartPage />} />
-              <Route path="course-checkout" element={<CourseCheckoutPage />} />
-              {/* <Route path='courses-single-5/:id' element={<CourseSinglePage6 />} /> */}
-              <Route path="lesson-single-1" element={<LessonSinglePage1 />} />
-              <Route path="lesson-single-2" element={<LessonSinglePage2 />} />
-              <Route
-                path="instructors-list-1"
-                element={<InstractorListPage1 />}
-              />
-              <Route
-                path="instructors-list-2"
-                element={<InstractorListPage2 />}
-              />
-              <Route
-                path="instructors/:id"
-                element={<InstractorSinglePage />}
-              />
-              <Route
-                path="instructor-become"
-                element={<InstractoBacomePage />}
-              />
-              <Route path="/not-authorized" element={<NotAuthorized />} />
+
               {/*dashboard nested route*/}
               <Route path="dashboard" element={<DashboardLayout />}>
                 <Route index element={<AIDashboardPage />} />
-                <Route path="courses" element={<DshbCoursesPage />} />
-                <Route path="mocktest" element={<DshbMockTestPage />} />
-                <Route
-                  path="createmocktest"
-                  element={<DshbCreateMockTestPage />}
-                />
-                <Route path="quizresults" element={<DshbQuizResultsPage />} />
-                <Route
-                  path="becomeinstructor"
-                  element={<DshbBecomeInstructor />}
-                />
                 <Route path="aicompliance" element={<DshbAICompliance />} />
                 <Route
                   path="aicompliance/:project_id"
@@ -229,18 +158,7 @@ function App() {
                   element={<DshbOrganizationListView />}
                 />
 
-                <Route
-                  path="reviewInstructors"
-                  element={<AdminInstructorsReviewPage />}
-                />
-                <Route path="bookmarks" element={<DshbBookmarksPage />} />
-                <Route path="listing" element={<DshbListingPage />} />
-                <Route path="reviews" element={<DshbReviewsPage />} />
                 <Route path="settings" element={<DshbSettingsPage />} />
-                <Route
-                  path="administration"
-                  element={<DshbAdministrationPage />}
-                />
                 <Route path="assignment" element={<DshbAssignmentPage />} />
                 <Route path="calendar" element={<DshbCalenderPage />} />
                 <Route path="dashboard" element={<DshbDashboardPage />} />
@@ -265,34 +183,15 @@ function App() {
                 <Route path="pricing" element={<DshbPricingPage />} />
                 <Route path="pricing/billing" element={<DshbBillingPage />} />
               </Route>
-              <Route path="event-list-1" element={<EventListPage1 />} />
-              <Route path="event-list-2" element={<EventListPage2 />} />
-              <Route path="events/:id" element={<EventSingPage />} />
-              <Route path="event-cart" element={<EventCartPage />} />
-              <Route path="event-checkout" element={<EventCheckoutPage />} />
-              <Route path="blog-list-1" element={<BlogListpage1 />} />
-              <Route path="blog-list-2" element={<BlogListpage2 />} />
-              <Route path="blog-list-3" element={<BlogListpage3 />} />
-              <Route path="blogs/:id" element={<BlogdetailsPage />} />
-              <Route path="about-1" element={<AboutPage1 />} />
-              <Route path="contact-1" element={<ContactPage1 />} />
-              <Route path="contact-2" element={<ContactPage2 />} />
-              <Route path="shop-cart" element={<ShopCartPage />} />
-              <Route path="shop-checkout" element={<ShopCheckoutPage />} />
-              <Route path="shop-list" element={<ShopListPage />} />
-              <Route path="shop-order" element={<ShopOrderPage />} />
-              <Route path="shop/:id" element={<ShopdetailsPage />} />
+
 
               <Route path="not-found" element={<DashboardNotFoundPage />} />
               <Route path="*" element={<DashboardNotFoundPage />} />
-              <Route path="terms" element={<TermsPage />} />
-              <Route path="help-center" element={<HelpCenterPage />} />
               <Route path="auth" element={<AuthPage />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="login/google" element={<GoogleLoginPage />} />
-              <Route path="ui-elements" element={<UIElementsPage />} />
             </Route>
           </Routes>
           <ScrollTopBehaviour />
