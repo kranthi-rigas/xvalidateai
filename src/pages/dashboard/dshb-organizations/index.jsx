@@ -1,7 +1,7 @@
 import MetaComponent from "@/components/common/MetaComponent";
 import OrganizationListView from "@/components/dashboard/organizations/OrganizationListView";
 const metadata = {
-  title: "Dashboard - Organizations | Academy51",
+  title: "Organizations || Academy51 - Smart Learning for smarter generation",
   description: "Organizations for Academy51",
 };
 

@@ -24,19 +24,31 @@ export default function OrgUsers({ refreshProjects }) {
   const show = useToast();
   const orgExists = hasOrganization();
 
-  //ADMIN Check helper
+  // ADMIN + ORG context
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
+  // ---------- ROLES ----------
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
 
+  // ADMIN check
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
+  // ---------- ORGANIZATION ----------
   const hasOrg = hasOrganization();
 
-  // FINAL PERMISSION
-  const canManage = hasOrg && isAdmin;
+  // normalize org name safely
+  const orgName = (userInfo.organization?.name || "").trim().toLowerCase();
+
+  // default orgs should behave like "no org"
+  const isDefaultOrg = orgName === "academy51" || orgName === "myacademy51";
+
+  // ✅ VALID org = exists AND not default
+  const hasValidOrg = hasOrg && !isDefaultOrg;
+
+  // ✅ FINAL permission (authoritative)
+  const canManage = hasValidOrg && isAdmin;
 
   // Preferences modal
   const [showPreferences, setShowPreferences] = useState(false);
@@ -396,16 +408,33 @@ export default function OrgUsers({ refreshProjects }) {
 
             <ActionsMenu
               selected={selected}
-              onEdit={(id) => alert("Edit user: " + id)}
-              onDelete={() => alert("Delete users: " + selected)}
+              items={
+                isAdmin
+                  ? [
+                      {
+                        key: "edit",
+                        label: "Edit",
+                        onClick: () => alert("Edit user: " + selected[0]),
+                      },
+                      {
+                        key: "delete",
+                        label: "Delete",
+                        danger: true,
+                        onClick: () => alert("Delete users: " + selected),
+                      },
+                    ]
+                  : [] // 🔥 NON-ADMIN → NO DROPDOWN ITEMS
+              }
             />
 
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg
+                !hasOrg || isDefaultOrg
                   ? "Please create an organization before inviting users"
-                  : "Only admin users can invite users"
+                  : !isAdmin
+                    ? "Only admin users can invite users"
+                    : ""
               }
             >
               <AwsButton

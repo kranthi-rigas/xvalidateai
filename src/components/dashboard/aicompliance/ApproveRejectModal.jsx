@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AwsButton from "../../common/AwsButton";
+import CreditInfoNote from "./CreditInfoNote";
 
 export default function ApproveRejectModal({
   title,

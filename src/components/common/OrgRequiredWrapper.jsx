@@ -13,15 +13,20 @@ export default function OrgRequiredWrapper({ children, disabled, message }) {
     const tooltip = tooltipRef.current.getBoundingClientRect();
     const padding = 12;
 
-    let left = wrapper.left + wrapper.width / 2 - tooltip.width / 2;
+    let left =
+      wrapper.left + wrapper.width / 2 - tooltip.width / 2 + window.scrollX;
 
-    // 🔥 clamp inside viewport
+    // ⛔ Clamp LEFT
     if (left < padding) {
       left = padding;
     }
 
-    if (left + tooltip.width > window.innerWidth - padding) {
-      left = window.innerWidth - tooltip.width - padding;
+    // ⛔ Clamp RIGHT
+    const maxLeft =
+      window.innerWidth + window.scrollX - tooltip.width - padding;
+
+    if (left > maxLeft) {
+      left = maxLeft;
     }
 
     setPos({
@@ -35,17 +40,25 @@ export default function OrgRequiredWrapper({ children, disabled, message }) {
   return (
     <span
       ref={wrapperRef}
-      style={{ display: "inline-flex", position: "relative" }}
+      style={{ display: "inline-flex" }}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <span style={{ opacity: 0.6, cursor: "not-allowed" }}>{children}</span>
+      <span
+        style={{
+          filter: "grayscale(0.2)",
+          opacity: 0.75,
+          cursor: "not-allowed",
+        }}
+      >
+        {children}
+      </span>
 
       {show && (
         <div
           ref={tooltipRef}
           style={{
-            position: "fixed", // 🔥 key change
+            position: "fixed",
             background: "#111827",
             color: "#fff",
             padding: "8px 12px",
@@ -54,6 +67,7 @@ export default function OrgRequiredWrapper({ children, disabled, message }) {
             whiteSpace: "nowrap",
             zIndex: 9999,
             boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+            pointerEvents: "none",
             ...pos,
           }}
         >

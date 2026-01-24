@@ -13,7 +13,8 @@
         "assignment",
         "grades",
         "ai_literacy",
-        "pricing"
+        "pricing",
+        "faqs"
     ],
     "AUDITOR": [
         "dashboard",
@@ -29,7 +30,8 @@
         "assignment",
         "grades",
         "ai_literacy",
-        "pricing"
+        "pricing",
+        "faqs"
     ],
     "ANALYST": [
         "dashboard",
@@ -45,6 +47,7 @@
         "assignment",
         "grades",
         "ai_literacy",
-        "pricing"
+        "pricing",
+        "faqs"
     ]
 }

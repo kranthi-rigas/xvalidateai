@@ -5,6 +5,7 @@ import {
 } from "../../../apiIntegration/compliance";
 import AwsButton from "../../common/AwsButton";
 import useToast from "../../../hooks/useToast";
+import CreditInfoNote from "./CreditInfoNote";
 
 /* ---------- FIELD RENDERER ---------- */
 function renderField(
@@ -97,26 +98,24 @@ export default function EditProjectModal({
   setShowEditModal,
   refreshProjects,
 }) {
-  const showReasonForAdoption =
-    project?.requested_by && project.requested_by.is_staff_admin === false;
-
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
+  const show = useToast();
 
-  const [form, setForm] = useState({
+  /* ---------- INITIAL FORM ---------- */
+  const initialFormRef = useRef({
     projectName: project.name || "",
     description: project.description || "",
     url: project.url || "",
     justification: project.justification || "",
   });
 
+  const [form, setForm] = useState({ ...initialFormRef.current });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
-  const show = useToast();
-
   const [creditError, setCreditError] = useState(false);
 
   const fieldRefs = {
@@ -126,6 +125,12 @@ export default function EditProjectModal({
     justification: useRef(null),
   };
 
+  /* ---------- DIRTY CHECK ---------- */
+  const isDirty = Object.keys(form).some(
+    (key) => form[key] !== initialFormRef.current[key],
+  );
+
+  /* ---------- VALIDATION ---------- */
   const validate = (data = form) => {
     const errs = {};
     if (!data.projectName.trim()) errs.projectName = "Tool Name is required";
@@ -133,14 +138,12 @@ export default function EditProjectModal({
     if (!data.url.trim()) errs.url = "Tool URL is required";
     else if (!/^https?:\/\//i.test(data.url))
       errs.url = "URL must start with http or https";
-
-    if (!data.justification.trim()) {
+    if (!data.justification.trim())
       errs.justification = "Reason for Adoption is required";
-    }
-
     return errs;
   };
 
+  /* ---------- HANDLERS ---------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -166,7 +169,7 @@ export default function EditProjectModal({
     setErrors(validate(form));
   };
 
-  /* ================= SAVE (EDIT TOOL API) ================= */
+  /* ================= SAVE ================= */
   const saveChanges = async () => {
     setSubmitted(true);
     const validation = validate(form);
@@ -183,205 +186,131 @@ export default function EditProjectModal({
     setSaving(true);
 
     try {
-      // ✅ EDIT TOOL DETAILS
       await updateComplianceTool(project.project_id, form);
 
       show("Tool updated successfully!", { type: "success" });
-
       setShowEditModal(false);
       refreshProjects?.();
     } catch (err) {
       console.error("Edit project error:", err);
 
       const rawMessage = err?.response?.data?.message || err?.message || "";
-
       const isInsufficientCredits =
-        rawMessage.toLowerCase().includes("insufficient") ||
         rawMessage.toLowerCase().includes("credit") ||
         err?.response?.status === 402;
 
-      const message = isInsufficientCredits
-        ? "Insufficient credits to run this scan."
-        : "Failed to update tool. Please try again.";
+      show(
+        isInsufficientCredits
+          ? "Insufficient credits to run this scan."
+          : "Failed to update tool. Please try again.",
+        { type: "error", duration: 5000 },
+      );
 
-      // 🔔 Toast only
-      show(message, { type: "error", duration: 5000 });
-
-      // 🔴 Modal visual feedback only
       setCreditError(true);
-
-      // ⏱ Remove error state after toast
-      setTimeout(() => {
-        setCreditError(false);
-      }, 5000);
+      setTimeout(() => setCreditError(false), 5000);
+    } finally {
+      setSaving(false); // ✅ FIXED
     }
   };
 
-  /* ================= OPTIONAL STATUS API (ADMIN) ================= */
-  const approveProject = async () => {
-    await updateComplianceProject(project.project_id, {
-      action: "approve",
-      status: "approved",
-      comment: "Approved by admin",
-    });
-    refreshProjects?.();
-    setShowEditModal(false);
-  };
-
-  const rejectProject = async () => {
-    await updateComplianceProject(project.project_id, {
-      action: "reject",
-      status: "rejected",
-      comment: "Rejected by admin",
-    });
-    refreshProjects?.();
-    setShowEditModal(false);
-  };
-
+  /* ---------- STATUS ACTIONS ---------- */
   const status = project?.status;
-
-  // ADMIN → requested → approve/reject
   const showAdminApprovalActions = isAdmin && status === "requested";
-
-  // INSTRUCTOR → requested → cancel/save
-  const showInstructorEditActions = !isAdmin && status === "requested";
-
-  // completed / approved / rejected → cancel/save (all roles)
   const showFinalEditActions = status !== "requested";
 
   return (
-    <>
-      <div style={overlay} onClick={() => setShowEditModal(false)}>
-        <div
-          style={{
-            ...modal,
-            ...(creditError && {
-              border: "2px solid #DC2626",
-              boxShadow: "0 0 0 4px rgba(220,38,38,0.25)",
-              animation: "shake 0.35s",
-            }),
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h2 style={{ marginBottom: 10, fontWeight: 700 }}>Edit Tool</h2>
+    <div style={overlay} onClick={() => setShowEditModal(false)}>
+      <div
+        style={{
+          ...modal,
+          ...(creditError && {
+            border: "2px solid #DC2626",
+            boxShadow: "0 0 0 4px rgba(220,38,38,0.25)",
+          }),
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 style={{ marginBottom: 10, fontWeight: 700 }}>Edit Tool</h2>
 
-          {renderField(
-            "Tool Name",
-            "projectName",
-            form,
-            handleChange,
-            handleBlur,
-            errors,
-            touched,
-            submitted,
-            fieldRefs.projectName,
-            false,
-            "Enter tool name...",
-            true,
-          )}
+        {renderField(
+          "Tool Name",
+          "projectName",
+          form,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          submitted,
+          fieldRefs.projectName,
+          false,
+          "Enter tool name...",
+          true,
+        )}
 
-          {renderField(
-            "Description",
-            "description",
-            form,
-            handleChange,
-            handleBlur,
-            errors,
-            touched,
-            submitted,
-            fieldRefs.description,
-            true,
-            "Enter a short description...",
-            true,
-          )}
+        {renderField(
+          "Description",
+          "description",
+          form,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          submitted,
+          fieldRefs.description,
+          true,
+          "Enter a short description...",
+          true,
+        )}
 
-          {renderField(
-            "Tool URL",
-            "url",
-            form,
-            handleChange,
-            handleBlur,
-            errors,
-            touched,
-            submitted,
-            fieldRefs.url,
-            false,
-            "https://example.com",
-            true,
-          )}
+        {renderField(
+          "Tool URL",
+          "url",
+          form,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          submitted,
+          fieldRefs.url,
+          false,
+          "https://example.com",
+          true,
+        )}
 
-          {renderField(
-            "Reason for Adoption",
-            "justification",
-            form,
-            handleChange,
-            handleBlur,
-            errors,
-            touched,
-            submitted,
-            fieldRefs.justification,
-            true,
-            "Explain the reason for adopting this tool...",
-            true,
-          )}
+        {renderField(
+          "Reason for Adoption",
+          "justification",
+          form,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          submitted,
+          fieldRefs.justification,
+          true,
+          "Explain the reason for adopting this tool...",
+          true,
+        )}
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-            {/* 🔴 Admin + requested */}
-            {showAdminApprovalActions && (
-              <>
-                <AwsButton
-                  label="Reject"
-                  onClick={rejectProject}
-                  disabled={saving}
-                />
-                <AwsButton
-                  label="Approve"
-                  onClick={approveProject}
-                  disabled={saving}
-                />
-              </>
-            )}
-
-            {/* 🟢 Instructor + requested */}
-            {showInstructorEditActions && (
-              <>
-                <AwsButton
-                  label="Cancel"
-                  onClick={() => setShowEditModal(false)}
-                  disabled={saving}
-                />
-                <AwsButton
-                  label={saving ? "Saving…" : "Save Changes"}
-                  onClick={saveChanges}
-                  disabled={saving}
-                />
-              </>
-            )}
-
-            {/* 🟢 completed / approved / rejected (all roles) */}
-            {showFinalEditActions && (
-              <>
-                <AwsButton
-                  label="Cancel"
-                  onClick={() => setShowEditModal(false)}
-                  disabled={saving}
-                />
-                <AwsButton
-                  label={saving ? "Saving…" : "Save Changes"}
-                  onClick={saveChanges}
-                  disabled={saving}
-                />
-              </>
-            )}
-          </div>
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <AwsButton
+            label="Cancel"
+            onClick={() => setShowEditModal(false)}
+            disabled={saving}
+          />
+          <AwsButton
+            label={saving ? "Saving…" : "Save Changes"}
+            onClick={saveChanges}
+            disabled={saving || !isDirty}
+          />
         </div>
+        <CreditInfoNote text="Re-running assessment consumes 10 credits" />
       </div>
-    </>
+    </div>
   );
 }
 
 /* ---------- STYLES ---------- */
-
 const overlay = {
   position: "fixed",
   inset: 0,
@@ -401,27 +330,3 @@ const modal = {
   borderRadius: 18,
   boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
 };
-
-const toastStyle = {
-  position: "fixed",
-  bottom: 20,
-  right: 20,
-  background: "#16A34A",
-  color: "#fff",
-  padding: "12px 22px",
-  borderRadius: 999,
-  boxShadow: "0 12px 40px rgba(22,163,74,0.5)",
-};
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.innerHTML = `
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-4px); }
-      50% { transform: translateX(4px); }
-      75% { transform: translateX(-2px); }
-      100% { transform: translateX(0); }
-    }
-  `;
-  document.head.appendChild(style);
-}

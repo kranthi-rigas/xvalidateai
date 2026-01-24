@@ -97,7 +97,15 @@ export default function ReviewOrganizationModal({
 
         <textarea
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setComment(value);
+
+            // ✅ clear error immediately once valid input exists
+            if (requiresComment && value.trim()) {
+              setError("");
+            }
+          }}
           placeholder="Explain the reason for this action clearly…"
           style={{
             width: "100%",

@@ -27,19 +27,31 @@ export default function OrgUserGroups() {
   const navigate = useNavigate();
   const orgExists = hasOrganization();
 
-  //ADMIN Check helper
+  // ---------------- PERMISSION LOGIC (SAME AS OrgUsers) ----------------
+
+  // user info
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
+  // roles
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
+  // org checks
   const hasOrg = hasOrganization();
 
-  // FINAL PERMISSION
-  const canManage = hasOrg && isAdmin;
+  const orgName = (userInfo.organization?.name || "").trim().toLowerCase();
+
+  // default org = treated as NO org
+  const isDefaultOrg = orgName === "academy51" || orgName === "myacademy51";
+
+  // valid org means: exists AND not default
+  const hasValidOrg = hasOrg && !isDefaultOrg;
+
+  // final permission
+  const canManage = isAdmin && hasValidOrg;
 
   // Modals
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -414,13 +426,24 @@ export default function OrgUserGroups() {
 
             <ActionsMenu
               selected={selected}
-              onDelete={() => setShowDeleteModal(true)}
+              items={
+                canManage
+                  ? [
+                      {
+                        key: "delete",
+                        label: "Delete",
+                        danger: true,
+                        onClick: () => setShowDeleteModal(true),
+                      },
+                    ]
+                  : [] // 🔒 non-admin → icon only, no dropdown items
+              }
             />
 
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg
+                !hasValidOrg
                   ? "Please create an organization before creating groups"
                   : "Only admin users can create user groups"
               }
@@ -431,10 +454,6 @@ export default function OrgUserGroups() {
                   if (!canManage) return;
                   setShowCreateGroupModal(true);
                 }}
-              />
-              <AwsSettingsIconButton
-                onClick={() => setShowPreferences(true)}
-                title="Preferences"
               />
             </OrgRequiredWrapper>
           </div>

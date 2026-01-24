@@ -20,6 +20,7 @@ import usePageLoader from "@/data/usePageLoader";
 import useToast from "../../../hooks/useToast";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 
 const STATUS_BADGE_MAP = {
   pending_assessment: {
@@ -90,6 +91,8 @@ export default function AIListView({
     : String(rolesRaw).toUpperCase().split(",");
 
   const isAdmin = roles.includes("ADMIN");
+  const isAuditor = roles.includes("AUDITOR");
+  const isAnalyst = roles.includes("ANALYST");
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
@@ -519,22 +522,13 @@ export default function AIListView({
     /* ------------------- NAME ------------------- */
     if (key === "name") {
       const text = row.name || "";
+      const isBlocked = row.status === "pending_assessment";
 
-      const isPendingAssessment = row.status === "pending_assessment";
-      const isRequested = row.status === "requested";
+      const tooltipText = isBlocked
+        ? "Assessment is currently in progress."
+        : "";
 
-      // 🔐 BLOCK CONDITIONS
-      const blockedByAssessment = isPendingAssessment;
-      const isBlocked = blockedByAssessment;
-
-      let tooltipText = "";
-
-      if (blockedByAssessment) {
-        tooltipText =
-          "Assessment is currently in progress. Please try again later.";
-      }
-
-      const nameContent = (
+      const content = (
         <span
           style={{
             ...LinkStyle,
@@ -551,25 +545,10 @@ export default function AIListView({
         </span>
       );
 
-      if (isBlocked) {
-        return <WhiteTooltip text={tooltipText}>{nameContent}</WhiteTooltip>;
-      }
-
-      // ✅ ADMIN or allowed users
-      return (
-        <span
-          onClick={() => setOpenedProject(row)}
-          style={{
-            ...LinkStyle,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.name - 20,
-            display: "inline-block",
-          }}
-        >
-          {text}
-        </span>
+      return isBlocked ? (
+        <WhiteTooltip text={tooltipText}>{content}</WhiteTooltip>
+      ) : (
+        <span onClick={() => setOpenedProject(row)}>{content}</span>
       );
     }
 
@@ -827,17 +806,27 @@ export default function AIListView({
     return row[key] ?? "";
   };
 
-  //helper for delete disabled
+  // helper for delete disabled (ADMIN only usage)
   const isDeleteDisabledForProject = (project) =>
     project.assessment_status === "scan_in_progress";
 
   const actionItems = (() => {
     if (selected.length === 0) return [];
 
+    const project = liveProjects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    // 🚫 ANALYST — view only
+    if (isAnalyst) {
+      return [];
+    }
+
     // ================= MULTI SELECT =================
     if (selected.length > 1) {
+      if (!isAdmin) return [];
+
       const anyScanInProgress = selected.some((id) => {
-        const p = projects.find((x) => x.project_id === id);
+        const p = liveProjects.find((x) => x.project_id === id);
         return p?.assessment_status === "scan_in_progress";
       });
 
@@ -851,17 +840,12 @@ export default function AIListView({
       ];
     }
 
-    // ================= SINGLE SELECT =================
-    const project = projects.find((p) => p.project_id === selected[0]);
-    if (!project) return [];
-
     const deleteDisabled = project.assessment_status === "scan_in_progress";
 
     // ================= ADMIN =================
     if (isAdmin) {
       const actions = [];
 
-      // 🔹 Scan approval stage
       if (project.status === "requested") {
         actions.push(
           { key: "scan_approve", label: "Approve for Scan" },
@@ -869,7 +853,6 @@ export default function AIListView({
         );
       }
 
-      // 🔹 Usage approval stage (after scan is fully completed)
       if (
         project.status === "scan_completed" &&
         project.assessment_status === "completed"
@@ -880,7 +863,6 @@ export default function AIListView({
         );
       }
 
-      // 🔹 Common admin actions
       actions.push(
         { key: "edit", label: "Edit" },
         {
@@ -894,16 +876,12 @@ export default function AIListView({
       return actions;
     }
 
-    // ================= NON-ADMIN =================
-    return [
-      { key: "edit", label: "Edit" },
-      {
-        key: "delete",
-        label: "Delete",
-        danger: true,
-        disabled: deleteDisabled,
-      },
-    ];
+    // ================= AUDITOR =================
+    if (isAuditor && project.status === "pending_assessment") {
+      return [{ key: "request", label: "Request Scan" }];
+    }
+
+    return [];
   })();
 
   if (pageLoading) {
@@ -954,7 +932,7 @@ export default function AIListView({
             selected={selected}
             items={actionItems}
             onSelect={(key) => {
-              const project = projects.find(
+              const project = liveProjects.find(
                 (p) => p.project_id === selected[0],
               );
               if (!project) return;
@@ -989,10 +967,19 @@ export default function AIListView({
             }}
           />
 
-          <AwsButton
-            label="+ Tool Assessment"
-            onClick={() => setShowCreateModal(true)}
-          />
+          <OrgRequiredWrapper
+            disabled={isAnalyst}
+            message="You have view-only access"
+          >
+            <AwsButton
+              label="+ Tool Assessment"
+              onClick={() => {
+                if (isAnalyst) return;
+                setShowCreateModal(true);
+              }}
+            />
+          </OrgRequiredWrapper>
+
           <AwsSettingsIconButton
             onClick={() => setShowPreferences(true)}
             title="Preferences"
@@ -1122,10 +1109,17 @@ export default function AIListView({
               });
 
               // ✅ SUCCESS
+              setLiveProjects((prev) =>
+                prev.map((p) =>
+                  p.project_id === activeProject.project_id
+                    ? { ...p, ...payload }
+                    : p,
+                ),
+              );
+
               setApprovalError(false);
               setShowApprovalModal(false);
               setSelected([]);
-              refreshProjects();
             } catch (err) {
               // 🔴 402 – Insufficient credits
               const message =

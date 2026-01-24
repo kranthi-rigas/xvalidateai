@@ -137,6 +137,15 @@ export const sidebarItems = [
         permission: "pricing",
     },
 
+    {
+        id: 24,
+        href: "/dashboard/faqs",
+        text: "FAQ's",
+        src: "/dashboardSideBarIcons/faq.svg",
+        active_src: "/dashboardSideBarIcons/faq_active.svg",
+        requiredPlan: null,
+        permission: "faqs",
+    },
 
 
 

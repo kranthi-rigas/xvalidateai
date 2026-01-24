@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createComplianceProject } from "../../../apiIntegration/compliance";
 import AwsButton from "../../common/AwsButton";
 import useToast from "../../../hooks/useToast";
+import CreditInfoNote from "./CreditInfoNote";
 
 /* ---------- FIELD RENDERER ---------- */
 function renderField(
@@ -359,6 +360,8 @@ export default function CreateProjectModal({
               disabled={!isValid || saving}
             />
           </div>
+          {/* 🔴 Credit info */}
+          <CreditInfoNote />
         </div>
       </div>
     </>
