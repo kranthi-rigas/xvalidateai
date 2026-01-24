@@ -25,8 +25,10 @@ export default function GoogleLoginPage() {
         const res = await googleLogin(code);
         localStorage.setItem("access_token", res.access_token);
         localStorage.setItem("refresh_token", res.refresh_token);
-        localStorage.setItem("user_info", res.user);
-          navigate("/dashboard");
+        localStorage.setItem("user_info", JSON.stringify(res.user));
+        refreshUserPlan?.();
+        refreshUserPlan();
+        navigate("/dashboard");
       } catch (err) {
         show(err.message || "Google login failed", { type: "error" });
         console.error("Google login error", err);
