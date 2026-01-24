@@ -4,6 +4,7 @@ import {
   fetchUserProfile,
   updateUserProfile,
 } from "../../../apiIntegration/auth.js";
+import AwsButton from "@/components/common/AwsButton";
 
 const flagEmoji = (code) =>
   code
@@ -11,7 +12,7 @@ const flagEmoji = (code) =>
         ...code
           .toUpperCase()
           .split("")
-          .map((c) => 127397 + c.charCodeAt())
+          .map((c) => 127397 + c.charCodeAt()),
       )
     : "";
 
@@ -78,7 +79,7 @@ export default function EditProfile({ activeTab }) {
     const loadCountries = async () => {
       try {
         const res = await fetch(
-          "https://restcountries.com/v3.1/all?fields=name,idd,cca2"
+          "https://restcountries.com/v3.1/all?fields=name,idd,cca2",
         );
         const data = await res.json();
 
@@ -88,7 +89,7 @@ export default function EditProfile({ activeTab }) {
               c?.idd?.root &&
               c?.name?.common &&
               typeof c?.name?.common === "string" &&
-              c?.cca2
+              c?.cca2,
           )
           .map((c) => ({
             label: c.name.common,
@@ -309,9 +310,6 @@ export default function EditProfile({ activeTab }) {
 
         <div className="col-auto">
           <div className="text-16 fw-500 text-dark-1">Your avatar</div>
-          <div className="text-14 lh-1 mt-10">
-            PNG or JPG no bigger than 800px wide and tall.
-          </div>
 
           <div className="d-flex x-gap-10 y-gap-10 flex-wrap pt-15">
             {/* Upload */}
@@ -449,17 +447,13 @@ export default function EditProfile({ activeTab }) {
           </div>
 
           <div className="col-12">
-            <button
+            <AwsButton
               type="submit"
-              className="button -md -purple-1 text-white"
+              label="Update Profile"
+              isLoading={saving}
               disabled={isFormInvalid}
-              style={{
-                opacity: isFormInvalid ? 0.6 : 1,
-                cursor: isFormInvalid ? "not-allowed" : "pointer",
-              }}
-            >
-              {saving ? "Updating..." : "Update Profile"}
-            </button>
+              size="lg"
+            />
           </div>
         </form>
 

@@ -2,6 +2,7 @@ import { Padding } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
+import AwsButton from "@/components/common/AwsButton";
 
 const pricingPlans = [
     {
@@ -106,6 +107,7 @@ export default function DashboardPricing() {
         }
     };
 
+<<<<<<< Updated upstream
 
 
     return (
@@ -123,6 +125,51 @@ export default function DashboardPricing() {
 
                 <div className="row y-gap-30">
                     <div className="col-12">
+=======
+  return (
+    <div className="dashboard__content">
+      <div className="row y-gap-30">
+        <div className="col-12">
+          <div
+            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
+            style={{ padding: "1rem" }}
+          >
+            <div className="py-20 px-15 md:py-30 md:px-30">
+              {/* Pricing Cards */}
+              <div className="row y-gap-30">
+                {pricingPlans.map((plan, index) => (
+                  <div
+                    className="col-12 col-sm-12 col-md-6 col-lg-4"
+                    key={plan.id}
+                    data-aos="fade-up"
+                    data-aos-delay={index * 100}
+                  >
+                    <div
+                      className="priceCard -type-1 rounded-16 h-100 bg-white border-light shadow-2"
+                      style={{
+                        position: "relative",
+                        overflow: "hidden",
+                        transition: "all 0.3s ease",
+                        transform: "scale(1)",
+                        display: "flex",
+                        flexDirection: "column",
+                        border: isCurrentPlan(plan.id)
+                          ? "2px solid #6440FB"
+                          : undefined,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-8px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 20px 40px rgba(0,0,0,0.12)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "";
+                      }}
+                    >
+                      {/* Current Plan Badge */}
+                      {isCurrentPlan(plan.id) && (
+>>>>>>> Stashed changes
                         <div
                             className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
                             style={{ padding: "1rem" }}
@@ -240,6 +287,7 @@ export default function DashboardPricing() {
                                                         )}
                                                     </div>
 
+<<<<<<< Updated upstream
                                                     {/* CTA Button */}
                                                     <div className="mt-25">
                                                         {isCurrentPlan(plan.id) ? (
@@ -285,6 +333,39 @@ export default function DashboardPricing() {
                                                             </button>
                                                         )}
                                                     </div>
+=======
+                        {/* CTA Button */}
+                        <div className="mt-25">
+                          {isCurrentPlan(plan.id) ? (
+                            <AwsButton
+                              label="Current Plan"
+                              disabled
+                              fullWidth
+                              size="lg"
+                            />
+                          ) : isPlanBelowCurrent(plan.id) ? (
+                            <AwsButton
+                              label={
+                                plan.id === "free"
+                                  ? "Free Plan"
+                                  : plan.buttonText
+                              }
+                              disabled
+                              fullWidth
+                              size="lg"
+                            />
+                          ) : plan.id === "free" ? (
+                            <div className="py-25" />
+                          ) : (
+                            <AwsButton
+                              label={plan.buttonText}
+                              onClick={() => handlePlanClick(plan)}
+                              fullWidth
+                              size="lg"
+                            />
+                          )}
+                        </div>
+>>>>>>> Stashed changes
 
                                                     {/* Features List */}
                                                     <div className="mt-25" style={{ flex: 1 }}>
@@ -325,6 +406,7 @@ export default function DashboardPricing() {
                                                                         >
                                     ✕
                                   </span>
+<<<<<<< Updated upstream
                                                                     )}
                                                                     <span
                                                                         className={`text-14 ${feature.included
@@ -337,6 +419,21 @@ export default function DashboardPricing() {
                                                                                 : "line-through",
                                                                         }}
                                                                     >
+=======
+                                )}
+                                <span
+                                  className={`text-14 ${
+                                    feature.included
+                                      ? "text-dark-1"
+                                      : "text-light-1"
+                                  }`}
+                                  style={{
+                                    textDecoration: feature.included
+                                      ? "none"
+                                      : "line-through",
+                                  }}
+                                >
+>>>>>>> Stashed changes
                                   {feature.text}
                                 </span>
                                                                 </div>
