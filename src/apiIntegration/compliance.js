@@ -49,7 +49,7 @@ export async function createComplianceProject(payload) {
 export async function updateComplianceTool(projectId, payload) {
   const body = {
     name: payload.projectName,
-    desc: payload.description,
+    description: payload.description,
     url: payload.url,
   };
 
