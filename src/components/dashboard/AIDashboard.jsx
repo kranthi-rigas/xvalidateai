@@ -6,12 +6,14 @@ import {
     RadialLinearScale,
     PointElement,
     LineElement,
+    LineController,
     Filler,
     Tooltip,
     Legend,
     CategoryScale,
     LinearScale,
     BarElement,
+    BarController,
     ArcElement,
 } from 'chart.js';
 import { Radar, Bar, Doughnut, Scatter } from 'react-chartjs-2';
@@ -21,7 +23,7 @@ import ListTable from "@/components/common/ListTable.jsx";
 import PageLoader from "@/components/common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ArcElement);
+ChartJS.register(RadialLinearScale, PointElement, LineElement, LineController, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, BarController, ArcElement);
 
 export default function AIDashboard() {
     const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
