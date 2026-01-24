@@ -21,6 +21,7 @@ function renderField(
   textarea = false,
   placeholder = "",
   required = false,
+  disabled = false,
 ) {
   const [focused, setFocused] = useState(false);
   const hasError = (touched[name] || submitted) && !!errors[name];
@@ -59,26 +60,43 @@ function renderField(
           name={name}
           value={form[name]}
           placeholder={placeholder}
-          onChange={handleChange}
-          onFocus={() => setFocused(true)}
+          onChange={disabled ? undefined : handleChange}
+          onFocus={() => !disabled && setFocused(true)}
           onBlur={(e) => {
-            setFocused(false);
-            handleBlur(e);
+            if (!disabled) {
+              setFocused(false);
+              handleBlur(e);
+            }
           }}
-          style={{ ...baseStyle, height: 90 }}
+          disabled={disabled}
+          style={{
+            ...baseStyle,
+            height: 90,
+            background: disabled ? "#F3F4F6" : "#F9FAFB",
+            color: disabled ? "#6B7280" : "#111827",
+            cursor: disabled ? "not-allowed" : "text",
+          }}
         />
       ) : (
         <input
           name={name}
           value={form[name]}
           placeholder={placeholder}
-          onChange={handleChange}
-          onFocus={() => setFocused(true)}
+          onChange={disabled ? undefined : handleChange}
+          onFocus={() => !disabled && setFocused(true)}
           onBlur={(e) => {
-            setFocused(false);
-            handleBlur(e);
+            if (!disabled) {
+              setFocused(false);
+              handleBlur(e);
+            }
           }}
-          style={baseStyle}
+          disabled={disabled}
+          style={{
+            ...baseStyle,
+            background: disabled ? "#F3F4F6" : "#F9FAFB",
+            color: disabled ? "#6B7280" : "#111827",
+            cursor: disabled ? "not-allowed" : "text",
+          }}
         />
       )}
 
@@ -102,6 +120,7 @@ export default function EditProjectModal({
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
   const show = useToast();
+  const isAuditor = roles.includes("AUDITOR");
 
   /* ---------- INITIAL FORM ---------- */
   const initialFormRef = useRef({
@@ -133,13 +152,21 @@ export default function EditProjectModal({
   /* ---------- VALIDATION ---------- */
   const validate = (data = form) => {
     const errs = {};
+
     if (!data.projectName.trim()) errs.projectName = "Tool Name is required";
+
     if (!data.description.trim()) errs.description = "Description is required";
-    if (!data.url.trim()) errs.url = "Tool URL is required";
-    else if (!/^https?:\/\//i.test(data.url))
-      errs.url = "URL must start with http or https";
+
+    // ✅ URL validation ONLY for Admin
+    if (isAdmin) {
+      if (!data.url.trim()) errs.url = "Tool URL is required";
+      else if (!/^https?:\/\//i.test(data.url))
+        errs.url = "URL must start with http or https";
+    }
+
     if (!data.justification.trim())
       errs.justification = "Reason for Adoption is required";
+
     return errs;
   };
 
@@ -186,6 +213,8 @@ export default function EditProjectModal({
     setSaving(true);
 
     try {
+      // 🔐 Auditor: remove url from payload
+      const payload = isAuditor ? (({ url, ...rest }) => rest)(form) : form;
       await updateComplianceTool(project.project_id, form);
 
       show("Tool updated successfully!", { type: "success" });
@@ -275,6 +304,13 @@ export default function EditProjectModal({
           false,
           "https://example.com",
           true,
+          isAuditor,
+        )}
+
+        {isAuditor && (
+          <p style={{ fontSize: 12, color: "#6B7280", marginTop: -10 }}>
+            Tool URL can only be modified by an Admin
+          </p>
         )}
 
         {renderField(

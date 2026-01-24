@@ -108,7 +108,7 @@ export default function CreateProjectModal({
   /* ---------- ROLE ---------- */
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
-  const isInstructor = roles.includes("INSTRUCTOR");
+  const isAuditor = roles.includes("AUDITOR");
 
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
@@ -219,11 +219,11 @@ export default function CreateProjectModal({
     try {
       await createComplianceProject({
         ...form,
-        status: isInstructor ? "requested" : "pending_assessment",
+        status: isAuditor ? "requested" : "pending_assessment",
       });
 
       show(
-        isInstructor
+        isAuditor
           ? "Request submitted successfully!"
           : "Tool created successfully!",
         { type: "success" },
@@ -349,10 +349,10 @@ export default function CreateProjectModal({
             <AwsButton
               label={
                 saving
-                  ? isInstructor
+                  ? isAuditor
                     ? "Requesting…"
                     : "Saving…"
-                  : isInstructor
+                  : isAuditor
                     ? "Request"
                     : "Save & Evaluate"
               }
