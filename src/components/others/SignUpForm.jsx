@@ -202,7 +202,6 @@ export default function SignUpForm() {
         navigate("/auth?mode=login");
       }, 2000);
     } catch (err) {
-      setError(err.message || "Signup failed");
       show(err.message || "Signup failed", { type: "error" });
     } finally {
       setLoading(false);
