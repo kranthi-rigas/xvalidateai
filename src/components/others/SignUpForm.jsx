@@ -4,7 +4,8 @@ import { signup } from "../../apiIntegration/auth";
 import { useCountryPhone } from "../../data/useCountryPhone";
 import CountrySelect from "../common/CountrySelect";
 import PhoneInput from "../common/PhoneInput";
-import { Button, GoogleLoginButton } from "../commonComponents";
+import AwsButton from "@/components/common/AwsButton";
+import { GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
@@ -378,11 +379,11 @@ export default function SignUpForm() {
                 </div>
 
                 <div className="col-12">
-                  <Button
+                  <AwsButton
                     type="submit"
-                    label={loading ? "Registering..." : "Register"}
-                    variant="primary"
-                    disabled={loading}
+                    label="Register"
+                    isLoading={loading}
+                    fullWidth
                   />
                 </div>
               </form>

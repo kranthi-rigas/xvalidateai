@@ -18013,7 +18013,7 @@ button.button:hover {
   padding: 13px 0;
   border: none;
   border-radius: 10px;
-  background: #6c4dfd;
+  background: var(--color-blue);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
