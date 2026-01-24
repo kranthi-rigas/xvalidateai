@@ -258,7 +258,7 @@ export default function DashboardBilling() {
                       )}
                       {voucherApplied && voucherData && (
                         // <div className="text-yellow-1 text-14 mt-10" style={{ color: "#FFD700" }}>
-                        <div className=" text-14 mt-10" style={{ color: "#06A022" }}>
+                        <div className=" text-14 mt-10" style={{ color: COLORS.success }}>
                           ✓ Voucher verified! {voucherData.plan_name} plan (
                           {voucherData.credits} credits)
                         </div>
@@ -397,10 +397,10 @@ export default function DashboardBilling() {
                     {voucherApplied && voucherData && (
                       <>
                         <div className="d-flex justify-between items-center mb-10">
-                          <span className="text-15 " style={{ color: "#06A022" }}>
+                          <span className="text-15 " style={{ color: COLORS.success }}>
                             Voucher Discount
                           </span>
-                          <span className="text-16 " style={{ color: "#06A022" }}>
+                          <span className="text-16 " style={{ color: COLORS.success }}>
                             {plan.price !== null && voucherData.price !== null
                               ? `-$${(plan.price - voucherData.price).toFixed(
                                 2
@@ -409,11 +409,11 @@ export default function DashboardBilling() {
                           </span>
                         </div>
                         <div className="mt-10 px-10 py-8 rounded-6 bg-green-3">
-                          <div className="text-12 " style={{ color: "#06A022" }}>
+                          <div className="text-12 " style={{ color: COLORS.success }}>
                             <strong>{voucherData.plan_name}</strong> - Voucher
                             verified
                           </div>
-                          <div className="text-11 " style={{ color: "#06A022" }} mt-5>
+                          <div className="text-11 " style={{ color: COLORS.success }} mt-5>
                             $ {voucherData.credits} credits will be activated on
                             purchase
                           </div>

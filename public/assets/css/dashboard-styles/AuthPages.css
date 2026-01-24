@@ -21,8 +21,8 @@
 
 .auth-form input:focus,
 .sign-up input:focus {
-  border-color: #576aff;
-  box-shadow: 0 0 0 3px rgba(87, 106, 255, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
   transform: translateY(-1px);
 }
 
@@ -85,7 +85,7 @@
   right: 50px;
   top: 50%;
   transform: translateY(-50%);
-  color: #dc3545;
+  color: var(--color-error);
   font-size: 18px;
   font-weight: bold;
 }
@@ -95,7 +95,7 @@
   right: 50px;
   top: 50%;
   transform: translateY(-50%);
-  color: #28a745;
+  color: var(--color-success);
   font-size: 18px;
   font-weight: bold;
 }

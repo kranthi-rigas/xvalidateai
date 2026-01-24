@@ -168,16 +168,18 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           {!collapsed ? (
             <Link to="/dashboard">
               <img
+                className="logo"
                 src="/assets/img/general/logo-dark.png"
                 alt="Academy51 Logo"
-                style={{ maxWidth: 130, height: "auto" }}
+                style={{ maxWidth: 160, height: "auto", objectFit: "contain" }}
               />
             </Link>
           ) : (
             <img
+              className="logo-short"
               src="/assets/img/general/logo-short.png"
               alt="Academy51 Short Logo"
-              style={{ maxWidth: 32, height: "auto" }}
+              style={{ maxWidth: 40, height: "auto", objectFit: "contain" }}
             />
           )}
           {/* Toggle button - visible on desktop */}

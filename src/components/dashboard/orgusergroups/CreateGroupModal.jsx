@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { COLORS } from "../../../styles/colors";
 import { getUserAttributes } from "../../../apiIntegration/organization";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
@@ -149,7 +150,7 @@ export default function CreateGroupModal({ onClose, onCreate }) {
 
         {/* GROUP NAME */}
         <label style={{ fontWeight: 600 }}>
-          Group Name <span style={{ color: "#DC2626" }}>*</span>
+          Group Name <span style={{ color: COLORS.error }}>*</span>
         </label>
         <input
           ref={inputRef}
@@ -162,12 +163,12 @@ export default function CreateGroupModal({ onClose, onCreate }) {
           style={fieldStyle("name")}
         />
         {errors.name && focused !== "name" && (
-          <p style={{ color: "#DC2626", fontSize: 12 }}>{errors.name}</p>
+          <p style={{ color: COLORS.error, fontSize: 12 }}>{errors.name}</p>
         )}
 
         {/* DESCRIPTION */}
         <label style={{ fontWeight: 600, marginTop: 18, display: "block" }}>
-          Description <span style={{ color: "#DC2626" }}>*</span>
+          Description <span style={{ color: COLORS.error }}>*</span>
         </label>
         <textarea
           name="description"
@@ -179,7 +180,7 @@ export default function CreateGroupModal({ onClose, onCreate }) {
           style={{ ...fieldStyle("description"), height: 60 }}
         />
         {(touched.description || submitted) && errors.description && (
-          <p style={{ color: "#DC2626", fontSize: 12 }}>{errors.description}</p>
+          <p style={{ color: COLORS.error, fontSize: 12 }}>{errors.description}</p>
         )}
 
         {/* PERMISSIONS */}

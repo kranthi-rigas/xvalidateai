@@ -1,4 +1,5 @@
 import React from "react";
+import { COLORS } from "../../../styles/colors";
 import { useSearchParams } from "react-router-dom";
 
 import Preloader from "@/components/common/Preloader";
@@ -31,7 +32,7 @@ export default function AuthPage() {
 
       <div
         className="py-30 border-top-light-15"
-        style={{ backgroundColor: "#202020" }}
+        style={{ backgroundColor: COLORS.bgDark }}
       >
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">

@@ -167,7 +167,7 @@ export default function ResetPassword() {
       {/* ✅ REUSED FOOTER */}
       <div
         className="py-30 border-top-light-15"
-        style={{ backgroundColor: "#202020" }}
+        style={{ backgroundColor: COLORS.bgDark }}
       >
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">

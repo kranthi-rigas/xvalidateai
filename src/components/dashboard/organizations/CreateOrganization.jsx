@@ -3,6 +3,7 @@ import AwsButton from "../../common/AwsButton";
 import { createOrganization } from "../../../apiIntegration/organization";
 import { fetchUserProfile } from "../../../apiIntegration/auth";
 import useToast from "../../../hooks/useToast";
+import { COLORS } from "../../../styles/colors";
 
 /* ---------- FIELD RENDERER (UNCHANGED) ---------- */
 function renderField(
@@ -47,7 +48,7 @@ function renderField(
     <div style={{ marginBottom: 20 }}>
       <label style={{ fontWeight: 600, marginBottom: 6, display: "block" }}>
         {label}
-        {required && <span style={{ color: "#DC2626", marginLeft: 4 }}>*</span>}
+        {required && <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>}
       </label>
 
       {textarea ? (
@@ -89,7 +90,7 @@ function renderField(
       )}
 
       {hasError && (
-        <p style={{ color: "#DC2626", fontSize: 12, marginTop: 4 }}>
+        <p style={{ color: COLORS.error, fontSize: 12, marginTop: 4 }}>
           {errors[name]}
         </p>
       )}

@@ -25,9 +25,9 @@ body {
   font-weight: 600;
 }
 
-.status.draft { background: #eef2ff; color: #2F5FD9; }
-.status.submitted { background: #fff7ed; color: #c2410c; }
-.status.published { background: #ecfdf5; color: #047857; }
+.status.draft { background: var(--color-purple-3); color: var(--color-primary); }
+.status.submitted { background: var(--color-warning-bg); color: var(--color-warning-dark); }
+.status.published { background: var(--color-success-bg); color: var(--color-success-dark); }
 
 .dropzone {
   margin: 24px 0;
@@ -42,7 +42,7 @@ body {
   display: inline-block;
   margin-top: 12px;
   padding: 8px 16px;
-  background: #2F5FD9;
+  background: var(--color-primary);
   color: white;
   border-radius: 6px;
   cursor: pointer;
@@ -98,7 +98,7 @@ button {
 }
 
 button.primary {
-  background: #2F5FD9;
+  background: var(--color-primary);
   color: white;
 }
 
@@ -135,20 +135,20 @@ button.secondary {
 
 /* Draft */
 .status-pill.draft {
-  background: #eef2ff;
-  color: #2F5FD9;
+  background: var(--color-purple-3);
+  color: var(--color-primary);
 }
 
 /* Submitted */
 .status-pill.submitted {
-  background: #fff7ed;
-  color: #c2410c;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-dark);
 }
 
 /* Published */
 .status-pill.published {
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--color-success-bg);
+  color: var(--color-success-dark);
 }
 
 .header-actions {
@@ -184,7 +184,7 @@ button.ghost {
 }
 
 .step-line.completed {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .step-label {
@@ -198,13 +198,13 @@ button.ghost {
 }
 
 .step-label.active {
-  background: #2F5FD9;
+  background: var(--color-primary);
   color: white;
 }
 
 .step-label.completed {
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--color-success-bg);
+  color: var(--color-success-dark);
 }
 
 .step-circle {
@@ -218,13 +218,13 @@ button.ghost {
 }
 
 .step-circle.active {
-  background: #2F5FD9;
-  border-color: #2F5FD9;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .step-circle.completed {
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--color-success);
+  border-color: var(--color-success);
 }
 
 .tick {
@@ -246,15 +246,15 @@ button.ghost {
 }
 
 .banner.success {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #10b981;
+  background: var(--color-success-bg);
+  color: var(--color-success-dark);
+  border: 1px solid var(--color-success);
 }
 
 .banner.error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #ef4444;
+  background: var(--color-error-bg);
+  color: var(--color-error-dark);
+  border: 1px solid var(--color-error);
 }
 
 /* ============================================

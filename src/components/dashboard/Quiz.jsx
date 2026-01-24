@@ -502,7 +502,7 @@ export default function Quiz() {
                 <h5 className="text-17 mb-20">Progress</h5>
                 <div
                   className="progress-bar w-1/1"
-                  style={{ height: 8, background: "#f1f1f1", borderRadius: 6 }}
+                  style={{ height: 8, background: COLORS.bgSecondary, borderRadius: 6 }}
                 >
                   <div
                     style={{

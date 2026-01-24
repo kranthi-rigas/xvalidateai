@@ -1,10 +1,10 @@
 
 
 .tabActive{
-    color: var(--color-purple-1) !important;
+    color: var(--color-primary) !important;
     font-weight: 500;
     background-color: var(--color-purple-3);
-    
+
 }
 
 
@@ -112,7 +112,7 @@
 
 
 .swiper-pagination-bullet {
-    background-color: var(--color-purple-1) !important;
+    background-color: var(--color-primary) !important;
   }
 
 .customSized{
@@ -164,10 +164,10 @@
     }
     --swiper-pagination-color: white !important;
     .swiper-pagination-bullet-active {
-        
-        
-        background-color: var(--color-purple-1) !important ;
-        
+
+
+        background-color: var(--color-primary) !important ;
+
       }
 }
 .pagination-white-dot{
@@ -177,10 +177,10 @@
     }
     --swiper-pagination-color: white !important;
     .swiper-pagination-bullet-active {
-        
-        
-        background-color: var(--color-purple-1) !important ;
-        
+
+
+        background-color: var(--color-primary) !important ;
+
       }
 }
 .custom-transition {
@@ -200,15 +200,15 @@
 }
 
 .activeMenu{
-    color: var(--color-purple-1) !important;
-    
+    color: var(--color-primary) !important;
+
 }
 .inActiveMenu{
     &:hover{
-        color: var(--color-purple-1) !important;
+        color: var(--color-primary) !important;
 
     }
-   
+
 }
 .inActiveMenuTwo{
     
@@ -411,7 +411,7 @@
     text-decoration: none !important;
     color:inherit !important;
     &:hover{
-        color: var(--color-purple-1) !important;
+        color: var(--color-primary) !important;
     }
 
 }
@@ -503,7 +503,7 @@
    ERROR TEXT (VISIBLE)
    =============================== */
 .auth-error-text {
-  color: #dc2626;        
+  color: var(--color-error, #da1e28);
   font-size: 1rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
@@ -518,7 +518,7 @@
 }
 
 .email-form h3.error {
-  color: #dc2626;
+  color: var(--color-error, #da1e28);
 }
 /* ===============================
    REDIRECT LOADER
@@ -534,12 +534,12 @@
 
 .redirect-text {
   font-size: 0.95rem;
-  color: #374151;
+  color: var(--color-text-primary, #161616);
 }
 /* Subtext under headings */
 .auth-subtext {
   font-size: 1rem;
-  color: #5b6472;
+  color: var(--color-text-secondary, #525252);
   line-height: 1.5;
 }
 
@@ -573,13 +573,13 @@
 }
 
 .email-input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: var(--color-primary, #0043ce);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha-15, rgba(0, 67, 206, 0.15));
 }
 
 /* Success text */
 .text-success {
-  color: #16a34a;
+  color: var(--color-success, #198038);
 }
 
 .mt-16 {

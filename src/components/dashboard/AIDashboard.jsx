@@ -19,6 +19,7 @@ import Modal from "@/components/commonComponents/ModalPopUp";
 import ListTable from "@/components/common/ListTable.jsx";
 import PageLoader from "@/components/common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
+import { COLORS } from "@/styles/colors";
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ArcElement);
 
@@ -378,7 +379,7 @@ export default function AIDashboard() {
 
     const renderHighRiskCell = (row, key) => {
         switch (key) {
-            case "project_name": return <span style={{ fontWeight: 600, color: "#dc2626" }}>{row.project_name}</span>;
+            case "project_name": return <span style={{ fontWeight: 600, color: COLORS.error }}>{row.project_name}</span>;
             case "developer": return row.developer || "—";
             case "overall_score": return <span style={{ fontWeight: 600, color: row.overall_score < 50 ? "#dc2626" : "#f59e0b" }}>{row.overall_score?.toFixed(0)}</span>;
             case "privacy_safety": return <span style={{ fontWeight: 600, color: row.privacy_safety < 50 ? "#dc2626" : "#f59e0b" }}>{row.privacy_safety}</span>;
@@ -392,7 +393,7 @@ export default function AIDashboard() {
         switch (key) {
             case "tool_name": return <strong>{row.tool_name}</strong>;
             case "developer": return row.developer || "—";
-            case "url": return row.url ? <a href={row.url} target="_blank" rel="noopener noreferrer" style={{ color: "#667eea" }}>{row.url}</a> : "—";
+            case "url": return row.url ? <a href={row.url} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary }}>{row.url}</a> : "—";
             case "overall_score":
                 const score = row.overall_score?.toFixed(0);
                 const scoreColor = score >= 80 ? "#22c55e" : score >= 60 ? "#3498db" : score >= 40 ? "#f59e0b" : "#ef4444";
@@ -502,8 +503,8 @@ export default function AIDashboard() {
                 <hr/>
                 <br/>
                 <div className="row">
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
+                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: COLORS.white, padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: COLORS.textPrimary, borderBottom: `2px solid ${COLORS.borderLight}`, paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
+                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: COLORS.white, padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: COLORS.textPrimary, borderBottom: `2px solid ${COLORS.borderLight}`, paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
                 </div>
                 <div className="row">
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>
@@ -513,8 +514,8 @@ export default function AIDashboard() {
 
             {/* TABLES */}
             {highRiskList.length > 0 && (
-                <div className="normal-container-styles" style={{ backgroundColor: "#fff3cd", padding: "20px" }}>
-                    <h4 className="d-flex mb-20 justify-center" style={{ color: "#92400e" }}>High-Risk Tools Requiring Immediate Attention</h4>
+                <div className="normal-container-styles" style={{ backgroundColor: COLORS.warningLight, padding: "20px" }}>
+                    <h4 className="d-flex mb-20 justify-center" style={{ color: COLORS.textPrimary }}>High-Risk Tools Requiring Immediate Attention</h4>
                     <ListTable columns={highRiskColumns} data={highRiskList} rowKey="project_id" renderCell={renderHighRiskCell} sortConfig={sortConfig} onSort={handleSort} />
                 </div>
             )}

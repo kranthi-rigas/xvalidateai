@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { COLORS } from "../../styles/colors";
 
 export default function PhoneInput({ phone, phoneCode, onChange, error }) {
   const [focused, setFocused] = useState(false);
@@ -49,7 +50,7 @@ export default function PhoneInput({ phone, phoneCode, onChange, error }) {
       </div>
 
       {error && (
-        <p style={{ color: "#DC2626", fontSize: 13, marginTop: 6 }}>
+        <p style={{ color: COLORS.error, fontSize: 13, marginTop: 6 }}>
           {error}
         </p>
       )}

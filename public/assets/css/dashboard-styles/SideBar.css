@@ -47,6 +47,33 @@
 .sidebar-logo-section {
   border-bottom: 1px solid #eee;
   margin-bottom: 15px;
+  padding: 15px 0;
+}
+
+/* Logo styling */
+.sidebar-logo-section .logo {
+  display: block;
+  max-width: 160px;
+  height: auto;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.sidebar-logo-section .logo-short {
+  display: block;
+  max-width: 40px;
+  height: auto;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* Ensure logo is visible when sidebar is collapsed */
+.sidebar.-dashboard.-is-collapsed .logo-short {
+  display: block !important;
+}
+
+.sidebar.-dashboard.-is-collapsed .logo {
+  display: none;
 }
 
 /* Sidebar toggle button - visible on desktop only */

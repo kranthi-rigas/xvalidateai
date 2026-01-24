@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { COLORS } from "../../styles/colors";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyEmail } from "../../apiIntegration/auth";
 import AwsButton from "../common/AwsButton";
@@ -74,7 +75,7 @@ export default function VerifyEmail() {
 
           {status === "success" && (
             <>
-              <h3 className="text-center mb-10" style={{ color: "#16A34A" }}>
+              <h3 className="text-center mb-10" style={{ color: COLORS.success }}>
                 Email verified successfully
               </h3>
 
@@ -103,7 +104,7 @@ export default function VerifyEmail() {
 
           {status === "already_verified" && (
             <>
-              <h3 className="text-center mb-10" style={{ color: "#2563EB" }}>
+              <h3 className="text-center mb-10" style={{ color: COLORS.primary }}>
                 Email already verified
               </h3>
 
@@ -159,7 +160,7 @@ export default function VerifyEmail() {
       {/* ✅ REUSED FOOTER */}
       <div
         className="py-30 border-top-light-15"
-        style={{ backgroundColor: "#202020" }}
+        style={{ backgroundColor: COLORS.bgDark }}
       >
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">

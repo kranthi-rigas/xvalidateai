@@ -5,6 +5,7 @@ import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import ProjectDetails from "./ProjectDetails";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { COLORS } from "../../../styles/colors";
 
 import {
   getComplianceProjects,
@@ -132,7 +133,7 @@ export default function AICompliance() {
             animation: "spin 0.7s linear infinite",
           }}
         />
-        <div style={{ color: "#2F5FD9", fontWeight: 600 }}>
+        <div style={{ color: COLORS.primary, fontWeight: 600 }}>
           Loading Assessment Report…
         </div>
 

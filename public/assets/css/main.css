@@ -8593,7 +8593,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .sidebar.-dashboard .sidebar__item.-is-active {
   background-color: var(--color-blue-3);
-  color: #4075FB !important;
+  color: var(--color-primary) !important;
   position: relative;
 }
 
@@ -8605,7 +8605,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-50%);
   width: 6px;
   height: 30px;
-  background-color: #576AFF; /* dark blue */
+  background-color: var(--color-primary); /* dark blue */
   border-radius: 4px;
 }
 
