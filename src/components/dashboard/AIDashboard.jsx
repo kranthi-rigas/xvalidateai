@@ -1,5 +1,6 @@
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import React, { useEffect, useState, useMemo } from "react";
+import StatCard from "./StatCard";
 import {
     Chart as ChartJS,
     RadialLinearScale,
@@ -412,45 +413,39 @@ export default function AIDashboard() {
 
     return (
         <div className="dashboard__content">
-            {/* EXECUTIVE SUMMARY CARDS WITH SVG */}
+            {/* MODERN STAT CARDS */}
             <div className="normal-container-styles">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Total Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.total_projects ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7L12 12L22 7L12 2Z" /><path d="M2 17L12 22L22 17" /><path d="M2 12L12 17L22 12" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>High-Risk Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.high_risk_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Approved Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.approved_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Rejected Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.rejected_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
-                        </div>
-                    </div>
+                <div className="stats-grid">
+                    <StatCard
+                        label="Total Scanned Tools"
+                        value={dashboardAnalytics.overview.total_projects ?? 0}
+                        icon="lucide:database"
+                        iconColor="primary"
+                        trend="Tools submitted for Evaluation"
+                    />
+                    <StatCard
+                        label="High Risk Tools"
+                        value={dashboardAnalytics.overview.high_risk_count ?? 0}
+                        icon="lucide:alert-octagon"
+                        iconColor="destructive"
+                        trend="Requires attention"
+                    />
+                    <StatCard
+                        label="Approved Tools"
+                        value={dashboardAnalytics.overview.approved_count?? 0}
+                        icon="lucide:shield-check"
+                        iconColor="success"
+                        trend="Ready for usage"
+                    />
+                    <StatCard
+                        label="Pending Review"
+                        value={dashboardAnalytics.overview.total_projects - dashboardAnalytics.overview.approved_count - dashboardAnalytics.overview.rejected_count - dashboardAnalytics.overview.high_risk_count}
+                        icon="lucide:clock"
+                        iconColor="warning"
+                        trend="Tool awaiting review"
+                        trendDirection="neutral"
+                    />
+                    
                 </div>
 
                 {/* PILLAR GAUGE CHARTS */}
