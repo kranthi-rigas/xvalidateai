@@ -304,13 +304,6 @@ export default function EditProjectModal({
           false,
           "https://example.com",
           true,
-          isAuditor,
-        )}
-
-        {isAuditor && (
-          <p style={{ fontSize: 12, color: "#6B7280", marginTop: -10 }}>
-            Tool URL can only be modified by an Admin
-          </p>
         )}
 
         {renderField(
