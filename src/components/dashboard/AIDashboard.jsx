@@ -468,6 +468,165 @@ export default function AIDashboard() {
                 </Modal>
             )}
 
+            {/* MODERN GROUPED HISTOGRAM - SCORE FACTORS BY TOOL */}
+            <div className="normal-container-styles">
+                <br/>
+                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <h4 className="d-flex mb-20 justify-center" > Comprehensive Tool Performance Analysis</h4>
+                <p style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>
+                        Detailed breakdown of evaluation scores across all assessment pillars
+                    </p>
+                <hr/>
+                <br/>
+                </div>
+                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div style={{ height: '450px', overflowX: 'auto', padding: '20px' }}>
+                        <Bar
+                            data={{
+                                labels: (dashboardAnalytics?.tool_kpis || []).map(t => t.tool_name),
+                                datasets: [
+                                    {
+                                        label: 'Privacy & Safety',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.privacy_safety_score),
+                                        backgroundColor: 'rgba(0, 168, 107, 0.85)',
+                                        hoverBackgroundColor: 'rgba(0, 168, 107, 1)',
+                                        borderColor: '#00A86B',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Instructional Impact',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.instructional_impact_score),
+                                        backgroundColor: 'rgba(48, 79, 253, 0.85)',
+                                        hoverBackgroundColor: 'rgba(48, 79, 253, 1)',
+                                        borderColor: '#304FFD',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Usability',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.usability_score),
+                                        backgroundColor: 'rgba(155, 138, 251, 0.85)',
+                                        hoverBackgroundColor: 'rgba(155, 138, 251, 1)',
+                                        borderColor: '#9B8AFB',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Data Quality',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.data_quality_score),
+                                        backgroundColor: 'rgba(255, 150, 93, 0.85)',
+                                        hoverBackgroundColor: 'rgba(255, 150, 93, 1)',
+                                        borderColor: '#FF965D',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Overall Score',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.overall_score),
+                                        type: 'line',
+                                        borderColor: '#304FFD',
+                                        backgroundColor: 'rgba(255, 150, 93, 0.1)',
+                                        borderWidth: 3,
+                                        pointRadius: 5,
+                                        pointHoverRadius: 7,
+                                        pointBackgroundColor: '#304FFD',
+                                        pointBorderColor: '#fff',
+                                        pointBorderWidth: 2,
+                                        pointHoverBackgroundColor: '#304FFD',
+                                        pointHoverBorderColor: '#fff',
+                                        tension: 0.4,
+                                        fill: false,
+                                        order: 0
+                                    }
+                                ]
+                            }}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.9,
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        },
+                                        ticks: {
+                                            font: { size: 12, weight: '500' },
+                                            color: '#64748b',
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: {
+                                            color: '#f1f5f9',
+                                            drawBorder: false
+                                        },
+                                        ticks: {
+                                            font: { size: 12 },
+                                            color: '#64748b',
+                                            callback: (value) => value + '%'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Score',
+                                            font: { size: 14, weight: 'bold' },
+                                            color: '#0f172a'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            usePointStyle: true,
+                                            pointStyle: 'circle',
+                                            padding: 20,
+                                            font: { size: 13, weight: '500' },
+                                            color: '#475569'
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                        titleColor: '#fff',
+                                        bodyColor: '#e2e8f0',
+                                        padding: 12,
+                                        cornerRadius: 8,
+                                        titleFont: { size: 14, weight: 'bold' },
+                                        bodyFont: { size: 13 },
+                                        displayColors: true,
+                                        callbacks: {
+                                            title: (context) => {
+                                                const tool = dashboardAnalytics?.tool_kpis?.[context[0].dataIndex];
+                                                return tool?.tool_name || '';
+                                            },
+                                            afterTitle: (context) => {
+                                                const tool = dashboardAnalytics?.tool_kpis?.[context[0].dataIndex];
+                                                return tool ? `Overall Score: ${tool.overall_score}/100` : '';
+                                            },
+                                            label: (context) => {
+                                                return ` ${context.dataset.label}: ${context.parsed.y}/100`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* CHARTS */}
             <div className="normal-container-styles">
                 <br/>
@@ -482,26 +641,13 @@ export default function AIDashboard() {
             </div>
             <div className="normal-container-styles">
                 <br/>
-                <h4 className="d-flex mb-20 justify-center" > Overall Score Distribution</h4>
-                <hr/>
-                <br/>
-                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
-                    <div style={{ height: '450px' }}>
-                        <Scatter data={overallScoreScatterData} options={overallScoreScatterOptions} />
-                    </div>
-                </div>
-            </div>
-            <div className="normal-container-styles">
-                <br/>
-                <h4 className="d-flex mb-20 justify-center" > Scores & Coverage Distribution</h4>
+                <h4 className="d-flex mb-20 justify-center" > Coverage Distribution</h4>
                 <hr/>
                 <br/>
                 <div className="row">
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
+                    {/*<div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>*/}
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
-                </div>
-                <div className="row">
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>
+                   {/* <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>*/}
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Intended Users Distribution</h3><div style={{ height: '300px' }}><Doughnut data={gradeLevelChartData} options={gradeLevelChartOptions} /></div></div></div>
                 </div>
             </div>
