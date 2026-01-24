@@ -7,7 +7,9 @@ export default function ApproveRejectModal({
   actionLabel,
   onConfirm,
   onClose,
-  hasError = false, // 👈 NEW
+  hasError = false,
+  hideCredits = false, // ✅ NEW
+  hideComment = false, // ✅ NEW (for cancel request)
 }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export default function ApproveRejectModal({
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await onConfirm(comment); // parent handles success / error
+      await onConfirm(comment);
     } finally {
       setLoading(false);
     }
@@ -36,17 +38,19 @@ export default function ApproveRejectModal({
         </div>
 
         {/* ===== BODY ===== */}
-        <div style={body}>
-          <textarea
-            placeholder="Add comments (optional)..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            style={{
-              ...textarea,
-              ...(hasError ? errorTextarea : {}),
-            }}
-          />
-        </div>
+        {!hideComment && (
+          <div style={body}>
+            <textarea
+              placeholder="Add comments (optional)..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              style={{
+                ...textarea,
+                ...(hasError ? errorTextarea : {}),
+              }}
+            />
+          </div>
+        )}
 
         {/* ===== FOOTER ===== */}
         <div style={footer}>
@@ -58,6 +62,13 @@ export default function ApproveRejectModal({
             disabled={loading}
           />
         </div>
+
+        {/* ===== CREDITS NOTE (ADMIN ONLY) ===== */}
+        {!hideCredits && (
+          <div style={{ padding: "0 24px 18px" }}>
+            <CreditInfoNote text="Each assessment consumes 10 credits" />
+          </div>
+        )}
       </div>
     </div>
   );

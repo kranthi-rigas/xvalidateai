@@ -205,14 +205,7 @@ export default function AIListView({
 
   //STATUS LABEL MAPPER
   const getAssessmentStatusLabel = (row) => {
-    // Instructor requested scan
-    if (
-      row.status === "requested" &&
-      row.assessment_status === "not_applicable"
-    ) {
-      return "Requested For Scan";
-    }
-
+    if (row.status === "requested") return "Requested For Scan";
     return row.status ? toTitleCase(row.status) : "-";
   };
 
@@ -846,7 +839,7 @@ export default function AIListView({
     if (isAdmin) {
       const actions = [];
 
-      if (project.status === "requested") {
+      if (project.status === "requested_for_scan") {
         actions.push(
           { key: "scan_approve", label: "Approve for Scan" },
           { key: "scan_reject", label: "Reject for Scan" },
@@ -877,8 +870,19 @@ export default function AIListView({
     }
 
     // ================= AUDITOR =================
-    if (isAuditor && project.status === "pending_assessment") {
-      return [{ key: "request", label: "Request Scan" }];
+    if (isAuditor) {
+      const actions = [];
+
+      if (project.status === "pending_assessment") {
+        actions.push({
+          key: "request_scan",
+          label: "Request Scan",
+        });
+      }
+
+      actions.push({ key: "edit", label: "Edit" });
+
+      return actions;
     }
 
     return [];
@@ -946,6 +950,18 @@ export default function AIListView({
                 key === "reject"
               ) {
                 setApprovalAction(key);
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "request_scan") {
+                setApprovalAction("request_scan");
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "cancel_request") {
+                setApprovalAction("cancel_request");
                 setShowApprovalModal(true);
                 return;
               }
@@ -1061,7 +1077,11 @@ export default function AIListView({
                 ? "Reject Tool for Scan"
                 : approvalAction === "approve"
                   ? "Approve Tool for Usage"
-                  : "Reject Tool for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject Tool for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Tool Assessment"
+                      : "Cancel Assessment Request"
           }
           actionLabel={
             approvalAction === "scan_approve"
@@ -1070,8 +1090,18 @@ export default function AIListView({
                 ? "Reject for Scan"
                 : approvalAction === "approve"
                   ? "Approve for Usage"
-                  : "Reject for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Scan"
+                      : "Cancel Request"
           }
+          /* 🔐 AUDITOR UX FIXES */
+          hideCredits={
+            approvalAction === "request_scan" ||
+            approvalAction === "cancel_request"
+          }
+          hideComment={approvalAction === "cancel_request"}
           onClose={() => {
             setShowApprovalModal(false);
             setApprovalError(false);
@@ -1080,24 +1110,50 @@ export default function AIListView({
             let payload = {};
 
             switch (approvalAction) {
+              // ===== AUDITOR =====
+              case "request_scan":
+                payload = {
+                  action: "request_scan",
+                  status: "requested",
+                };
+                break;
+
+              case "cancel_request":
+                payload = {
+                  action: "cancel_request",
+                  status: "pending_assessment",
+                };
+                break;
+
+              // ===== ADMIN =====
               case "scan_approve":
                 payload = {
                   action: "scan_approve",
                   status: "approved_for_scan",
                 };
                 break;
+
               case "scan_reject":
                 payload = {
                   action: "scan_reject",
                   status: "rejected_for_scan",
                 };
                 break;
+
               case "approve":
-                payload = { action: "approve", status: "approved_for_usage" };
+                payload = {
+                  action: "approve",
+                  status: "approved_for_usage",
+                };
                 break;
+
               case "reject":
-                payload = { action: "reject", status: "rejected_for_usage" };
+                payload = {
+                  action: "reject",
+                  status: "rejected_for_usage",
+                };
                 break;
+
               default:
                 return;
             }
@@ -1108,7 +1164,7 @@ export default function AIListView({
                 comment,
               });
 
-              // ✅ SUCCESS
+              // ✅ Optimistic UI update
               setLiveProjects((prev) =>
                 prev.map((p) =>
                   p.project_id === activeProject.project_id
@@ -1121,18 +1177,14 @@ export default function AIListView({
               setShowApprovalModal(false);
               setSelected([]);
             } catch (err) {
-              // 🔴 402 – Insufficient credits
               const message =
                 err?.response?.data?.message ||
                 "Insufficient credits to run this scan.";
 
-              // 🔔 Toast (5 seconds)
               show(message, { type: "error", duration: 10000 });
 
-              // 🔴 Highlight modal
               setApprovalError(true);
 
-              // ⏱ AUTO-CLOSE modal after toast disappears
               setTimeout(() => {
                 setApprovalError(false);
                 setShowApprovalModal(false);
