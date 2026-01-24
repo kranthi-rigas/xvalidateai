@@ -1,3 +1,5 @@
+import "./Button.css";
+
 export default function Button({
   label,
   onClick,
@@ -5,12 +7,11 @@ export default function Button({
   disabled = false,
   icon,
   type = "button",
-  className = "",
 }) {
   return (
     <button
       type={type}
-      className={`btn btn-${variant} ${className}`}
+      className={`btn btn-${variant}`}
       onClick={onClick}
       disabled={disabled}
     >

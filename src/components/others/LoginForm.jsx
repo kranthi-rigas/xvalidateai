@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login, fetchUserProfile } from "../../apiIntegration/auth.js";
-import AwsButton from "@/components/common/AwsButton";
-import { GoogleLoginButton } from "../commonComponents";
+import { Button, GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
@@ -180,11 +179,11 @@ export default function LoginForm() {
               </div>
             </div>
             <div className="col-12">
-              <AwsButton
+              <Button
                 type="submit"
-                label="Login"
-                isLoading={loading}
-                fullWidth
+                label={loading ? "Logging in..." : "Login"}
+                variant="primary"
+                disabled={loading}
               />
             </div>
           </form>

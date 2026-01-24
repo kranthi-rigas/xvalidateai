@@ -11,9 +11,9 @@
 }
 
 .btn-primary {
-  background-color: #4075FB !important;
+  background-color: #2563eb;
   color: #ffffff;
-  transition: all 0.25s ease;
+   transition: all 0.25s ease;
 }
 
 .btn-secondary {
