@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { signup } from "../../apiIntegration/auth";
 import { useCountryPhone } from "../../data/useCountryPhone";
 import CountrySelect from "../common/CountrySelect";
@@ -9,6 +9,13 @@ import useToast from "../../hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
 export default function SignUpForm() {
+  const [searchParams] = useSearchParams();
+  const invitedEmail = searchParams.get("email");
+
+  console.log("✅ invitedEmail:", invitedEmail);
+
+  const [emailLocked, setEmailLocked] = useState(false);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +28,7 @@ export default function SignUpForm() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -84,6 +92,17 @@ export default function SignUpForm() {
 
   const navigate = useNavigate();
   const show = useToast();
+
+  //Prefill email for invitation user
+  useEffect(() => {
+    if (invitedEmail && isValidEmail(invitedEmail)) {
+      setFormData((prev) => ({
+        ...prev,
+        email: decodeURIComponent(invitedEmail),
+      }));
+      setEmailLocked(true);
+    }
+  }, [invitedEmail]);
 
   // 🔐 OAuth Configuration
 
@@ -234,14 +253,29 @@ export default function SignUpForm() {
                   <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
                     Email Address *
                   </label>
+
                   <input
                     required
                     type="email"
                     name="email"
                     placeholder="Email"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly={emailLocked}
+                    onChange={(e) => {
+                      if (emailLocked) return; // 🔐 block manual edits
+                      handleChange(e);
+                    }}
+                    style={{
+                      backgroundColor: emailLocked ? "#F3F4F6" : "#FFFFFF",
+                      cursor: emailLocked ? "not-allowed" : "text",
+                    }}
                   />
+
+                  {emailLocked && (
+                    <p style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
+                      Email prefilled from invitation
+                    </p>
+                  )}
                 </div>
 
                 <div className="col-lg-6">

@@ -14,7 +14,7 @@ import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import CreateOrganizationModal from "./CreateOrganization";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 
-export default function OrganizationListView({ setShowCreateModal }) {
+export default function OrganizationListView() {
   const navigate = useNavigate();
   const [viewOrg, setViewOrg] = useState(null);
   const [organizations, setOrganizations] = useState(null);
@@ -108,6 +108,29 @@ export default function OrganizationListView({ setShowCreateModal }) {
     : String(userInfo.roles || "").split(",");
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
+
+  const planType = userInfo?.plan?.plan_type?.toUpperCase() || "FREE";
+  const isEnterprisePlan = planType === "ENTERPRISE";
+
+  const DEFAULT_ORGS = ["academy51", "myacademy51"];
+
+  const orgList = organizations || [];
+
+  const nonDefaultOrgCount = orgList.filter(
+    (org) => !DEFAULT_ORGS.includes((org.name || "").toLowerCase()),
+  ).length;
+
+  // ❗ ONLY ENTERPRISE can have more than one org
+  const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
+
+  // FINAL permission
+  const canCreateOrg = isAdmin && !hasReachedOrgLimit;
+
+  const createOrgTooltip = !isAdmin
+    ? "Only admin users can create an organization"
+    : hasReachedOrgLimit
+      ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
+      : "";
 
   /* ---------- SEARCH ---------- */
   const filtered = (organizations || [])
@@ -289,9 +312,11 @@ export default function OrganizationListView({ setShowCreateModal }) {
 
             <ActionsMenu
               selected={selected}
-              items={ORG_ACTIONS}
-              disabled={selected.length !== 1}
+              items={isAdmin ? ORG_ACTIONS : []} // 🔥 no items for non-admin
+              disabled={!isAdmin || selected.length !== 1}
               onSelect={(actionKey) => {
+                if (!isAdmin) return; // 🔒 safety guard
+
                 const orgId = selected[0];
                 const org = organizations.find((o) => o.org_id === orgId);
 
@@ -300,20 +325,20 @@ export default function OrganizationListView({ setShowCreateModal }) {
                   return;
                 }
 
-                setActiveOrg(org); // ✅ SET ACTIVE ORG
+                setActiveOrg(org);
                 setSelectedAction(actionKey);
                 setShowReviewModal(true);
               }}
             />
 
             <OrgRequiredWrapper
-              disabled={!isAdmin}
-              message="Only admin users can create an organization"
+              disabled={!canCreateOrg}
+              message={createOrgTooltip}
             >
               <AwsButton
                 label="+ Create Organization"
                 onClick={() => {
-                  if (!isAdmin) return;
+                  if (!canCreateOrg) return;
                   setShowCreateOrgModal(true);
                 }}
               />

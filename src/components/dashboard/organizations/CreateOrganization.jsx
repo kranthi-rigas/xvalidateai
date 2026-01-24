@@ -99,7 +99,10 @@ function renderField(
 
 /* ================= MODAL COMPONENT ================= */
 
-export default function CreateOrganizationModal({ setShowCreateModal }) {
+export default function CreateOrganizationModal({
+  setShowCreateModal,
+  onSuccess,
+}) {
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
     name: "",
@@ -217,7 +220,14 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
 
       show("Organization created successfully!", { type: "success" });
 
-      setTimeout(() => setShowCreateModal(false), 1200);
+      // ✅ notify parent to refresh list
+      if (typeof onSuccess === "function") {
+        onSuccess();
+        setShowCreateModal(false);
+      }
+
+      // close modal immediately (no delay needed)
+      setShowCreateModal(false);
     } catch (err) {
       console.error("Create organization error:", err);
 
