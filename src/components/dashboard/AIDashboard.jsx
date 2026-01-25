@@ -618,7 +618,7 @@ export default function AIDashboard() {
                                                 return tool ? `Overall Score: ${tool.overall_score}/100` : '';
                                             },
                                             label: (context) => {
-                                                return ` ${context.dataset.label}: ${context.parsed.y}/100`;
+                                                return ` ${context.dataset.label}: ${context.parsed.y.toFixed(2)}/100`;
                                             }
                                         }
                                     }
