@@ -8,6 +8,7 @@ import {
   getRequiredPlanName,
   PLAN_BADGE_COLORS,
 } from "@/utils/planAccess";
+import { useContextElement } from "@/context/Context";
 
 // Plan badge component for locked items
 const PlanBadge = ({ requiredPlan, collapsed }) => {
@@ -40,10 +41,9 @@ const PlanBadge = ({ requiredPlan, collapsed }) => {
 export default function Sidebar({ collapsed, setCollapsed }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-
+  const { userPlan } = useContextElement();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [userPlan, setUserPlan] = useState("free");
 
   // Dropdown state ONLY for sections that have children (Organization)
   const [openSections, setOpenSections] = useState({});
@@ -69,11 +69,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         setUser(enrichedUser);
 
         localStorage.setItem("user_info", JSON.stringify(enrichedUser));
-
-        // Get user's plan from localStorage
-        const currentPlan = getUserPlan();
-        setUserPlan(currentPlan);
-        console.log("🔍 Sidebar Debug - User Plan:", currentPlan);
       } else {
         setUser(null);
       }

@@ -1,16 +1,19 @@
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import React, { useEffect, useState, useMemo } from "react";
+import StatCard from "./StatCard";
 import {
     Chart as ChartJS,
     RadialLinearScale,
     PointElement,
     LineElement,
+    LineController,
     Filler,
     Tooltip,
     Legend,
     CategoryScale,
     LinearScale,
     BarElement,
+    BarController,
     ArcElement,
 } from 'chart.js';
 import { Radar, Bar, Doughnut, Scatter } from 'react-chartjs-2';
@@ -20,7 +23,7 @@ import ListTable from "@/components/common/ListTable.jsx";
 import PageLoader from "@/components/common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ArcElement);
+ChartJS.register(RadialLinearScale, PointElement, LineElement, LineController, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, BarController, ArcElement);
 
 export default function AIDashboard() {
     const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
@@ -412,45 +415,39 @@ export default function AIDashboard() {
 
     return (
         <div className="dashboard__content">
-            {/* EXECUTIVE SUMMARY CARDS WITH SVG */}
+            {/* MODERN STAT CARDS */}
             <div className="normal-container-styles">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Total Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.total_projects ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7L12 12L22 7L12 2Z" /><path d="M2 17L12 22L22 17" /><path d="M2 12L12 17L22 12" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>High-Risk Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.high_risk_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Approved Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.approved_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                        </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '10px' }}>Rejected Tools</div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{dashboardAnalytics.overview.rejected_count ?? 0}</div>
-                            </div>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
-                        </div>
-                    </div>
+                <div className="stats-grid">
+                    <StatCard
+                        label="Total Scanned Tools"
+                        value={dashboardAnalytics.overview.total_projects ?? 0}
+                        icon="lucide:database"
+                        iconColor="primary"
+                        trend="Tools submitted for Evaluation"
+                    />
+                    <StatCard
+                        label="High Risk Tools"
+                        value={dashboardAnalytics.overview.high_risk_count ?? 0}
+                        icon="lucide:alert-octagon"
+                        iconColor="destructive"
+                        trend="Requires attention"
+                    />
+                    <StatCard
+                        label="Approved Tools"
+                        value={dashboardAnalytics.overview.approved_count?? 0}
+                        icon="lucide:shield-check"
+                        iconColor="success"
+                        trend="Ready for usage"
+                    />
+                    <StatCard
+                        label="Pending Review"
+                        value={dashboardAnalytics.overview.total_projects - dashboardAnalytics.overview.approved_count - dashboardAnalytics.overview.rejected_count - dashboardAnalytics.overview.high_risk_count}
+                        icon="lucide:clock"
+                        iconColor="warning"
+                        trend="Tool awaiting review"
+                        trendDirection="neutral"
+                    />
+                    
                 </div>
 
                 {/* PILLAR GAUGE CHARTS */}
@@ -473,6 +470,165 @@ export default function AIDashboard() {
                 </Modal>
             )}
 
+            {/* MODERN GROUPED HISTOGRAM - SCORE FACTORS BY TOOL */}
+            <div className="normal-container-styles">
+                <br/>
+                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <h4 className="d-flex mb-20 justify-center" > Comprehensive Tool Performance Analysis</h4>
+                <p style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>
+                        Detailed breakdown of evaluation scores across all assessment pillars
+                    </p>
+                <hr/>
+                <br/>
+                </div>
+                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
+                    <div style={{ height: '450px', overflowX: 'auto', padding: '20px' }}>
+                        <Bar
+                            data={{
+                                labels: (dashboardAnalytics?.tool_kpis || []).map(t => t.tool_name),
+                                datasets: [
+                                    {
+                                        label: 'Privacy & Safety',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.privacy_safety_score),
+                                        backgroundColor: 'rgba(0, 168, 107, 0.85)',
+                                        hoverBackgroundColor: 'rgba(0, 168, 107, 1)',
+                                        borderColor: '#00A86B',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Instructional Impact',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.instructional_impact_score),
+                                        backgroundColor: 'rgba(48, 79, 253, 0.85)',
+                                        hoverBackgroundColor: 'rgba(48, 79, 253, 1)',
+                                        borderColor: '#304FFD',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Usability',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.usability_score),
+                                        backgroundColor: 'rgba(155, 138, 251, 0.85)',
+                                        hoverBackgroundColor: 'rgba(155, 138, 251, 1)',
+                                        borderColor: '#9B8AFB',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Data Quality',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.data_quality_score),
+                                        backgroundColor: 'rgba(255, 150, 93, 0.85)',
+                                        hoverBackgroundColor: 'rgba(255, 150, 93, 1)',
+                                        borderColor: '#FF965D',
+                                        borderWidth: 0,
+                                        borderRadius: 8,
+                                        borderSkipped: false,
+                                        type: 'bar'
+                                    },
+                                    {
+                                        label: 'Overall Score',
+                                        data: (dashboardAnalytics?.tool_kpis || []).map(t => t.overall_score),
+                                        type: 'line',
+                                        borderColor: '#304FFD',
+                                        backgroundColor: 'rgba(255, 150, 93, 0.1)',
+                                        borderWidth: 3,
+                                        pointRadius: 5,
+                                        pointHoverRadius: 7,
+                                        pointBackgroundColor: '#304FFD',
+                                        pointBorderColor: '#fff',
+                                        pointBorderWidth: 2,
+                                        pointHoverBackgroundColor: '#304FFD',
+                                        pointHoverBorderColor: '#fff',
+                                        tension: 0.4,
+                                        fill: false,
+                                        order: 0
+                                    }
+                                ]
+                            }}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.9,
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        },
+                                        ticks: {
+                                            font: { size: 12, weight: '500' },
+                                            color: '#64748b',
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: {
+                                            color: '#f1f5f9',
+                                            drawBorder: false
+                                        },
+                                        ticks: {
+                                            font: { size: 12 },
+                                            color: '#64748b',
+                                            callback: (value) => value + '%'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Score',
+                                            font: { size: 14, weight: 'bold' },
+                                            color: '#0f172a'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            usePointStyle: true,
+                                            pointStyle: 'circle',
+                                            padding: 20,
+                                            font: { size: 13, weight: '500' },
+                                            color: '#475569'
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                        titleColor: '#fff',
+                                        bodyColor: '#e2e8f0',
+                                        padding: 12,
+                                        cornerRadius: 8,
+                                        titleFont: { size: 14, weight: 'bold' },
+                                        bodyFont: { size: 13 },
+                                        displayColors: true,
+                                        callbacks: {
+                                            title: (context) => {
+                                                const tool = dashboardAnalytics?.tool_kpis?.[context[0].dataIndex];
+                                                return tool?.tool_name || '';
+                                            },
+                                            afterTitle: (context) => {
+                                                const tool = dashboardAnalytics?.tool_kpis?.[context[0].dataIndex];
+                                                return tool ? `Overall Score: ${tool.overall_score}/100` : '';
+                                            },
+                                            label: (context) => {
+                                                return ` ${context.dataset.label}: ${context.parsed.y}/100`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* CHARTS */}
             <div className="normal-container-styles">
                 <br/>
@@ -487,26 +643,13 @@ export default function AIDashboard() {
             </div>
             <div className="normal-container-styles">
                 <br/>
-                <h4 className="d-flex mb-20 justify-center" > Overall Score Distribution</h4>
-                <hr/>
-                <br/>
-                <div className="col-lg-12 col-md-12 col-sm-12 mb-3">
-                    <div style={{ height: '450px' }}>
-                        <Scatter data={overallScoreScatterData} options={overallScoreScatterOptions} />
-                    </div>
-                </div>
-            </div>
-            <div className="normal-container-styles">
-                <br/>
-                <h4 className="d-flex mb-20 justify-center" > Scores & Coverage Distribution</h4>
+                <h4 className="d-flex mb-20 justify-center" > Coverage Distribution</h4>
                 <hr/>
                 <br/>
                 <div className="row">
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>
+                    {/*<div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Pillar Health Scores</h3><div style={{ height: '300px' }}><Radar data={radarChartData} options={radarChartOptions} /></div></div></div>*/}
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Recommendation Distribution</h3><div style={{ height: '300px' }}><Doughnut data={recommendationChartData} options={recommendationChartOptions} /></div></div></div>
-                </div>
-                <div className="row">
-                    <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>
+                   {/* <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Privacy & Risk Assessment</h3><div style={{ height: '300px' }}><Scatter data={privacyRiskScatterData} options={privacyRiskScatterOptions} /></div><div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#27ae60' }}></span>Low Risk (80+)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#304FFD' }}></span>Medium (60-79)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#f39c12' }}></span>High (40-59)</span><span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}><span style={{ width: '16px', height: '16px', borderRadius: '3px', background: '#e74c3c' }}></span>Critical (&lt;40)</span></div></div></div>*/}
                     <div className="col-lg-6 col-md-6 col-sm-12 mb-3"><div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><h3 style={{ fontSize: '1.3rem', marginBottom: '20px', color: '#2c3e50', borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>Intended Users Distribution</h3><div style={{ height: '300px' }}><Doughnut data={gradeLevelChartData} options={gradeLevelChartOptions} /></div></div></div>
                 </div>
             </div>
