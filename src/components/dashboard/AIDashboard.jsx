@@ -441,7 +441,7 @@ export default function AIDashboard() {
                     />
                     <StatCard
                         label="Pending Review"
-                        value={dashboardAnalytics.overview.total_projects - dashboardAnalytics.overview.approved_count - dashboardAnalytics.overview.rejected_count - dashboardAnalytics.overview.high_risk_count}
+                        value={dashboardAnalytics.overview.pending_count }
                         icon="lucide:clock"
                         iconColor="warning"
                         trend="Tool awaiting review"
