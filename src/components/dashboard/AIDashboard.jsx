@@ -25,6 +25,11 @@ import usePageLoader from "@/data/usePageLoader";
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, LineController, Filler, Tooltip, Legend, CategoryScale, LinearScale, BarElement, BarController, ArcElement);
 
+function formatNumber(num) {
+    const decimals = num.toString().split('.')[1]?.length || 0;
+    return decimals > 2 ? Number(num.toFixed(2)) : num;
+}
+
 export default function AIDashboard() {
     const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
     const [selectedPillar, setSelectedPillar] = useState(null);
@@ -618,7 +623,7 @@ export default function AIDashboard() {
                                                 return tool ? `Overall Score: ${tool.overall_score}/100` : '';
                                             },
                                             label: (context) => {
-                                                return ` ${context.dataset.label}: ${context.parsed.y.toFixed(2)}/100`;
+                                                return ` ${context.dataset.label}: ${context.parsed.y.toFixed(0)}/100`;
                                             }
                                         }
                                     }
