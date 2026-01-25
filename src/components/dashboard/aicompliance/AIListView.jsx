@@ -96,10 +96,6 @@ export default function AIListView({
     ? rolesRaw.map((r) => String(r).toUpperCase())
     : String(rolesRaw).toUpperCase().split(",");
 
-  const isAdmin = roles.includes("ADMIN");
-  const isAuditor = roles.includes("AUDITOR");
-  const isAnalyst = roles.includes("ANALYST");
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
   const [deleteError, setDeleteError] = useState("");
@@ -116,6 +112,15 @@ export default function AIListView({
   const [showPreferences, setShowPreferences] = useState(false);
 
   const isRequested = (row) => row.status === "requested";
+
+  const hasAdminRole = roles.includes("ADMIN");
+  const hasAuditorRole = roles.includes("AUDITOR");
+  const hasAnalystRole = roles.includes("ANALYST");
+
+  const isAdmin = hasAdminRole;
+  const isAuditor = hasAuditorRole;
+  // ✅ Analyst-only = NO higher privilege
+  const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
 
   /* ---------- Add columnWidths state ---------- */
   const [columnWidths, setColumnWidths] = useState({
@@ -815,8 +820,8 @@ export default function AIListView({
     const project = liveProjects.find((p) => p.project_id === selected[0]);
     if (!project) return [];
 
-    // 🚫 ANALYST — view only
-    if (isAnalyst) {
+    // 🚫 ANALYST-ONLY — view only
+    if (isAnalystOnly) {
       return [];
     }
 
@@ -996,13 +1001,13 @@ export default function AIListView({
           />
 
           <OrgRequiredWrapper
-            disabled={isAnalyst}
+            disabled={isAnalystOnly}
             message="You have view-only access"
           >
             <AwsButton
               label="+ Tool Assessment"
               onClick={() => {
-                if (isAnalyst) return;
+                if (isAnalystOnly) return;
                 setShowCreateModal(true);
               }}
             />
