@@ -34,6 +34,11 @@ const STATUS_BADGE_MAP = {
     color: "#075985",
     border: "#7DD3FC",
   },
+  requested_for_scan: {
+    bg: "#E0F2FE",
+    color: "#075985",
+    border: "#7DD3FC",
+  },
   approved_for_scan: {
     bg: "#DCFCE7",
     color: "#166534",
@@ -732,7 +737,7 @@ export default function AIListView({
     }
     /* ------------------- APPROVED BY ------------------- */
     if (key === "approved_by") {
-      const a = row.approved_by;
+      const a = row.scan_approved_by; // 🔥 UPDATED KEY
       const requester = row.requested_by;
 
       // ✅ Admin created → show "-"
@@ -740,7 +745,7 @@ export default function AIListView({
         return <span>-</span>;
       }
 
-      // ✅ Not approved yet (non-admin created)
+      // ✅ Not approved yet
       if (!a) {
         return (
           <span
@@ -755,7 +760,7 @@ export default function AIListView({
         );
       }
 
-      // ✅ Approved by someone
+      // ✅ Scan approved by someone
       const fullName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
       const email = a.email || "";
 
@@ -840,13 +845,18 @@ export default function AIListView({
     if (isAdmin) {
       const actions = [];
 
-      if (project.status === "requested") {
+      // 🟦 Scan request stage
+      if (
+        project.status === "requested" ||
+        project.status === "requested_for_scan"
+      ) {
         actions.push(
           { key: "scan_approve", label: "Approve for Scan" },
           { key: "scan_reject", label: "Reject for Scan" },
         );
       }
 
+      // 🟩 Scan completed → usage approval stage ONLY
       if (
         project.status === "scan_completed" &&
         project.assessment_status === "completed"
@@ -857,6 +867,7 @@ export default function AIListView({
         );
       }
 
+      // ⚙️ Always available
       actions.push(
         { key: "edit", label: "Edit" },
         {
@@ -1098,10 +1109,7 @@ export default function AIListView({
                       : "Cancel Request"
           }
           /* 🔐 AUDITOR UX FIXES */
-          hideCredits={
-            approvalAction === "request_scan" ||
-            approvalAction === "scan_reject"
-          }
+          hideCredits={!["scan_approve"].includes(approvalAction)}
           hideComment={approvalAction === "cancel_request"}
           onClose={() => {
             setShowApprovalModal(false);
