@@ -48,9 +48,9 @@ export const sidebarItems = [
         permission: "organization",
         requiredPlan: "business",
         children: [
-            { id: "user-groups", iconClass: "text-20 icon-person-3", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
-            { id: "users", iconClass: "text-20 icon-person-3", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
-            { id: "organizations", iconClass: "text-20 icon-person-3", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
+            { id: "user-groups", src: "/dashboardSideBarIcons/groups.svg", active_src: "/dashboardSideBarIcons/groups_active.svg", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
+            { id: "users", src: "/dashboardSideBarIcons/users.svg", active_src: "/dashboardSideBarIcons/users_active.svg", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
+            { id: "organizations", src: "/dashboardSideBarIcons/orgs.svg", active_src: "/dashboardSideBarIcons/orgs_active.svg", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
         ],
     },
     /*{
