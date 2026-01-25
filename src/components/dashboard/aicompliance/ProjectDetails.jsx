@@ -646,52 +646,74 @@ export default function ProjectDetails({ project, onBack }) {
             )}
           </div>
           {/* ✅ NEW — Approve / Reject buttons */}
-          {isRequested && isAdmin && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 12,
-                marginTop: 24,
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <AwsButton
-                label="Approve for Scan"
-                onClick={() => {
-                  setActionType("scan_approve");
-                  setShowModal(true);
-                }}
-              />
+          {/* ================= ADMIN ACTIONS ================= */}
+          {isAdmin && (
+            <>
+              {/* 🔹 Scan approval – ONLY when requested */}
+              {project.status === "requested" && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: 12,
+                    marginTop: 24,
+                    flexWrap: "wrap",
+                    width: "100%",
+                  }}
+                >
+                  <AwsButton
+                    label="Approve for Scan"
+                    onClick={() => {
+                      setActionType("scan_approve");
+                      setShowModal(true);
+                    }}
+                  />
 
-              <AwsButton
-                label="Reject for Scan"
-                onClick={() => {
-                  setActionType("scan_reject");
-                  setShowModal(true);
-                }}
-              />
+                  <AwsButton
+                    label="Reject for Scan"
+                    onClick={() => {
+                      setActionType("scan_reject");
+                      setShowModal(true);
+                    }}
+                  />
+                </div>
+              )}
 
-              <AwsButton
-                label="Approve for Usage"
-                onClick={() => {
-                  setActionType("approve");
-                  setShowModal(true);
-                }}
-              />
+              {/* 🔹 Usage approval – ONLY after scan completed */}
+              {project.status === "scan_completed" &&
+                project.assessment_status === "completed" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 12,
+                      marginTop: 24,
+                      flexWrap: "wrap",
+                      width: "100%",
+                    }}
+                  >
+                    <AwsButton
+                      label="Approve for Usage"
+                      onClick={() => {
+                        setActionType("approve");
+                        setShowModal(true);
+                      }}
+                    />
 
-              <AwsButton
-                label="Reject for Usage"
-                onClick={() => {
-                  setActionType("reject");
-                  setShowModal(true);
-                }}
-              />
-            </div>
+                    <AwsButton
+                      label="Reject for Usage"
+                      onClick={() => {
+                        setActionType("reject");
+                        setShowModal(true);
+                      }}
+                    />
+                  </div>
+                )}
+            </>
           )}
 
-          {isRequested && !isAdmin && (
+          {/* ================= NON-ADMIN MESSAGE ================= */}
+          {project.status === "requested" && !isAdmin && (
             <div
               style={{
                 marginTop: 20,
@@ -809,6 +831,8 @@ export default function ProjectDetails({ project, onBack }) {
                   ? "Approve for Usage"
                   : "Reject for Usage"
           }
+          /* ✅ FIX IS HERE */
+          hideCredits={actionType !== "scan_approve"}
           onClose={() => setShowModal(false)}
           onConfirm={handleApproveReject}
         />
