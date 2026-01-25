@@ -333,7 +333,8 @@ export default function EditProjectModal({
             disabled={saving || !isDirty}
           />
         </div>
-        <CreditInfoNote text="Re-running assessment consumes 10 credits" />
+
+        {!isAuditor && <CreditInfoNote />}
       </div>
     </div>
   );

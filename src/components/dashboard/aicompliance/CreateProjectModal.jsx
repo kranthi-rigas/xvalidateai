@@ -360,8 +360,8 @@ export default function CreateProjectModal({
               disabled={!isValid || saving}
             />
           </div>
-          {/* 🔴 Credit info */}
-          <CreditInfoNote />
+          {/* 🔴 Credit info — ONLY for Admin (Save & Evaluate) */}
+          {!isAuditor && <CreditInfoNote />}
         </div>
       </div>
     </>

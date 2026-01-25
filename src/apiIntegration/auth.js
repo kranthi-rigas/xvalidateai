@@ -59,17 +59,28 @@ export async function signup(userData) {
     });
 
     if (!res.ok) {
-      const error = await res.text();
-      throw new Error(error || "Signup failed");
+      const errorText = await res.text();
+
+      // Try to parse backend JSON error safely
+      let message = "Signup failed";
+      try {
+        const parsed = JSON.parse(errorText);
+        message = parsed.error || parsed.message || message;
+      } catch {
+        message = errorText || message;
+      }
+
+      throw new Error(message);
     }
 
     return await res.json();
   } catch (err) {
-    alert("Signup failed. " + err.message);
     console.error("Signup error:", err);
+
     throw err;
   }
 }
+
 export async function login(credentials) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
