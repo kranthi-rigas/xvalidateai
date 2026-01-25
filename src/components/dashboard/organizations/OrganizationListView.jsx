@@ -254,8 +254,20 @@ export default function OrganizationListView() {
       );
     }
 
-    if (key === "created_at")
-      return row.created_at ? new Date(row.created_at).toLocaleString() : "-";
+    if (key === "created_at") {
+      if (!row.created_at) return "-";
+
+      const utcDate = new Date(row.created_at + "Z");
+      return utcDate.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    }
 
     return row[key] || "-";
   };

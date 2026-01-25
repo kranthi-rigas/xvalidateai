@@ -279,17 +279,7 @@ export default function SignUpForm() {
                       if (emailLocked) return; // 🔐 block manual edits
                       handleChange(e);
                     }}
-                    style={{
-                      backgroundColor: emailLocked ? "#F3F4F6" : "#FFFFFF",
-                      cursor: emailLocked ? "not-allowed" : "text",
-                    }}
                   />
-
-                  {emailLocked && (
-                    <p style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
-                      Email prefilled from invitation
-                    </p>
-                  )}
                 </div>
 
                 <div className="col-lg-6">
