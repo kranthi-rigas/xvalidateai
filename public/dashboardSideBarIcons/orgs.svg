@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none"
+  xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Building -->
+  <rect x="6" y="4" width="20" height="24" rx="2"
+    stroke="#9397B2" stroke-width="2"/>
+
+  <!-- Windows -->
+  <path d="M11 9h.01M16 9h.01M21 9h.01
+           M11 14h.01M16 14h.01M21 14h.01
+           M11 19h.01M16 19h.01M21 19h.01"
+    stroke="#9397B2"
+    stroke-width="2"
+    stroke-linecap="round"/>
+
+  <!-- Door -->
+  <path d="M14 28v-5h4v5"
+    stroke="#9397B2" stroke-width="2"
+    stroke-linejoin="round"/>
+</svg>

@@ -91,6 +91,17 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     setOpenSections((prev) => ({ ...prev, ...newOpenState }));
   }, [pathname]);
 
+  useEffect(() => {
+    const isOrganizationRoute = sidebarItems.some(
+      (item) =>
+        item.children && item.children.some((child) => child.href === pathname),
+    );
+
+    if (!isOrganizationRoute) {
+      setOpenSections({});
+    }
+  }, [pathname]);
+
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
@@ -99,6 +110,9 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
   const handleNavigation = (e, item, isLocked = false) => {
     e.preventDefault();
+
+    // 🔥 CLOSE ALL DROPDOWNS
+    setOpenSections({});
 
     // If item is locked due to plan restriction, redirect to pricing page
     if (isLocked) {
@@ -340,16 +354,16 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                             : ""
                         }
                       >
-                        {child.iconClass && (
-                          <i
-                            className={child.iconClass}
-                            style={{
-                              fontSize: 16,
-                              color: isChildLocked ? "#999" : "#576AFF",
-                              minWidth: 18,
-                            }}
-                          />
-                        )}
+                        <img
+                          src={isActiveChild ? child.active_src : child.src}
+                          alt={child.text}
+                          style={{
+                            width: 26,
+                            height: 26,
+                            filter: isChildLocked ? "grayscale(100%)" : "none",
+                          }}
+                        />
+
                         <span>{child.text}</span>
                         {isChildLocked && child.requiredPlan && (
                           <PlanBadge
