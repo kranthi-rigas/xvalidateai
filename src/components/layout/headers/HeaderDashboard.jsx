@@ -360,8 +360,19 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                                 {first_name} {last_name}
                               </div>
 
+                              {/* Email */}
+                              <div
+                                style={{
+                                  fontSize: 13,
+                                  color: "#374151",
+                                  marginTop: 2,
+                                }}
+                              >
+                                {email}
+                              </div>
+
                               {/* Role (subtitle style under name) */}
-                              {userRole && (
+                              {userRole && orgName && (
                                 <div
                                   style={{
                                     fontSize: 12.5,
@@ -386,23 +397,11 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                                             : "#0891B2", // fallback
                                     }}
                                   />
-                                  {userRole.charAt(0) +
-                                    userRole.slice(1).toLowerCase()}
+                                  {`${userRole.charAt(0)}${userRole.slice(1).toLowerCase()} @ ${orgName} `}
                                 </div>
                               )}
 
-                              {/* Email */}
-                              <div
-                                style={{
-                                  fontSize: 13,
-                                  color: "#374151",
-                                  marginTop: 2,
-                                }}
-                              >
-                                {email}
-                              </div>
-
-                              {/* Organization (SECONDARY / LAST) */}
+                              {/* Organization (SECONDARY / LAST) 
                               {orgName && (
                                 <div
                                   style={{
