@@ -1,5 +1,5 @@
 // src/api/auth.js
-export const API_BASE_URL = "https://api.myacademy51.com";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 async function fetchWithAuth(url, options = {}) {
   const accessToken = localStorage.getItem("access_token");
@@ -59,17 +59,28 @@ export async function signup(userData) {
     });
 
     if (!res.ok) {
-      const error = await res.text();
-      throw new Error(error || "Signup failed");
+      const errorText = await res.text();
+
+      // Try to parse backend JSON error safely
+      let message = "Signup failed";
+      try {
+        const parsed = JSON.parse(errorText);
+        message = parsed.error || parsed.message || message;
+      } catch {
+        message = errorText || message;
+      }
+
+      throw new Error(message);
     }
 
     return await res.json();
   } catch (err) {
-    alert("Signup failed. " + err.message);
     console.error("Signup error:", err);
+
     throw err;
   }
 }
+
 export async function login(credentials) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -235,7 +246,7 @@ export const applyInstructor = async (formData, token) => {
 export async function updatePassword({ password, new_password }) {
   const accessToken = localStorage.getItem("access_token");
 
-  const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+  const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

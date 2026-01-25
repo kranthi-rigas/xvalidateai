@@ -11,20 +11,12 @@
         "settings",
         "administration",
         "assignment",
-        "grades"
+        "grades",
+        "ai_literacy",
+        "pricing",
+        "faqs"
     ],
-    "INSTRUCTOR": [
-        "dashboard",
-        "ai_compliance",
-        "courses",
-        "mock_tests",
-        "create_mock_test",
-        "become_instructor",
-        "settings",
-        "assignment",
-        "grades"
-    ],
-    "STUDENT": [
+    "AUDITOR": [
         "dashboard",
         "ai_compliance",
         "organization",
@@ -36,14 +28,26 @@
         "settings",
         "administration",
         "assignment",
-        "grades"
+        "grades",
+        "ai_literacy",
+        "pricing",
+        "faqs"
     ],
-    "PARENT": [
+    "ANALYST": [
         "dashboard",
+        "ai_compliance",
+        "organization",
         "courses",
         "mock_tests",
+        "create_mock_test",
         "become_instructor",
-        "settings"
+        "review_instructors",
+        "settings",
+        "administration",
+        "assignment",
+        "grades",
+        "ai_literacy",
+        "pricing",
+        "faqs"
     ]
-
 }

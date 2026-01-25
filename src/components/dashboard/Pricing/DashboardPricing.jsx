@@ -2,6 +2,7 @@ import { Padding } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
+import AwsButton from "@/components/common/AwsButton";
 
 const pricingPlans = [
   {
@@ -17,7 +18,9 @@ const pricingPlans = [
 
     features: [
       { text: "20 credits included", included: true },
+      { text: "Downloadable Report", included: false },
       { text: "Priority support", included: false },
+      { text: "Downloadable Report", included: false },
       { text: "Create organizations", included: false },
       { text: "Download content", included: false },
       { text: "Share content", included: false },
@@ -38,8 +41,9 @@ const pricingPlans = [
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
       { text: "100 credits included", included: true },
+      { text: "Downloadable Report", included: true },
       { text: "Priority support", included: true },
-      { text: "Create organizations", included: true },
+      { text: "Create organizations", included: false },
       { text: "Download content", included: false },
       { text: "Share content", included: false },
       { text: "AI Analytics", included: false },
@@ -59,6 +63,7 @@ const pricingPlans = [
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
       { text: "300 credits included", included: true },
+      { text: "Downloadable Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: true },
       { text: "Download content", included: true },
@@ -102,26 +107,11 @@ export default function DashboardPricing() {
     }
   };
 
-
-
   return (
-    <div className="dashboard__content bg-light-4">
-      <div className="row pb-50 mb-10">
-        <div className="col-auto">
-          {/* <h1 className="text-30 lh-12 fw-700">Pricing Plans</h1> */}
-          {/* <h3 >Pricing Plans</h3> */}
-          {/* <div className="mt-10">
-            Choose the plan that fits your learning journey
-          </div> */}
-        </div>
-      </div>
-
-      <div className="row y-gap-30">
-        <div className="col-12">
-          <div
-            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
-            style={{ padding: "1rem" }}
-          >
+    <div className="dashboard__content">
+      <div className="dashboard-body">
+        <div className="row y-gap-30">
+          <div className="col-12">
             <div className="py-20 px-15 md:py-30 md:px-30">
               {/* Pricing Cards */}
               <div className="row y-gap-30">
@@ -141,7 +131,9 @@ export default function DashboardPricing() {
                         transform: "scale(1)",
                         display: "flex",
                         flexDirection: "column",
-                        border: isCurrentPlan(plan.id) ? "2px solid #6440FB" : undefined,
+                        border: isCurrentPlan(plan.id)
+                          ? "2px solid #6440FB"
+                          : undefined,
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-8px)";
@@ -238,46 +230,32 @@ export default function DashboardPricing() {
                         {/* CTA Button */}
                         <div className="mt-25">
                           {isCurrentPlan(plan.id) ? (
-                            <button
+                            <AwsButton
+                              label="Current Plan"
                               disabled
-                              className="button w-100 py-15 fw-500 rounded-8"
-                              style={{
-                                padding: "12px 24px",
-                                backgroundColor: "#9e9e9e",
-                                color: "#F0F8FF",
-                                cursor: "not-allowed",
-                                border: "none",
-                              }}
-                            >
-                              Current Plan
-                            </button>
+                              fullWidth
+                              size="lg"
+                            />
                           ) : isPlanBelowCurrent(plan.id) ? (
-                            <button
+                            <AwsButton
+                              label={
+                                plan.id === "free"
+                                  ? "Free Plan"
+                                  : plan.buttonText
+                              }
                               disabled
-                              className="button w-100 py-15 fw-500 rounded-8"
-                              style={{
-                                padding: "12px 24px",
-                                backgroundColor: "#e0e0e0",
-                                color: "#9e9e9e",
-                                cursor: "not-allowed",
-                                border: "none",
-                              }}
-                            >
-                              {plan.id === "free" ? "Free Plan" : plan.buttonText}
-                            </button>
+                              fullWidth
+                              size="lg"
+                            />
                           ) : plan.id === "free" ? (
-                            <div className=" py-25 "></div>
+                            <div className="py-25" />
                           ) : (
-                            <button
+                            <AwsButton
+                              label={plan.buttonText}
                               onClick={() => handlePlanClick(plan)}
-                              className={`button w-100 py-15 fw-500 rounded-8 ${plan.buttonStyle}`}
-                              style={{
-                                transition: "all 0.2s ease",
-                                padding: "12px 24px",
-                              }}
-                            >
-                              {plan.buttonText}
-                            </button>
+                              fullWidth
+                              size="lg"
+                            />
                           )}
                         </div>
 
@@ -322,10 +300,11 @@ export default function DashboardPricing() {
                                   </span>
                                 )}
                                 <span
-                                  className={`text-14 ${feature.included
+                                  className={`text-14 ${
+                                    feature.included
                                       ? "text-dark-1"
                                       : "text-light-1"
-                                    }`}
+                                  }`}
                                   style={{
                                     textDecoration: feature.included
                                       ? "none"

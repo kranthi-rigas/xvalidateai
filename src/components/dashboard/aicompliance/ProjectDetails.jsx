@@ -10,11 +10,13 @@ import jsPDF from "jspdf";
 import { TbDownload } from "react-icons/tb";
 import { getUserPlan } from "../../../utils/planAccess";
 
-function capitalizeFirstLetter(string) {
-  if (string.length === 0) {
-    return "";
-  }
-  return string.charAt(0).toUpperCase() + string.slice(1);
+function formatStatus(value) {
+  if (!value || typeof value !== "string") return "-";
+
+  return value
+    .replace(/_/g, " ") // replace underscores with spaces
+    .toLowerCase() // normalize
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
 }
 
 export default function ProjectDetails({ project, onBack }) {
@@ -27,6 +29,7 @@ export default function ProjectDetails({ project, onBack }) {
   const evaluationBlockRef = useRef(null); // Page 2 (title + first table)
   const usageTableRef = useRef(null);
   const tableRefs = useRef([]); // Page 3+
+  const [isPdfRendering, setIsPdfRendering] = useState(false);
 
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -39,6 +42,9 @@ export default function ProjectDetails({ project, onBack }) {
 
     try {
       setIsDownloading(true);
+      setIsPdfRendering(true);
+
+      await new Promise((r) => setTimeout(r, 0));
 
       const pdf = new jsPDF("p", "mm", "a4");
 
@@ -48,144 +54,302 @@ export default function ProjectDetails({ project, onBack }) {
       const marginX = 15;
       const usableWidth = pageWidth - marginX * 2;
 
-      /* ===============================
-       HEADER (USED FROM PAGE 2+)
-    =============================== */
-      const drawHeader = () => {
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(18);
-        pdf.text(project.name, pageWidth / 2, 18, { align: "center" });
+      const HEADER_HEIGHT = 22;
+      const FOOTER_HEIGHT = 26;
 
-        pdf.setDrawColor(200);
-        pdf.setLineWidth(0.5);
-        pdf.line(15, 22, pageWidth - 15, 22);
+      const CONTENT_TOP = HEADER_HEIGHT + 6;
+      const CONTENT_BOTTOM = pageHeight - FOOTER_HEIGHT - 6;
+      const CONTENT_HEIGHT = CONTENT_BOTTOM - CONTENT_TOP;
+
+      const addImagePaged = (
+        pdf,
+        sourceCanvas, // ✅ canvas, NOT base64
+        imgWidthPx,
+        imgHeightPx,
+        usableWidth,
+        CONTENT_TOP,
+        CONTENT_HEIGHT,
+        marginX,
+        drawHeader,
+        drawFooter,
+      ) => {
+        const pageWidthMm = usableWidth;
+        const pageHeightMm = CONTENT_HEIGHT;
+
+        // px → mm scale
+        const ratio = pageWidthMm / imgWidthPx;
+        const pageHeightPx = pageHeightMm / ratio;
+
+        let positionPx = 0;
+
+        while (positionPx < imgHeightPx) {
+          const canvasSlice = document.createElement("canvas");
+          canvasSlice.width = imgWidthPx;
+          canvasSlice.height = Math.min(pageHeightPx, imgHeightPx - positionPx);
+
+          const ctx = canvasSlice.getContext("2d");
+
+          // ✅ DRAW FROM SOURCE CANVAS
+          ctx.drawImage(
+            sourceCanvas,
+            0,
+            positionPx,
+            imgWidthPx,
+            canvasSlice.height,
+            0,
+            0,
+            imgWidthPx,
+            canvasSlice.height,
+          );
+
+          const imgSlice = canvasSlice.toDataURL("image/png");
+
+          drawHeader(true);
+          drawFooter();
+
+          pdf.addImage(
+            imgSlice,
+            "PNG",
+            marginX,
+            CONTENT_TOP,
+            pageWidthMm,
+            canvasSlice.height * ratio,
+          );
+
+          positionPx += pageHeightPx;
+
+          if (positionPx < imgHeightPx) {
+            pdf.addPage();
+          }
+        }
       };
 
-      const headerHeight = 28;
-      const contentStartY = headerHeight + 12;
+      /* ---------- LOAD LOGO ---------- */
+      const logoImg = new Image();
+      logoImg.src = "/assets/img/general/logo-dark.png";
 
-      /* ---------- helper ---------- */
-      const capture = async (el) => {
-        const canvas = await html2canvas(el, {
-          scale: 2,
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = reject;
+      });
+
+      /* ---------- HEADER ---------- */
+      const drawHeader = (withTitle = true) => {
+        // Header background (slate)
+        pdf.setFillColor(255, 255, 255); // ✅ white
+
+        pdf.rect(0, 0, pageWidth, HEADER_HEIGHT, "F");
+
+        /* ---------- LOGO WITH MATCHING SLATE BG ---------- */
+        const logoHeight = 10;
+        const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+
+        const logoX = 15;
+        const logoY = (HEADER_HEIGHT - logoHeight) / 2;
+
+        // Logo
+        pdf.addImage(logoImg, "PNG", logoX, logoY, logoWidth, logoHeight);
+
+        /* ---------- TITLE ---------- */
+        if (withTitle) {
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(18);
+          pdf.setTextColor(15, 23, 42);
+
+          pdf.text("Assessment Report", pageWidth / 2, 15.5, {
+            align: "center",
+          });
+        }
+
+        /* ---------- SUBTITLE ---------- */
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(71, 85, 105);
+
+        pdf.text("AI Compliance & Risk Evaluation", pageWidth / 2, 20.5, {
+          align: "center",
+        });
+
+        /* ---------- DIVIDER ---------- */
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(15, HEADER_HEIGHT, pageWidth - 15, HEADER_HEIGHT);
+      };
+
+      /* ---------- FOOTER ---------- */
+      const drawFooter = () => {
+        /* ---------- FOOTER BACKGROUND ---------- */
+        pdf.setFillColor(255, 255, 255); // same as header
+        pdf.rect(0, pageHeight - FOOTER_HEIGHT, pageWidth, FOOTER_HEIGHT, "F");
+
+        /* ---------- TOP DIVIDER ---------- */
+        pdf.setDrawColor(226, 232, 240); // slate-200
+        pdf.line(
+          15,
+          pageHeight - FOOTER_HEIGHT,
+          pageWidth - 15,
+          pageHeight - FOOTER_HEIGHT,
+        );
+
+        /* ---------- FOOTER TEXT ---------- */
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 116, 139); // slate-500
+
+        pdf.text(
+          "MyAcademy 51 © 2026. All rights reserved.",
+          pageWidth / 2,
+          pageHeight - FOOTER_HEIGHT / 2 + 3,
+          { align: "center" },
+        );
+      };
+
+      /* ---------- CAPTURE HELPER ---------- */
+      const capture = async (el, options = {}) => {
+        if (!el) return null;
+
+        const clone = el.cloneNode(true);
+
+        clone.style.position = "fixed";
+        clone.style.top = "-10000px";
+        clone.style.left = "0";
+        clone.style.width = el.offsetWidth + "px";
+        clone.style.background = "#ffffff";
+        clone.style.opacity = "1";
+        clone.style.pointerEvents = "none";
+
+        // ✅ Hide UI header ONLY if requested
+        if (options.hideUiHeader) {
+          const uiHeader = clone.querySelector("[data-ui-header]");
+          if (uiHeader) uiHeader.style.display = "none";
+        }
+
+        document.body.appendChild(clone);
+
+        await new Promise((r) => requestAnimationFrame(r));
+
+        const canvas = await html2canvas(clone, {
+          scale: 3,
           backgroundColor: "#ffffff",
           useCORS: true,
         });
 
+        document.body.removeChild(clone);
+
         return {
-          img: canvas.toDataURL("image/png"),
+          canvas,
           width: canvas.width,
           height: canvas.height,
         };
       };
 
       /* ===============================
-   PAGE 1 — SUMMARY (NO HEADER)
-================================ */
-      const summary = await capture(summaryRef.current);
-      const summaryHeight = (summary.height * usableWidth) / summary.width;
+ PAGE 1 — SUMMARY (NO UI HEADER)
+=============================== */
+      const captured = await capture(summaryRef.current, {
+        hideUiHeader: true, // ✅ key line
+      });
 
-      // ✅ FIX: do NOT center vertically
-      const summaryY = 22;
-
-      pdf.addImage(
-        summary.img,
-        "PNG",
-        marginX,
-        summaryY,
+      addImagePaged(
+        pdf,
+        captured.canvas,
+        captured.width,
+        captured.height,
         usableWidth,
-        summaryHeight,
+        CONTENT_TOP,
+        CONTENT_HEIGHT,
+        marginX,
+        drawHeader, // ✅ still drawn
+        drawFooter,
       );
 
       /* ===============================
-   PAGE 3 — Usage / Privacy / Safety
-================================ */
+ PAGE 2 — ASSESSMENT SUMMARY
+=============================== */
       if (usageTableRef.current) {
         pdf.addPage();
-        drawHeader();
 
-        const usageBlock = await capture(usageTableRef.current);
-        const usageHeight =
-          (usageBlock.height * usableWidth) / usageBlock.width;
+        const captured = await capture(usageTableRef.current);
 
-        pdf.addImage(
-          usageBlock.img,
-          "PNG",
-          marginX,
-          contentStartY,
+        addImagePaged(
+          pdf,
+          captured.canvas, // ✅ FIX
+          captured.width,
+          captured.height,
           usableWidth,
-          usageHeight,
+          CONTENT_TOP,
+          CONTENT_HEIGHT,
+          marginX,
+          drawHeader,
+          drawFooter,
         );
       }
 
       /* ===============================
-       PAGE 2 — Evaluation Summary
-    =============================== */
-      pdf.addPage();
-      drawHeader();
+ PAGE 3 — EVALUATION (FIRST)
+=============================== */
+      if (evaluationBlockRef.current) {
+        pdf.addPage();
 
-      let cursorY = contentStartY;
+        const captured = await capture(evaluationBlockRef.current);
 
-      const evalBlock = await capture(evaluationBlockRef.current);
-      const evalHeight = (evalBlock.height * usableWidth) / evalBlock.width;
-
-      pdf.addImage(
-        evalBlock.img,
-        "PNG",
-        marginX,
-        cursorY,
-        usableWidth,
-        evalHeight,
-      );
+        addImagePaged(
+          pdf,
+          captured.canvas, // ✅ FIX
+          captured.width,
+          captured.height,
+          usableWidth,
+          CONTENT_TOP,
+          CONTENT_HEIGHT,
+          marginX,
+          drawHeader,
+          drawFooter,
+        );
+      }
 
       /* ===============================
-       PAGE 3+ — Remaining Tables
-    =============================== */
+ PAGE 4+ — REMAINING TABLES
+=============================== */
       for (let i = 1; i < tableRefs.current.length; i++) {
         const el = tableRefs.current[i];
         if (!el) continue;
 
         pdf.addPage();
-        drawHeader();
 
-        cursorY = contentStartY;
+        const captured = await capture(el);
 
-        const table = await capture(el);
-        const tableHeight = (table.height * usableWidth) / table.width;
-
-        pdf.addImage(
-          table.img,
-          "PNG",
-          marginX,
-          cursorY,
+        addImagePaged(
+          pdf,
+          captured.canvas, // ✅ FIX
+          captured.width,
+          captured.height,
           usableWidth,
-          tableHeight,
+          CONTENT_TOP,
+          CONTENT_HEIGHT,
+          marginX,
+          drawHeader,
+          drawFooter,
         );
       }
 
       /* ===============================
-       PAGE NUMBERS
+       PAGE NUMBERS (ABOVE FOOTER)
     =============================== */
-      const addPageNumbers = () => {
-        const pageCount = pdf.getNumberOfPages();
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(10);
+      const pages = pdf.getNumberOfPages();
+      pdf.setFontSize(10);
 
-        for (let i = 1; i <= pageCount; i++) {
-          pdf.setPage(i);
-          pdf.text(
-            `Page ${i} of ${pageCount}`,
-            pageWidth / 2,
-            pageHeight - 10,
-            { align: "center" },
-          );
-        }
-      };
-
-      addPageNumbers();
+      for (let i = 1; i <= pages; i++) {
+        pdf.setPage(i);
+        pdf.text(
+          `Page ${i} of ${pages}`,
+          pageWidth / 2,
+          pageHeight - FOOTER_HEIGHT - 4,
+          { align: "center" },
+        );
+      }
 
       pdf.save(`${project.name}-AI-Compliance-Report.pdf`);
     } finally {
+      setIsPdfRendering(false);
       setIsDownloading(false);
     }
   };
@@ -377,26 +541,28 @@ export default function ProjectDetails({ project, onBack }) {
 
         {/* HEADER */}
         <div ref={summaryRef}>
-          <h1
-            style={{
-              textAlign: "center",
-              fontSize: 28,
-              fontWeight: 700,
-              marginBottom: 16,
-              color: "#0F172A",
-            }}
-          >
-            {project.name}
-          </h1>
+          <div data-ui-header>
+            <h1
+              style={{
+                textAlign: "center",
+                fontSize: 28,
+                fontWeight: 700,
+                marginBottom: 16,
+                color: "#0F172A",
+              }}
+            >
+              Assessment Report
+            </h1>
 
-          <div
-            style={{
-              height: 1,
-              background: "#D1D5DB",
-              marginBottom: 25,
-              width: "100%",
-            }}
-          />
+            <div
+              style={{
+                height: 1,
+                background: "#D1D5DB",
+                marginBottom: 25,
+                width: "100%",
+              }}
+            />
+          </div>
 
           {/* CONTENT LAYOUT */}
           <div
@@ -423,7 +589,7 @@ export default function ProjectDetails({ project, onBack }) {
               <Detail label="Date" value={dateString} />
               <Detail
                 label="Status"
-                value={capitalizeFirstLetter(project.status) || "-"}
+                value={formatStatus(project.status) || "-"}
               />
               <Detail
                 label="Requested By"
@@ -480,52 +646,74 @@ export default function ProjectDetails({ project, onBack }) {
             )}
           </div>
           {/* ✅ NEW — Approve / Reject buttons */}
-          {isRequested && isAdmin && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 12,
-                marginTop: 24,
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <AwsButton
-                label="Approve for Scan"
-                onClick={() => {
-                  setActionType("scan_approve");
-                  setShowModal(true);
-                }}
-              />
+          {/* ================= ADMIN ACTIONS ================= */}
+          {isAdmin && (
+            <>
+              {/* 🔹 Scan approval – ONLY when requested */}
+              {project.status === "requested" && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: 12,
+                    marginTop: 24,
+                    flexWrap: "wrap",
+                    width: "100%",
+                  }}
+                >
+                  <AwsButton
+                    label="Approve for Scan"
+                    onClick={() => {
+                      setActionType("scan_approve");
+                      setShowModal(true);
+                    }}
+                  />
 
-              <AwsButton
-                label="Reject for Scan"
-                onClick={() => {
-                  setActionType("scan_reject");
-                  setShowModal(true);
-                }}
-              />
+                  <AwsButton
+                    label="Reject for Scan"
+                    onClick={() => {
+                      setActionType("scan_reject");
+                      setShowModal(true);
+                    }}
+                  />
+                </div>
+              )}
 
-              <AwsButton
-                label="Approve for Usage"
-                onClick={() => {
-                  setActionType("approve");
-                  setShowModal(true);
-                }}
-              />
+              {/* 🔹 Usage approval – ONLY after scan completed */}
+              {project.status === "scan_completed" &&
+                project.assessment_status === "completed" && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 12,
+                      marginTop: 24,
+                      flexWrap: "wrap",
+                      width: "100%",
+                    }}
+                  >
+                    <AwsButton
+                      label="Approve for Usage"
+                      onClick={() => {
+                        setActionType("approve");
+                        setShowModal(true);
+                      }}
+                    />
 
-              <AwsButton
-                label="Reject for Usage"
-                onClick={() => {
-                  setActionType("reject");
-                  setShowModal(true);
-                }}
-              />
-            </div>
+                    <AwsButton
+                      label="Reject for Usage"
+                      onClick={() => {
+                        setActionType("reject");
+                        setShowModal(true);
+                      }}
+                    />
+                  </div>
+                )}
+            </>
           )}
 
-          {isRequested && !isAdmin && (
+          {/* ================= NON-ADMIN MESSAGE ================= */}
+          {project.status === "requested" && !isAdmin && (
             <div
               style={{
                 marginTop: 20,
@@ -643,6 +831,8 @@ export default function ProjectDetails({ project, onBack }) {
                   ? "Approve for Usage"
                   : "Reject for Usage"
           }
+          /* ✅ FIX IS HERE */
+          hideCredits={actionType !== "scan_approve"}
           onClose={() => setShowModal(false)}
           onConfirm={handleApproveReject}
         />
@@ -939,70 +1129,68 @@ function UsageSummaryTable({ project }) {
   ];
 
   return (
-    <div
-      style={{
-        marginTop: 30,
-        border: "1px solid #E5E7EB",
-        borderRadius: 10,
-        overflow: "hidden",
-        background: "#FFFFFF",
-      }}
-    >
-      <table
+    <>
+      {/* ✅ SECTION TITLE — EXACTLY LIKE UI */}
+      <h2 style={sectionTitleStyle}>Assessment Summary</h2>
+
+      <div
         style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
+          marginTop: 16,
+          border: "1px solid #E5E7EB",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "#FFFFFF",
         }}
       >
-        <tbody>
-          {rows.map((row, index) => (
-            <tr
-              key={index}
-              style={{
-                borderBottom:
-                  index !== rows.length - 1 ? "1px solid #E5E7EB" : "none",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#F8FAFC")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "#FFFFFF")
-              }
-            >
-              {/* LEFT LABEL */}
-              <td
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+          }}
+        >
+          <tbody>
+            {rows.map((row, index) => (
+              <tr
+                key={index}
                 style={{
-                  width: 220,
-                  padding: "14px 16px",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  color: "#0F172A",
-                  background: "#F9FAFB",
-                  verticalAlign: "top",
+                  borderBottom:
+                    index !== rows.length - 1 ? "1px solid #E5E7EB" : "none",
                 }}
               >
-                {row.label}
-              </td>
+                {/* LEFT LABEL */}
+                <td
+                  style={{
+                    width: 220,
+                    padding: "14px 16px",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    color: "#0F172A",
+                    background: "#F9FAFB",
+                    verticalAlign: "top",
+                  }}
+                >
+                  {row.label}
+                </td>
 
-              {/* RIGHT VALUE */}
-              <td
-                style={{
-                  padding: "14px 16px",
-                  fontSize: 15,
-                  color: "#334155",
-                  lineHeight: "24px",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {row.value || "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                {/* RIGHT VALUE */}
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    fontSize: 15,
+                    color: "#334155",
+                    lineHeight: "24px",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {row.value || "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

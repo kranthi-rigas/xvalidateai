@@ -12,6 +12,8 @@ import usePageLoader from "@/data/usePageLoader";
 import useToast from "../../../hooks/useToast";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { hasOrganization } from "@/data/orgGuard";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 
 export default function OrgUsers({ refreshProjects }) {
   const [users, setUsers] = useState(null);
@@ -22,19 +24,34 @@ export default function OrgUsers({ refreshProjects }) {
   const show = useToast();
   const orgExists = hasOrganization();
 
-  //ADMIN Check helper
+  // ADMIN + ORG context
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
+  // ---------- ROLES ----------
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
 
+  // ADMIN check
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
+  // ---------- ORGANIZATION ----------
   const hasOrg = hasOrganization();
 
-  // FINAL PERMISSION
-  const canManage = hasOrg && isAdmin;
+  // normalize org name safely
+  const orgName = (userInfo.organization?.name || "").trim().toLowerCase();
+
+  // default orgs should behave like "no org"
+  const isDefaultOrg = orgName === "academy51" || orgName === "myacademy51";
+
+  // ✅ VALID org = exists AND not default
+  const hasValidOrg = hasOrg && !isDefaultOrg;
+
+  // ✅ FINAL permission (authoritative)
+  const canManage = hasValidOrg && isAdmin;
+
+  // Preferences modal
+  const [showPreferences, setShowPreferences] = useState(false);
 
   /* ---------- Add columnWidths state ---------- */
   const [columnWidths, setColumnWidths] = useState({
@@ -321,6 +338,22 @@ export default function OrgUsers({ refreshProjects }) {
     return row[key] || "-";
   };
 
+  // Table preferences
+  const [pageSize, setPageSize] = useState(25);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  // Column visibility
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((c) => c.key),
+  );
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
+
   // ---------- Table Refresh ---------- //
   const [tableLoading, setTableLoading] = useState(false);
   {
@@ -375,16 +408,33 @@ export default function OrgUsers({ refreshProjects }) {
 
             <ActionsMenu
               selected={selected}
-              onEdit={(id) => alert("Edit user: " + id)}
-              onDelete={() => alert("Delete users: " + selected)}
+              items={
+                isAdmin
+                  ? [
+                      {
+                        key: "edit",
+                        label: "Edit",
+                        onClick: () => alert("Edit user: " + selected[0]),
+                      },
+                      {
+                        key: "delete",
+                        label: "Delete",
+                        danger: true,
+                        onClick: () => alert("Delete users: " + selected),
+                      },
+                    ]
+                  : [] // 🔥 NON-ADMIN → NO DROPDOWN ITEMS
+              }
             />
 
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg
+                !hasOrg || isDefaultOrg
                   ? "Please create an organization before inviting users"
-                  : "Only admin users can invite users"
+                  : !isAdmin
+                    ? "Only admin users can invite users"
+                    : ""
               }
             >
               <AwsButton
@@ -397,6 +447,10 @@ export default function OrgUsers({ refreshProjects }) {
                 <SlUserFollow size={15} />
               </AwsButton>
             </OrgRequiredWrapper>
+            <AwsSettingsIconButton
+              onClick={() => setShowPreferences(true)}
+              title="Preferences"
+            />
           </div>
         </div>
 
@@ -411,8 +465,8 @@ export default function OrgUsers({ refreshProjects }) {
         >
           <div style={{ position: "relative" }}>
             <ListTable
-              columns={columns}
-              data={filtered}
+              columns={visibleCols}
+              data={filtered.slice(0, pageSize)}
               rowKey="user_id"
               renderCell={renderCell}
               sortConfig={sortConfig}
@@ -475,6 +529,21 @@ export default function OrgUsers({ refreshProjects }) {
               return { success: false, error: message };
             }
           }}
+        />
+      )}
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
         />
       )}
     </div>

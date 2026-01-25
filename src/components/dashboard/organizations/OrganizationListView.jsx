@@ -7,11 +7,14 @@ import { useNavigate, Link } from "react-router-dom";
 import OrganizationDetails from "./OrganizationDetails";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
-
 import { getOrganizations } from "../../../apiIntegration/organization"; // you will create these APIs
 import ReviewOrganizationModal from "./ReviewOrganizationModal";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import CreateOrganizationModal from "./CreateOrganization";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 
-export default function OrganizationListView({ setShowCreateModal }) {
+export default function OrganizationListView() {
   const navigate = useNavigate();
   const [viewOrg, setViewOrg] = useState(null);
   const [organizations, setOrganizations] = useState(null);
@@ -22,7 +25,10 @@ export default function OrganizationListView({ setShowCreateModal }) {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [activeOrg, setActiveOrg] = useState(null);
-  const pageLoading = usePageLoader([organizations]);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -75,18 +81,56 @@ export default function OrganizationListView({ setShowCreateModal }) {
   }, []);
 
   /* ---------- FETCH DATA ---------- */
-  const loadOrganizations = async () => {
+  const loadOrganizations = async ({ showPageLoader = false } = {}) => {
     try {
+      if (showPageLoader) setPageLoading(true);
+      else setTableLoading(true);
+
       const res = await getOrganizations();
       setOrganizations(res.organizations || []);
     } catch (err) {
       console.error("Error loading organizations:", err);
+    } finally {
+      if (showPageLoader) setPageLoading(false);
+      else setTableLoading(false);
     }
   };
 
   useEffect(() => {
-    loadOrganizations();
+    loadOrganizations({ showPageLoader: true });
   }, []);
+
+  // ---------- ADMIN CHECK ----------
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+
+  const roles = Array.isArray(userInfo.roles)
+    ? userInfo.roles
+    : String(userInfo.roles || "").split(",");
+
+  const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
+
+  const planType = userInfo?.plan?.plan_type?.toUpperCase() || "FREE";
+  const isEnterprisePlan = planType === "ENTERPRISE";
+
+  const DEFAULT_ORGS = ["academy51", "myacademy51"];
+
+  const orgList = organizations || [];
+
+  const nonDefaultOrgCount = orgList.filter(
+    (org) => !DEFAULT_ORGS.includes((org.name || "").toLowerCase()),
+  ).length;
+
+  // ❗ ONLY ENTERPRISE can have more than one org
+  const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
+
+  // FINAL permission
+  const canCreateOrg = isAdmin && !hasReachedOrgLimit;
+
+  const createOrgTooltip = !isAdmin
+    ? "Only admin users can create an organization"
+    : hasReachedOrgLimit
+      ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
+      : "";
 
   /* ---------- SEARCH ---------- */
   const filtered = (organizations || [])
@@ -210,8 +254,20 @@ export default function OrganizationListView({ setShowCreateModal }) {
       );
     }
 
-    if (key === "created_at")
-      return row.created_at ? new Date(row.created_at).toLocaleString() : "-";
+    if (key === "created_at") {
+      if (!row.created_at) return "-";
+
+      const utcDate = new Date(row.created_at + "Z");
+      return utcDate.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    }
 
     return row[key] || "-";
   };
@@ -268,9 +324,11 @@ export default function OrganizationListView({ setShowCreateModal }) {
 
             <ActionsMenu
               selected={selected}
-              items={ORG_ACTIONS}
-              disabled={selected.length !== 1}
+              items={isAdmin ? ORG_ACTIONS : []} // 🔥 no items for non-admin
+              disabled={!isAdmin || selected.length !== 1}
               onSelect={(actionKey) => {
+                if (!isAdmin) return; // 🔒 safety guard
+
                 const orgId = selected[0];
                 const org = organizations.find((o) => o.org_id === orgId);
 
@@ -279,15 +337,28 @@ export default function OrganizationListView({ setShowCreateModal }) {
                   return;
                 }
 
-                setActiveOrg(org); // ✅ SET ACTIVE ORG
+                setActiveOrg(org);
                 setSelectedAction(actionKey);
                 setShowReviewModal(true);
               }}
             />
 
-            <AwsButton
-              label="+ Create Organization"
-              onClick={() => navigate("/dashboard/createorganization")}
+            <OrgRequiredWrapper
+              disabled={!canCreateOrg}
+              message={createOrgTooltip}
+            >
+              <AwsButton
+                label="+ Create Organization"
+                onClick={() => {
+                  if (!canCreateOrg) return;
+                  setShowCreateOrgModal(true);
+                }}
+              />
+            </OrgRequiredWrapper>
+
+            <AwsSettingsIconButton
+              onClick={() => setShowPreferences(true)}
+              title="Preferences"
             />
           </div>
         </div>
@@ -322,6 +393,33 @@ export default function OrganizationListView({ setShowCreateModal }) {
               setSelected([]);
               loadOrganizations();
             }}
+          />
+        )}
+        {/* ===== CREATE ORGANIZATION MODAL ===== */}
+        {showCreateOrgModal && (
+          <CreateOrganizationModal
+            setShowCreateModal={setShowCreateOrgModal}
+            onSuccess={() => {
+              setShowCreateOrgModal(false);
+              loadOrganizations();
+            }}
+          />
+        )}
+
+        {showPreferences && (
+          <TablePreferencesModal
+            open={showPreferences}
+            onClose={() => setShowPreferences(false)}
+            /* These are REQUIRED props */
+            pageSize={10}
+            setPageSize={() => {}}
+            wrapLines={false}
+            setWrapLines={() => {}}
+            stripedRows={false}
+            setStripedRows={() => {}}
+            columns={columns}
+            visibleColumns={columns.map((c) => c.key)}
+            toggleColumn={() => {}}
           />
         )}
 

@@ -2,3 +2,6 @@
 build
 package-lock.json
 node_modules
+.env.development
+.DS
+.DS_Store

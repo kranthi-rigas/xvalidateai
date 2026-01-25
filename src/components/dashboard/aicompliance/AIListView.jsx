@@ -17,6 +17,59 @@ import { RxCrossCircled } from "react-icons/rx";
 import { GrStatusGood } from "react-icons/gr";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
+import useToast from "../../../hooks/useToast";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import CreditInfoNote from "./CreditInfoNote";
+
+const STATUS_BADGE_MAP = {
+  pending_assessment: {
+    bg: "#FEF3C7",
+    color: "#92400E",
+    border: "#FDE68A",
+  },
+  requested: {
+    bg: "#E0F2FE",
+    color: "#075985",
+    border: "#7DD3FC",
+  },
+  requested_for_scan: {
+    bg: "#E0F2FE",
+    color: "#075985",
+    border: "#7DD3FC",
+  },
+  approved_for_scan: {
+    bg: "#DCFCE7",
+    color: "#166534",
+    border: "#86EFAC",
+  },
+  rejected_for_scan: {
+    bg: "#FEE2E2",
+    color: "#991B1B",
+    border: "#FCA5A5",
+  },
+  scan_in_progress: {
+    bg: "#E0E7FF",
+    color: "#3730A3",
+    border: "#A5B4FC",
+  },
+  completed: {
+    bg: "#ECFDF5",
+    color: "#065F46",
+    border: "#6EE7B7",
+  },
+  approved_for_usage: {
+    bg: "#DCFCE7",
+    color: "#14532D",
+    border: "#86EFAC",
+  },
+  rejected_for_usage: {
+    bg: "#FEE2E2",
+    color: "#7F1D1D",
+    border: "#FCA5A5",
+  },
+};
 
 export default function AIListView({
   projects,
@@ -43,8 +96,6 @@ export default function AIListView({
     ? rolesRaw.map((r) => String(r).toUpperCase())
     : String(rolesRaw).toUpperCase().split(",");
 
-  const isAdmin = roles.includes("ADMIN");
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
   const [deleteError, setDeleteError] = useState("");
@@ -56,16 +107,30 @@ export default function AIListView({
   const [approvalAction, setApprovalAction] = useState(null); // approve | reject
   const [activeProject, setActiveProject] = useState(null);
 
+  const show = useToast();
+  const [approvalError, setApprovalError] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
+
   const isRequested = (row) => row.status === "requested";
+
+  const hasAdminRole = roles.includes("ADMIN");
+  const hasAuditorRole = roles.includes("AUDITOR");
+  const hasAnalystRole = roles.includes("ANALYST");
+
+  const isAdmin = hasAdminRole;
+  const isAuditor = hasAuditorRole;
+  // ✅ Analyst-only = NO higher privilege
+  const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
 
   /* ---------- Add columnWidths state ---------- */
   const [columnWidths, setColumnWidths] = useState({
     checkbox: 60,
-    name: 220,
+    name: 190,
     description: 180,
-    status: 170,
-    assessment_status: 150,
-    score: 120,
+    status: 200,
+    assessment_status: 120,
+    score: 100,
+    recommendation: 190,
     lastScanDate: 180,
     requested_by: 220,
     approved_by: 220,
@@ -142,18 +207,17 @@ export default function AIListView({
     return () => window.removeEventListener("mousemove", handleResize);
   }, []);
 
+  // 🔤 Convert snake_case / lowercase to Title Case
+  const toTitleCase = (value = "") =>
+    value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
   //STATUS LABEL MAPPER
   const getAssessmentStatusLabel = (row) => {
-    // Instructor requested scan
-    if (
-      row.status === "requested" &&
-      row.assessment_status === "not_applicable"
-    ) {
-      return "requested for scan";
-    }
-
-    // Normal formatting fallback
-    return row.status ? row.status.replace(/_/g, " ") : "-";
+    if (row.status === "requested") return "Requested For Scan";
+    return row.status ? toTitleCase(row.status) : "-";
   };
 
   /* ---------- Search ---------- */
@@ -256,12 +320,6 @@ export default function AIListView({
     },
 
     { key: "name", label: "Tool Name", sortable: true, resizable: true },
-    {
-      key: "description",
-      label: "Description",
-      sortable: false,
-      resizable: true,
-    },
 
     {
       key: "status",
@@ -277,6 +335,18 @@ export default function AIListView({
     },
 
     { key: "score", label: "Score", sortable: true, resizable: true },
+    {
+      key: "recommendation",
+      label: "Recommendation",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: false,
+      resizable: true,
+    },
     {
       key: "lastScanDate",
       label: "Last Scan",
@@ -297,6 +367,22 @@ export default function AIListView({
       resizable: true,
     },
   ];
+
+  //Settings icon helper
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((c) => c.key),
+  );
+
+  const toggleColumn = (key) =>
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+
+  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
 
   //score icon helper
   // ⭐ SCORE ICON HELPER (Enterprise / AWS style)
@@ -338,6 +424,74 @@ export default function AIListView({
     };
   };
 
+  //Recommendation helper
+  const getRecommendationUI = (row) => {
+    const rec = (row.recommendation || "").toLowerCase();
+    const assessment = (row.assessment_status || "").toLowerCase();
+
+    // 🔴 Error case
+    if (assessment === "error" || assessment === "failed") {
+      return {
+        label: "Error",
+        bg: "#FEE2E2",
+        color: "#991B1B",
+        border: "#FCA5A5",
+      };
+    }
+
+    // ⏳ Pending (scan not started)
+    if (
+      !assessment ||
+      assessment === "not_applicable" ||
+      assessment === "queued"
+    ) {
+      return {
+        label: "Pending",
+        bg: "#F3F4F6",
+        color: "#374151",
+        border: "#E5E7EB",
+      };
+    }
+
+    // ❌ Not Recommended
+    if (rec === "not recommended") {
+      return {
+        label: "Not Recommended",
+        bg: "#FEE2E2",
+        color: "#991B1B",
+        border: "#FCA5A5",
+      };
+    }
+
+    // ⚠️ Approved with limitations
+    if (rec === "approved with limitations") {
+      return {
+        label: "Approved with limitations",
+        bg: "#FEF3C7",
+        color: "#92400E",
+        border: "#FDE68A",
+      };
+    }
+
+    // ✅ Approved
+    if (rec === "approved") {
+      return {
+        label: "Approved",
+        bg: "#DCFCE7",
+        color: "#166534",
+        border: "#86EFAC",
+      };
+    }
+
+    // 🔹 Default fallback
+    return {
+      label: "-",
+      bg: "#F3F4F6",
+      color: "#374151",
+      border: "#E5E7EB",
+    };
+  };
+
   /* ---------- Cell renderer ---------- */
   // Measure text width exactly like the browser does
   const measureTextWidth = (text, font = "14px Amazon Ember") => {
@@ -372,22 +526,13 @@ export default function AIListView({
     /* ------------------- NAME ------------------- */
     if (key === "name") {
       const text = row.name || "";
+      const isBlocked = row.status === "pending_assessment";
 
-      const isPendingAssessment = row.status === "pending_assessment";
-      const isRequested = row.status === "requested";
+      const tooltipText = isBlocked
+        ? "Assessment is currently in progress."
+        : "";
 
-      // 🔐 BLOCK CONDITIONS
-      const blockedByAssessment = isPendingAssessment;
-      const isBlocked = blockedByAssessment;
-
-      let tooltipText = "";
-
-      if (blockedByAssessment) {
-        tooltipText =
-          "Assessment is currently in progress. Please try again later.";
-      }
-
-      const nameContent = (
+      const content = (
         <span
           style={{
             ...LinkStyle,
@@ -404,25 +549,10 @@ export default function AIListView({
         </span>
       );
 
-      if (isBlocked) {
-        return <WhiteTooltip text={tooltipText}>{nameContent}</WhiteTooltip>;
-      }
-
-      // ✅ ADMIN or allowed users
-      return (
-        <span
-          onClick={() => setOpenedProject(row)}
-          style={{
-            ...LinkStyle,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.name - 20,
-            display: "inline-block",
-          }}
-        >
-          {text}
-        </span>
+      return isBlocked ? (
+        <WhiteTooltip text={tooltipText}>{content}</WhiteTooltip>
+      ) : (
+        <span onClick={() => setOpenedProject(row)}>{content}</span>
       );
     }
 
@@ -449,30 +579,35 @@ export default function AIListView({
     }
 
     if (key === "status") {
-      const text = getAssessmentStatusLabel(row);
+      const label = getAssessmentStatusLabel(row);
+      const style =
+        STATUS_BADGE_MAP[row.status] || STATUS_BADGE_MAP.pending_assessment;
 
       return (
         <span
           style={{
-            display: "inline-block",
-            maxWidth: columnWidths.status - 20,
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 600,
+            background: style.bg,
+            color: style.color,
+            border: `1px solid ${style.border}`,
             whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            cursor: "default",
-            color: "#374151",
-            fontWeight: text === "Requested for Scan" ? 600 : 400, // subtle emphasis
+            maxWidth: columnWidths.status - 20,
           }}
-          title={text}
+          title={label}
         >
-          {text}
+          {label}
         </span>
       );
     }
 
     if (key === "assessment_status") {
       const text = row.assessment_status
-        ? formatStatusLabel(row.assessment_status)
+        ? toTitleCase(row.assessment_status)
         : "-";
 
       return (
@@ -492,6 +627,7 @@ export default function AIListView({
         </span>
       );
     }
+
     if (key === "score") {
       if (row.score == null) return "-";
 
@@ -511,6 +647,31 @@ export default function AIListView({
           <Icon size={18} color={color} />
           <span style={{ color }}>{row.score}</span>
         </div>
+      );
+    }
+
+    if (key === "recommendation") {
+      const ui = getRecommendationUI(row);
+
+      return (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 600,
+            background: ui.bg,
+            color: ui.color,
+            border: `1px solid ${ui.border}`,
+            whiteSpace: "nowrap",
+            maxWidth: columnWidths.recommendation - 20,
+          }}
+          title={ui.label}
+        >
+          {ui.label}
+        </span>
       );
     }
 
@@ -581,7 +742,7 @@ export default function AIListView({
     }
     /* ------------------- APPROVED BY ------------------- */
     if (key === "approved_by") {
-      const a = row.approved_by;
+      const a = row.scan_approved_by; // 🔥 UPDATED KEY
       const requester = row.requested_by;
 
       // ✅ Admin created → show "-"
@@ -589,7 +750,7 @@ export default function AIListView({
         return <span>-</span>;
       }
 
-      // ✅ Not approved yet (non-admin created)
+      // ✅ Not approved yet
       if (!a) {
         return (
           <span
@@ -599,12 +760,12 @@ export default function AIListView({
               fontStyle: "italic",
             }}
           >
-            Pending
+            N/A
           </span>
         );
       }
 
-      // ✅ Approved by someone
+      // ✅ Scan approved by someone
       const fullName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
       const email = a.email || "";
 
@@ -645,20 +806,31 @@ export default function AIListView({
       );
     }
 
+    if (key === "recommendation") return null;
     return row[key] ?? "";
   };
 
-  //helper for delete disabled
+  // helper for delete disabled (ADMIN only usage)
   const isDeleteDisabledForProject = (project) =>
     project.assessment_status === "scan_in_progress";
 
   const actionItems = (() => {
     if (selected.length === 0) return [];
 
+    const project = liveProjects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    // 🚫 ANALYST-ONLY — view only
+    if (isAnalystOnly) {
+      return [];
+    }
+
     // ================= MULTI SELECT =================
     if (selected.length > 1) {
+      if (!isAdmin) return [];
+
       const anyScanInProgress = selected.some((id) => {
-        const p = projects.find((x) => x.project_id === id);
+        const p = liveProjects.find((x) => x.project_id === id);
         return p?.assessment_status === "scan_in_progress";
       });
 
@@ -672,19 +844,36 @@ export default function AIListView({
       ];
     }
 
-    // ================= SINGLE SELECT =================
-    const project = projects.find((p) => p.project_id === selected[0]);
-    if (!project) return [];
-
     const deleteDisabled = project.assessment_status === "scan_in_progress";
 
     // ================= ADMIN =================
     if (isAdmin) {
-      return [
-        { key: "scan_approve", label: "Approve for Scan" },
-        { key: "scan_reject", label: "Reject for Scan" },
-        { key: "approve", label: "Approve for Usage" },
-        { key: "reject", label: "Reject for Usage" },
+      const actions = [];
+
+      // 🟦 Scan request stage
+      if (
+        project.status === "requested" ||
+        project.status === "requested_for_scan"
+      ) {
+        actions.push(
+          { key: "scan_approve", label: "Approve for Scan" },
+          { key: "scan_reject", label: "Reject for Scan" },
+        );
+      }
+
+      // 🟩 Scan completed → usage approval stage ONLY
+      if (
+        project.status === "scan_completed" &&
+        project.assessment_status === "completed"
+      ) {
+        actions.push(
+          { key: "approve", label: "Approve for Usage" },
+          { key: "reject", label: "Reject for Usage" },
+        );
+      }
+
+      // ⚙️ Always available
+      actions.push(
         { key: "edit", label: "Edit" },
         {
           key: "delete",
@@ -692,19 +881,28 @@ export default function AIListView({
           danger: true,
           disabled: deleteDisabled,
         },
-      ];
+      );
+
+      return actions;
     }
 
-    // ================= NON-ADMIN =================
-    return [
-      { key: "edit", label: "Edit" },
-      {
-        key: "delete",
-        label: "Delete",
-        danger: true,
-        disabled: deleteDisabled,
-      },
-    ];
+    // ================= AUDITOR =================
+    if (isAuditor) {
+      const actions = [];
+
+      if (project.status === "pending_assessment") {
+        actions.push({
+          key: "request_scan",
+          label: "Request Scan",
+        });
+      }
+
+      actions.push({ key: "edit", label: "Edit" });
+
+      return actions;
+    }
+
+    return [];
   })();
 
   if (pageLoading) {
@@ -755,7 +953,7 @@ export default function AIListView({
             selected={selected}
             items={actionItems}
             onSelect={(key) => {
-              const project = projects.find(
+              const project = liveProjects.find(
                 (p) => p.project_id === selected[0],
               );
               if (!project) return;
@@ -769,6 +967,18 @@ export default function AIListView({
                 key === "reject"
               ) {
                 setApprovalAction(key);
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "request_scan") {
+                setApprovalAction("request_scan");
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "cancel_request") {
+                setApprovalAction("cancel_request");
                 setShowApprovalModal(true);
                 return;
               }
@@ -790,9 +1000,22 @@ export default function AIListView({
             }}
           />
 
-          <AwsButton
-            label="+ Tool Assessment"
-            onClick={() => setShowCreateModal(true)}
+          <OrgRequiredWrapper
+            disabled={isAnalystOnly}
+            message="You have view-only access"
+          >
+            <AwsButton
+              label="+ Tool Assessment"
+              onClick={() => {
+                if (isAnalystOnly) return;
+                setShowCreateModal(true);
+              }}
+            />
+          </OrgRequiredWrapper>
+
+          <AwsSettingsIconButton
+            onClick={() => setShowPreferences(true)}
+            title="Preferences"
           />
         </div>
       </div>
@@ -806,8 +1029,8 @@ export default function AIListView({
         }}
       >
         <ListTable
-          columns={columns}
-          data={filtered}
+          columns={visibleCols}
+          data={filtered.slice(0, pageSize)}
           rowKey="project_id"
           renderCell={renderCell}
           sortConfig={sortConfig}
@@ -863,6 +1086,7 @@ export default function AIListView({
       )}
       {showApprovalModal && activeProject && (
         <ApproveRejectModal
+          hasError={approvalError}
           title={
             approvalAction === "scan_approve"
               ? "Approve Tool for Scan"
@@ -870,7 +1094,11 @@ export default function AIListView({
                 ? "Reject Tool for Scan"
                 : approvalAction === "approve"
                   ? "Approve Tool for Usage"
-                  : "Reject Tool for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject Tool for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Tool Assessment"
+                      : "Cancel Assessment Request"
           }
           actionLabel={
             approvalAction === "scan_approve"
@@ -879,13 +1107,39 @@ export default function AIListView({
                 ? "Reject for Scan"
                 : approvalAction === "approve"
                   ? "Approve for Usage"
-                  : "Reject for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Scan"
+                      : "Cancel Request"
           }
-          onClose={() => setShowApprovalModal(false)}
+          /* 🔐 AUDITOR UX FIXES */
+          hideCredits={!["scan_approve"].includes(approvalAction)}
+          hideComment={approvalAction === "cancel_request"}
+          onClose={() => {
+            setShowApprovalModal(false);
+            setApprovalError(false);
+          }}
           onConfirm={async (comment) => {
             let payload = {};
 
             switch (approvalAction) {
+              // ===== AUDITOR =====
+              case "request_scan":
+                payload = {
+                  action: "request_scan",
+                  status: "requested",
+                };
+                break;
+
+              case "cancel_request":
+                payload = {
+                  action: "cancel_request",
+                  status: "pending_assessment",
+                };
+                break;
+
+              // ===== ADMIN =====
               case "scan_approve":
                 payload = {
                   action: "scan_approve",
@@ -902,14 +1156,14 @@ export default function AIListView({
 
               case "approve":
                 payload = {
-                  action: "approve", // ✅ as requested
+                  action: "approve",
                   status: "approved_for_usage",
                 };
                 break;
 
               case "reject":
                 payload = {
-                  action: "reject", // ✅ as requested
+                  action: "reject",
                   status: "rejected_for_usage",
                 };
                 break;
@@ -918,15 +1172,55 @@ export default function AIListView({
                 return;
             }
 
-            await updateComplianceProject(activeProject.project_id, {
-              ...payload,
-              comment,
-            });
+            try {
+              await updateComplianceProject(activeProject.project_id, {
+                ...payload,
+                comment,
+              });
 
-            setShowApprovalModal(false);
-            setSelected([]);
-            refreshProjects();
+              // ✅ Optimistic UI update
+              setLiveProjects((prev) =>
+                prev.map((p) =>
+                  p.project_id === activeProject.project_id
+                    ? { ...p, ...payload }
+                    : p,
+                ),
+              );
+
+              setApprovalError(false);
+              setShowApprovalModal(false);
+              setSelected([]);
+            } catch (err) {
+              const message =
+                err?.response?.data?.message ||
+                "Insufficient credits to run this scan.";
+
+              show(message, { type: "error", duration: 10000 });
+
+              setApprovalError(true);
+
+              setTimeout(() => {
+                setApprovalError(false);
+                setShowApprovalModal(false);
+              }, 5000);
+            }
           }}
+        />
+      )}
+
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
         />
       )}
 

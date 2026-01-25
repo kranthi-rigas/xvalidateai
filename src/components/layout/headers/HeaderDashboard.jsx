@@ -8,6 +8,7 @@ import CartToggle from "../component/CartToggle";
 import PlanStatusBadge from "../component/PlanStatusBadge";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
+import DashboardBreadcrumb from "@/components/dashboard/DashboardBreadcrumb";
 
 export default function HeaderDashboard({ collapsed, setCollapsed }) {
   const [messageOpen, setMessageOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
 
   const [orgName, setOrgName] = useState("");
   const [email, setEmail] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   const profileRef = useRef(null);
 
@@ -63,6 +65,21 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
           setFirstName(userData?.first_name);
           setLastName(userData?.last_name);
           setEmail(userData?.email || "");
+
+          // ✅ Extract role safely INSIDE effect
+          const rolesRaw = userData?.roles || [];
+          const rolesArray = Array.isArray(rolesRaw)
+            ? rolesRaw
+            : String(rolesRaw).split(",");
+
+          // Priority: ADMIN > AUDITOR > ANALYST
+          const primaryRole =
+            rolesArray.find((r) => r.toUpperCase() === "ADMIN") ||
+            rolesArray.find((r) => r.toUpperCase() === "AUDITOR") ||
+            rolesArray.find((r) => r.toUpperCase() === "ANALYST") ||
+            "";
+
+          setUserRole(primaryRole);
 
           const org = userData?.organization?.name || "";
           setOrgName(org);
@@ -234,7 +251,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
     <>
       <header className="header -dashboard js-header">
         <div className="header-inner">
-          <div className="py-20 px-30">
+          <div className="pt-10 px-20">
             <div className="row justify-between items-center mobile-header-layout">
               {/* --- Mobile Hamburger Menu --- */}
               <div className="col-auto d-none-desktop mobile-hamburger">
@@ -330,11 +347,14 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                             {/* ===== AWS STYLE HEADER ===== */}
                             <div style={{ padding: "12px 14px" }}>
                               {/* User Full Name (PRIMARY) */}
+                              {/* User Full Name */}
+                              {/* User Name */}
                               <div
                                 style={{
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: 600,
                                   color: "#111827",
+                                  lineHeight: "20px",
                                 }}
                               >
                                 {first_name} {last_name}
@@ -351,7 +371,37 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                                 {email}
                               </div>
 
-                              {/* Organization (SECONDARY / LAST) */}
+                              {/* Role (subtitle style under name) */}
+                              {userRole && orgName && (
+                                <div
+                                  style={{
+                                    fontSize: 12.5,
+                                    color: "#6B7280",
+                                    marginTop: 2,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                  }}
+                                >
+                                  {/* Role indicator dot */}
+                                  <span
+                                    style={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: "50%",
+                                      backgroundColor:
+                                        userRole === "ADMIN"
+                                          ? "#7C3AED" // 🟣 purple
+                                          : userRole === "AUDITOR"
+                                            ? "#2563EB" // 🔵 blue
+                                            : "#0891B2", // fallback
+                                    }}
+                                  />
+                                  {`${userRole.charAt(0)}${userRole.slice(1).toLowerCase()} @ ${orgName} `}
+                                </div>
+                              )}
+
+                              {/* Organization (SECONDARY / LAST) 
                               {orgName && (
                                 <div
                                   style={{
@@ -495,6 +545,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
           </div>
           <Messages setMessageOpen={setMessageOpen} messageOpen={messageOpen} />
         </div>
+        <DashboardBreadcrumb />
       </header>
 
       {/* Profile Dropdown Overlay for Mobile */}

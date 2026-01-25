@@ -1,13 +1,23 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { signup } from "../../apiIntegration/auth";
 import { useCountryPhone } from "../../data/useCountryPhone";
 import CountrySelect from "../common/CountrySelect";
 import PhoneInput from "../common/PhoneInput";
-import { Button, GoogleLoginButton } from "../commonComponents";
+import AwsButton from "@/components/common/AwsButton";
+import { GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
+import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
+import { useRef } from "react";
 
 export default function SignUpForm() {
+  const [searchParams] = useSearchParams();
+  const invitedEmail = searchParams.get("email");
+
+  console.log("✅ invitedEmail:", invitedEmail);
+
+  const [emailLocked, setEmailLocked] = useState(false);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +30,8 @@ export default function SignUpForm() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const phoneInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -84,14 +96,18 @@ export default function SignUpForm() {
   const navigate = useNavigate();
   const show = useToast();
 
+  //Prefill email for invitation user
+  useEffect(() => {
+    if (invitedEmail && isValidEmail(invitedEmail)) {
+      setFormData((prev) => ({
+        ...prev,
+        email: decodeURIComponent(invitedEmail),
+      }));
+      setEmailLocked(true);
+    }
+  }, [invitedEmail]);
+
   // 🔐 OAuth Configuration
-  const CONFIG = {
-    GOOGLE_CLIENT_ID:
-      "801741037631-asfpma8d5i3d7do4nfne16jho2bh8d2h.apps.googleusercontent.com", // ← replace this with your real Google client ID
-    REDIRECT_URI: `https://app.academy51.com/login/google`, // or your deployed URL
-    SCOPE: "openid profile email",
-    RESPONSE_TYPE: "code",
-  };
 
   // Generate random state (for CSRF protection)
   const generateState = () =>
@@ -105,16 +121,15 @@ export default function SignUpForm() {
     sessionStorage.setItem("oauth_state", state);
 
     const params = new URLSearchParams({
-      client_id: CONFIG.GOOGLE_CLIENT_ID,
-      redirect_uri: CONFIG.REDIRECT_URI,
-      response_type: CONFIG.RESPONSE_TYPE,
-      scope: CONFIG.SCOPE,
+      client_id: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+      redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
+      response_type: GOOGLE_OAUTH_CONFIG.RESPONSE_TYPE,
+      scope: GOOGLE_OAUTH_CONFIG.SCOPE,
       state,
       include_granted_scopes: "true",
       prompt: "select_account",
     });
 
-    // Redirect user to Google's OAuth consent screen
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
 
@@ -149,7 +164,7 @@ export default function SignUpForm() {
         atob(base64)
           .split("")
           .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
+          .join(""),
       );
       return JSON.parse(jsonPayload);
     } catch (e) {
@@ -161,17 +176,32 @@ export default function SignUpForm() {
   // Manual Signup form handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setMessage("");
 
-    // Phone validation
-    const phoneError = validatePhone();
-    if (phoneError) {
-      setError(phoneError);
+    // 🔴 Force phone validation FIRST
+    if (!phone || phone.length < 6) {
+      phoneInputRef.current?.focus();
+      phoneInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      phoneInputRef.current?.reportValidity();
+      return;
+    }
+
+    // ❌ Password mismatch
+    if (passwordsMismatch) {
+      show("Passwords do not match", { type: "error" });
+      return;
+    }
+
+    // ❌ Password length
+    if (formData.password.length < 8) {
+      show("Password must be at least 8 characters long", { type: "error" });
       return;
     }
 
     setLoading(true);
+
     try {
       await signup({
         email: formData.email,
@@ -182,14 +212,10 @@ export default function SignUpForm() {
         country: selectedCountry?.label,
       });
 
-      setMessage("✅ Account created! Check your email.");
       show("Account created! Check your email.", { type: "success" });
 
-      setTimeout(() => {
-        navigate("/auth?mode=login");
-      }, 2000);
+      setTimeout(() => navigate("/auth?mode=login"), 2000);
     } catch (err) {
-      setError(err.message || "Signup failed");
       show(err.message || "Signup failed", { type: "error" });
     } finally {
       setLoading(false);
@@ -241,13 +267,18 @@ export default function SignUpForm() {
                   <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
                     Email Address *
                   </label>
+
                   <input
                     required
                     type="email"
                     name="email"
                     placeholder="Email"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly={emailLocked}
+                    onChange={(e) => {
+                      if (emailLocked) return; // 🔐 block manual edits
+                      handleChange(e);
+                    }}
                   />
                 </div>
 
@@ -266,6 +297,7 @@ export default function SignUpForm() {
                     />
                     <button
                       type="button"
+                      tabIndex={-1}
                       onClick={() => setShowPassword(!showPassword)}
                       className="password-view"
                       title={showPassword ? "Hide password" : "Show password"}
@@ -291,8 +323,8 @@ export default function SignUpForm() {
                         borderColor: passwordsMismatch
                           ? "#dc3545"
                           : passwordsMatch
-                          ? "#28a745"
-                          : "",
+                            ? "#28a745"
+                            : "",
                       }}
                     />
                     {/* Tick mark when passwords match */}
@@ -311,17 +343,17 @@ export default function SignUpForm() {
                       </span>
                     )}
                   </div>
-                  {passwordsMismatch && (
-                    <p
-                      style={{
-                        color: "#dc3545",
-                        fontSize: "12px",
-                        marginTop: "5px",
-                      }}
-                    >
-                      Passwords do not match
-                    </p>
-                  )}
+                  <p
+                    style={{
+                      color: "#dc3545",
+                      fontSize: "12px",
+                      marginTop: "5px",
+                      minHeight: "16px", // ⭐ reserves space
+                      visibility: passwordsMismatch ? "visible" : "hidden",
+                    }}
+                  >
+                    Passwords do not match
+                  </p>
                 </div>
 
                 <div className="col-lg-6">
@@ -343,38 +375,42 @@ export default function SignUpForm() {
                   </label>
 
                   <PhoneInput
+                    ref={phoneInputRef}
                     phone={phone}
                     phoneCode={phoneCode}
                     onChange={onPhoneChange}
-                    error={error}
                   />
                 </div>
 
                 <div className="col-12">
-                  <Button
+                  <AwsButton
                     type="submit"
-                    label={loading ? "Registering..." : "Register"}
-                    variant="primary"
-                    disabled={loading}
+                    label="Register"
+                    isLoading={loading}
+                    fullWidth
                   />
                 </div>
               </form>
               <div className="col-12">
                 <p className="text-13 text-center mt-10 lh-14 text-dark-1">
                   By creating an account, you agree to our{" "}
-                  <Link
-                    to="/terms"
+                  <a
+                    href="https://myacademy51.com/terms-of-use/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`footer-links ${loading ? "disabled-link" : ""}`}
                   >
-                    Terms of Service
-                  </Link>{" "}
+                    Terms of Use
+                  </a>{" "}
                   and{" "}
-                  <Link
-                    to="/privacy-policy"
+                  <a
+                    href="https://myacademy51.com/privacy-policy/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`footer-links ${loading ? "disabled-link" : ""}`}
                   >
                     Privacy Policy
-                  </Link>
+                  </a>
                   .
                 </p>
               </div>

@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import HeaderAuth from "../layout/headers/HeaderAuth";
 import AwsButton from "../common/AwsButton";
 import { resetPassword } from "../../apiIntegration/auth";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -14,6 +15,8 @@ export default function ResetPassword() {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   /* 🔐 Real-time validation */
   const validatePasswords = (pwd, confirmPwd) => {
@@ -82,25 +85,63 @@ export default function ResetPassword() {
               {/* New Password */}
               <div className="form-group">
                 <label className="form-label">New Password</label>
-                <input
-                  type="password"
-                  className="email-input"
-                  placeholder="Enter new password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="email-input"
+                    placeholder="Enter new password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                  />
+
+                  <span
+                    onClick={() => setShowPassword((v) => !v)}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      cursor: "pointer",
+                      color: "#6B7280",
+                    }}
+                  >
+                    {showPassword ? (
+                      <FiEyeOff size={18} />
+                    ) : (
+                      <FiEye size={18} />
+                    )}
+                  </span>
+                </div>
               </div>
 
               {/* Confirm Password */}
               <div className="form-group mt-16">
                 <label className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  className="email-input"
-                  placeholder="Re-enter new password"
-                  value={confirm}
-                  onChange={handleConfirmChange}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    className="email-input"
+                    placeholder="Re-enter new password"
+                    value={confirm}
+                    onChange={handleConfirmChange}
+                  />
+
+                  <span
+                    onClick={() => setShowConfirm((v) => !v)}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      cursor: "pointer",
+                      color: "#6B7280",
+                    }}
+                  >
+                    {showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </span>
+                </div>
               </div>
 
               {/* Password mismatch error */}
@@ -172,7 +213,7 @@ export default function ResetPassword() {
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">
             <div className="d-flex items-center h-100 text-white">
-              Academy 51 © {new Date().getFullYear()}. All rights reserved.
+              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
             </div>
           </div>
         </div>

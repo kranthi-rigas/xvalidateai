@@ -10,7 +10,7 @@ export const PLAN_HIERARCHY = {
 export const PLAN_DISPLAY_NAMES = {
   free: "Free",
   premium: "Premium",
-  business: "Business",
+  business: "Upgrade to Business",
   enterprise: "Enterprise",
 };
 
