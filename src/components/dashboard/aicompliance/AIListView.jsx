@@ -134,6 +134,7 @@ export default function AIListView({
     lastScanDate: 180,
     requested_by: 220,
     approved_by: 220,
+    createdtime: 180,
   });
 
   const resizingCol = useRef(null);
@@ -154,7 +155,13 @@ export default function AIListView({
   };
 
   useEffect(() => {
-    setLiveProjects(projects || []);
+    setLiveProjects(
+      (projects || []).map((p) => ({
+        ...p,
+        __created_time: p.created_time,
+        __scan_approved_by: p.scan_approved_by,
+      })),
+    );
   }, [projects]);
 
   useEffect(() => {
@@ -190,7 +197,21 @@ export default function AIListView({
         setLiveProjects((prev) =>
           prev.map((p) => {
             const updated = updates.find((u) => u.project_id === p.project_id);
-            return updated ? { ...p, ...updated } : p;
+            return updated
+              ? {
+                  ...p,
+                  // 🔄 only dynamic fields
+                  status: updated.status,
+                  assessment_status: updated.assessment_status,
+                  last_scanned_time: updated.last_scanned_time,
+                  score: updated.score,
+                  recommendation: updated.recommendation,
+
+                  // 🔒 keep immutable values
+                  created_time: p.__created_time,
+                  scan_approved_by: p.__scan_approved_by,
+                }
+              : p;
           }),
         );
       } catch (err) {
@@ -365,6 +386,13 @@ export default function AIListView({
       label: "Scan Approved By",
       sortable: false,
       resizable: true,
+    },
+    {
+      key: "createdtime",
+      label: "Created on",
+      sortable: true,
+      resizable: true,
+      sortKey: "created_time",
     },
   ];
 
@@ -806,6 +834,23 @@ export default function AIListView({
       );
     }
 
+    if (key === "createdtime")
+      return (
+        <span style={{ cursor: "default" }}>
+          {row.created_time
+            ? new Date(row.created_time).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
+            : "-"}
+        </span>
+      );
+
     if (key === "recommendation") return null;
     return row[key] ?? "";
   };
@@ -1182,7 +1227,19 @@ export default function AIListView({
               setLiveProjects((prev) =>
                 prev.map((p) =>
                   p.project_id === activeProject.project_id
-                    ? { ...p, ...payload }
+                    ? {
+                        ...p,
+                        ...payload,
+                        scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.scan_approved_by,
+
+                        __scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.__scan_approved_by,
+                      }
                     : p,
                 ),
               );
