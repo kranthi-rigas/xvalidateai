@@ -128,7 +128,7 @@ export default function AIListView({
     name: 190,
     description: 180,
     status: 200,
-    assessment_status: 120,
+    assessment_status: 122,
     score: 100,
     recommendation: 190,
     lastScanDate: 180,

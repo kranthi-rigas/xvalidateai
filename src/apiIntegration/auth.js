@@ -89,15 +89,18 @@ export async function login(credentials) {
       body: JSON.stringify(credentials),
     });
 
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const error = await res.text();
-      throw new Error(error || "Login failed");
+       const error = new Error(data?.error || "Login failed");
+      error.status = res.status;      
+      error.data = data;              
+      throw error;
     }
 
-    return await res.json();
+    return data;
   } catch (err) {
     console.error("Login error:", err);
-    throw err;
+    throw err; 
   }
 }
 
