@@ -1,7 +1,7 @@
 
 
 .tabActive{
-    color: var(--color-purple-1) !important;
+    color: var(--color-primary) !important;
     font-weight: 500;
     background-color: var(--color-purple-3);
     
@@ -112,7 +112,7 @@
 
 
 .swiper-pagination-bullet {
-    background-color: var(--color-purple-1) !important;
+    background-color: var(--color-primary) !important;
   }
 
 .customSized{
@@ -166,7 +166,7 @@
     .swiper-pagination-bullet-active {
         
         
-        background-color: var(--color-purple-1) !important ;
+        background-color: var(--color-primary) !important ;
         
       }
 }
@@ -179,7 +179,7 @@
     .swiper-pagination-bullet-active {
         
         
-        background-color: var(--color-purple-1) !important ;
+        background-color: var(--color-primary) !important ;
         
       }
 }
@@ -200,12 +200,12 @@
 }
 
 .activeMenu{
-    color: var(--color-purple-1) !important;
+    color: var(--color-primary) !important;
     
 }
 .inActiveMenu{
     &:hover{
-        color: var(--color-purple-1) !important;
+        color: var(--color-primary) !important;
 
     }
    
@@ -411,7 +411,7 @@
     text-decoration: none !important;
     color:inherit !important;
     &:hover{
-        color: var(--color-purple-1) !important;
+        color: var(--color-primary) !important;
     }
 
 }
