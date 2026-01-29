@@ -169,16 +169,20 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             <Link to="/dashboard">
               <img
                 className="logo"
-                src="/assets/img/general/logo-dark.png"
-                alt="Academy51 Logo"
-                style={{ maxWidth: 160, height: "auto", objectFit: "contain" }}
+                src="/assets/img/general/xvalidateai_logo.png"
+                alt="XValidateAI logo"
+                style={{
+                  width: 88,
+                  height: "auto",
+                  objectFit: "contain",
+                }}
               />
             </Link>
           ) : (
             <img
               className="logo-short"
-              src="/assets/img/general/logo-short.png"
-              alt="Academy51 Short Logo"
+              src="/assets/img/general/app-logo.png"
+              alt="XValidateAI Short Logo"
               style={{ maxWidth: 40, height: "auto", objectFit: "contain" }}
             />
           )}

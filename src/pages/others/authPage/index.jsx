@@ -13,8 +13,8 @@ export default function AuthPage() {
   const mode = searchParams.get("mode") || "login";
 
   const metadata = {
-    title: mode === "login" ? "Login || Academy51" : "Sign up || Academy51",
-    description: "Academy51 authentication page",
+    title: mode === "login" ? "Login || XVALIDATEAI" : "Sign up || XVALIDATEAI",
+    description: "XVALIDATEAI authentication page",
   };
 
   return (
@@ -37,7 +37,7 @@ export default function AuthPage() {
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">
             <div className="d-flex items-center h-100 text-white">
-              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
+              XVALIDATEAI © {new Date().getFullYear()}. All rights reserved.
             </div>
           </div>
         </div>

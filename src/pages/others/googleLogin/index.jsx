@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import useToast from "@/hooks/useToast";
 
 const metadata = {
-  title: "Academy51 - Login",
+  title: "XVALIDATEAI - Login",
   description: "Login into application using google login",
 };
 

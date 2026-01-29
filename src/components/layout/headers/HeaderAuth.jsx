@@ -20,11 +20,24 @@ export default function HeaderAuth() {
             <div className="header-left">
               <div className="header__logo ">
                 <Link data-barba to="/">
-                  <img
-                    className="logo"
-                    src="/assets/img/general/logo-dark.png"
-                    alt="logo"
-                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <img
+                      className="logo"
+                      src="/assets/img/general/app_logo.png"
+                      alt="XValidateAI logo"
+                      style={{
+                        width: 160,
+                        height: "auto",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </div>
                 </Link>
               </div>
             </div>
