@@ -166,16 +166,12 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       <div className="sidebar-logo-section d-none-mobile">
         <div className="d-flex items-center justify-between pl-10 pr-15 pb-10">
           {!collapsed ? (
-            <Link to="/dashboard">
+            <Link to="/dashboard" className="sidebar-logo-link">
               <img
                 className="logo"
                 src="/assets/img/general/xvalidateai_logo.png"
                 alt="XValidateAI logo"
-                style={{
-                  width: 88,
-                  height: "auto",
-                  objectFit: "contain",
-                }}
+                style={{ width: 100, marginLeft: 55, height: "auto" }}
               />
             </Link>
           ) : (
