@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { login, fetchUserProfile } from "@/apiIntegration/auth.js";
+import { login, signup, fetchUserProfile } from "@/apiIntegration/auth.js";
 import useToast from "@/hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import MetaComponent from "@/components/common/MetaComponent";
@@ -9,7 +9,13 @@ export default function AuthPage() {
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "login";
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    first_name: "",
+    last_name: "",
+    confirm_password: ""
+  });
   const navigate = useNavigate();
   const show = useToast();
 
@@ -105,20 +111,56 @@ export default function AuthPage() {
     }
   };
 
-  // Manual login
+  // Manual login/signup
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
-      const res = await login(formData);
-      localStorage.setItem("access_token", res.access_token);
-      localStorage.setItem("refresh_token", res.refresh_token);
-      const userData = await fetchUserProfile(res.access_token);
-      localStorage.setItem("user_info", JSON.stringify(userData));
-      navigate("/dashboard");
+      if (mode === "signup") {
+        // Validate passwords match
+        if (formData.password !== formData.confirm_password) {
+          show("Passwords do not match", { type: "error", duration: 4000 });
+          setLoading(false);
+          return;
+        }
+        
+        // Validate password strength
+        if (formData.password.length < 8) {
+          show("Password must be at least 8 characters long", { type: "error", duration: 4000 });
+          setLoading(false);
+          return;
+        }
+        
+        // Sign up
+        const signupData = {
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.first_name,
+          last_name: formData.last_name
+        };
+        
+        await signup(signupData);
+        show("Account created successfully! Please check your email to verify your account.", { type: "success", duration: 6000 });
+        
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          navigate("/auth?mode=login");
+        }, 2000);
+      } else {
+        // Login
+        const res = await login({ email: formData.email, password: formData.password });
+        localStorage.setItem("access_token", res.access_token);
+        localStorage.setItem("refresh_token", res.refresh_token);
+        const userData = await fetchUserProfile(res.access_token);
+        localStorage.setItem("user_info", JSON.stringify(userData));
+        navigate("/dashboard");
+      }
     } catch (err) {
-      console.error("❌ Login failed:", err);
-      const message = getLoginErrorMessage(err);
+      console.error(`❌ ${mode === "signup" ? "Signup" : "Login"} failed:`, err);
+      const message = mode === "signup"
+        ? err.message || "Sign up failed. Please try again."
+        : getLoginErrorMessage(err);
       show(message, { type: "error", duration: 6000 });
     } finally {
       setLoading(false);
@@ -133,10 +175,6 @@ export default function AuthPage() {
     }));
   };
 
-  // Only show login for now
-  if (mode !== "login") {
-    return null;
-  }
 
   return (
     <>
@@ -338,13 +376,61 @@ export default function AuthPage() {
             <div style={{ position: 'relative', zIndex: 10, maxWidth: '500px', width: '100%', padding: '0 1rem' }}>
               <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-                  <span className="gradient-text">Welcome Back</span>
+                  <span className="gradient-text">{mode === "signup" ? "Create Account" : "Welcome Back"}</span>
                 </h1>
-                <p style={{ color: 'var(--muted-foreground)', fontSize: '1.125rem' }}>Sign in to access your compliance dashboard</p>
+                <p style={{ color: 'var(--muted-foreground)', fontSize: '1.125rem' }}>
+                  {mode === "signup" ? "Sign up to start your compliance journey" : "Sign in to access your compliance dashboard"}
+                </p>
               </div>
 
               <div className="login-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {mode === "signup" && (
+                    <>
+                      <div>
+                        <label htmlFor="first_name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)', marginBottom: '0.5rem' }}>First Name</label>
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                            <i className="fa-solid fa-user" style={{ color: 'var(--muted-foreground)' }}></i>
+                          </div>
+                          <input
+                            type="text"
+                            id="first_name"
+                            name="first_name"
+                            placeholder="John"
+                            value={formData.first_name}
+                            onChange={handleChange}
+                            required
+                            style={{ width: '100%', paddingLeft: '3rem', paddingRight: '1rem', paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)', outline: 'none', transition: 'all 0.3s' }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--ring)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="last_name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Last Name</label>
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                            <i className="fa-solid fa-user" style={{ color: 'var(--muted-foreground)' }}></i>
+                          </div>
+                          <input
+                            type="text"
+                            id="last_name"
+                            name="last_name"
+                            placeholder="Doe"
+                            value={formData.last_name}
+                            onChange={handleChange}
+                            required
+                            style={{ width: '100%', paddingLeft: '3rem', paddingRight: '1rem', paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)', outline: 'none', transition: 'all 0.3s' }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--ring)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  
                   <div>
                     <label htmlFor="email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Email Address</label>
                     <div style={{ position: 'relative' }}>
@@ -387,13 +473,38 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {mode === "signup" && (
+                    <div>
+                      <label htmlFor="confirm_password" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Confirm Password</label>
+                      <div style={{ position: 'relative' }}>
+                        <div style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                          <i className="fa-solid fa-lock" style={{ color: 'var(--muted-foreground)' }}></i>
+                        </div>
+                        <input
+                          type="password"
+                          id="confirm_password"
+                          name="confirm_password"
+                          placeholder="••••••••"
+                          value={formData.confirm_password}
+                          onChange={handleChange}
+                          required
+                          style={{ width: '100%', paddingLeft: '3rem', paddingRight: '1rem', paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)', outline: 'none', transition: 'all 0.3s' }}
+                          onFocus={(e) => e.target.style.borderColor = 'var(--ring)'}
+                          onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {mode === "login" && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                       <input type="checkbox" id="remember" name="remember" style={{ width: '1rem', height: '1rem', color: 'var(--primary)', background: 'var(--input)', border: '1px solid var(--border)', borderRadius: '4px' }} />
                       <span style={{ marginLeft: '0.5rem', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Remember me</span>
                     </label>
-                    <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--secondary)', textDecoration: 'none', transition: 'color 0.3s' }}>Forgot password?</Link>
-                  </div>
+                      <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--secondary)', textDecoration: 'none', transition: 'color 0.3s' }}>Forgot password?</Link>
+                    </div>
+                  )}
 
                   <button 
                     type="submit"
@@ -402,7 +513,10 @@ export default function AuthPage() {
                     onMouseEnter={(e) => !loading && (e.target.style.transform = 'scale(1.02)')}
                     onMouseLeave={(e) => !loading && (e.target.style.transform = 'scale(1)')}
                   >
-                    {loading ? 'Signing In...' : 'Sign In'}
+                    {loading
+                      ? (mode === "signup" ? 'Creating Account...' : 'Signing In...')
+                      : (mode === "signup" ? 'Create Account' : 'Sign In')
+                    }
                     {!loading && <i className="fa-solid fa-arrow-right" style={{ marginLeft: '0.5rem' }}></i>}
                   </button>
 
@@ -441,8 +555,17 @@ export default function AuthPage() {
 
                   <div style={{ textAlign: 'center', paddingTop: '1rem' }}>
                     <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', margin: 0 }}>
-                      Don't have an account? 
-                      <Link to="/auth?mode=signup" style={{ color: 'var(--secondary)', fontWeight: '500', textDecoration: 'none', marginLeft: '0.25rem', transition: 'color 0.3s' }}>Sign up for free</Link>
+                      {mode === "signup" ? (
+                        <>
+                          Already have an account?
+                          <Link to="/auth?mode=login" style={{ color: 'var(--secondary)', fontWeight: '500', textDecoration: 'none', marginLeft: '0.25rem', transition: 'color 0.3s' }}>Sign in</Link>
+                        </>
+                      ) : (
+                        <>
+                          Don't have an account?
+                          <Link to="/auth?mode=signup" style={{ color: 'var(--secondary)', fontWeight: '500', textDecoration: 'none', marginLeft: '0.25rem', transition: 'color 0.3s' }}>Sign up for free</Link>
+                        </>
+                      )}
                     </p>
                   </div>
                 </form>
