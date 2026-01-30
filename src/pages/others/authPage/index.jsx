@@ -334,8 +334,51 @@ export default function AuthPage() {
               <div style={{ position: 'absolute', top: '5rem', left: '5rem', width: '24rem', height: '24rem', background: 'radial-gradient(circle, rgba(88, 191, 206, 0.1) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(60px)' }}></div>
               <div className="float-animation" style={{ position: 'absolute', bottom: '5rem', right: '5rem', width: '20rem', height: '20rem', background: 'radial-gradient(circle, rgba(15, 48, 83, 0.1) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(60px)', animationDelay: '1s' }}></div>
               
-              {/* Floating Data Cards - Hidden on mobile/tablet */}
-              <div className="scanline-container float-animation" style={{ position: 'absolute', top: '10rem', right: '25%', width: '12rem', height: '12rem', animationDelay: '0.5s', display: 'none' }}>
+              {/* Floating Compliance Cards */}
+              {/* GDPR Compliance Card - Top Right */}
+              <div className="scanline-container float-animation compliance-card" style={{ position: 'absolute', top: '15%', right: '15%', width: '13rem', animationDelay: '0.5s' }}>
+                <div className="scanline"></div>
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="fa-solid fa-shield-check" style={{ color: 'var(--secondary)', fontSize: '1.25rem' }}></i>
+                      <span style={{ fontSize: '0.875rem', color: 'var(--foreground)', fontWeight: '600' }}>GDPR</span>
+                    </div>
+                    <div className="pulse-glow" style={{ width: '0.5rem', height: '0.5rem', background: '#10b981', borderRadius: '50%' }}></div>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: '1.4' }}>
+                    Full compliance with EU data protection regulations
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.75rem', fontSize: '0.75rem', color: '#10b981', fontWeight: '500' }}>
+                    <i className="fa-solid fa-check-circle" style={{ marginRight: '0.25rem' }}></i>
+                    <span>Certified</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* CCPA Compliance Card - Bottom Left */}
+              <div className="scanline-container float-animation compliance-card" style={{ position: 'absolute', bottom: '15%', left: '15%', width: '13rem', animationDelay: '1.5s' }}>
+                <div className="scanline" style={{ animationDelay: '1s' }}></div>
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="fa-solid fa-shield-check" style={{ color: 'var(--secondary)', fontSize: '1.25rem' }}></i>
+                      <span style={{ fontSize: '0.875rem', color: 'var(--foreground)', fontWeight: '600' }}>CCPA</span>
+                    </div>
+                    <div className="pulse-glow" style={{ width: '0.5rem', height: '0.5rem', background: '#10b981', borderRadius: '50%' }}></div>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', lineHeight: '1.4' }}>
+                    California Consumer Privacy Act compliant
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.75rem', fontSize: '0.75rem', color: '#10b981', fontWeight: '500' }}>
+                    <i className="fa-solid fa-check-circle" style={{ marginRight: '0.25rem' }}></i>
+                    <span>Verified</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Compliance Score Card - Top Left (Optional) */}
+              <div className="scanline-container float-animation compliance-card" style={{ position: 'absolute', top: '15%', left: '15%', width: '12rem', animationDelay: '0.8s' }}>
                 <div className="scanline"></div>
                 <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -350,7 +393,8 @@ export default function AuthPage() {
                 </div>
               </div>
               
-              <div className="scanline-container float-animation" style={{ position: 'absolute', bottom: '10rem', left: '25%', width: '14rem', height: '14rem', animationDelay: '1.5s', display: 'none' }}>
+              {/* Risk Alerts Card - Bottom Right (Optional) */}
+              <div className="scanline-container float-animation compliance-card" style={{ position: 'absolute', bottom: '15%', right: '15%', width: '12rem', animationDelay: '1.2s' }}>
                 <div className="scanline" style={{ animationDelay: '1s' }}></div>
                 <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -613,13 +657,19 @@ export default function AuthPage() {
       </div>
 
       <style>{`
-        @media (min-width: 1024px) {
-          .float-animation[style*="display: none"] {
-            display: block !important;
+        /* Hide compliance cards on mobile and small tablets */
+        @media (max-width: 1023px) {
+          .compliance-card {
+            display: none !important;
           }
         }
-        @media (min-width: 1280px) {
-          .scanline-container[style*="display: none"] {
+        
+        /* Show compliance cards on desktop */
+        @media (min-width: 1024px) {
+          .compliance-card {
+            display: block !important;
+          }
+          .float-animation[style*="display: none"] {
             display: block !important;
           }
         }
