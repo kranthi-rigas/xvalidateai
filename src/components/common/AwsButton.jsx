@@ -1,16 +1,26 @@
 import React, { useState } from "react";
+import { COLORS } from "@/styles/colors";
 
-export default function AwsButton({ label, disabled = false, onClick, children }) {
+export default function AwsButton({
+  label,
+  disabled = false,
+  onClick,
+  children,
+  variant = "primary" // "primary" or "secondary"
+}) {
   const [hover, setHover] = useState(false);
 
-  // Purple styles for default background button
-  const purpleBg = "#2F5FD9";
-  const purpleBorder = "##2F5FD9";
+  // Design system colors
+  const primaryBg = COLORS.primary; // #0043ce Trust Blue
+  const primaryHoverBg = COLORS.primaryDark; // #001d6c
+  
+  // Secondary (outline) button colors
+  const secondaryBg = "transparent";
+  const secondaryHoverBg = COLORS.bgSecondary; // #f4f4f4
+  const secondaryBorder = COLORS.border; // #c6c6c6
+  const secondaryText = COLORS.textPrimary; // #161616
 
-  // AWS hover colors
-  const hoverBg = "rgb(242,248,253)";
-  const darkText = "rgb(15,38,70)";
-  const darkBorder = "rgb(15,38,70)";
+  const isPrimary = variant === "primary";
 
   return (
     <button
@@ -20,39 +30,48 @@ export default function AwsButton({ label, disabled = false, onClick, children }
       onMouseLeave={() => setHover(false)}
       className="lh-1"
       style={{
-        padding: "6px 16px",
-        minHeight: 32,
-        fontSize: "clamp(11px, 2.5vw, 13px)",
-        fontWeight: 600,
-        fontFamily: "Amazon Ember, sans-serif",
-        borderRadius: 24,
+        padding: "8px 20px",
+        minHeight: 36,
+        fontSize: "14px",
+        fontWeight: 500,
+        borderRadius: 8,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: 6,
+        gap: 8,
         cursor: disabled ? "not-allowed" : "pointer",
-        transition: "all 160ms ease",
+        transition: "all 0.2s ease",
         whiteSpace: "nowrap",
 
         // Background
         background: disabled
-          ? "#E5E7EB"
+          ? COLORS.bgSecondary
+          : isPrimary
+          ? hover
+            ? primaryHoverBg
+            : primaryBg
           : hover
-          ? hoverBg
-          : purpleBg,
+          ? secondaryHoverBg
+          : secondaryBg,
 
         // Text color
         color: disabled
-          ? "#9CA3AF"
-          : hover
-          ? darkText
-          : "#FFFFFF",
+          ? COLORS.textMuted
+          : isPrimary
+          ? COLORS.white
+          : secondaryText,
 
         // Border
         border: `1px solid ${
-          disabled ? "#D1D5DB"
-          : hover ? darkBorder
-          : purpleBorder
+          disabled
+            ? COLORS.borderLight
+            : isPrimary
+            ? hover
+              ? primaryHoverBg
+              : primaryBg
+            : hover
+            ? COLORS.borderDark
+            : secondaryBorder
         }`,
       }}
     >

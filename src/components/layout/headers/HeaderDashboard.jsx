@@ -707,14 +707,18 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
             }}>
               <AwsButton
                 label="Cancel"
+                variant="secondary"
                 onClick={() => setShowLogoutModal(false)}
                 disabled={isLoggingOut}
               />
               <AwsButton
                 label={isLoggingOut ? "Logging out..." : "Logout"}
+                variant="primary"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-              />
+              >
+                {!isLoggingOut && <i className="icon icon-power" style={{ fontSize: "14px" }}></i>}
+              </AwsButton>
             </div>
           </div>
         </div>

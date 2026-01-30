@@ -341,6 +341,7 @@ export default function CreateProjectModal({
             {/* Cancel */}
             <AwsButton
               label="Cancel"
+              variant="secondary"
               onClick={() => setShowCreateModal(false)}
               disabled={saving}
             />
@@ -356,9 +357,12 @@ export default function CreateProjectModal({
                     ? "Request"
                     : "Save & Evaluate"
               }
+              variant="primary"
               onClick={saveProject}
               disabled={!isValid || saving}
-            />
+            >
+              {!saving && <i className="fa-solid fa-gear" style={{ fontSize: "14px" }}></i>}
+            </AwsButton>
           </div>
         </div>
       </div>

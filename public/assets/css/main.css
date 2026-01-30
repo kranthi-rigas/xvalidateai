@@ -10525,45 +10525,45 @@ body:has(.form-page__content) .header.-base {
 }
 
 .py-3 {
-  padding-top: 3px !important;
-  padding-bottom: 3px !important;
+  padding-top: 0.9rem !important;
+  padding-bottom: 0.9rem !important;
 }
 
 .px-3 {
-  padding-left: 3px !important;
-  padding-right: 3px !important;
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
 }
 
 .pt-3 {
-  padding-top: 3px !important;
+  padding-top: 0.9rem !important;
 }
 
 .pb-3 {
-  padding-bottom: 3px !important;
+  padding-bottom: 0.9rem !important;
 }
 
 .pl-3 {
-  padding-left: 3px !important;
+  padding-left: 0.9rem !important;
 }
 
 .pr-3 {
-  padding-right: 3px !important;
+  padding-right: 0.9rem !important;
 }
 
 .mt-3 {
-  margin-top: 3px !important;
+  margin-top: 0.9rem !important;
 }
 
 .mb-3 {
-  margin-bottom: 3px !important;
+  margin-bottom: 0.9rem !important;
 }
 
 .ml-3 {
-  margin-left: 3px !important;
+  margin-left: 0.9rem !important;
 }
 
 .mr-3 {
-  margin-right: 3px !important;
+  margin-right: 0.9rem !important;
 }
 
 .py-5 {
