@@ -35,6 +35,8 @@ import CourseSinglePage5 from "./pages/courseSingle/courses-single-5";
 import CourseSinglePage6 from "./pages/courseSingle/courses-single-6/page";
 import DashboardLayout from "@/pages/dashboard/dashboardMainPage";
 import DashboardPage from "./pages/dashboard/dashboard";
+import ModernDashboardLayout from "@/components/dashboard/ModernDashboardLayout";
+import DashboardHome from "@/components/dashboard/DashboardHome";
 import DshbAICompliance from "./pages/dashboard/dshb-aicompliance";
 import DshbAdministrationPage from "./pages/dashboard/dshb-administration";
 import DshbAssignmentPage from "./pages/dashboard/dshb-assignment";
@@ -127,9 +129,9 @@ function App() {
             <Route path="/">
               <Route index element={<AuthPage />} />
 
-              {/*dashboard nested route*/}
-              <Route path="dashboard" element={<DashboardLayout />}>
-                <Route index element={<AIDashboardPage />} />
+              {/* Modern Dashboard with layout wrapper */}
+              <Route path="dashboard" element={<ModernDashboardLayout />}>
+                <Route index element={<DashboardHome />} />
                 <Route path="aicompliance" element={<DshbAICompliance />} />
                 <Route
                   path="aicompliance/:project_id"

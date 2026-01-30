@@ -9,6 +9,8 @@ import PlanStatusBadge from "../component/PlanStatusBadge";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
 import DashboardBreadcrumb from "@/components/dashboard/DashboardBreadcrumb";
+import { COLORS } from "@/styles/colors";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function HeaderDashboard({ collapsed, setCollapsed }) {
   const [messageOpen, setMessageOpen] = useState(false);
@@ -18,6 +20,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
   const [documentElement, setDocumentElement] = useState();
   const [initials, setInitials] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
   const [userPermissions, setUserPermissions] = useState([]);
@@ -124,10 +127,16 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
 
   const navigate = useNavigate();
 
+  // ✅ Show logout confirmation modal
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
   // ✅ Logout logic
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+      setShowLogoutModal(false);
 
       const token =
         localStorage.getItem("refresh_token") ||
@@ -233,10 +242,17 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
 
   return (
     <>
-      <header className="header -dashboard js-header">
-        <div className="header-inner">
-          <div className="pt-10 px-20">
-            <div className="row justify-between items-center mobile-header-layout">
+      <header className="header -dashboard js-header" style={{
+        height: "80px",
+        backgroundColor: "white",
+        borderBottom: "1px solid #E2E8F0",
+        position: "sticky",
+        top: 0,
+        zIndex: 10
+      }}>
+        <div className="header-inner" style={{ height: "100%" }}>
+          <div className="pt-10 px-20" style={{ height: "100%" }}>
+            <div className="row justify-between items-center mobile-header-layout" style={{ height: "100%", alignItems: "center" }}>
               {/* --- Mobile Hamburger Menu --- */}
               <div className="col-auto d-none-desktop mobile-hamburger">
                 <button
@@ -253,6 +269,18 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                 </button>
               </div>
 
+              {/* --- Dashboard Title (visible on desktop) --- */}
+              <div className="col-auto d-none-mobile">
+                <div>
+                  <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#0F3053", margin: 0 }}>
+                    Dashboard Overview
+                  </h1>
+                  <p style={{ fontSize: "14px", color: "#64748B", margin: 0 }}>
+                    Welcome back to your compliance center.
+                  </p>
+                </div>
+              </div>
+
               {/* --- Logo (visible only on mobile, centered) --- */}
               <div className="col-auto d-none-desktop mobile-logo-center">
                 <div className="header__logo">
@@ -267,11 +295,80 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                 </div>
               </div>
 
-              {/* --- Empty spacer for desktop to push content right --- */}
-              <div className="col-auto d-none-mobile"></div>
-
               <div className="col-auto ml-auto">
-                <div className="d-flex items-center">
+                <div className="d-flex items-center" style={{ gap: "16px" }}>
+                  {/* --- Search Bar --- */}
+                  <div className="d-none-mobile" style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      placeholder="Search tools, vendors..."
+                      style={{
+                        paddingLeft: "40px",
+                        paddingRight: "16px",
+                        paddingTop: "8px",
+                        paddingBottom: "8px",
+                        backgroundColor: "#F1F5F9",
+                        border: "1px solid transparent",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        width: "256px",
+                        transition: "all 0.2s",
+                        outline: "none"
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "#0F3053";
+                        e.target.style.backgroundColor = "white";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "transparent";
+                        e.target.style.backgroundColor = "#F1F5F9";
+                      }}
+                    />
+                    <i className="fa-solid fa-search" style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#64748B",
+                      fontSize: "14px"
+                    }}></i>
+                  </div>
+
+                  {/* --- Notification Bell --- */}
+                  <button style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    backgroundColor: "#F1F5F9",
+                    border: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#64748B",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#0F3053";
+                    e.currentTarget.style.backgroundColor = "rgba(88, 191, 206, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "#64748B";
+                    e.currentTarget.style.backgroundColor = "#F1F5F9";
+                  }}>
+                    <i className="fa-regular fa-bell"></i>
+                    <span style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "8px",
+                      height: "8px",
+                      backgroundColor: "#ef4444",
+                      borderRadius: "50%",
+                      border: "2px solid white"
+                    }}></span>
+                  </button>
                   {/* --- Quick Pages & My Courses --- 
                   <div className="text-white d-flex items-center lg:d-none mr-15">
                     <MyCourses />
@@ -284,6 +381,41 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                   <div className="d-flex items-center ml-10 d-none-mobile">
                     <PlanStatusBadge />
                   </div>
+
+                  {/* --- Logout Button (visible on desktop) --- */}
+                  <button
+                    onClick={handleLogoutClick}
+                    disabled={isLoggingOut}
+                    className="d-none-mobile"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 16px",
+                      backgroundColor: "transparent",
+                      border: `1px solid ${COLORS.borderLight}`,
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: COLORS.error,
+                      cursor: isLoggingOut ? "not-allowed" : "pointer",
+                      transition: "all 0.2s",
+                      marginLeft: "12px"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLoggingOut) {
+                        e.currentTarget.style.backgroundColor = COLORS.errorLight;
+                        e.currentTarget.style.borderColor = COLORS.error;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.borderColor = COLORS.borderLight;
+                    }}
+                  >
+                    <i className="icon icon-power" style={{ fontSize: "16px" }}></i>
+                    <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+                  </button>
 
                   {/* --- Profile Dropdown --- */}
                   <div
@@ -465,10 +597,10 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
 
                             <button
                               type="button"
-                              onClick={handleLogout}
+                              onClick={handleLogoutClick}
                               style={{
                                 ...menuItemStyle,
-                                color: "#DC2626",
+                                color: COLORS.error,
                               }}
                             >
                               <span
@@ -505,6 +637,87 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
           className="profile-dropdown-overlay"
           onClick={() => setIsOnProfile(false)}
         />
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: COLORS.bgOverlay,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: COLORS.white,
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ marginBottom: "16px" }}>
+              <div style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                backgroundColor: COLORS.errorLight,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "16px"
+              }}>
+                <i className="icon icon-power" style={{ fontSize: "24px", color: COLORS.error }}></i>
+              </div>
+              <h3 style={{
+                fontSize: "18px",
+                fontWeight: "600",
+                color: COLORS.textPrimary,
+                marginBottom: "8px"
+              }}>
+                Confirm Logout
+              </h3>
+              <p style={{
+                fontSize: "14px",
+                color: COLORS.textSecondary,
+                lineHeight: "1.5"
+              }}>
+                Are you sure you want to logout? You'll need to sign in again to access your dashboard.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end",
+              marginTop: "24px"
+            }}>
+              <AwsButton
+                label="Cancel"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+              />
+              <AwsButton
+                label={isLoggingOut ? "Logging out..." : "Logout"}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

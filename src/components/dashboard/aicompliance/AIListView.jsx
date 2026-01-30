@@ -912,7 +912,6 @@ export default function AIListView({
   return (
     <div>
       {/* TOP BAR */}
-
       <div
         className="d-flex flex-wrap justify-between items-center y-gap-10"
         style={{

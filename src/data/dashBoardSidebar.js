@@ -4,23 +4,10 @@ export const sidebarItems = [
         href: "/dashboard",
         src: "/dashboardSideBarIcons/dashboard.svg",
         active_src: "/dashboardSideBarIcons/dashboard_active.svg",
-        text: "Home",
+        text: "Dashboard",
         permission: "dashboard",
         requiredPlan: null,
     },
-
-    /*{
-       id: 3,
-       href: "/dashboard/aianalytics",
-       src: "/dashboardSideBarIcons/dashboard.svg",
-       active_src: "/dashboardSideBarIcons/dashboard_active.png",
-       // src: "/dashboardSideBarIcons/analytics.svg",
-       // active_src: "/dashboardSideBarIcons/analytics_active.png",
-       text: "Home",
-       permission: "ai_compliance",
-       requiredPlan: null,
-     },
-     */
     {
         id: 2,
         href: "/dashboard/aicompliance",
@@ -39,7 +26,11 @@ export const sidebarItems = [
         permission: "ai_literacy",
         requiredPlan: null,
     },
-
+    {
+        id: "section-management",
+        type: "section",
+        text: "Management",
+    },
     {
         id: 4,
         src: "/dashboardSideBarIcons/organization.svg",
@@ -52,6 +43,24 @@ export const sidebarItems = [
             { id: "users", iconClass: "text-20 icon-person-3", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
             { id: "organizations", iconClass: "text-20 icon-person-3", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
         ],
+    },
+    {
+        id: 24,
+        href: "/dashboard/settings",
+        src: "/dashboardSideBarIcons/settings.svg",
+        active_src: "/dashboardSideBarIcons/settings_active.svg",
+        text: "Settings",
+        permission: "settings",
+        requiredPlan: null,
+    },
+    {
+        id: 25,
+        href: "/dashboard/pricing",
+        src: "/dashboardSideBarIcons/pricing.svg",
+        active_src: "/dashboardSideBarIcons/pricing_active.svg",
+        text: "Pricing",
+        permission: null,
+        requiredPlan: null,
     },
     /*{
       id: 5,
