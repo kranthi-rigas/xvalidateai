@@ -1,0 +1,60 @@
+/* Prevent FontAwesome icon duplication - force single line display */
+.nav-item span[class*="fa-"] {
+  display: inline-block !important;
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Remove any pseudo-elements that might duplicate icons */
+.nav-item span[class*="fa-"]::after,
+.nav-item span[class*="fa-"]::before {
+  display: inline-block !important;
+  vertical-align: middle;
+}
+
+/* Ensure FontAwesome renders correctly */
+.nav-item .fa-solid,
+.nav-item .fa-regular {
+  font-family: "Font Awesome 6 Free" !important;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block !important;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1 !important;
+  vertical-align: middle;
+}
+
+.nav-item .fa-solid {
+  font-weight: 900;
+}
+
+.nav-item .fa-regular {
+  font-weight: 400;
+}
+
+/* Sidebar transition */
+aside {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Tooltip styling for collapsed state */
+.nav-item[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Made with Bob */

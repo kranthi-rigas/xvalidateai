@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link, Outlet, Navigate, useLocation } from "react-router-dom";
 import Preloader from "@/components/common/Preloader";
+import "./ModernDashboardLayout.css";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
   const isAuthenticated = localStorage.getItem("access_token");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Dynamic header content based on route
   const headerContent = useMemo(() => {
@@ -62,113 +64,142 @@ export default function ModernDashboardLayout() {
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
       {/* Sidebar */}
-      <aside id="sidebar" className="w-64 bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg">
-        <div className="h-20 flex items-center px-6 border-b border-sidebar-border">
-          <div className="flex items-center space-x-2">
+      <aside id="sidebar" className={`${sidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}>
+        <div className="h-20 flex items-center px-6 border-b border-sidebar-border justify-between">
+          <div className={`flex items-center space-x-2 ${sidebarCollapsed ? 'hidden' : ''}`}>
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <i className="fa-solid fa-shield-halved text-secondary text-sm"></i>
             </div>
             <span className="text-lg font-bold text-primary">XVALIDATE<span className="text-secondary">AI</span></span>
           </div>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`${sidebarCollapsed ? 'mx-auto' : ''} w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors`}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <i className={`fa-solid ${sidebarCollapsed ? 'fa-angles-right' : 'fa-angles-left'}`}></i>
+          </button>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
           <Link
             to="/dashboard"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname === '/dashboard' || location.pathname === '/dashboard/'
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "Dashboard" : ""}
           >
-            <i className="fa-solid fa-table-columns w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            Dashboard
+            <span className={`fa-solid fa-table-columns ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>Dashboard</span>}
           </Link>
           
           <Link
             to="/dashboard/aicompliance"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname.startsWith('/dashboard/aicompliance')
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "AI Compliance" : ""}
           >
-            <i className="fa-solid fa-shield-virus w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            AI Compliance
+            <span className={`fa-solid fa-shield-virus ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>AI Compliance</span>}
           </Link>
 
           <Link
             to="/dashboard/ailiteracy"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname.startsWith('/dashboard/ailiteracy')
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "AI Literacy" : ""}
           >
-            <i className="fa-solid fa-graduation-cap w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            AI Literacy
+            <span className={`fa-solid fa-graduation-cap ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>AI Literacy</span>}
           </Link>
 
-          <div className="pt-2 pb-1">
-            <div className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Management</div>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="pt-2 pb-1">
+              <div className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Management</div>
+            </div>
+          )}
+
+          {sidebarCollapsed && <div className="border-t border-sidebar-border my-2"></div>}
 
           <Link
             to="/dashboard/organizations"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group justify-between ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4 justify-between'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname.startsWith('/dashboard/organizations')
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "Organization" : ""}
           >
             <div className="flex items-center">
-              <i className="fa-regular fa-building w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-              Organization
+              <span className={`fa-regular fa-building ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+              {!sidebarCollapsed && <span>Organization</span>}
             </div>
-            <i className="fa-solid fa-chevron-right text-xs text-muted-foreground/50"></i>
+            {!sidebarCollapsed && <span className="fa-solid fa-chevron-right text-xs text-muted-foreground/50"></span>}
           </Link>
 
           <Link
             to="/dashboard/settings"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname.startsWith('/dashboard/settings')
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "Settings" : ""}
           >
-            <i className="fa-solid fa-gear w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            Settings
+            <span className={`fa-solid fa-gear ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>Settings</span>}
           </Link>
 
           <Link
             to="/dashboard/pricing"
-            className={`nav-item flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium rounded-lg transition-colors group ${
               location.pathname.startsWith('/dashboard/pricing')
                 ? 'active'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={sidebarCollapsed ? "Pricing" : ""}
           >
-            <i className="fa-solid fa-file-invoice-dollar w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            Pricing
+            <span className={`fa-solid fa-file-invoice-dollar ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>Pricing</span>}
           </Link>
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
-          <Link to="/dashboard/faq" className="nav-item flex items-center px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors group mb-2">
-            <i className="fa-regular fa-circle-question w-5 h-5 mr-3 group-hover:text-primary transition-colors"></i>
-            FAQ's
+          <Link
+            to="/dashboard/faq"
+            className={`nav-item flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors group mb-2`}
+            title={sidebarCollapsed ? "FAQ's" : ""}
+          >
+            <span className={`fa-regular fa-circle-question ${sidebarCollapsed ? '' : 'mr-3'} group-hover:text-primary transition-colors`}></span>
+            {!sidebarCollapsed && <span>FAQ's</span>}
           </Link>
-          <div className="flex items-center p-3 bg-muted/50 rounded-lg border border-border">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs mr-3">
-              RP
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">Rakesh P.</p>
-              <p className="text-xs text-muted-foreground truncate">Admin</p>
-            </div>
-            <button className="text-muted-foreground hover:text-foreground">
-              <i className="fa-solid fa-arrow-right-from-bracket"></i>
-            </button>
+          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-3 bg-muted/50 rounded-lg border border-border`}>
+            {sidebarCollapsed ? (
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                RP
+              </div>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs mr-3">
+                  RP
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">Rakesh P.</p>
+                  <p className="text-xs text-muted-foreground truncate">Admin</p>
+                </div>
+                <button className="text-muted-foreground hover:text-foreground">
+                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </aside>

@@ -3,7 +3,7 @@ import useToast from "../../../hooks/useToast";
 import AIListViewModern from "./AIListViewModern";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
-import ProjectDetails from "./ProjectDetails";
+import ProjectDetailsModern from "./ProjectDetailsModern";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { COLORS } from "../../../styles/colors";
 
@@ -150,7 +150,7 @@ export default function AICompliance() {
   /* ✅ DETAILS PAGE */
   if (openedProject) {
     return (
-      <ProjectDetails
+      <ProjectDetailsModern
         project={openedProject}
         onBack={(shouldRefresh) => {
           if (shouldRefresh) loadProjects();

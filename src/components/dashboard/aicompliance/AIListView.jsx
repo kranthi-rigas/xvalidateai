@@ -942,9 +942,7 @@ export default function AIListView({
           <RefreshButton
             onRefresh={async () => {
               setSelected([]); // 🔥 clear checkbox state
-              setTableLoading(true);
               await refreshProjects(); // 🔥 backend API call
-              setTableLoading(false);
             }}
             setTableLoading={setTableLoading}
           />
