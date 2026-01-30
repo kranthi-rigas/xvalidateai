@@ -66,11 +66,12 @@ export default function ModernDashboardLayout() {
       {/* Sidebar */}
       <aside id="sidebar" className={`${sidebarCollapsed ? 'w-20' : 'w-64'} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}>
         <div className="h-20 flex items-center px-6 border-b border-sidebar-border justify-between">
-          <div className={`flex items-center space-x-2 ${sidebarCollapsed ? 'hidden' : ''}`}>
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <i className="fa-solid fa-shield-halved text-secondary text-sm"></i>
-            </div>
-            <span className="text-lg font-bold text-primary">XVALIDATE<span className="text-secondary">AI</span></span>
+          <div className={`flex items-center ${sidebarCollapsed ? 'hidden' : ''}`}>
+            <img
+              src="/assets/img/logo/xvalidateai-logo.svg"
+              alt="XVALIDATEAI"
+              className="h-10 w-auto"
+            />
           </div>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
