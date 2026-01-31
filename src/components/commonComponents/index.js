@@ -3,3 +3,4 @@ export { default as IconButton } from "./IconButton";
 export { default as Filter } from "./Filter";
 export {default as GoogleLoginButton} from "./GoogleLoginIcon/GoogleLoginButton";
 export { default as Modal } from "./ModalPopUp";
+export {default as SingleScore } from "./SingleScore";
