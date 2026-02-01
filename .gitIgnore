@@ -4,3 +4,5 @@ package-lock.json
 node_modules
 .env.development
 .DS_Store
+.env 
+.env.development.example
