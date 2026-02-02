@@ -3,7 +3,9 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login, signup, fetchUserProfile } from "@/apiIntegration/auth.js";
 import useToast from "@/hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
+import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
+import CountrySelect from "@/components/common/CountrySelect";
 
 // Auth Components
 import AuthHeader from "@/components/others/AuthHeader";
@@ -24,10 +26,23 @@ export default function AuthPage() {
     password: "",
     first_name: "",
     last_name: "",
-    confirm_password: ""
+    confirm_password: "",
+    country: "",
+    phone: ""
   });
   const navigate = useNavigate();
   const show = useToast();
+  
+  // Country and phone hook for signup
+  const {
+    countries,
+    selectedCountry,
+    phone,
+    phoneCode,
+    setPhone,
+    onCountryChange,
+    validatePhone
+  } = useCountryPhone();
 
   const metadata = {
     title: mode === "login" ? "Login - XVALIDATEAI" : "Sign up - XVALIDATEAI",
@@ -142,12 +157,22 @@ export default function AuthPage() {
           return;
         }
         
+        // Validate phone number
+        const phoneError = validatePhone();
+        if (phoneError) {
+          show(phoneError, { type: "error", duration: 4000 });
+          setLoading(false);
+          return;
+        }
+        
         // Sign up
         const signupData = {
           email: formData.email,
           password: formData.password,
           first_name: formData.first_name,
-          last_name: formData.last_name
+          last_name: formData.last_name,
+          country: selectedCountry?.label || "",
+          phone: phone
         };
         
         await signup(signupData);
@@ -276,16 +301,52 @@ export default function AuthPage() {
 
                   {/* Confirm Password (Signup Only) */}
                   {mode === "signup" && (
-                    <AuthFormInput
-                      id="confirm_password"
-                      name="confirm_password"
-                      type="password"
-                      label="Confirm Password"
-                      placeholder="••••••••"
-                      value={formData.confirm_password}
-                      onChange={handleChange}
-                      icon="fa-lock"
-                    />
+                    <>
+                      <AuthFormInput
+                        id="confirm_password"
+                        name="confirm_password"
+                        type="password"
+                        label="Confirm Password"
+                        placeholder="••••••••"
+                        value={formData.confirm_password}
+                        onChange={handleChange}
+                        icon="fa-lock"
+                      />
+                      
+                      {/* Country Selection */}
+                      <div className="auth-input-group">
+                        <label className="auth-input-label">Country</label>
+                        <div className="auth-input-wrapper">
+                          <CountrySelect
+                            countries={countries}
+                            value={selectedCountry}
+                            onChange={onCountryChange}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Phone Number */}
+                      <div className="auth-input-group">
+                        <label className="auth-input-label">Phone Number</label>
+                        <div className="auth-phone-group">
+                          <div className="auth-country-code">
+                            {phoneCode || '+--'}
+                          </div>
+                          <input
+                            type="tel"
+                            placeholder="Enter phone number"
+                            value={phone}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '');
+                              setPhone(value);
+                            }}
+                            className="auth-input auth-phone-input"
+                            style={{ paddingLeft: '1rem' }}
+                            disabled={!selectedCountry}
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* Remember Me & Forgot Password (Login Only) */}

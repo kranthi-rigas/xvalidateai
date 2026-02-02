@@ -623,6 +623,29 @@
   border-color: var(--auth-ring, #58BFCE);
 }
 
+/* Auth Phone Input Group */
+.auth-phone-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.auth-country-code {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--auth-input, #FFFFFF);
+  border: 1px solid var(--auth-border, #E2E8F0);
+  border-radius: 12px;
+  min-width: 80px;
+  color: var(--auth-muted-foreground, #64748B);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.auth-phone-input {
+  flex: 1;
+}
+
 /* Remember Me & Forgot Password */
 .auth-form-options {
   display: flex;
