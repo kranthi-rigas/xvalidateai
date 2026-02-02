@@ -1,3 +1,4 @@
+import { right } from "@popperjs/core";
 import React from "react";
 
 /* ---------- SAFE HELPERS ---------- */
@@ -40,12 +41,16 @@ function applySorting(data, sortConfig, columns) {
 
 /* ---------- TABLE ---------- */
 export default function ListTable({
-  columns,
-  data,
+  columns = [],
+  data = [],
   rowKey,
   renderCell,
+
+  /* sorting */
   sortConfig,
   onSort,
+
+  /* resizing */
   columnWidths = {},
   startResize,
   pagination,

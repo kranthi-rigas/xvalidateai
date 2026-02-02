@@ -2,10 +2,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
+import { COLORS } from "@/styles/colors";
+import { useContextElement } from "@/context/Context";
 
 export default function DashboardHome() {
   const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { userCredits } = useContextElement();
 
   useEffect(() => {
     // Fetch dashboard data
@@ -178,7 +181,25 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8">
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-4 gap-6">
+      <section id="stats-section" className="grid grid-cols-5 gap-6">
+        {/* Credits Card */}
+        <div className="dashboard-card p-6 flex flex-col justify-between border-l-4" style={{ borderLeftColor: COLORS.secondary }}>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Available Credits</p>
+              <h3 className="text-4xl font-bold mt-1" style={{ color: COLORS.secondary }}>
+                {userCredits?.remaining || 0}
+              </h3>
+            </div>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${COLORS.secondary}15`, color: COLORS.secondary }}>
+              <i className="fa-solid fa-coins"></i>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            of {userCredits?.total || 0} total credits
+          </div>
+        </div>
+
         {/* Total Scanned Tools */}
         <div className="dashboard-card p-6 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">

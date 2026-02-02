@@ -76,15 +76,11 @@
 /* New chart CSS */
 
 .gauge-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
   text-align: center;
 }
 
 .gauge-label {
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: #374151;
 }

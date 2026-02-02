@@ -2,11 +2,14 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link, Outlet, Navigate, useLocation } from "react-router-dom";
 import Preloader from "@/components/common/Preloader";
 import "./ModernDashboardLayout.css";
+import { COLORS } from "@/styles/colors";
+import { useContextElement } from "@/context/Context";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
   const isAuthenticated = localStorage.getItem("access_token");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { userCredits } = useContextElement();
 
   // Dynamic header content based on route
   const headerContent = useMemo(() => {
@@ -172,6 +175,31 @@ export default function ModernDashboardLayout() {
             {!sidebarCollapsed && <span>Pricing</span>}
           </Link>
         </nav>
+
+        {/* Credits Display */}
+        {!sidebarCollapsed && (
+          <div className="px-4 py-3 mx-3 mb-3 rounded-lg border border-border" style={{ backgroundColor: `${COLORS.secondary}08` }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Credits</span>
+              <i className="fa-solid fa-coins" style={{ color: COLORS.secondary, fontSize: '14px' }}></i>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold" style={{ color: COLORS.secondary }}>
+                {userCredits?.remaining ?? 0}
+              </span>
+              <span className="text-xs text-muted-foreground">/ {userCredits?.total ?? 0}</span>
+            </div>
+            <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${userCredits?.total ? ((userCredits.remaining / userCredits.total) * 100) : 0}%`,
+                  backgroundColor: COLORS.secondary
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
 
         <div className="p-4 border-t border-sidebar-border">
           <Link

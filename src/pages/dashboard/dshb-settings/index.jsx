@@ -1,4 +1,4 @@
-import Settings from "@/components/dashboard/Settings/Settings";
+import ModernSettings from "@/components/dashboard/Settings/ModernSettings";
 import MetaComponent from "@/components/common/MetaComponent";
 
 const metadata = {
@@ -11,7 +11,7 @@ export default function DshbSettingsPage() {
   return (
     <>
       <MetaComponent meta={metadata} />
-      <Settings />
+      <ModernSettings />
     </>
   );
 }
