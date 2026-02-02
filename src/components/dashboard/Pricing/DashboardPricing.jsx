@@ -1,20 +1,19 @@
-import { Padding } from "@mui/icons-material";
 import { useNavigate, Link } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
+import { COLORS } from "@/styles/colors";
 
 const pricingPlans = [
     {
         id: "free",
         name: "Free",
         description: "Perfect for getting started",
+        icon: "fa-solid fa-rocket",
+        iconColor: COLORS.secondary,
         price: 0,
         period: "yearly",
         credits: 20,
         popular: false,
-        // buttonText: "Try For Free",
-        // buttonStyle: "-outline-purple-1 text-purple-1",
-
         features: [
             { text: "20 credits included", included: true },
             { text: "Downloadable Report", included: false },
@@ -32,6 +31,8 @@ const pricingPlans = [
         id: "premium",
         name: "Premium",
         description: "Best for growing learners",
+        icon: "fa-solid fa-star",
+        iconColor: COLORS.primary,
         price: null,
         period: "yearly",
         credits: 100,
@@ -54,6 +55,8 @@ const pricingPlans = [
         id: "business",
         name: "Business",
         description: "For organizations",
+        icon: "fa-solid fa-building",
+        iconColor: COLORS.success,
         price: null,
         period: "yearly",
         credits: 300,
@@ -146,7 +149,7 @@ export default function DashboardPricing() {
                                                     transform: "scale(1)",
                                                     display: "flex",
                                                     flexDirection: "column",
-                                                    border: isCurrentPlan(plan.id) ? "2px solid #6440FB" : undefined,
+                                                    border: isCurrentPlan(plan.id) ? `2px solid ${COLORS.primary}` : undefined,
                                                 }}
                                                 onMouseEnter={(e) => {
                                                     e.currentTarget.style.transform = "translateY(-8px)";
@@ -165,7 +168,7 @@ export default function DashboardPricing() {
                                                             position: "absolute",
                                                             top: "12px",
                                                             right: "12px",
-                                                            backgroundColor: "#6440FB",
+                                                            backgroundColor: COLORS.primary,
                                                             color: "#fff",
                                                             padding: "4px 12px",
                                                             borderRadius: "12px",
@@ -185,12 +188,32 @@ export default function DashboardPricing() {
                                                         flex: 1,
                                                     }}
                                                 >
-                                                    {/* Plan Name */}
-                                                    <div className="text-20 fw-600 text-dark-1">
-                                                        {plan.name}
-                                                    </div>
-                                                    <div className="text-14 mt-5 text-light-1">
-                                                        {plan.description}
+                                                    {/* Plan Icon & Name */}
+                                                    <div className="d-flex items-center gap-3 mb-3">
+                                                        <div
+                                                            className="d-flex items-center justify-center rounded-12"
+                                                            style={{
+                                                                width: "48px",
+                                                                height: "48px",
+                                                                backgroundColor: `${plan.iconColor}15`,
+                                                            }}
+                                                        >
+                                                            <i
+                                                                className={plan.icon}
+                                                                style={{
+                                                                    fontSize: "24px",
+                                                                    color: plan.iconColor,
+                                                                }}
+                                                            ></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-20 fw-600 text-dark-1">
+                                                                {plan.name}
+                                                            </div>
+                                                            <div className="text-14 mt-5 text-light-1">
+                                                                {plan.description}
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     {/* Price */}
@@ -232,10 +255,16 @@ export default function DashboardPricing() {
                                                     >
                                                         {plan.credits && (
                                                             <div
-                                                                className="d-inline-block mt-15 px-15 py-8 rounded-8 bg-purple-3 text-purple-1"
-                                                                style={{ fontSize: "12px", fontWeight: 500 }}
+                                                                className="d-inline-block mt-15 px-15 py-8 rounded-8"
+                                                                style={{
+                                                                    fontSize: "12px",
+                                                                    fontWeight: 500,
+                                                                    backgroundColor: `${plan.iconColor}15`,
+                                                                    color: plan.iconColor,
+                                                                }}
                                                             >
-                                                                $ {plan.credits} credits included
+                                                                <i className="fa-solid fa-coins mr-1"></i>
+                                                                {plan.credits} credits included
                                                             </div>
                                                         )}
                                                     </div>
@@ -302,12 +331,13 @@ export default function DashboardPricing() {
                                                                 >
                                                                     {feature.included ? (
                                                                         <span
-                                                                            className="d-flex items-center justify-center rounded-full mr-12 bg-blue-1 text-white"
+                                                                            className="d-flex items-center justify-center rounded-full mr-12 text-white"
                                                                             style={{
                                                                                 width: "20px",
                                                                                 height: "20px",
                                                                                 minWidth: "20px",
                                                                                 fontSize: "11px",
+                                                                                backgroundColor: COLORS.success,
                                                                             }}
                                                                         >
                                     ✓
