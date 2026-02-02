@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import EditProjectModal from "./EditProjectModal";
 import DeleteConfirmModal from "../../common/DeleteConfirmModal";
 import ActionsMenu from "../../common/ActionsMenu";
-import ListTable, { Td, LinkStyle } from "../../common/ListTable";
+import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import AwsButton from "../../common/AwsButton";
 import ApproveRejectModal from "./ApproveRejectModal";

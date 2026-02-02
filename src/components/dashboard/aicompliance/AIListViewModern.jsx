@@ -1,7 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
+import useToast from "../../../hooks/useToast";
+
+import ActionsMenu from "../../common/ActionsMenu";
+import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import TablePreferencesModal from "../../common/TablePreferencesModal";
+
+import EditProjectModal from "./EditProjectModal";
+import DeleteConfirmModal from "../../common/DeleteConfirmModal";
+import ApproveRejectModal from "./ApproveRejectModal";
+import ListTable from "../../common/ListTable";
+
+import {
+  updateComplianceProject,
+  getComplianceProjectDetails,
+  deleteComplianceProject,
+} from "../../../apiIntegration/compliance";
 
 export default function AIListViewModern({
   projects,
@@ -9,20 +24,241 @@ export default function AIListViewModern({
   setOpenedProject,
   refreshProjects,
 }) {
-  const navigate = useNavigate();
+  const pageLoading = usePageLoader([projects]);
+  const toast = useToast();
+
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState([]);
   const [liveProjects, setLiveProjects] = useState([]);
-  const pageLoading = usePageLoader([projects]);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const actionsDisabled = selected.length === 0;
+  const actionsRef = useRef(null);
+  const [page, setPage] = useState(1);
+  const scoreCacheRef = useRef({});
 
   useEffect(() => {
-    setLiveProjects(projects || []);
+    function handleOutside(e) {
+      if (actionsRef.current && !actionsRef.current.contains(e.target)) {
+        setShowActions(false);
+      }
+    }
+
+    if (showActions) {
+      document.addEventListener("mousedown", handleOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, [showActions]);
+
+  /* ---------------- SORTING ---------------- */
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
+
+  const requestSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  /* ---------------- COLUMN RESIZE ---------------- */
+  const [columnWidths, setColumnWidths] = useState({
+    name: 220,
+    status: 180,
+    assessment_status: 160,
+    score: 120,
+    recommendation: 200,
+    description: 260,
+    last_scanned_time: 180,
+    requested_by: 220,
+    approved_by: 240,
+    createdtime: 180,
+  });
+
+  const resizingCol = useRef(null);
+
+  const startResize = (key, e) => {
+    e.preventDefault();
+    resizingCol.current = {
+      key,
+      startX: e.clientX,
+      startWidth: columnWidths[key],
+    };
+  };
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!resizingCol.current) return;
+      const { key, startX, startWidth } = resizingCol.current;
+      setColumnWidths((prev) => ({
+        ...prev,
+        [key]: Math.max(120, startWidth + (e.clientX - startX)),
+      }));
+    };
+
+    const onUp = () => (resizingCol.current = null);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  /* ---------------- TABLE PREFERENCES ---------------- */
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  /* Visible columns */
+  const [visibleColumns, setVisibleColumns] = useState(
+    Object.keys(columnWidths),
+  );
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key],
+    );
+  };
+
+  /* ---------------- MODALS ---------------- */
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editProjectData, setEditProjectData] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
+  const [deleteError, setDeleteError] = useState("");
+
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalAction, setApprovalAction] = useState(null);
+  const [activeProject, setActiveProject] = useState(null);
+  const [approvalError, setApprovalError] = useState(false);
+
+  const [showPreferences, setShowPreferences] = useState(false);
+
+  /* ---------------- ROLE ---------------- */
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const roles = (userInfo?.roles || []).map((r) => r.toUpperCase());
+  const isAdmin = roles.includes("ADMIN");
+
+  /* ---------------- DATA ---------------- */
+  useEffect(() => {
+    if (!projects?.length) return;
+
+    setLiveProjects((prev) => {
+      const map = new Map(prev.map((p) => [p.project_id, p]));
+
+      return projects.map((p) => {
+        const old = map.get(p.project_id);
+
+        // 🔄 SCAN RESTARTED → CLEAR CACHED SCORE
+        if (
+          old &&
+          old.assessment_status === "completed" &&
+          (p.assessment_status === "queued" ||
+            p.assessment_status === "in_progress")
+        ) {
+          delete scoreCacheRef.current[p.project_id];
+        }
+
+        // 🔒 preserve completed scan rows only if still completed
+        if (
+          old &&
+          old.assessment_status === "completed" &&
+          p.assessment_status === "completed"
+        ) {
+          return { ...old, ...p, score: old.score };
+        }
+
+        return old ? { ...old, ...p } : p;
+      });
+    });
   }, [projects]);
 
-  // Filter projects based on search
-  const filtered = (liveProjects || []).filter((p) =>
-    (p.name || "").toLowerCase().includes(search.toLowerCase())
-  );
+  /* ---------------- POLLING ---------------- */
+  useEffect(() => {
+    // only poll running scans
+    const pollable = liveProjects.filter(
+      (p) =>
+        p &&
+        (p.assessment_status === "queued" ||
+          p.assessment_status === "in_progress"),
+    );
+
+    if (!pollable.length) return;
+
+    const interval = setInterval(async () => {
+      const updates = await Promise.all(
+        pollable.map((p) =>
+          getComplianceProjectDetails(p.project_id).catch(() => null),
+        ),
+      );
+
+      setLiveProjects((prev) =>
+        prev.map((p) => {
+          const updated = updates.find(
+            (u) => u && u.project_id === p.project_id,
+          );
+
+          // 🔒 NEVER touch completed rows again
+          if (p.assessment_status === "completed") {
+            return p;
+          }
+
+          return updated ? { ...p, ...updated } : p;
+        }),
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [liveProjects]);
+
+  useEffect(() => {
+    setShowActions(false);
+  }, [selected]);
+
+  // ✅ DEFINE THIS FIRST
+  const getScoreDisplay = (project) => {
+    const { project_id, score, assessment_status } = project;
+
+    if (scoreCacheRef.current[project_id] != null) {
+      const s = scoreCacheRef.current[project_id];
+
+      if (s >= 60)
+        return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
+
+      if (s >= 40)
+        return { icon: "warning", color: "text-amber-700", value: s };
+
+      return { icon: "fa-circle-xmark", color: "text-red-600", value: s };
+    }
+
+    if (assessment_status === "queued" || assessment_status === "in_progress") {
+      return {
+        icon: "fa-spinner",
+        spinning: true,
+        color: "text-muted-foreground",
+        value: "--",
+      };
+    }
+
+    if (assessment_status === "completed" && score != null) {
+      scoreCacheRef.current[project_id] = Number(score);
+      return getScoreDisplay(project);
+    }
+
+    return {
+      icon: "fa-circle-minus",
+      color: "text-muted-foreground",
+      value: "--",
+    };
+  };
 
   // Format status for display
   const formatStatus = (status) => {
@@ -33,6 +269,33 @@ export default function AIListViewModern({
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
+
+  /* ---------------- SEARCH + SORT ---------------- */
+  const filtered = liveProjects
+    .filter((p) => {
+      if (!search.trim()) return true;
+      return buildSearchText(p).includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
+      return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
+    });
+
+  /* ---------------- PAGINATION DATA ---------------- */
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  /* ---------------- SELECTION ---------------- */
+  const toggleSelect = (id) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+
+  const toggleSelectAll = (checked) =>
+    setSelected(checked ? filtered.map((x) => x.project_id) : []);
 
   // Get status badge styling
   const getStatusBadge = (status) => {
@@ -113,32 +376,28 @@ export default function AIListViewModern({
     return config;
   };
 
-  // Get score icon and color
-  const getScoreDisplay = (score, assessmentStatus) => {
-    if (assessmentStatus === "in_progress" || assessmentStatus === "queued") {
-      return {
-        icon: "fa-spinner fa-spin",
-        color: "text-muted-foreground",
-        value: "--",
-      };
-    }
+  //search helper
+  function buildSearchText(project) {
+    const scoreDisplay = getScoreDisplay(project);
 
-    const s = Number(score) || 0;
-    if (s >= 80) {
-      return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
-    }
-    if (s >= 60) {
-      return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
-    }
-    if (s >= 40) {
-      return {
-        icon: "fa-triangle-exclamation",
-        color: "text-amber-500",
-        value: s,
-      };
-    }
-    return { icon: "fa-circle-xmark", color: "text-red-600", value: s };
-  };
+    return [
+      project.project_id,
+      project.name,
+      formatStatus(project.status),
+      formatStatus(project.assessment_status),
+      scoreDisplay?.value !== "--" ? scoreDisplay.value : null,
+      project.recommendation,
+      project.requested_by?.first_name,
+      project.requested_by?.last_name,
+      project.requested_by?.email,
+      project.approved_by?.first_name,
+      project.approved_by?.last_name,
+      project.approved_by?.email,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
 
   // Format date
   const formatDate = (dateString) => {
@@ -154,56 +413,366 @@ export default function AIListViewModern({
     });
   };
 
-  // Toggle selection
-  const toggleSelect = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+  /* ---------------- ACTIONS MENU ---------------- */
+  const actionItems = (() => {
+    if (!selected.length) return [];
+
+    // ✅ MULTI SELECT → DELETE ONLY
+    if (selected.length > 1) {
+      return [
+        {
+          key: "delete",
+          label: "Delete",
+          danger: true,
+        },
+      ];
+    }
+
+    // SINGLE SELECT
+    const project = liveProjects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    const deleteDisabled = project.assessment_status === "scan_in_progress";
+
+    const items = [];
+
+    if (isAdmin) {
+      if (project.status === "requested") {
+        items.push(
+          { key: "scan_approve", label: "Approve for Scan" },
+          { key: "scan_reject", label: "Reject for Scan" },
+        );
+      }
+
+      if (
+        project.status === "scan_completed" &&
+        project.assessment_status === "completed"
+      ) {
+        items.push(
+          { key: "approve", label: "Approve for Usage" },
+          { key: "reject", label: "Reject for Usage" },
+        );
+      }
+    }
+
+    items.push(
+      { key: "edit", label: "Edit" },
+      {
+        key: "delete",
+        label: "Delete",
+        danger: true,
+        disabled: deleteDisabled,
+      },
     );
+
+    return items;
+  })();
+
+  const columns = [
+    {
+      key: "checkbox",
+      label: "",
+      width: 48,
+      resizable: false,
+      allSelected: filtered.length > 0 && selected.length === filtered.length,
+      onToggleAll: toggleSelectAll,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={selected.includes(row.project_id)}
+          onChange={() => toggleSelect(row.project_id)}
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+        />
+      ),
+    },
+    {
+      key: "name",
+      label: "Tool Name",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "status",
+      label: "Tool Status",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "assessment_status",
+      label: "Scan Status",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "score",
+      label: "Score",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "recommendation",
+      label: "Recommendation",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "description",
+      label: "Description",
+      resizable: true,
+    },
+    {
+      key: "last_scanned_time",
+      label: "Last Scan",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "createdtime",
+      label: "Created On",
+      sortable: true,
+      sortKey: "created_time",
+      resizable: true,
+    },
+    {
+      key: "requested_by",
+      label: "Requested By",
+      resizable: true,
+    },
+    {
+      key: "approved_by",
+      label: "Scan Approved By",
+      resizable: true,
+    },
+  ];
+
+  const renderCell = (project, key) => {
+    switch (key) {
+      case "checkbox":
+        return columns[0].render(project);
+
+      case "name":
+        return (
+          <span
+            className="font-medium text-primary hover:underline cursor-pointer"
+            onClick={() => setOpenedProject(project)}
+          >
+            {project.name || "Unnamed Tool"}
+          </span>
+        );
+
+      case "status": {
+        const badge = getStatusBadge(project.status);
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+          >
+            {badge.label}
+          </span>
+        );
+      }
+
+      case "assessment_status":
+        return (
+          <span className="text-muted-foreground">
+            {formatStatus(project.assessment_status) || "Pending"}
+          </span>
+        );
+
+      case "score": {
+        const s = getScoreDisplay(project);
+
+        return (
+          <div className={`flex items-center gap-2 font-semibold ${s.color}`}>
+            {s.icon === "warning" ? (
+              <span
+                key={`${project.project_id}-warning`}
+                className="relative inline-flex items-center justify-center w-5 h-5"
+              >
+                <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-30 animate-ping" />
+                <span className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                  !
+                </span>
+              </span>
+            ) : (
+              <i
+                key={`${project.project_id}-${s.icon}`}
+                className={`fa-solid ${s.icon} ${s.spinning ? "fa-spin" : ""}`}
+              />
+            )}
+            {s.value}
+          </div>
+        );
+      }
+
+      case "recommendation": {
+        const badge = getRecommendationBadge(project.recommendation);
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+          >
+            {badge.label}
+          </span>
+        );
+      }
+
+      case "description":
+        return (
+          <span
+            className="truncate text-muted-foreground"
+            title={project.description}
+          >
+            {project.description || "--"}
+          </span>
+        );
+
+      case "last_scanned_time":
+        return (
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatDate(project.last_scanned_time)}
+          </span>
+        );
+
+      case "createdtime":
+        return (
+          <span className="font-mono text-xs text-muted-foreground">
+            {project.created_time ? formatDate(project.created_time) : "-"}
+          </span>
+        );
+
+      case "requested_by": {
+        const r = project.requested_by;
+        if (!r) return <span className="text-muted-foreground">-</span>;
+        return (
+          <div className="flex flex-col gap-0.5 truncate">
+            <span className="text-sm font-medium text-foreground truncate">
+              {`${r.first_name || ""} ${r.last_name || ""}`.trim()}
+            </span>
+            <span className="text-xs text-muted-foreground truncate">
+              {r.email}
+            </span>
+          </div>
+        );
+      }
+
+      case "approved_by": {
+        const a = project.approved_by;
+        if (!a)
+          return (
+            <span className="text-sm italic text-muted-foreground">N/A</span>
+          );
+        return (
+          <div className="flex flex-col gap-0.5 truncate">
+            <span className="text-sm font-medium text-foreground truncate">
+              {`${a.first_name || ""} ${a.last_name || ""}`.trim()}
+            </span>
+            <span className="text-xs text-muted-foreground truncate">
+              {a.email}
+            </span>
+          </div>
+        );
+      }
+
+      default:
+        return project[key] ?? "";
+    }
   };
 
-  const toggleSelectAll = (checked) => {
-    setSelected(checked ? filtered.map((x) => x.project_id) : []);
-  };
+  const visibleTableColumns = columns.filter(
+    (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
+  );
 
-  if (pageLoading) {
-    return <PageLoader loading={true} />;
-  }
+  if (pageLoading) return <PageLoader loading />;
 
   return (
-    <div className="space-y-8">
-      {/* Main Table Card */}
-      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px]">
-        {/* Toolbar */}
+    <div className="space-y-6">
+      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
+        {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Search */}
           <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i className="fa-solid fa-magnifying-glass text-muted-foreground"></i>
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
             </div>
+
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
               placeholder="Find tool by name, ID or requester..."
             />
           </div>
 
-          <div className="flex items-center space-x-3">
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh */}
             <button
-              onClick={refreshProjects}
-              className="w-10 h-10 flex items-center justify-center rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors"
-              title="Refresh Data"
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await refreshProjects();
+                setTimeout(() => setTableLoading(false), 300);
+              }}
+              title="Refresh"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
 
-            <div className="relative group">
-              <button className="flex items-center px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-background transition-all shadow-sm">
-                Actions
-                <i className="fa-solid fa-caret-down ml-2 text-xs"></i>
-              </button>
+            {/* Actions dropdown */}
+            <div ref={actionsRef} className="relative">
+              <ActionsMenu
+                disabled={selected.length === 0}
+                items={actionItems}
+                onSelect={(key) => {
+                  const project = projects.find(
+                    (p) => p.project_id === selected[0],
+                  );
+                  if (!project) return;
+
+                  setActiveProject(project);
+
+                  if (
+                    key === "scan_approve" ||
+                    key === "scan_reject" ||
+                    key === "approve" ||
+                    key === "reject"
+                  ) {
+                    setApprovalAction(key);
+                    setShowApprovalModal(true);
+                    return;
+                  }
+
+                  if (key === "edit") {
+                    setEditProjectData(project);
+                    setShowEditModal(true);
+                  }
+
+                  if (key === "delete") {
+                    if (project.assessment_status === "scan_in_progress") {
+                      return;
+                    }
+
+                    setPendingDeleteIds(selected);
+                    setShowDeleteModal(true);
+                  }
+                }}
+              />
             </div>
 
+            {/* Preferences button */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+
+            {/* Tool Assessment */}
             <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
@@ -214,186 +783,158 @@ export default function AIListViewModern({
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="flex-1 overflow-auto relative">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
-              <tr>
-                <th className="p-4 pl-6 w-12 border-b border-border">
-                  <input
-                    type="checkbox"
-                    checked={
-                      filtered.length > 0 && selected.length === filtered.length
-                    }
-                    onChange={(e) => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                  />
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Tool Name
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Tool Status
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Scan Status
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Score
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Recommendation
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border w-64">
-                  Description
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border cursor-pointer hover:bg-muted/50 transition-colors group">
-                  Last Scan
-                  <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100"></i>
-                </th>
-                <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
-                  Requested By
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border text-sm">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="9"
-                    className="p-8 text-center text-muted-foreground"
-                  >
-                    No tools found
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((project) => {
-                  const statusBadge = getStatusBadge(project.status);
-                  const recBadge = getRecommendationBadge(
-                    project.recommendation
-                  );
-                  const scoreDisplay = getScoreDisplay(
-                    project.score,
-                    project.assessment_status
-                  );
-                  const isHighRisk =
-                    project.recommendation?.toLowerCase() === "not recommended";
-
-                  return (
-                    <tr
-                      key={project.project_id}
-                      className={`hover:bg-muted/20 transition-colors group ${
-                        isHighRisk ? "bg-red-50/30" : ""
-                      }`}
-                    >
-                      <td className="p-4 pl-6">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(project.project_id)}
-                          onChange={() => toggleSelect(project.project_id)}
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                        />
-                      </td>
-                      <td
-                        className="p-4 font-medium text-primary hover:underline cursor-pointer"
-                        onClick={() => setOpenedProject(project)}
-                      >
-                        {project.name || "Unnamed Tool"}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge.bg} ${statusBadge.text} border ${statusBadge.border}`}
-                        >
-                          {statusBadge.label}
-                        </span>
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {formatStatus(project.assessment_status) || "Pending"}
-                      </td>
-                      <td className="p-4">
-                        <div
-                          className={`flex items-center ${scoreDisplay.color} font-semibold`}
-                        >
-                          <i
-                            className={`fa-regular ${scoreDisplay.icon} mr-2`}
-                          ></i>{" "}
-                          {scoreDisplay.value}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${recBadge.bg} ${recBadge.text} border ${recBadge.border}`}
-                        >
-                          {recBadge.label}
-                        </span>
-                      </td>
-                      <td
-                        className="p-4 text-muted-foreground truncate max-w-xs"
-                        title={project.description || project.name}
-                      >
-                        {project.description || project.name || "--"}
-                      </td>
-                      <td className="p-4 text-muted-foreground font-mono text-xs">
-                        {formatDate(project.last_scanned_time)}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-foreground text-xs">
-                            {project.requested_by_name || "Unknown"}
-                          </span>
-                          <span className="text-xs text-muted-foreground truncate max-w-[150px]">
-                            {project.requested_by_email || ""}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer / Pagination */}
-        <div className="p-4 border-t border-border bg-white rounded-b-2xl flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing{" "}
-            <span className="font-medium text-foreground">
-              1-{Math.min(filtered.length, 50)}
-            </span>{" "}
-            of{" "}
-            <span className="font-medium text-foreground">
-              {filtered.length}
-            </span>{" "}
-            items
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
-              <i className="fa-solid fa-chevron-left text-xs"></i>
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-secondary text-primary font-medium text-sm border border-secondary">
-              1
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium text-sm">
-              2
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors font-medium text-sm">
-              3
-            </button>
-            <span className="text-muted-foreground px-1">...</span>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
-              <i className="fa-solid fa-chevron-right text-xs"></i>
-            </button>
-          </div>
+        {/* TABLE */}
+        <div className="relative flex-1 overflow-hidden">
+          {tableLoading && (
+            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
+          )}
+          <ListTable
+            columns={visibleTableColumns}
+            data={paginatedData}
+            rowKey="project_id"
+            renderCell={renderCell}
+            sortConfig={sortConfig}
+            onSort={requestSort}
+            columnWidths={columnWidths}
+            startResize={startResize}
+            loading={tableLoading}
+            selectedCount={selected.length}
+            selectionCounterLabel="tool"
+            pagination={{
+              page,
+              pageSize,
+              total: filtered.length,
+              onPageChange: setPage,
+            }}
+          />
         </div>
       </section>
+
+      {/* MODALS */}
+      {showEditModal && (
+        <EditProjectModal
+          project={editProjectData}
+          setShowEditModal={setShowEditModal}
+          refreshProjects={refreshProjects}
+        />
+      )}
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          onClose={() => {
+            setShowDeleteModal(false);
+            setDeleteError("");
+          }}
+          error={deleteError}
+          onConfirm={async () => {
+            try {
+              for (let id of pendingDeleteIds) {
+                await deleteComplianceProject(id);
+              }
+              setShowDeleteModal(false);
+              setSelected([]);
+              refreshProjects();
+            } catch (err) {
+              setDeleteError(err.message || "Delete failed");
+            }
+          }}
+          title="Delete Tool"
+          message="Are you sure you want to delete the selected tool(s)?"
+        />
+      )}
+      {showApprovalModal && activeProject && (
+        <ApproveRejectModal
+          hasError={approvalError}
+          title={
+            approvalAction === "scan_approve"
+              ? "Approve Tool for Scan"
+              : approvalAction === "scan_reject"
+                ? "Reject Tool for Scan"
+                : approvalAction === "approve"
+                  ? "Approve Tool for Usage"
+                  : "Reject Tool for Usage"
+          }
+          actionLabel={
+            approvalAction === "scan_approve"
+              ? "Approve for Scan"
+              : approvalAction === "scan_reject"
+                ? "Reject for Scan"
+                : approvalAction === "approve"
+                  ? "Approve for Usage"
+                  : "Reject for Usage"
+          }
+          onClose={() => {
+            setShowApprovalModal(false);
+            setApprovalError(false);
+          }}
+          onConfirm={async (comment) => {
+            let payload = {};
+
+            switch (approvalAction) {
+              case "scan_approve":
+                payload = {
+                  action: "scan_approve",
+                  status: "approved_for_scan",
+                };
+                break;
+              case "scan_reject":
+                payload = {
+                  action: "scan_reject",
+                  status: "rejected_for_scan",
+                };
+                break;
+              case "approve":
+                payload = { action: "approve", status: "approved_for_usage" };
+                break;
+              case "reject":
+                payload = { action: "reject", status: "rejected_for_usage" };
+                break;
+              default:
+                return;
+            }
+
+            try {
+              await updateComplianceProject(activeProject.project_id, {
+                ...payload,
+                comment,
+              });
+
+              setApprovalError(false);
+              setShowApprovalModal(false);
+              setSelected([]);
+              refreshProjects();
+            } catch (err) {
+              const message =
+                err?.response?.data?.message ||
+                "Insufficient credits to run this scan.";
+
+              toast(message, { type: "error", duration: 10000 });
+
+              setApprovalError(true);
+
+              setTimeout(() => {
+                setApprovalError(false);
+                setShowApprovalModal(false);
+              }, 5000);
+            }
+          }}
+        />
+      )}
+
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
+          columns={columns}
+        />
+      )}
     </div>
   );
 }
-
-// Made with Bob
