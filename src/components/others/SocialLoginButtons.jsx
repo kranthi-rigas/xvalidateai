@@ -1,14 +1,12 @@
 import React from "react";
 
 /**
- * SocialLoginButtons - Google and Microsoft OAuth buttons
+ * SocialLoginButtons - Google OAuth button
  * @param {function} onGoogleClick - Google login handler
- * @param {function} onMicrosoftClick - Microsoft login handler (optional)
  * @param {boolean} loading - Whether buttons should be disabled
  */
 export default function SocialLoginButtons({
   onGoogleClick,
-  onMicrosoftClick,
   loading = false,
 }) {
   return (
@@ -31,15 +29,6 @@ export default function SocialLoginButtons({
         >
           <i className="fa-brands fa-google"></i>
           <span>Google</span>
-        </button>
-        <button
-          type="button"
-          onClick={onMicrosoftClick}
-          disabled={loading}
-          className="auth-social-btn auth-social-btn--microsoft"
-        >
-          <i className="fa-brands fa-microsoft"></i>
-          <span>Microsoft</span>
         </button>
       </div>
     </>

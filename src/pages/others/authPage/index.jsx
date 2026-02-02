@@ -185,11 +185,7 @@ export default function AuthPage() {
     }));
   };
 
-  // Microsoft login handler (placeholder)
-  const handleMicrosoftLogin = () => {
-    // TODO: Implement Microsoft OAuth
-    console.log("Microsoft login not implemented");
-  };
+
 
   return (
     <>
@@ -320,7 +316,6 @@ export default function AuthPage() {
                   {/* Social Login Buttons */}
                   <SocialLoginButtons
                     onGoogleClick={handleGoogleLogin}
-                    onMicrosoftClick={handleMicrosoftLogin}
                     loading={loading}
                   />
 

@@ -721,8 +721,8 @@
 
 /* Social Login Buttons */
 .auth-social-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  justify-content: center;
   gap: 1rem;
 }
 
@@ -736,6 +736,9 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: 200px;
+  width: 100%;
+  max-width: 280px;
 }
 
 .auth-social-btn:hover:not(:disabled) {
@@ -752,10 +755,6 @@
 
 .auth-social-btn--google i {
   color: var(--auth-destructive, #ef4444);
-}
-
-.auth-social-btn--microsoft i {
-  color: var(--auth-primary, #0F3053);
 }
 
 .auth-social-btn span {
