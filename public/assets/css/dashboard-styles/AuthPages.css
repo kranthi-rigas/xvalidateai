@@ -29,12 +29,14 @@
 .auth-form,
 .sign-up {
   transition: all 0.3s ease;
+  margin-left: 0rem !important;
+  box-shadow: none !important;
 }
 
 .auth-form:hover,
 .sign-up:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
 }
 
 .auth-card {
@@ -218,14 +220,14 @@
 /* Login Card Hover Effect */
 .auth-login-card {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: var(--auth-card, #ffffff);
   border: 1px solid var(--auth-border, #E2E8F0);
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 0;
+  box-sizing: border-box;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   width: 100%;
-  box-sizing: border-box;
 }
 
 .auth-login-card::before {
@@ -546,15 +548,9 @@
 .auth-form-container {
   position: relative;
   z-index: 10;
-  max-width: 500px;
+  max-width: 30rem;
   width: 100%;
   padding: 0 1rem;
-  box-sizing: border-box;
-  margin: 0 auto ;
-  margin-left: auto;
-}
-
-.auth-form-container * {
   box-sizing: border-box;
 }
 
@@ -580,6 +576,8 @@
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
 }
 
 .auth-input-group {
@@ -598,7 +596,6 @@
 
 .auth-input-wrapper {
   position: relative;
-  width: 100%;
 }
 
 .auth-input-icon {
@@ -620,7 +617,6 @@
   outline: none;
   transition: all 0.3s;
   box-sizing: border-box;
-  font-size: 1rem;
 }
 
 .auth-input:focus {
