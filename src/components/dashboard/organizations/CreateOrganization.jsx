@@ -1,104 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AwsButton from "../../common/AwsButton";
+import ReusableModal from "../../common/ReusableModal";
+import FormField from "../../common/FormField";
 import { createOrganization } from "../../../apiIntegration/organization";
 import { fetchUserProfile } from "../../../apiIntegration/auth";
 import useToast from "../../../hooks/useToast";
-import { COLORS } from "../../../styles/colors";
-
-/* ---------- FIELD RENDERER (UNCHANGED) ---------- */
-function renderField(
-  label,
-  name,
-  value,
-  onChange,
-  onBlur,
-  errors,
-  touched,
-  submitted,
-  textarea = false,
-  placeholder = "",
-  required = false,
-  disabled = false,
-) {
-  const [focused, setFocused] = useState(false);
-  const hasError = (touched[name] || submitted) && !!errors[name];
-
-  const baseStyle = {
-    width: "100%",
-    padding: "11px 13px",
-    borderRadius: 12,
-    fontSize: 14,
-    background: "#F9FAFB",
-    outline: "none",
-    marginBottom: 4,
-    border: focused
-      ? "1.5px solid #2563EB"
-      : hasError
-        ? "1.5px solid #DC2626"
-        : "1px solid #E5E7EB",
-    boxShadow: focused
-      ? "0 0 0 3px rgba(37,99,235,0.25)"
-      : hasError
-        ? "0 0 0 3px rgba(220,38,38,0.25)"
-        : "none",
-    transition: "all 0.15s ease",
-  };
-
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label style={{ fontWeight: 600, marginBottom: 6, display: "block" }}>
-        {label}
-        {required && <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>}
-      </label>
-
-      {textarea ? (
-        <textarea
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          disabled={disabled}
-          onChange={disabled ? undefined : onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={(e) => {
-            setFocused(false);
-            onBlur(e);
-          }}
-          style={{
-            ...baseStyle,
-            height: 100,
-            background: disabled ? "#F3F4F6" : baseStyle.background,
-          }}
-        />
-      ) : (
-        <input
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          disabled={disabled}
-          onChange={disabled ? undefined : onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={(e) => {
-            setFocused(false);
-            onBlur(e);
-          }}
-          style={{
-            ...baseStyle,
-            background: disabled ? "#F3F4F6" : baseStyle.background,
-            cursor: disabled ? "not-allowed" : "text",
-          }}
-        />
-      )}
-
-      {hasError && (
-        <p style={{ color: COLORS.error, fontSize: 12, marginTop: 4 }}>
-          {errors[name]}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ================= MODAL COMPONENT ================= */
 
 export default function CreateOrganizationModal({ setShowCreateModal }) {
   /* ---------- STATE ---------- */
@@ -117,6 +23,15 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
   const show = useToast();
   const [modalError, setModalError] = useState(false);
 
+  /* ---------- FIELD REFS (FOR SCROLL) ---------- */
+  const fieldRefs = {
+    name: useRef(null),
+    slug: useRef(null),
+    description: useRef(null),
+    email: useRef(null),
+    address: useRef(null),
+  };
+
   /* ---------- PREFILL EMAIL ---------- */
   useEffect(() => {
     const userInfo =
@@ -133,6 +48,7 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
     setErrors((p) => ({ ...p, [name]: "" }));
+    setTouched((p) => ({ ...p, [name]: false }));
   };
 
   const handleBlur = (e) => {
@@ -162,6 +78,7 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
     const errs = validate();
     return Object.keys(errs).length === 0;
   };
+
   const getReadableApiError = (err) => {
     const status = err?.response?.status;
     const data = err?.response?.data;
@@ -196,7 +113,28 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
     setSubmitted(true);
     const validation = validate();
     setErrors(validation);
-    if (Object.keys(validation).length) return;
+
+    // Mark all fields as touched
+    setTouched({
+      name: true,
+      slug: true,
+      description: true,
+      email: true,
+      address: true,
+    });
+
+    if (Object.keys(validation).length) {
+      const firstErrorField = Object.keys(validation)[0];
+      const ref = fieldRefs[firstErrorField];
+
+      if (ref?.current) {
+        ref.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      return;
+    }
 
     try {
       setLoading(true);
@@ -235,152 +173,111 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
       setTimeout(() => {
         setShowCreateModal(false);
       }, 5000);
+    } finally {
+      setLoading(false);
     }
   };
-  //close modal user click on Esc helper
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && setShowCreateModal(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+
+  /* ---------- FOOTER ---------- */
+  const footer = (
+    <>
+      <AwsButton
+        label="Cancel"
+        variant="secondary"
+        onClick={() => setShowCreateModal(false)}
+        disabled={loading}
+      />
+      <AwsButton
+        label={loading ? "Creating..." : "Create Organization"}
+        variant="primary"
+        onClick={handleSubmit}
+        disabled={loading || !isFormValid()}
+        loading={loading}
+      />
+    </>
+  );
 
   return (
-    <div style={overlay} onClick={() => setShowCreateModal(false)}>
-      <div
-        style={{
-          ...modal,
-          ...(modalError && {
-            border: "2px solid #DC2626",
-            boxShadow: "0 0 0 4px rgba(220,38,38,0.25)",
-            animation: "shake 0.35s",
-          }),
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ marginBottom: 16, fontWeight: 700 }}>
-          Create Organization
-        </h2>
+    <ReusableModal
+      isOpen={true}
+      onClose={() => setShowCreateModal(false)}
+      title="Create Organization"
+      footer={footer}
+      size="md"
+      error={modalError}
+      closeOnOverlayClick={!loading}
+    >
+      <FormField
+        label="Organization Name"
+        name="name"
+        value={form.name}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.name}
+        touched={touched.name}
+        required
+        placeholder="Enter organization name"
+        fieldRef={fieldRefs.name}
+      />
 
-        {renderField(
-          "Organization Name",
-          "name",
-          form.name,
-          handleChange,
-          handleBlur,
-          errors,
-          touched,
-          submitted,
-          false,
-          "Enter organization name",
-          true,
-        )}
+      <FormField
+        label="Slug"
+        name="slug"
+        value={form.slug}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.slug}
+        touched={touched.slug}
+        required
+        placeholder="app"
+        disabled
+        fieldRef={fieldRefs.slug}
+        helperText="Only lowercase letters, numbers & hyphens allowed"
+      />
 
-        {renderField(
-          "Slug",
-          "slug",
-          form.slug,
-          handleChange,
-          handleBlur,
-          errors,
-          touched,
-          submitted,
-          false,
-          "app",
-          true,
-          true,
-        )}
+      <FormField
+        label="Description"
+        name="description"
+        value={form.description}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.description}
+        touched={touched.description}
+        required
+        placeholder="Short description"
+        type="textarea"
+        rows={3}
+        fieldRef={fieldRefs.description}
+      />
 
-        {renderField(
-          "Description",
-          "description",
-          form.description,
-          handleChange,
-          handleBlur,
-          errors,
-          touched,
-          submitted,
-          true,
-          "Short description",
-          true,
-        )}
+      <FormField
+        label="Email"
+        name="email"
+        value={form.email}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.email}
+        touched={touched.email}
+        required
+        type="email"
+        disabled
+        fieldRef={fieldRefs.email}
+      />
 
-        {renderField(
-          "Email",
-          "email",
-          form.email,
-          handleChange,
-          handleBlur,
-          errors,
-          touched,
-          submitted,
-          false,
-          "",
-          true,
-          true,
-        )}
-
-        {renderField(
-          "Address",
-          "address",
-          form.address,
-          handleChange,
-          handleBlur,
-          errors,
-          touched,
-          submitted,
-          true,
-          "Organization address",
-          true,
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-          <AwsButton label="Cancel" onClick={() => setShowCreateModal(false)} />
-          <AwsButton
-            label={loading ? "Creating..." : "Create Organization"}
-            disabled={loading || !isFormValid()}
-            style={{
-              opacity: loading || !isFormValid() ? 0.6 : 1,
-              cursor: loading || !isFormValid() ? "not-allowed" : "pointer",
-            }}
-            onClick={handleSubmit}
-          />
-        </div>
-      </div>
-    </div>
+      <FormField
+        label="Address"
+        name="address"
+        value={form.address}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.address}
+        touched={touched.address}
+        required
+        placeholder="Organization address"
+        type="textarea"
+        rows={3}
+        fieldRef={fieldRefs.address}
+      />
+    </ReusableModal>
   );
-}
-
-/* ---------- MODAL STYLES ---------- */
-
-const overlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.45)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 999,
-};
-
-const modal = {
-  width: 480,
-  maxHeight: "85vh",
-  overflowY: "auto",
-  background: "#fff",
-  padding: 24,
-  borderRadius: 18,
-  boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
-};
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.innerHTML = `
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-4px); }
-      50% { transform: translateX(4px); }
-      75% { transform: translateX(-2px); }
-      100% { transform: translateX(0); }
-    }
-  `;
-  document.head.appendChild(style);
 }

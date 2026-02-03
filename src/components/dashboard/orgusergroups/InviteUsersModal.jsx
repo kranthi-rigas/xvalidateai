@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { getUserAttributes } from "../../../apiIntegration/organization";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
+import ReusableModal from "../../common/ReusableModal";
+import useToast from "../../../hooks/useToast";
+import { COLORS } from "../../../styles/colors";
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -24,6 +27,8 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   const [focused, setFocused] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [modalError, setModalError] = useState(false);
+  const show = useToast();
 
   /* ---------- LOAD ROLES / GROUPS ---------- */
   useEffect(() => {
@@ -34,6 +39,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         setGroups(res.groups || []);
       } catch (err) {
         console.error("Failed to load attributes:", err);
+        show("Failed to load user attributes", { type: "error" });
       }
     }
 
@@ -110,11 +116,29 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     setErrors(validation);
     if (Object.keys(validation).length) return;
 
-    setLoading(true);
-    const result = await onInvite(chipEmails, rolesSelected, selectedGroups);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const result = await onInvite(chipEmails, rolesSelected, selectedGroups);
 
-    if (result?.success) onClose();
+      if (result?.success) {
+        show("Users invited successfully!", { type: "success" });
+        onClose();
+      }
+    } catch (err) {
+      console.error("Invite error:", err);
+
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to invite users. Please try again.";
+
+      show(message, { type: "error", duration: 5000 });
+
+      setModalError(true);
+      setTimeout(() => setModalError(false), 5000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ---------- CHIP INPUT STYLE ---------- */
@@ -122,7 +146,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     const hasError =
       (submitted || touched.emails) &&
       Boolean(errors.emails) &&
-      focused !== "emails"; // 🔥 KEY LINE
+      focused !== "emails";
 
     const isFocused = focused === "emails";
 
@@ -132,34 +156,69 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       borderRadius: 12,
 
       border: isFocused
-        ? "1.5px solid #2563EB"
+        ? `1.5px solid ${COLORS.borderFocus || "#2563EB"}`
         : hasError
-          ? "1.5px solid #DC2626"
-          : "1px solid #D1D5DB",
+          ? `1.5px solid ${COLORS.error || "#DC2626"}`
+          : `1px solid ${COLORS.borderLight || "#D1D5DB"}`,
 
       boxShadow: isFocused
-        ? "0 0 0 3px rgba(37,99,235,0.25)"
+        ? `0 0 0 3px ${COLORS.focusRing || "rgba(37,99,235,0.25)"}`
         : hasError
-          ? "0 0 0 3px rgba(220,38,38,0.25)"
+          ? `0 0 0 3px ${COLORS.errorLight || "rgba(220,38,38,0.25)"}`
           : "none",
 
-      background: "#F9FAFB",
+      background: COLORS.surfaceLight || "#F9FAFB",
       padding: "6px 10px",
       display: "flex",
       flexWrap: "wrap",
       gap: 6,
       transition: "all 0.15s ease",
+      cursor: "text",
     };
   };
 
-  return (
-    <div style={overlay}>
-      <div style={modal}>
-        <h2 style={title}>Invite Users</h2>
+  /* ---------- FOOTER ---------- */
+  const footer = (
+    <>
+      <AwsButton
+        label="Cancel"
+        variant="secondary"
+        onClick={onClose}
+        disabled={loading}
+      />
+      <AwsButton
+        label={loading ? "Inviting…" : "Invite Users"}
+        variant="primary"
+        disabled={loading}
+        loading={loading}
+        onClick={handleInvite}
+      />
+    </>
+  );
 
-        {/* EMAILS */}
-        <label style={label}>
-          Email(s) <span style={requiredStar}>*</span>
+  return (
+    <ReusableModal
+      isOpen={true}
+      onClose={onClose}
+      title="Invite Users"
+      footer={footer}
+      size="md"
+      error={modalError}
+      closeOnOverlayClick={!loading}
+    >
+      {/* EMAILS */}
+      <div style={{ marginBottom: "20px" }}>
+        <label
+          style={{
+            display: "block",
+            fontWeight: 600,
+            fontSize: "14px",
+            lineHeight: 1.5,
+            color: COLORS.textPrimary,
+            marginBottom: "6px",
+          }}
+        >
+          Email(s) <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>
         </label>
 
         <div
@@ -167,9 +226,27 @@ export default function InviteUsersModal({ onClose, onInvite }) {
           onClick={() => chipInputRef.current?.focus()}
         >
           {chipEmails.map((email, i) => (
-            <div key={i} style={chip(email)}>
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "4px 10px",
+                background: isValidEmail(email) ? "#E0E7FF" : "#FEE2E2",
+                color: isValidEmail(email) ? "#3730A3" : "#B91C1C",
+                borderRadius: 20,
+                fontSize: 13,
+              }}
+            >
               {email}
-              <span style={chipClose} onClick={() => removeEmail(i)}>
+              <span
+                style={{
+                  marginLeft: 8,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+                onClick={() => removeEmail(i)}
+              >
                 ×
               </span>
             </div>
@@ -184,7 +261,6 @@ export default function InviteUsersModal({ onClose, onInvite }) {
             onBlur={() => {
               setFocused(null);
               setTouched((p) => ({ ...p, emails: true }));
-              // 🔥 VALIDATE IMMEDIATELY
               const validation = validate();
               setErrors(validation);
 
@@ -193,125 +269,73 @@ export default function InviteUsersModal({ onClose, onInvite }) {
               }
             }}
             placeholder="Enter email and press Enter…"
-            style={chipInput}
+            style={{
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              flex: 1,
+              minWidth: 140,
+              fontSize: 14,
+              padding: "4px",
+            }}
           />
         </div>
 
         {(submitted || touched.emails) &&
           errors.emails &&
-          focused !== "emails" && <div style={errorText}>{errors.emails}</div>}
-
-        {/* ROLES */}
-        <MultiSelectDropdown
-          ref={rolesRef}
-          label="Assign to Role(s)"
-          required
-          options={roles.map((r) => ({ label: r, value: r }))}
-          selected={rolesSelected}
-          onChange={(arr) => {
-            setRolesSelected(arr);
-            setErrors((p) => ({ ...p, roles: "" }));
-          }}
-          error={(submitted || touched.roles) && errors.roles}
-        />
-
-        {/* GROUPS (OPTIONAL) */}
-        <MultiSelectDropdown
-          label="Assign to Group(s)"
-          options={groups.map((g) => ({
-            label: g.name,
-            value: g.group_id,
-          }))}
-          selected={selectedGroups}
-          onChange={setSelectedGroups}
-        />
-
-        {/* ACTIONS */}
-        <div style={actions}>
-          <AwsButton label="Cancel" onClick={onClose} />
-          <AwsButton
-            label={loading ? "Inviting…" : "Invite Users"}
-            disabled={loading}
-            onClick={handleInvite}
-          />
-        </div>
+          focused !== "emails" && (
+            <p
+              style={{
+                color: COLORS.error,
+                fontSize: 12,
+                marginTop: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M7 0C3.13438 0 0 3.13438 0 7C0 10.8656 3.13438 14 7 14C10.8656 14 14 10.8656 14 7C14 3.13438 10.8656 0 7 0ZM7 10.5C6.65625 10.5 6.375 10.2188 6.375 9.875V7C6.375 6.65625 6.65625 6.375 7 6.375C7.34375 6.375 7.625 6.65625 7.625 7V9.875C7.625 10.2188 7.34375 10.5 7 10.5ZM7 5.25C6.65625 5.25 6.375 4.96875 6.375 4.625V4.125C6.375 3.78125 6.65625 3.5 7 3.5C7.34375 3.5 7.625 3.78125 7.625 4.125V4.625C7.625 4.96875 7.34375 5.25 7 5.25Z"
+                  fill={COLORS.error}
+                />
+              </svg>
+              {errors.emails}
+            </p>
+          )}
       </div>
-    </div>
+
+      {/* ROLES */}
+      <MultiSelectDropdown
+        ref={rolesRef}
+        label="Assign to Role(s)"
+        required
+        options={roles.map((r) => ({ label: r, value: r }))}
+        selected={rolesSelected}
+        onChange={(arr) => {
+          setRolesSelected(arr);
+          setErrors((p) => ({ ...p, roles: "" }));
+        }}
+        error={(submitted || touched.roles) && errors.roles}
+      />
+
+      {/* GROUPS (OPTIONAL) */}
+      <MultiSelectDropdown
+        label="Assign to Group(s)"
+        options={groups.map((g) => ({
+          label: g.name,
+          value: g.group_id,
+        }))}
+        selected={selectedGroups}
+        onChange={setSelectedGroups}
+      />
+    </ReusableModal>
   );
 }
-
-/* ---------- STYLES ---------- */
-
-const overlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 2000,
-};
-
-const modal = {
-  width: 480,
-  padding: "28px 32px",
-  borderRadius: 16,
-  background: "#fff",
-  border: "1px solid #E5E7EB",
-  boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
-};
-
-const title = {
-  fontSize: 22,
-  fontWeight: 700,
-  marginBottom: 18,
-};
-
-const label = {
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#334155",
-  marginBottom: 6,
-};
-
-const requiredStar = {
-  color: "#DC2626",
-  marginLeft: 4,
-};
-
-const chip = (email) => ({
-  display: "flex",
-  alignItems: "center",
-  padding: "4px 10px",
-  background: isValidEmail(email) ? "#E0E7FF" : "#FEE2E2",
-  color: isValidEmail(email) ? "#3730A3" : "#B91C1C",
-  borderRadius: 20,
-  fontSize: 13,
-});
-
-const chipClose = {
-  marginLeft: 8,
-  cursor: "pointer",
-  fontWeight: 700,
-};
-
-const chipInput = {
-  border: "none",
-  outline: "none",
-  background: "transparent",
-  flex: 1,
-  minWidth: 140,
-  fontSize: 14,
-};
-
-const errorText = {
-  color: "#DC2626",
-  fontSize: 13,
-  marginBottom: 12,
-};
-
-const actions = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 12,
-};

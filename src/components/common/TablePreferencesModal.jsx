@@ -148,8 +148,8 @@ export default function TablePreferencesModal({
 
         {/* FOOTER */}
         <div style={footer}>
-          <AwsButton label="Cancel" onClick={onClose} />
-          <AwsButton label="Apply" onClick={onClose} />
+          <AwsButton label="Cancel" variant="secondary" onClick={onClose} />
+          <AwsButton label="Apply" variant="primary" onClick={onClose} />
         </div>
       </div>
     </div>

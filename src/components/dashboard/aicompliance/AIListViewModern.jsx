@@ -17,6 +17,7 @@ import {
   getComplianceProjectDetails,
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function AIListViewModern({
   projects,
@@ -773,13 +774,13 @@ export default function AIListViewModern({
             </button>
 
             {/* Tool Assessment */}
-            <button
+            <AwsButton
               onClick={() => setShowCreateModal(true)}
               className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
             >
               <i className="fa-solid fa-plus mr-2"></i>
               Tool Assessment
-            </button>
+            </AwsButton>
           </div>
         </div>
 

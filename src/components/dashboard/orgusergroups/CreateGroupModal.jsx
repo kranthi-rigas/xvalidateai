@@ -3,6 +3,9 @@ import { COLORS } from "../../../styles/colors";
 import { getUserAttributes } from "../../../apiIntegration/organization";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
+import ReusableModal from "../../common/ReusableModal";
+import FormField from "../../common/FormField";
+import useToast from "../../../hooks/useToast";
 
 export default function CreateGroupModal({ onClose, onCreate }) {
   const [form, setForm] = useState({
@@ -16,13 +19,15 @@ export default function CreateGroupModal({ onClose, onCreate }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [focused, setFocused] = useState(null);
 
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef(null);
+  const [modalError, setModalError] = useState(false);
+  const show = useToast();
+
+  const nameRef = useRef(null);
+  const descriptionRef = useRef(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
     loadPermissions();
   }, []);
 
@@ -36,6 +41,7 @@ export default function CreateGroupModal({ onClose, onCreate }) {
       setPermissionsList(perms);
     } catch (err) {
       console.error("Failed permissions:", err);
+      show("Failed to load permissions", { type: "error" });
     }
   }
 
@@ -56,10 +62,14 @@ export default function CreateGroupModal({ onClose, onCreate }) {
 
     setForm((p) => ({ ...p, [name]: value }));
 
-    // 🔥 CLEAR ERROR WHILE TYPING
+    // CLEAR ERROR WHILE TYPING
     setErrors((prev) => ({
       ...prev,
       [name]: "",
+    }));
+    setTouched((prev) => ({
+      ...prev,
+      [name]: false,
     }));
   };
 
@@ -67,7 +77,6 @@ export default function CreateGroupModal({ onClose, onCreate }) {
     const field = e.target.name;
     setTouched((p) => ({ ...p, [field]: true }));
     setErrors(validate());
-    setFocused(null);
   };
 
   const handleCreate = async () => {
@@ -75,144 +84,127 @@ export default function CreateGroupModal({ onClose, onCreate }) {
     const validation = validate();
     setErrors(validation);
 
-    if (Object.keys(validation).length) return;
-
-    setLoading(true);
-
-    const result = await onCreate({
-      name: form.name.trim(),
-      description: form.description.trim(),
-      permissions: selectedPermissions,
-      tags: [],
-      metadata: {},
+    // Mark all fields as touched
+    setTouched({
+      name: true,
+      description: true,
+      permissions: true,
     });
 
-    setLoading(false);
-    if (result.success) onClose();
+    if (Object.keys(validation).length) {
+      // Scroll to first error
+      const firstErrorField = Object.keys(validation)[0];
+      if (firstErrorField === "name" && nameRef.current) {
+        nameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (firstErrorField === "description" && descriptionRef.current) {
+        descriptionRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const result = await onCreate({
+        name: form.name.trim(),
+        description: form.description.trim(),
+        permissions: selectedPermissions,
+        tags: [],
+        metadata: {},
+      });
+
+      if (result.success) {
+        show("Group created successfully!", { type: "success" });
+        onClose();
+      }
+    } catch (err) {
+      console.error("Create group error:", err);
+
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to create group. Please try again.";
+
+      show(message, { type: "error", duration: 5000 });
+
+      setModalError(true);
+      setTimeout(() => setModalError(false), 5000);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fieldStyle = (field) => {
-    const hasError = (touched[field] || submitted) && Boolean(errors[field]);
-    const isFocused = focused === field;
-
-    return {
-      width: "100%",
-      padding: "11px 13px",
-      borderRadius: 12,
-      fontSize: 14,
-      background: "#F9FAFB",
-      outline: "none",
-      marginBottom: 4,
-
-      /* 🔥 FIXED PRIORITY */
-      border: isFocused
-        ? "1.5px solid #2563EB"
-        : hasError
-          ? "1.5px solid #DC2626"
-          : "1px solid #E5E7EB",
-
-      boxShadow: isFocused
-        ? "0 0 0 3px rgba(37,99,235,0.25)"
-        : hasError
-          ? "0 0 0 3px rgba(220,38,38,0.25)"
-          : "none",
-
-      transition: "all 0.15s ease",
-    };
-  };
+  /* ---------- FOOTER ---------- */
+  const footer = (
+    <>
+      <AwsButton
+        label="Cancel"
+        variant="secondary"
+        onClick={onClose}
+        disabled={loading}
+      />
+      <AwsButton
+        label={loading ? "Creating…" : "Create Group"}
+        variant="primary"
+        onClick={handleCreate}
+        disabled={loading}
+        loading={loading}
+      />
+    </>
+  );
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 2000,
-      }}
+    <ReusableModal
+      isOpen={true}
+      onClose={onClose}
+      title="Create New Group"
+      footer={footer}
+      size="md"
+      error={modalError}
+      closeOnOverlayClick={!loading}
     >
-      <div
-        style={{
-          width: 520,
-          maxHeight: "85vh", // 🔥 LIMIT HEIGHT
-          background: "#FFFFFF",
-          borderRadius: 16,
-          padding: "28px 32px",
-          border: "1px solid #E5E7EB",
-          boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
+      <FormField
+        label="Group Name"
+        name="name"
+        value={form.name}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.name}
+        touched={touched.name}
+        required
+        placeholder="Enter group name..."
+        fieldRef={nameRef}
+      />
+
+      <FormField
+        label="Description"
+        name="description"
+        value={form.description}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={errors.description}
+        touched={touched.description}
+        required
+        placeholder="Enter description..."
+        type="textarea"
+        rows={2}
+        fieldRef={descriptionRef}
+      />
+
+      <MultiSelectDropdown
+        label="Permissions"
+        required
+        options={permissionsList}
+        selected={selectedPermissions}
+        onChange={(arr) => {
+          setSelectedPermissions(arr);
+          setErrors((p) => ({ ...p, permissions: "" }));
         }}
-      >
-        <h2 style={{ fontSize: 23, fontWeight: 600, marginBottom: 15 }}>
-          Create New Group
-        </h2>
-
-        {/* GROUP NAME */}
-        <label style={{ fontWeight: 600 }}>
-          Group Name <span style={{ color: COLORS.error }}>*</span>
-        </label>
-        <input
-          ref={inputRef}
-          name="name"
-          value={form.name}
-          placeholder="Enter group name..."
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={() => setFocused("name")}
-          style={fieldStyle("name")}
-        />
-        {errors.name && focused !== "name" && (
-          <p style={{ color: COLORS.error, fontSize: 12 }}>{errors.name}</p>
-        )}
-
-        {/* DESCRIPTION */}
-        <label style={{ fontWeight: 600, marginTop: 18, display: "block" }}>
-          Description <span style={{ color: COLORS.error }}>*</span>
-        </label>
-        <textarea
-          name="description"
-          value={form.description}
-          placeholder="Enter description..."
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={() => setFocused("description")}
-          style={{ ...fieldStyle("description"), height: 60 }}
-        />
-        {(touched.description || submitted) && errors.description && (
-          <p style={{ color: COLORS.error, fontSize: 12 }}>{errors.description}</p>
-        )}
-
-        {/* PERMISSIONS */}
-        <MultiSelectDropdown
-          label="Permissions"
-          required
-          options={permissionsList}
-          selected={selectedPermissions}
-          onChange={(arr) => {
-            setSelectedPermissions(arr);
-            setErrors((p) => ({ ...p, permissions: "" }));
-          }}
-          error={(submitted || touched.permissions) && errors.permissions}
-        />
-
-        {/* BUTTONS */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            marginTop: 22,
-          }}
-        >
-          <AwsButton label="Cancel" onClick={onClose} disabled={loading} />
-          <AwsButton
-            label={loading ? "Creating…" : "Create Group"}
-            onClick={handleCreate}
-            disabled={loading}
-          />
-        </div>
-      </div>
-    </div>
+        error={(submitted || touched.permissions) && errors.permissions}
+      />
+    </ReusableModal>
   );
 }
