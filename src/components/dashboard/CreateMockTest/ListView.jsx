@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import ActionsMenu from "../../common/ActionsMenu";
-import ListTable, { Td } from "../../common/ListTable";
+import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import AwsButton from "../../common/AwsButton";
 import TablePreferencesModal from "../../common/TablePreferencesModal";

@@ -20095,19 +20095,38 @@ body.sidebar-collapsed .dashboard__content {
 }
 
 /* ----------- SPINNER ----------- */
-.table-spinner {
+.page-spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid #ccc;
-    border-top: 4px solid #2F5FD9;
     border-radius: 50%;
-    animation: spin 0.9s linear infinite;
+    display: inline-block;
+    position: relative;
+    background: conic-gradient(
+        from 0deg,
+        #4285f4 0deg,
+        #ea4335 90deg,
+        #fbbc04 180deg,
+        #34a853 270deg,
+        #4285f4 360deg
+    );
+    animation: playstore-rotate 1.4s linear infinite;
 }
 
-/* Spin animation */
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.page-spinner::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+@keyframes playstore-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 /* Match <button> styling with sidebar <a> links */
 .sidebar.-dashboard .sidebar__item button {

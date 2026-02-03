@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import AwsButton from "./AwsButton";
 import { FiSearch } from "react-icons/fi";
 
+const PAGE_SIZES = [10, 25, 50, 100];
+
 export default function TablePreferencesModal({
   open,
   onClose,
@@ -18,6 +20,10 @@ export default function TablePreferencesModal({
   const [filter, setFilter] = useState("");
 
   if (!open) return null;
+
+  const preferenceColumns = columns.filter(
+    (c) => c.key !== "checkbox" && c.label,
+  );
 
   return (
     <div style={overlay} onClick={onClose}>
@@ -36,14 +42,14 @@ export default function TablePreferencesModal({
           <div style={left}>
             <h4 style={sectionTitle}>Page size</h4>
 
-            {[10, 25, 50].map((n) => (
+            {PAGE_SIZES.map((n) => (
               <label key={n} style={radioRow}>
                 <input
                   type="radio"
                   checked={pageSize === n}
                   onChange={() => setPageSize(n)}
                 />
-                <span>{n} resources</span>
+                <span>{n} rows</span>
               </label>
             ))}
 
@@ -53,7 +59,7 @@ export default function TablePreferencesModal({
                 checked={wrapLines}
                 onChange={(e) => setWrapLines(e.target.checked)}
               />
-              <span>Wrap lines</span>
+              <span>Wrap text</span>
             </label>
 
             <label style={checkRow}>
@@ -70,8 +76,8 @@ export default function TablePreferencesModal({
 
           {/* RIGHT */}
           <div style={right}>
-            <h4 style={sectionTitle}>Attribute columns</h4>
-            <p style={subText}>Select visible attribute columns</p>
+            <h4 style={sectionTitle}>Columns</h4>
+            <p style={subText}>Show or hide table columns</p>
 
             <div style={searchBox}>
               <FiSearch size={16} />
@@ -83,8 +89,7 @@ export default function TablePreferencesModal({
               />
             </div>
 
-            {columns
-              .filter((c) => c.key !== "checkbox")
+            {preferenceColumns
               .filter((c) =>
                 c.label.toLowerCase().includes(filter.toLowerCase()),
               )
@@ -112,7 +117,6 @@ export default function TablePreferencesModal({
                       </span>
                     </div>
 
-                    {/* ✅ AWS TOGGLE (NOW VISIBLE) */}
                     <label style={toggleWrap}>
                       <input
                         type="checkbox"
@@ -144,14 +148,13 @@ export default function TablePreferencesModal({
 
         {/* FOOTER */}
         <div style={footer}>
-          <AwsButton label="Cancel" onClick={onClose} />
-          <AwsButton label="Confirm" onClick={onClose} />
+          <AwsButton label="Cancel" variant="secondary" onClick={onClose} />
+          <AwsButton label="Apply" variant="primary" onClick={onClose} />
         </div>
       </div>
     </div>
   );
 }
-
 /* ================= STYLES ================= */
 
 const overlay = {
@@ -173,7 +176,6 @@ const modal = {
   background: "#FFFFFF",
   borderRadius: 16,
   boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
-  fontFamily: "Amazon Ember, sans-serif",
   overflow: "hidden",
 };
 
@@ -238,7 +240,6 @@ const toggleWrap = {
 };
 
 const toggleTrack = {
-  display: "block",
   width: 36,
   height: 20,
   borderRadius: 999,
