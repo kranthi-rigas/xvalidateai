@@ -152,7 +152,7 @@ export default function AICompliance() {
 
   /* ---------- MAIN LIST ---------- */
   return (
-    <div className="normal-container-styles">
+    <div className="space-y">
       <StatisticsCards
         totalScanned={totalScanned}
         compliantTools={compliantTools}

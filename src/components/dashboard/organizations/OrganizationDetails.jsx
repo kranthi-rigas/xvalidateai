@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getOrganizations } from "../../../apiIntegration/organization";
 import { SlArrowRight } from "react-icons/sl";
+import { COLORS } from "../../../styles/colors";
 
 export default function OrganizationDetails({ organization, onBack }) {
   if (!organization) {
@@ -67,7 +68,7 @@ export default function OrganizationDetails({ organization, onBack }) {
     organization.comment.trim().length > 0;
 
   return (
-    <div className="dashboard__content bg-light-4">
+    <div className="space-y">
       {/* ---------- BREADCRUMB ---------- */}
       <div
         style={{

@@ -685,7 +685,7 @@ export default function AIListViewModern({
   if (pageLoading) return <PageLoader loading />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y">
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -903,4 +903,92 @@
   color: #9CA3AF;
 }
 
+/* ============================================
+   STATUS PILLS - Complete CSS Code
+   Add this to your ProjectDetailsModern.css
+   ============================================ */
+
+/* Base Status Pill Styling */
+.status-pill {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+  border: 1px solid;
+  transition: all 0.2s ease;
+}
+
+/* ============================================
+   GRAY - Requested/Pending Status
+   ============================================ */
+.status-pill.requested {
+  background-color: #F9FAFB !important;
+  color: #374151 !important;
+  border-color: #E5E7EB !important;
+}
+
+/* ============================================
+   YELLOW - Scan Completed Status
+   ============================================ */
+.status-pill.completed,
+.status-pill.scan_completed {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #FCD34D !important;
+}
+
+/* ============================================
+   GREEN - Approved Statuses
+   ============================================ */
+.status-pill.approved_for_usage,
+.status-pill.approved_for_scan,
+.status-pill.scan_approve,
+.status-pill.scan_approved,
+.status-pill.approved {
+  background-color: #D1FAE5 !important;
+  color: #065F46 !important;
+  border-color: #10B981 !important;
+}
+
+/* ============================================
+   RED - Rejected Statuses
+   ============================================ */
+.status-pill.rejected_for_usage,
+.status-pill.rejected_for_scan,
+.status-pill.scan_reject,
+.status-pill.scan_rejected,
+.status-pill.rejected {
+  background-color: #FEE2E2 !important;
+  color: #991B1B !important;
+  border-color: #F87171 !important;
+}
+
+/* ============================================
+   BLUE - In Progress/Scanning Statuses
+   ============================================ */
+.status-pill.scan_in_progress,
+.status-pill.in_progress,
+.status-pill.scanned,
+.status-pill.scanning,
+.status-pill.processing,
+.status-pill.queued {
+  background-color: #DBEAFE !important;
+  color: #1E40AF !important;
+  border-color: #60A5FA !important;
+}
+
+/* Hover Effect */
+.status-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+
+
 /* Made with Bob */

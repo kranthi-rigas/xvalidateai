@@ -64,6 +64,22 @@ export default function ModernDashboardLayout() {
       };
     }
 
+    if (path.startsWith("/dashboard/orgusergroups")) {
+      return {
+        title: "User Groups",
+        description:
+          "Create and manage user groups to organize users and control access across your organization.",
+      };
+    }
+
+    if (path.startsWith("/dashboard/orgusers")) {
+      return {
+        title: "Users",
+        description:
+          "View, invite, and manage users in your organization, including roles and access status.",
+      };
+    }
+
     if (path.startsWith("/dashboard/organizations")) {
       return {
         title: "Organizations",

@@ -117,8 +117,15 @@ export default function CreateGroupModal({ onClose, onCreate }) {
       });
 
       if (result.success) {
-        show("Group created successfully!", { type: "success" });
+        // Success toast is shown by parent component
         onClose();
+      } else {
+        // Only show error toast if creation failed
+        const message =
+          result.error || "Failed to create group. Please try again.";
+        show(message, { type: "error", duration: 5000 });
+        setModalError(true);
+        setTimeout(() => setModalError(false), 5000);
       }
     } catch (err) {
       console.error("Create group error:", err);
