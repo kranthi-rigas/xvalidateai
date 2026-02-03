@@ -154,7 +154,7 @@ export default function OrgUserGroupDetails() {
             animation: "spin 0.7s linear infinite",
           }}
         />
-        <div style={{ color: "#4F46E5", fontWeight: 600 }}>
+        <div style={{ color: COLORS.primary, fontWeight: 600 }}>
           Loading group details…
         </div>
 
@@ -243,14 +243,14 @@ export default function OrgUserGroupDetails() {
             <div>{group.name}</div>
           </div>
 
-          <div style={{ width: 1, background: "#ddd" }} />
+          <div style={{ width: 1, background: COLORS.border }} />
 
           <div>
             <div style={{ fontWeight: 600 }}>Description</div>
             <div>{group.description || "-"}</div>
           </div>
 
-          <div style={{ width: 1, background: "#ddd" }} />
+          <div style={{ width: 1, background: COLORS.border }} />
 
           <div>
             <div style={{ fontWeight: 600 }}>Creation time</div>
@@ -274,7 +274,7 @@ export default function OrgUserGroupDetails() {
           Users ({group?.users?.length || 0})
         </div>
 
-        <div style={{ width: 1, background: "#ddd" }} />
+        <div style={{ width: 1, background: COLORS.border }} />
 
         <div
           onClick={() => setActiveTab("permissions")}
@@ -418,7 +418,7 @@ export default function OrgUserGroupDetails() {
 
           {/* NO RECORDS */}
           {filteredPerms.length === 0 && (
-            <div style={{ padding: 20, textAlign: "center", color: "#6B7280" }}>
+            <div style={{ padding: 20, textAlign: "center", color: COLORS.textMuted }}>
               No permissions attached
             </div>
           )}

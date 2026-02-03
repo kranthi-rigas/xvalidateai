@@ -1,0 +1,362 @@
+/**
+ * AI Compliance Design System - CSS Custom Properties
+ * Global color variables for the entire application
+ * Based on trust-blue palette with WCAG AA/AAA compliance
+ */
+
+:root {
+  /* ============================================================================
+     PRIMARY COLORS - Trust Blue Foundation
+     ============================================================================ */
+  
+  --color-primary: #0043ce;           /* Trust Blue - 7:1 contrast (AAA) */
+  --color-primary-dark: #001d6c;      /* Deep Blue - 12:1 contrast (AAA) */
+  --color-primary-light: #a6c8ff;     /* Sky Blue - 3.2:1 on dark */
+  --color-primary-hover: #0036a8;     /* Hover state */
+  --color-primary-pressed: #002d8a;   /* Pressed state */
+  
+  /* Legacy purple mapping to new blue system */
+  --color-purple-1: #0043ce;          /* Maps to Trust Blue */
+  --color-purple-2: #0036a8;          /* Maps to Primary Hover */
+  --color-purple-3: #e8f0ff;          /* Light blue background */
+  
+  /* Legacy blue mapping to new system */
+  --color-blue-1: #0043ce;            /* Maps to Trust Blue */
+  --color-blue-2: #0036a8;            /* Maps to Primary Hover */
+  --color-blue-3: #e8f0ff;            /* Light blue background */
+  
+  /* ============================================================================
+     SECONDARY COLORS
+     ============================================================================ */
+  
+  --color-secondary: #007d79;         /* Teal - 4.5:1 contrast (AA) */
+  --color-secondary-dark: #005f5c;    /* Dark Teal */
+  --color-secondary-light: #b3e5e3;   /* Light Teal */
+  
+  /* ============================================================================
+     SEMANTIC COLORS - Compliance States
+     ============================================================================ */
+  
+  /* Success/Compliant */
+  --color-success: #198038;           /* Green - 5.9:1 contrast (AA) */
+  --color-success-dark: #0f5c28;      /* Dark Green */
+  --color-success-light: #d1f0d9;     /* Light Green */
+  --color-success-bg: #f0fdf4;        /* Subtle success background */
+  
+  /* Warning/Attention */
+  --color-warning: #ff832b;           /* Amber */
+  --color-warning-dark: #e66a0f;      /* Dark Amber */
+  --color-warning-light: #ffe5d1;     /* Light Amber */
+  --color-warning-bg: #fffbf5;        /* Subtle warning background */
+  
+  /* Error/Non-compliant */
+  --color-error: #da1e28;             /* Red */
+  --color-error-dark: #a51920;        /* Dark Red */
+  --color-error-light: #ffd7d9;       /* Light Red */
+  --color-error-bg: #fff5f5;          /* Subtle error background */
+  
+  /* Neutral/Pending */
+  --color-neutral: #8d8d8d;           /* Gray */
+  --color-neutral-dark: #6f6f6f;      /* Dark Gray */
+  --color-neutral-light: #e0e0e0;     /* Light Gray */
+  
+  /* ============================================================================
+     NEUTRAL SYSTEM - UI Chrome (Light Mode)
+     ============================================================================ */
+  
+  --color-bg: #f4f4f4;                /* Background */
+  --color-surface: #ffffff;           /* Surface/Cards */
+  --color-border: #c6c6c6;            /* Borders */
+  --color-text-primary: #161616;      /* Primary text - 18:1 contrast (AAA) */
+  --color-text-secondary: #525252;    /* Secondary text - 8:1 contrast (AAA) */
+  --color-text-tertiary: #8d8d8d;     /* Tertiary text - 4.5:1 contrast (AA) */
+  
+  /* Legacy dark color mappings */
+  --color-dark-1: #161616;            /* Maps to text primary */
+  --color-dark-2: #525252;            /* Maps to text secondary */
+  
+  /* White */
+  --white: #ffffff;
+  --color-white: #ffffff;
+  
+  /* ============================================================================
+     DATA VISUALIZATION - Color-blind Safe
+     ============================================================================ */
+  
+  --color-viz-blue: #0043ce;
+  --color-viz-orange: #ff832b;
+  --color-viz-teal: #007d79;
+  --color-viz-purple: #8a3ffc;
+  --color-viz-green: #198038;
+  --color-viz-red: #da1e28;
+  
+  /* ============================================================================
+     INTERACTIVE STATES
+     ============================================================================ */
+  
+  --color-focus: #0043ce;
+  --color-focus-ring: rgba(0, 67, 206, 0.4);
+  --color-disabled: #c6c6c6;
+  --color-disabled-text: #8d8d8d;
+  
+  /* Hover overlays */
+  --overlay-hover: rgba(0, 0, 0, 0.04);
+  --overlay-pressed: rgba(0, 0, 0, 0.08);
+  
+  /* ============================================================================
+     SHADOWS & ELEVATION
+     ============================================================================ */
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* ============================================================================
+     GRADIENTS
+     ============================================================================ */
+  
+  --gradient-primary: linear-gradient(135deg, #0043ce 0%, #a6c8ff 100%);
+  --gradient-success: linear-gradient(135deg, #198038 0%, #d1f0d9 100%);
+  --gradient-warning: linear-gradient(135deg, #ff832b 0%, #ffe5d1 100%);
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #161616;
+    --color-surface: #262626;
+    --color-border: rgba(255, 255, 255, 0.15);
+    --color-text-primary: #f5f5f5;
+    --color-text-secondary: #a8a8a8;
+    --color-text-tertiary: #8d8d8d;
+    
+    /* Adjust overlays for dark mode */
+    --overlay-hover: rgba(255, 255, 255, 0.08);
+    --overlay-pressed: rgba(255, 255, 255, 0.16);
+    
+    /* Legacy mappings for dark mode */
+    --color-dark-1: #f5f5f5;
+    --color-dark-2: #a8a8a8;
+  }
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE
+   ============================================================================ */
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary: #001d6c;         /* Darker blue for better contrast */
+    --color-border: #000000;          /* Solid black borders */
+    --color-text-primary: #000000;    /* Pure black text */
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.bg-success { background-color: var(--color-success) !important; }
+.bg-warning { background-color: var(--color-warning) !important; }
+.bg-error { background-color: var(--color-error) !important; }
+
+.text-primary { color: var(--color-primary) !important; }
+.text-secondary { color: var(--color-secondary) !important; }
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-error { color: var(--color-error) !important; }
+
+.border-primary { border-color: var(--color-primary) !important; }
+.border-secondary { border-color: var(--color-secondary) !important; }
+
+/* ============================================================================
+   BUTTON OVERRIDES
+   ============================================================================ */
+
+.button-primary,
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--white) !important;
+}
+
+.button-primary:hover,
+.btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.button-secondary,
+.btn-secondary {
+  background-color: transparent !important;
+  border: 2px solid var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.button-secondary:hover,
+.btn-secondary:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--white) !important;
+}
+
+/* ============================================================================
+   LINK OVERRIDES
+   ============================================================================ */
+
+a:not(.no-style) {
+  color: var(--color-primary);
+  transition: color 0.2s ease-in-out;
+}
+
+a:not(.no-style):hover {
+  color: var(--color-primary-hover);
+}
+
+/* ============================================================================
+   FORM ELEMENT OVERRIDES
+   ============================================================================ */
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
+}
+
+/* ============================================================================
+   ACTIVE/SELECTED STATE OVERRIDES
+   ============================================================================ */
+
+.active,
+.is-active,
+[aria-selected="true"] {
+  color: var(--color-primary) !important;
+  background-color: var(--color-purple-3) !important;
+}
+
+/* Tab active states */
+.tabs__button.is-active,
+.tabs__button.-is-active {
+  color: var(--color-primary) !important;
+  border-bottom-color: var(--color-primary) !important;
+}
+
+/* Navigation active states */
+.nav-link.active,
+.sidebar-link.active {
+  color: var(--color-primary) !important;
+  background-color: var(--color-purple-3) !important;
+}
+
+/* ============================================================================
+   SWIPER/CAROUSEL OVERRIDES
+   ============================================================================ */
+
+.swiper-pagination-bullet-active {
+  background-color: var(--color-primary) !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--color-primary) !important;
+}
+
+/* ============================================================================
+   BADGE/TAG OVERRIDES
+   ============================================================================ */
+
+.badge-primary,
+.tag-primary {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+.badge-success,
+.tag-success {
+  background-color: var(--color-success-light) !important;
+  color: var(--color-success-dark) !important;
+}
+
+.badge-warning,
+.tag-warning {
+  background-color: var(--color-warning-light) !important;
+  color: var(--color-warning-dark) !important;
+}
+
+.badge-error,
+.tag-error {
+  background-color: var(--color-error-light) !important;
+  color: var(--color-error-dark) !important;
+}
+
+/* ============================================================================
+   PROGRESS BAR OVERRIDES
+   ============================================================================ */
+
+.progress-bar {
+  background-color: var(--color-primary) !important;
+}
+
+.progress-bar.success {
+  background-color: var(--color-success) !important;
+}
+
+.progress-bar.warning {
+  background-color: var(--color-warning) !important;
+}
+
+.progress-bar.error {
+  background-color: var(--color-error) !important;
+}
+
+/* ============================================================================
+   ALERT OVERRIDES
+   ============================================================================ */
+
+.alert-success {
+  background-color: var(--color-success-bg) !important;
+  border-left: 4px solid var(--color-success) !important;
+  color: var(--color-success-dark) !important;
+}
+
+.alert-warning {
+  background-color: var(--color-warning-bg) !important;
+  border-left: 4px solid var(--color-warning) !important;
+  color: var(--color-warning-dark) !important;
+}
+
+.alert-error,
+.alert-danger {
+  background-color: var(--color-error-bg) !important;
+  border-left: 4px solid var(--color-error) !important;
+  color: var(--color-error-dark) !important;
+}
+
+/* ============================================================================
+   ICON COLOR OVERRIDES
+   ============================================================================ */
+
+.icon-primary {
+  color: var(--color-primary) !important;
+}
+
+.icon-success {
+  color: var(--color-success) !important;
+}
+
+.icon-warning {
+  color: var(--color-warning) !important;
+}
+
+.icon-error {
+  color: var(--color-error) !important;
+}
+
+/* Made with Bob */

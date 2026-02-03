@@ -170,24 +170,73 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       className={`sidebar -dashboard ${
         collapsed ? "-is-collapsed -is-sidebar-hidden" : ""
       }`}
+      style={{
+        backgroundColor: "white",
+        borderRight: "1px solid #E2E8F0",
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
     >
       {/* Logo section - visible only on desktop */}
-      <div className="sidebar-logo-section d-none-mobile">
-        <div className="d-flex items-center justify-between pl-10 pr-15 pb-10">
+      <div
+        className="sidebar-logo-section d-none-mobile"
+        style={{ height: "80px", borderBottom: "1px solid #E2E8F0" }}
+      >
+        <div
+          className="d-flex items-center justify-between pl-10 pr-15 pb-10"
+          style={{ height: "100%", alignItems: "center" }}
+        >
           {!collapsed ? (
-            <Link to="/dashboard">
-              <img
-                src="/assets/img/general/logo-dark.png"
-                alt="Academy51 Logo"
-                style={{ maxWidth: 130, height: "auto" }}
-              />
+            <Link
+              to="/dashboard"
+              className="sidebar-logo-link d-flex items-center"
+              style={{ gap: "8px" }}
+            >
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  backgroundColor: "#0F3053",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <i
+                  className="fa-solid fa-shield-halved"
+                  style={{ color: "#58BFCE", fontSize: "14px" }}
+                ></i>
+              </div>
+              <span
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: "#0F3053",
+                }}
+              >
+                XVALIDATE<span style={{ color: "#58BFCE" }}>AI</span>
+              </span>
             </Link>
           ) : (
-            <img
-              src="/assets/img/general/logo-short.png"
-              alt="Academy51 Short Logo"
-              style={{ maxWidth: 32, height: "auto" }}
-            />
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                backgroundColor: "#0F3053",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <i
+                className="fa-solid fa-shield-halved"
+                style={{ color: "#58BFCE", fontSize: "14px" }}
+              ></i>
+            </div>
           )}
           {/* Toggle button - visible on desktop */}
           <button
@@ -205,181 +254,398 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             <i className="icon-explore text-24 text-dark-1"></i>
           </button>
         </div>
-        {/* Secondary logo - visible when expanded */}
       </div>
 
       {/* ===================== SIDEBAR ITEMS ===================== */}
-      {filteredSidebar.map((item, index) => {
-        const hasChildren = Array.isArray(item.children);
-        const isParentActive =
-          item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-        const isOpen = openSections[item.id] || false;
-
-        // Check if this item is locked due to plan restriction
-        const isParentLocked = !hasPlanAccess(item);
-
-        return (
-          <div key={index}>
-            {/* -------- Parent Item -------- */}
-            <div
-              className={`sidebar__item ${isParentActive ? "-is-active" : ""} ${
-                isParentLocked ? "sidebar__item--locked" : ""
-              }`}
-              style={isParentLocked ? { opacity: 0.5 } : {}}
-            >
-              {hasChildren ? (
-                <button
-                  onClick={() =>
-                    isParentLocked
-                      ? navigate("/dashboard/pricing")
-                      : toggleSection(item.id)
-                  }
-                  className="sidebar-parent d-flex items-center text-17 lh-1 fw-500"
+      <nav
+        style={{
+          flex: 1,
+          paddingTop: "24px",
+          paddingBottom: "24px",
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          overflowY: "auto",
+        }}
+      >
+        {filteredSidebar.map((item, index) => {
+          // Handle section headers
+          if (item.type === "section") {
+            return (
+              <div
+                key={index}
+                style={{
+                  paddingTop: index > 0 ? "8px" : "0",
+                  paddingBottom: "4px",
+                }}
+              >
+                <div
                   style={{
-                    background: "none",
-                    border: "none",
-                    width: "100%",
-                    padding: "6px 0",
-                    cursor: isParentLocked ? "not-allowed" : "pointer",
+                    paddingLeft: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#64748B",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    marginBottom: "8px",
                   }}
-                  title={
-                    isParentLocked
-                      ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan,
-                        )} plan`
-                      : ""
-                  }
                 >
-                  <img
-                    src={isParentActive ? `${item.active_src}` : `${item.src}`}
-                    style={isParentLocked ? { filter: "grayscale(100%)" } : {}}
-                  />
-                  <i className="mr-15" />
-                  <span className={`${collapsed ? "d-none" : ""}`}>
-                    {item.text}
-                  </span>
-                  {isParentLocked && item.requiredPlan && (
-                    <PlanBadge
-                      requiredPlan={item.requiredPlan}
-                      collapsed={collapsed}
+                  {item.text}
+                </div>
+              </div>
+            );
+          }
+
+          const hasChildren = Array.isArray(item.children);
+          const isParentActive =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+          const isOpen = openSections[item.id] || false;
+
+          // Check if this item is locked due to plan restriction
+          const isParentLocked = !hasPlanAccess(item);
+
+          return (
+            <div key={index} style={{ marginBottom: "4px" }}>
+              {/* -------- Parent Item -------- */}
+              <div
+                className={`nav-item ${isParentActive ? "active" : ""} ${
+                  isParentLocked ? "sidebar__item--locked" : ""
+                }`}
+                style={isParentLocked ? { opacity: 0.5 } : {}}
+              >
+                {hasChildren ? (
+                  <button
+                    onClick={() =>
+                      isParentLocked
+                        ? navigate("/dashboard/pricing")
+                        : toggleSection(item.id)
+                    }
+                    className="sidebar-parent"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 16px",
+                      cursor: isParentLocked ? "not-allowed" : "pointer",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: isParentActive ? "#0F3053" : "#64748B",
+                    }}
+                    title={
+                      isParentLocked
+                        ? `Requires ${getRequiredPlanName(
+                            item.requiredPlan,
+                          )} plan`
+                        : ""
+                    }
+                  >
+                    <img
+                      src={
+                        isParentActive ? `${item.active_src}` : `${item.src}`
+                      }
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        marginRight: "12px",
+                        filter: isParentLocked ? "grayscale(100%)" : "none",
+                      }}
                     />
-                  )}
-                  {!isParentLocked && (
-                    <span
-                      className={`sidebar-arrow ${isOpen ? "open" : ""} ${
-                        collapsed ? "d-none" : ""
-                      }`}
-                    >
-                      ▸
+                    <span className={`${collapsed ? "d-none" : ""}`}>
+                      {item.text}
                     </span>
-                  )}
-                </button>
-              ) : (
-                <a
-                  href={isParentLocked ? "/dashboard/pricing" : item.href}
-                  onClick={(e) => handleNavigation(e, item, isParentLocked)}
-                  className={`d-flex items-center text-17 lh-1 fw-500 ${
-                    isParentActive ? "-is-active" : ""
-                  }`}
-                  style={{
-                    padding: "6px 0",
-                    cursor: isParentLocked ? "not-allowed" : "pointer",
-                  }}
-                  title={
-                    isParentLocked
-                      ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan,
-                        )} plan`
-                      : ""
-                  }
-                >
-                  <img
-                    src={isParentActive ? `${item.active_src}` : `${item.src}`}
-                    style={isParentLocked ? { filter: "grayscale(100%)" } : {}}
-                  />
-                  <i className="mr-15" />
-                  <span className={`${collapsed ? "d-none" : ""}`}>
-                    {item.text}
-                  </span>
-                  {isParentLocked && item.requiredPlan && (
-                    <PlanBadge
-                      requiredPlan={item.requiredPlan}
-                      collapsed={collapsed}
+                    {isParentLocked && item.requiredPlan && (
+                      <PlanBadge
+                        requiredPlan={item.requiredPlan}
+                        collapsed={collapsed}
+                      />
+                    )}
+                    {!isParentLocked && (
+                      <span
+                        style={{
+                          marginLeft: "auto",
+                          fontSize: "12px",
+                          transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                          display: collapsed ? "none" : "block",
+                        }}
+                      >
+                        ▸
+                      </span>
+                    )}
+                  </button>
+                ) : (
+                  <a
+                    href={isParentLocked ? "/dashboard/pricing" : item.href}
+                    onClick={(e) => handleNavigation(e, item, isParentLocked)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 16px",
+                      cursor: isParentLocked ? "not-allowed" : "pointer",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: isParentActive ? "#0F3053" : "#64748B",
+                      textDecoration: "none",
+                    }}
+                    title={
+                      isParentLocked
+                        ? `Requires ${getRequiredPlanName(
+                            item.requiredPlan,
+                          )} plan`
+                        : ""
+                    }
+                  >
+                    <img
+                      src={
+                        isParentActive ? `${item.active_src}` : `${item.src}`
+                      }
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        marginRight: "12px",
+                        filter: isParentLocked ? "grayscale(100%)" : "none",
+                      }}
                     />
-                  )}
-                </a>
+                    <span className={`${collapsed ? "d-none" : ""}`}>
+                      {item.text}
+                    </span>
+                    {isParentLocked && item.requiredPlan && (
+                      <PlanBadge
+                        requiredPlan={item.requiredPlan}
+                        collapsed={collapsed}
+                      />
+                    )}
+                  </a>
+                )}
+              </div>
+
+              {/* -------- Child Items -------- */}
+              {hasChildren && !isParentLocked && isOpen && (
+                <div
+                  className="sidebar-children"
+                  style={{ paddingLeft: "34px", marginTop: "4px" }}
+                >
+                  {item.children.map((child) => {
+                    const isActiveChild = pathname === child.href;
+                    const isChildLocked = !hasPlanAccess(child);
+
+                    return (
+                      <div
+                        key={child.id}
+                        className={`nav-item ${isActiveChild ? "active" : ""}`}
+                        style={{
+                          marginBottom: "4px",
+                          opacity: isChildLocked ? 0.5 : 1,
+                        }}
+                      >
+                        <a
+                          href={
+                            isChildLocked ? "/dashboard/pricing" : child.href
+                          }
+                          onClick={(e) =>
+                            handleNavigation(e, child, isChildLocked)
+                          }
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "8px 12px",
+                            gap: "10px",
+                            cursor: isChildLocked ? "not-allowed" : "pointer",
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            color: isActiveChild ? "#0F3053" : "#64748B",
+                            textDecoration: "none",
+                          }}
+                          title={
+                            isChildLocked
+                              ? `Requires ${getRequiredPlanName(
+                                  child.requiredPlan,
+                                )} plan`
+                              : ""
+                          }
+                        >
+                          {child.iconClass && (
+                            <i
+                              className={child.iconClass}
+                              style={{
+                                fontSize: "16px",
+                                color: isChildLocked
+                                  ? "#999"
+                                  : isActiveChild
+                                    ? "#0F3053"
+                                    : "#64748B",
+                                minWidth: "18px",
+                              }}
+                            />
+                          )}
+                          <span>{child.text}</span>
+                          {isChildLocked && child.requiredPlan && (
+                            <PlanBadge
+                              requiredPlan={child.requiredPlan}
+                              collapsed={collapsed}
+                            />
+                          )}
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
+          );
+        })}
+      </nav>
 
-            {/* -------- Child Items -------- */}
-            {hasChildren && !isParentLocked && (
-              <div
-                className={`sidebar-children ${isOpen ? "open" : ""}`}
-                style={{ paddingLeft: 34, marginTop: -6 }}
+      {/* Bottom Section - FAQ and User Profile */}
+      <div
+        style={{
+          marginTop: "auto",
+          padding: "16px",
+          borderTop: "1px solid #E2E8F0",
+        }}
+      >
+        {/* FAQ Link */}
+        {!collapsed && (
+          <Link
+            to="/dashboard/faq"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "12px 16px",
+              marginBottom: "8px",
+              fontSize: "14px",
+              fontWeight: 500,
+              color: pathname === "/dashboard/faq" ? "#0F3053" : "#64748B",
+              textDecoration: "none",
+              borderRadius: "8px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#F1F5F9")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <i
+              className="fa-regular fa-circle-question"
+              style={{
+                width: "18px",
+                height: "18px",
+                marginRight: "12px",
+                fontSize: "18px",
+              }}
+            ></i>
+            FAQ's
+          </Link>
+        )}
+
+        {/* User Profile Section */}
+        {!collapsed && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "12px",
+              borderRadius: "8px",
+              backgroundColor: "rgba(241, 245, 249, 0.5)",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(15, 48, 83, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0F3053",
+                fontWeight: "bold",
+                fontSize: "12px",
+                marginRight: "12px",
+              }}
+            >
+              {user?.name?.substring(0, 2).toUpperCase() || "RP"}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  color: "#0F172A",
+                  margin: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
               >
-                {item.children.map((child) => {
-                  const isActiveChild = pathname === child.href;
-                  const isChildLocked = !hasPlanAccess(child);
-
-                  return (
-                    <div
-                      key={child.id}
-                      className={`sidebar__item ${
-                        isActiveChild ? "-is-active" : ""
-                      } ${isChildLocked ? "sidebar__item--locked" : ""}`}
-                      style={{
-                        margin: "-6px 0",
-                        opacity: isChildLocked ? 0.5 : 1,
-                      }}
-                    >
-                      <a
-                        href={isChildLocked ? "/dashboard/pricing" : child.href}
-                        onClick={(e) =>
-                          handleNavigation(e, child, isChildLocked)
-                        }
-                        className="d-flex items-center text-15 lh-1 fw-500"
-                        style={{
-                          padding: "6px 0",
-                          gap: 10,
-                          cursor: isChildLocked ? "not-allowed" : "pointer",
-                        }}
-                        title={
-                          isChildLocked
-                            ? `Requires ${getRequiredPlanName(
-                                child.requiredPlan,
-                              )} plan`
-                            : ""
-                        }
-                      >
-                        <img
-                          src={isActiveChild ? child.active_src : child.src}
-                          alt={child.text}
-                          style={{
-                            width: 26,
-                            height: 26,
-                            filter: isChildLocked ? "grayscale(100%)" : "none",
-                          }}
-                        />
-
-                        <span>{child.text}</span>
-                        {isChildLocked && child.requiredPlan && (
-                          <PlanBadge
-                            requiredPlan={child.requiredPlan}
-                            collapsed={collapsed}
-                          />
-                        )}
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                {user?.name || "Rakesh P."}
+              </p>
+              <p
+                style={{
+                  fontSize: "10px",
+                  color: "#64748B",
+                  margin: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {user?.effective_role || "Admin"}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#64748B",
+                padding: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#0F172A")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#64748B")}
+              title="Logout"
+            >
+              <i
+                className="fa-solid fa-arrow-right-from-bracket"
+                style={{ fontSize: "14px" }}
+              ></i>
+            </button>
           </div>
-        );
-      })}
+        )}
+
+        {/* Collapsed state - just show icon */}
+        {collapsed && (
+          <div
+            style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(15, 48, 83, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#0F3053",
+              fontWeight: "bold",
+              fontSize: "12px",
+              margin: "0 auto",
+              cursor: "pointer",
+            }}
+          >
+            {user?.name?.substring(0, 2).toUpperCase() || "RP"}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

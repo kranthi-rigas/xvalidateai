@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import ListTable, { LinkStyle as TableLink } from "../../common/ListTable";
+import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import ActionsMenu from "../../common/ActionsMenu";
 import AwsButton from "../../common/AwsButton";

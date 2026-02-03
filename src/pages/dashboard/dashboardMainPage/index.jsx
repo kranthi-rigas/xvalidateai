@@ -25,34 +25,57 @@ export default function DashboardLayout() {
   }, []);
 
   return (
-    <div className="barba-container" data-barba="container">
-      <main className="main-content">
+    <div className="barba-container" data-barba="container" style={{ height: "100vh", overflow: "hidden" }}>
+      <main className="main-content" style={{ height: "100%", display: "flex" }}>
         <Preloader />
-        <div className="content-wrapper js-content-wrapper overflow-hidden">
+        <div className="content-wrapper js-content-wrapper" style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
           <div
             id="dashboardOpenClose"
             className={`dashboard -home-9 ${
               collapsed ? "-is-sidebar-hidden" : ""
             }`}
+            style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden" }}
           >
-            <HeaderDashboard
-              collapsed={collapsed}
-              setCollapsed={setCollapsed}
-              className={` ${
-                collapsed ? "-is-collapsed -is-sidebar-hidden" : ""
-              }`}
-            />
-            <div className="dashboard__sidebar scroll-bar-1">
+            {/* Sidebar */}
+            <div className="dashboard__sidebar scroll-bar-1" style={{
+              width: collapsed ? "80px" : "256px",
+              transition: "width 0.3s ease",
+              flexShrink: 0,
+              height: "100%",
+              overflow: "hidden"
+            }}>
               <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
             </div>
 
-            {/* Child route renders here */}
+            {/* Main Content Area */}
             <div
               className={`dashboard__main ${collapsed ? "-is-collapsed" : ""}`}
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                overflow: "hidden",
+                backgroundColor: "#FAFAFA"
+              }}
             >
+              <HeaderDashboard
+                collapsed={collapsed}
+                setCollapsed={setCollapsed}
+                className={` ${
+                  collapsed ? "-is-collapsed -is-sidebar-hidden" : ""
+                }`}
+              />
+              
+              {/* Scrollable Content */}
               <div
                 key={location.pathname}
                 className="dashboard-page-transition"
+                style={{
+                  flex: 1,
+                  overflow: "auto",
+                  backgroundColor: "#FAFAFA"
+                }}
               >
                 {isAuthenticated ? (
                   <Outlet />

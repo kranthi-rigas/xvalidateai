@@ -1,190 +1,112 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function ActionsMenu({
-  selected = [],
-  items = null,
+  items = [],
+  disabled = false,
   onSelect = () => {},
-  onEdit = () => {},
-  onDelete = () => {},
 }) {
-  const [show, setShow] = useState(false);
-  const [isHover, setIsHover] = useState(false);
+  const [open, setOpen] = useState(false);
   const [hoverKey, setHoverKey] = useState(null);
   const ref = useRef(null);
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
   useEffect(() => {
-    function outside(e) {
+    function handleOutside(e) {
       if (ref.current && !ref.current.contains(e.target)) {
-        setShow(false);
+        setOpen(false);
       }
     }
-    document.addEventListener("mousedown", outside);
-    return () => document.removeEventListener("mousedown", outside);
-  }, []);
 
-  const disabled = selected.length === 0;
-  const singleSelect = selected.length === 1;
+    if (open) {
+      document.addEventListener("mousedown", handleOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, [open]);
 
   return (
-    <div
-      ref={ref}
-      style={{ position: "relative" }}
-      onMouseDown={(e) => e.stopPropagation()} // 🔥 REQUIRED
-      onClick={(e) => e.stopPropagation()} // 🔥 REQUIRED
-    >
-      {/* ---------- ACTIONS BUTTON ---------- */}
+    <div ref={ref} className="relative">
+      {/* ---------- ACTION BUTTON ---------- */}
       <button
         type="button"
         disabled={disabled}
-        onMouseDown={(e) => e.stopPropagation()} // 🔥 REQUIRED
         onClick={(e) => {
+          if (disabled) return;
           e.stopPropagation();
-          !disabled && setShow((v) => !v);
+          setOpen((v) => !v);
         }}
-        onMouseEnter={() => setIsHover(true)}
-        onMouseLeave={() => setIsHover(false)}
-        className="lh-1"
-        style={{
-          padding: "4px 12px",
-          minHeight: 32,
-          fontSize: "clamp(11px, 2.5vw, 13px)",
-          fontWeight: 600,
-          fontFamily: "Amazon Ember, sans-serif",
-          background: disabled ? "#F2F4F8" : isHover ? "#F2F8FD" : "#FFFFFF",
-          color: disabled ? "#6B7280" : isHover ? "#0F1E46" : "#1A73E8",
-          border: `2px solid ${
-            disabled ? "#C3C7CF" : isHover ? "#0F1E46" : "#1A73E8"
-          }`,
-          borderRadius: 999,
-          cursor: disabled ? "not-allowed" : "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 4,
-          whiteSpace: "nowrap",
-        }}
+        className={`
+          relative flex items-center gap-2 px-5 py-2.5 rounded-full border
+          text-sm font-medium transition-all
+          ${
+            disabled
+              ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+              : open
+                ? "bg-muted text-foreground border-border"
+                : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+          }
+
+          /* ---------- SINGLE FA CARET ---------- */
+          after:content-['\\f0d7']
+          after:font-['Font_Awesome_6_Free']
+          after:font-black
+          after:text-xs
+          after:transition-transform
+          after:duration-200
+          ${open ? "after:rotate-180" : ""}
+        `}
       >
         Actions
-        <span
-          style={{
-            fontSize: 11,
-            transform: `rotate(${show ? 180 : 0}deg)`,
-          }}
-        >
-          ▼
-        </span>
       </button>
 
       {/* ---------- DROPDOWN ---------- */}
-      {show && (
+      {open && (
         <div
-          onMouseDown={(e) => e.stopPropagation()} // 🔥 REQUIRED
-          onClick={(e) => e.stopPropagation()} // 🔥 REQUIRED
-          style={{
-            position: "absolute",
-            top: "calc(100% + 8px)",
-            right: 0,
-            width: "max-content",
-            background: "#FFFFFF",
-            border: "1px solid #D5DBE0",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-            overflow: "hidden",
-            zIndex: 1000,
-          }}
+          className="
+            absolute right-0 mt-2 z-50
+            bg-white border border-border
+            rounded-xl shadow-lg overflow-hidden
+            min-w-[180px]
+          "
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
-          {items ? (
-            items.map((item) => {
-              const isDisabled = !!item.disabled;
+          {items.map((item) => {
+            const isDisabled = !!item.disabled;
 
-              return (
-                <div
-                  key={item.key}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-
-                    // 🔒 BLOCK CLICK IF DISABLED
-                    if (isDisabled) return;
-
-                    setShow(false);
-                    onSelect(item.key);
-                  }}
-                  title={
+            return (
+              <div
+                key={item.key}
+                onClick={() => {
+                  if (isDisabled) return;
+                  setOpen(false);
+                  onSelect(item.key);
+                }}
+                onMouseEnter={() => !isDisabled && setHoverKey(item.key)}
+                onMouseLeave={() => setHoverKey(null)}
+                className={`
+                  flex items-center px-4 py-2
+                  text-sm font-medium select-none
+                  transition-colors
+                  ${
                     isDisabled
-                      ? "Approved or pending assessment tools cannot be deleted"
-                      : ""
-                  }
-                  onMouseEnter={() => !isDisabled && setHoverKey(item.key)}
-                  onMouseLeave={() => setHoverKey(null)}
-                  style={{
-                    minHeight: 36,
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "8px 16px",
-
-                    /* ✅ TEXT ALIGNMENT */
-                    fontSize: 14,
-                    lineHeight: "20px",
-                    fontWeight: 500,
-                    fontFamily: "Amazon Ember, sans-serif",
-
-                    /* ✅ HOVER HIGHLIGHT */
-                    background:
-                      hoverKey === item.key && !isDisabled
-                        ? item.danger
-                          ? "#FEE2E2"
-                          : "#F2F8FD"
-                        : "#FFFFFF",
-
-                    cursor: isDisabled ? "not-allowed" : "pointer",
-                    opacity: isDisabled ? 0.5 : 1,
-
-                    color: isDisabled
-                      ? "#9CA3AF"
+                      ? "text-muted-foreground cursor-not-allowed opacity-50"
                       : item.danger
-                        ? "#DC2626"
-                        : "#1F2937",
-
-                    borderBottom: "1px solid #F1F1F1",
-                    userSelect: "none",
-                    transition: "background 0.15s ease",
-                  }}
-                >
-                  {item.label}
-                </div>
-              );
-            })
-          ) : (
-            <>
-              <div
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (singleSelect) {
-                    setShow(false);
-                    onEdit(selected[0]);
+                        ? hoverKey === item.key
+                          ? "bg-red-50 text-red-600"
+                          : "text-red-600"
+                        : hoverKey === item.key
+                          ? "bg-muted text-foreground"
+                          : "text-foreground"
                   }
-                }}
-                style={{ padding: "8px 14px" }}
+                `}
               >
-                Edit
+                {item.label}
               </div>
-
-              <div
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShow(false);
-                  onDelete();
-                }}
-                style={{ padding: "8px 14px" }}
-              >
-                Delete
-              </div>
-            </>
-          )}
+            );
+          })}
         </div>
       )}
     </div>

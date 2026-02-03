@@ -10,7 +10,7 @@ import useToast from "@/hooks/useToast";
 import { useContextElement } from "@/context/Context";
 
 const metadata = {
-  title: "Academy51 - Login",
+  title: "XVALIDATEAI - Login",
   description: "Login into application using google login",
 };
 

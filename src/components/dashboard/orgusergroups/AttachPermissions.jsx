@@ -96,7 +96,7 @@ export default function AttachPermissions() {
             animation: "spin 0.7s linear infinite",
           }}
         />
-        <div style={{ color: "#4F46E5", fontWeight: 600 }}>
+        <div style={{ color: COLORS.primary, fontWeight: 600 }}>
           Loading permissions details…
         </div>
 
@@ -199,7 +199,7 @@ export default function AttachPermissions() {
 
           {/* TABLE BODY */}
           {group.currentPermissions.length === 0 ? (
-            <div style={{ padding: 20, textAlign: "center", color: "#6B7280" }}>
+            <div style={{ padding: 20, textAlign: "center", color: COLORS.textMuted }}>
               No permissions attached
             </div>
           ) : (

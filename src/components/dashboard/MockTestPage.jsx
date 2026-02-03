@@ -88,7 +88,7 @@ function ExamTile({
           >
             {examName}
           </div>
-          <div style={{ fontSize: "clamp(12px, 2vw, 14px)", color: "#64748B" }}>
+          <div style={{ fontSize: "clamp(12px, 2vw, 14px)", color: COLORS.textMuted }}>
             {testCount} mock tests available
           </div>
         </div>

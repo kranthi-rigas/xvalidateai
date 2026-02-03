@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createComplianceProject } from "../../../apiIntegration/compliance";
 import AwsButton from "../../common/AwsButton";
 import useToast from "../../../hooks/useToast";
-import CreditInfoNote from "./CreditInfoNote";
+import { COLORS } from "../../../styles/colors";
 
 /* ---------- FIELD RENDERER ---------- */
 function renderField(
@@ -59,7 +59,9 @@ function renderField(
         }}
       >
         {label}
-        {required && <span style={{ color: "#DC2626", marginLeft: 4 }}>*</span>}
+        {required && (
+          <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>
+        )}
       </label>
 
       {textarea ? (
@@ -91,7 +93,7 @@ function renderField(
       )}
 
       {hasError && (
-        <p style={{ color: "#DC2626", fontSize: 12, marginTop: 4 }}>
+        <p style={{ color: COLORS.error, fontSize: 12, marginTop: 4 }}>
           {errors[name]}
         </p>
       )}
@@ -341,6 +343,7 @@ export default function CreateProjectModal({
             {/* Cancel */}
             <AwsButton
               label="Cancel"
+              variant="secondary"
               onClick={() => setShowCreateModal(false)}
               disabled={saving}
             />
@@ -356,9 +359,17 @@ export default function CreateProjectModal({
                     ? "Request"
                     : "Save & Evaluate"
               }
+              variant="primary"
               onClick={saveProject}
               disabled={!isValid || saving}
-            />
+            >
+              {!saving && (
+                <i
+                  className="fa-solid fa-gear"
+                  style={{ fontSize: "14px" }}
+                ></i>
+              )}
+            </AwsButton>
           </div>
           {/* 🔴 Credit info — ONLY for Admin (Save & Evaluate) */}
           {!isAuditor && <CreditInfoNote />}

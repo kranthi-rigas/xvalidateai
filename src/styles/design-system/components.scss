@@ -1,0 +1,494 @@
+/**
+ * AI Compliance Design System - Component Styles
+ * Reusable component patterns for compliance UI
+ */
+
+@import './colors.scss';
+@import './typography.scss';
+@import './spacing.scss';
+
+// ============================================================================
+// BUTTONS - Primary Actions
+// ============================================================================
+
+@mixin button-base {
+  @include text-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-6;
+  border-radius: $radius-md;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  white-space: nowrap;
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background-color: $color-primary;
+  color: #ffffff;
+  
+  &:hover:not(:disabled) {
+    background-color: $color-primary-hover;
+    box-shadow: $shadow-md;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: $color-primary-pressed;
+  }
+  
+  &:focus-visible {
+    outline: 2px solid $color-focus;
+    outline-offset: 2px;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background-color: transparent;
+  color: $color-primary;
+  border: 2px solid $color-primary;
+  
+  &:hover:not(:disabled) {
+    background-color: color-alpha($color-primary, 0.08);
+  }
+  
+  &:active:not(:disabled) {
+    background-color: color-alpha($color-primary, 0.16);
+  }
+}
+
+@mixin button-ghost {
+  @include button-base;
+  background-color: transparent;
+  color: $color-primary;
+  
+  &:hover:not(:disabled) {
+    background-color: $overlay-hover-light;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: $overlay-pressed-light;
+  }
+}
+
+@mixin button-danger {
+  @include button-base;
+  background-color: $color-error;
+  color: #ffffff;
+  
+  &:hover:not(:disabled) {
+    background-color: $color-error-dark;
+  }
+}
+
+// Button sizes
+@mixin button-sm {
+  @include text-button-sm;
+  padding: $spacing-2 $spacing-4;
+}
+
+@mixin button-lg {
+  padding: $spacing-4 $spacing-8;
+}
+
+// ============================================================================
+// COMPLIANCE STATUS BADGES
+// ============================================================================
+
+@mixin badge-base {
+  @include text-caption;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+}
+
+@mixin badge-compliant {
+  @include badge-base;
+  background-color: $color-success-light;
+  color: $color-success-dark;
+  
+  &::before {
+    content: '✓';
+    font-weight: $font-weight-bold;
+  }
+}
+
+@mixin badge-warning {
+  @include badge-base;
+  background-color: $color-warning-light;
+  color: darken($color-warning, 20%);
+  
+  &::before {
+    content: '⚠';
+  }
+}
+
+@mixin badge-non-compliant {
+  @include badge-base;
+  background-color: $color-error-light;
+  color: $color-error-dark;
+  
+  &::before {
+    content: '✕';
+    font-weight: $font-weight-bold;
+  }
+}
+
+@mixin badge-pending {
+  @include badge-base;
+  background-color: $color-neutral-light;
+  color: $color-neutral-dark;
+  
+  &::before {
+    content: '○';
+  }
+}
+
+// ============================================================================
+// CARDS & SURFACES
+// ============================================================================
+
+@mixin compliance-card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  
+  &:hover {
+    @include card-hover;
+  }
+}
+
+@mixin stat-card {
+  @include compliance-card;
+  text-align: center;
+  
+  .stat-value {
+    @include text-display-2;
+    color: $color-primary;
+    margin: $spacing-2 0;
+  }
+  
+  .stat-label {
+    @include text-body-sm;
+    color: $color-text-secondary-light;
+  }
+  
+  .stat-change {
+    @include text-caption;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-1;
+    margin-top: $spacing-2;
+    
+    &.positive {
+      color: $color-success;
+    }
+    
+    &.negative {
+      color: $color-error;
+    }
+  }
+}
+
+// ============================================================================
+// FORM INPUTS
+// ============================================================================
+
+@mixin input-base {
+  @include text-body;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  border: 2px solid $color-border-light;
+  border-radius: $radius-md;
+  background-color: $color-surface-light;
+  color: $color-text-primary-light;
+  transition: all 0.2s ease-in-out;
+  
+  &::placeholder {
+    color: $color-text-tertiary-light;
+  }
+  
+  &:hover:not(:disabled) {
+    border-color: $color-primary-light;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px $color-focus-ring;
+  }
+  
+  &:disabled {
+    background-color: $color-neutral-light;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  &.error {
+    border-color: $color-error;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px color-alpha($color-error, 0.2);
+    }
+  }
+}
+
+@mixin input-label {
+  @include text-body-sm;
+  display: block;
+  margin-bottom: $spacing-2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary-light;
+}
+
+@mixin input-helper {
+  @include text-caption;
+  display: block;
+  margin-top: $spacing-2;
+  color: $color-text-secondary-light;
+  
+  &.error {
+    color: $color-error;
+  }
+}
+
+// ============================================================================
+// PROGRESS INDICATORS
+// ============================================================================
+
+@mixin progress-bar {
+  width: 100%;
+  height: $spacing-2;
+  background-color: $color-neutral-light;
+  border-radius: $radius-full;
+  overflow: hidden;
+  
+  .progress-fill {
+    height: 100%;
+    background: $gradient-primary;
+    border-radius: $radius-full;
+    transition: width 0.3s ease-in-out;
+    
+    &.success {
+      background: $gradient-success;
+    }
+    
+    &.warning {
+      background: $gradient-warning;
+    }
+  }
+}
+
+@mixin compliance-score-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  
+  svg {
+    transform: rotate(-90deg);
+  }
+  
+  .score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    @include text-display-2;
+    color: $color-primary;
+  }
+}
+
+// ============================================================================
+// TABLES
+// ============================================================================
+
+@mixin compliance-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: $color-surface-light;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+  
+  thead {
+    background-color: $color-bg-light;
+    
+    th {
+      @include text-label;
+      padding: $spacing-4;
+      text-align: left;
+      color: $color-text-secondary-light;
+      border-bottom: 2px solid $color-border-light;
+    }
+  }
+  
+  tbody {
+    tr {
+      border-bottom: 1px solid $color-border-light;
+      transition: background-color 0.15s ease-in-out;
+      
+      &:hover {
+        background-color: $overlay-hover-light;
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+    
+    td {
+      @include text-body-sm;
+      padding: $spacing-4;
+      color: $color-text-primary-light;
+    }
+  }
+}
+
+// ============================================================================
+// ALERTS & NOTIFICATIONS
+// ============================================================================
+
+@mixin alert-base {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border-radius: $radius-md;
+  border-left: 4px solid;
+  
+  .alert-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .alert-content {
+    flex: 1;
+    
+    .alert-title {
+      @include text-body;
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacing-1;
+    }
+    
+    .alert-message {
+      @include text-body-sm;
+    }
+  }
+}
+
+@mixin alert-success {
+  @include alert-base;
+  background-color: $color-success-bg;
+  border-left-color: $color-success;
+  
+  .alert-icon {
+    color: $color-success;
+  }
+}
+
+@mixin alert-warning {
+  @include alert-base;
+  background-color: $color-warning-bg;
+  border-left-color: $color-warning;
+  
+  .alert-icon {
+    color: $color-warning;
+  }
+}
+
+@mixin alert-error {
+  @include alert-base;
+  background-color: $color-error-bg;
+  border-left-color: $color-error;
+  
+  .alert-icon {
+    color: $color-error;
+  }
+}
+
+// ============================================================================
+// TOOLTIPS
+// ============================================================================
+
+@mixin tooltip {
+  @include text-caption;
+  position: absolute;
+  z-index: $z-index-tooltip;
+  padding: $spacing-2 $spacing-3;
+  background-color: $color-text-primary-light;
+  color: $color-surface-light;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  
+  &.visible {
+    opacity: 1;
+  }
+}
+
+// ============================================================================
+// MODULAR DASHBOARD GRID
+// ============================================================================
+
+@mixin dashboard-grid {
+  display: grid;
+  gap: $spacing-6;
+  
+  @include respond-above($breakpoint-md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include respond-above($breakpoint-lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include respond-above($breakpoint-xl) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@mixin dashboard-widget {
+  @include compliance-card;
+  min-height: 200px;
+  
+  &.span-2 {
+    @include respond-above($breakpoint-md) {
+      grid-column: span 2;
+    }
+  }
+  
+  &.span-3 {
+    @include respond-above($breakpoint-lg) {
+      grid-column: span 3;
+    }
+  }
+  
+  &.span-full {
+    grid-column: 1 / -1;
+  }
+}
+
+// Made with Bob

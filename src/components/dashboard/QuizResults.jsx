@@ -67,7 +67,7 @@ export default function QuizResults() {
     return (
       <div className="dashboard__main p-40">
         <h1 className="text-30 fw-700 mb-20">Invalid Results</h1>
-        <p style={{ color: "#666", marginBottom: 20 }}>
+        <p style={{ color: COLORS.textMuted, marginBottom: 20 }}>
           The page was refreshed or opened without quiz data.
         </p>
         <button

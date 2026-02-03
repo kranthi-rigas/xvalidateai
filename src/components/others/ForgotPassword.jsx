@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { COLORS } from "../../styles/colors";
 import HeaderAuth from "../layout/headers/HeaderAuth";
 import AwsButton from "../common/AwsButton";
 import { forgotPassword } from "../../apiIntegration/auth";
@@ -113,7 +114,7 @@ export default function ForgotPassword() {
       {/* ✅ REUSED FOOTER */}
       <div
         className="py-30 border-top-light-15"
-        style={{ backgroundColor: "#202020" }}
+        style={{ backgroundColor: COLORS.bgDark }}
       >
         <div className="row justify-center items-center text-center y-gap-20">
           <div className="col-auto">

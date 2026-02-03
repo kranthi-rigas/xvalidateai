@@ -1,4 +1,5 @@
-import { useState, forwardRef } from "react";
+import { useState } from "react";
+import { COLORS } from "../../styles/colors";
 
 const PhoneInput = forwardRef(({ phone, phoneCode, onChange }, ref) => {
   const [focused, setFocused] = useState(false);
@@ -20,37 +21,39 @@ const PhoneInput = forwardRef(({ phone, phoneCode, onChange }, ref) => {
         }}
       />
 
-      {/* Phone Number */}
-      <input
-        ref={ref}
-        required
-        value={phone}
-        placeholder="Phone number"
-        inputMode="numeric"
-        onChange={(e) => {
-          // 🔥 clears tooltip immediately when typing
-          e.target.setCustomValidity("");
-          onChange(e);
-        }}
-        onInvalid={(e) => {
-          // ✅ ONLY custom message
-          e.target.setCustomValidity("Please enter a valid phone number");
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          flex: 1,
-          height: 48,
-          background: "transparent",
-          borderRadius: 8,
-          padding: "0 14px",
-          color: "#0F172A",
-          border: "1px solid #DDDDDD",
-          boxShadow: focused ? "inset 0 0 0 1px rgba(184,181,181,0.6)" : "none",
-          outline: "none",
-        }}
-      />
-    </div>
+        {/* Phone Number */}
+        <input
+          value={phone}
+          onChange={onChange}
+          placeholder="Phone number"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            flex: 1,
+            height: 48,
+            background: "transparent",
+            borderRadius: 8,
+            padding: "0 14px",
+            color: "#0F172A",
+
+            /* ✅ TRANSPARENT HIGHLIGHT (VISIBLE) */
+            border: "1px solid #DDDDDD",
+            boxShadow: focused
+              ? "inset 0 0 0 1px rgba(184, 181, 181, 0.6)"
+              : "none",
+
+            outline: "none",
+            transition: "box-shadow 0.15s ease",
+          }}
+        />
+      </div>
+
+      {error && (
+        <p style={{ color: COLORS.error, fontSize: 13, marginTop: 6 }}>
+          {error}
+        </p>
+      )}
+    </>
   );
 });
 

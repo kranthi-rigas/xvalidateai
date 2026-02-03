@@ -8593,7 +8593,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .sidebar.-dashboard .sidebar__item.-is-active {
   background-color: var(--color-blue-3);
-  color: #4075FB !important;
+  color: var(--color-primary) !important;
   position: relative;
 }
 
@@ -8605,7 +8605,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-50%);
   width: 6px;
   height: 30px;
-  background-color: #576AFF; /* dark blue */
+  background-color: var(--color-primary); /* dark blue */
   border-radius: 4px;
 }
 
@@ -10525,45 +10525,45 @@ body:has(.form-page__content) .header.-base {
 }
 
 .py-3 {
-  padding-top: 3px !important;
-  padding-bottom: 3px !important;
+  padding-top: 0.9rem !important;
+  padding-bottom: 0.9rem !important;
 }
 
 .px-3 {
-  padding-left: 3px !important;
-  padding-right: 3px !important;
+  padding-left: 0.9rem !important;
+  padding-right: 0.9rem !important;
 }
 
 .pt-3 {
-  padding-top: 3px !important;
+  padding-top: 0.9rem !important;
 }
 
 .pb-3 {
-  padding-bottom: 3px !important;
+  padding-bottom: 0.9rem !important;
 }
 
 .pl-3 {
-  padding-left: 3px !important;
+  padding-left: 0.9rem !important;
 }
 
 .pr-3 {
-  padding-right: 3px !important;
+  padding-right: 0.9rem !important;
 }
 
 .mt-3 {
-  margin-top: 3px !important;
+  margin-top: 0.9rem !important;
 }
 
 .mb-3 {
-  margin-bottom: 3px !important;
+  margin-bottom: 0.9rem !important;
 }
 
 .ml-3 {
-  margin-left: 3px !important;
+  margin-left: 0.9rem !important;
 }
 
 .mr-3 {
-  margin-right: 3px !important;
+  margin-right: 0.9rem !important;
 }
 
 .py-5 {
@@ -20095,19 +20095,38 @@ body.sidebar-collapsed .dashboard__content {
 }
 
 /* ----------- SPINNER ----------- */
-.table-spinner {
+.page-spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid #ccc;
-    border-top: 4px solid #2F5FD9;
     border-radius: 50%;
-    animation: spin 0.9s linear infinite;
+    display: inline-block;
+    position: relative;
+    background: conic-gradient(
+        from 0deg,
+        #4285f4 0deg,
+        #ea4335 90deg,
+        #fbbc04 180deg,
+        #34a853 270deg,
+        #4285f4 360deg
+    );
+    animation: playstore-rotate 1.4s linear infinite;
 }
 
-/* Spin animation */
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.page-spinner::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+@keyframes playstore-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 /* Match <button> styling with sidebar <a> links */
 .sidebar.-dashboard .sidebar__item button {
