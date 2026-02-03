@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { COLORS } from "../../styles/colors";
+import COLORS from "../../styles/colors";
 
 export default function ActionsMenu({
   items = [],
@@ -7,6 +7,7 @@ export default function ActionsMenu({
   onSelect = () => {},
 }) {
   const [open, setOpen] = useState(false);
+  const [buttonHovered, setButtonHovered] = useState(false);
   const [hoverKey, setHoverKey] = useState(null);
   const ref = useRef(null);
 
@@ -37,26 +38,29 @@ export default function ActionsMenu({
     borderRadius: "999px",
     fontSize: "14px",
     fontWeight: 600,
-    transition: "all 0.15s ease",
+    transition: "all 0.2s ease",
     cursor: disabled ? "not-allowed" : "pointer",
-    border: `1px solid ${COLORS.borderLight || "#E5E7EB"}`,
+    border: `1px solid ${
+      disabled
+        ? COLORS.borderLight
+        : buttonHovered || open
+          ? COLORS.primary
+          : COLORS.borderLight
+    }`,
     background: disabled
-      ? COLORS.bgTertiary || "#F3F4F6"
+      ? COLORS.bgTertiary
       : open
-        ? COLORS.surfaceLight || "#F9FAFB"
-        : COLORS.bgPrimary || "#FFFFFF",
+        ? COLORS.hover
+        : buttonHovered
+          ? COLORS.surfaceLight
+          : COLORS.bgPrimary,
     color: disabled
-      ? COLORS.textDisabled || "#9CA3AF"
-      : COLORS.textPrimary || "#111827",
+      ? COLORS.textDisabled
+      : buttonHovered || open
+        ? COLORS.primary
+        : COLORS.textPrimary,
     opacity: disabled ? 0.6 : 1,
   };
-
-  const buttonHoverStyle =
-    !disabled && !open
-      ? {
-          background: COLORS.surfaceLight || "#F9FAFB",
-        }
-      : {};
 
   /* ---------- DROPDOWN STYLES ---------- */
   const dropdownStyle = {
@@ -64,8 +68,8 @@ export default function ActionsMenu({
     right: 0,
     marginTop: "8px",
     zIndex: 50,
-    background: COLORS.bgPrimary || "#FFFFFF",
-    border: `1px solid ${COLORS.borderLight || "#E5E7EB"}`,
+    background: COLORS.bgPrimary,
+    border: `1px solid ${COLORS.borderLight}`,
     borderRadius: "12px",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)",
     minWidth: "180px",
@@ -90,16 +94,20 @@ export default function ActionsMenu({
         ? "transparent"
         : item.danger
           ? isHovered
-            ? "#FEE2E2"
+            ? COLORS.errorLight
             : "transparent"
           : isHovered
-            ? COLORS.surfaceLight || "#F9FAFB"
+            ? COLORS.hover
             : "transparent",
       color: isDisabled
-        ? COLORS.textDisabled || "#9CA3AF"
+        ? COLORS.textDisabled
         : item.danger
-          ? COLORS.error || "#DC2626"
-          : COLORS.textPrimary || "#111827",
+          ? isHovered
+            ? COLORS.errorDark
+            : COLORS.error
+          : isHovered
+            ? COLORS.primary
+            : COLORS.textPrimary,
     };
   };
 
@@ -108,6 +116,7 @@ export default function ActionsMenu({
     fontSize: "12px",
     transition: "transform 0.2s ease",
     transform: open ? "rotate(180deg)" : "rotate(0deg)",
+    // Color will inherit from button text color
   };
 
   return (
@@ -121,12 +130,11 @@ export default function ActionsMenu({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        style={{
-          ...buttonStyle,
-          ...(hoverKey === "button" ? buttonHoverStyle : {}),
-        }}
-        onMouseEnter={() => setHoverKey("button")}
-        onMouseLeave={() => setHoverKey(null)}
+        style={buttonStyle}
+        onMouseEnter={() => setButtonHovered(true)}
+        onMouseLeave={() => setButtonHovered(false)}
+        aria-expanded={open}
+        aria-haspopup="true"
       >
         Actions
         <i
@@ -140,6 +148,7 @@ export default function ActionsMenu({
       {open && (
         <div
           style={dropdownStyle}
+          role="menu"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
@@ -150,6 +159,8 @@ export default function ActionsMenu({
             return (
               <div
                 key={item.key}
+                role="menuitem"
+                tabIndex={isDisabled ? -1 : 0}
                 onClick={() => {
                   if (isDisabled) return;
                   setOpen(false);
@@ -157,7 +168,16 @@ export default function ActionsMenu({
                 }}
                 onMouseEnter={() => !isDisabled && setHoverKey(item.key)}
                 onMouseLeave={() => setHoverKey(null)}
+                onKeyDown={(e) => {
+                  if (isDisabled) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setOpen(false);
+                    onSelect(item.key);
+                  }
+                }}
                 style={getItemStyle(item, isHovered)}
+                aria-disabled={isDisabled}
               >
                 {item.label}
               </div>
@@ -169,16 +189,23 @@ export default function ActionsMenu({
       <style>{`
         /* Focus visible for accessibility */
         button:focus-visible {
-          outline: 2px solid ${COLORS.borderFocus || "#2563EB"};
+          outline: 2px solid ${COLORS.borderFocus};
           outline-offset: 2px;
+        }
+        
+        /* Menu item focus */
+        div[role="menuitem"]:focus-visible {
+          outline: 2px solid ${COLORS.borderFocus};
+          outline-offset: -2px;
         }
         
         /* Reduced motion support */
         @media (prefers-reduced-motion: reduce) {
           button,
           button i,
+          button span,
           div[style*="transition"] {
-            transition: none;
+            transition: none !important;
           }
         }
       `}</style>
