@@ -149,14 +149,14 @@ export default function DashboardBilling() {
         
         const redeemResponse = await redeemVoucher(
           formData.voucherCode.trim(),
-          plan?.id || null
+          plan?.id || null,
         );
 
         console.log("Voucher redeemed successfully:", redeemResponse);
 
         show(
           `Subscription activated successfully! You now have ${redeemResponse.subscription.credits} credits.`,
-          { type: "success" }
+          { type: "success" },
         );
 
         // Refresh user plan in Context and localStorage, then navigate
@@ -208,8 +208,9 @@ export default function DashboardBilling() {
                     rows="4"
                     value={formData.billingAddress}
                     onChange={handleChange}
-                    className={`form-control ${errors.billingAddress ? "is-invalid" : ""
-                      }`}
+                    className={`form-control ${
+                      errors.billingAddress ? "is-invalid" : ""
+                    }`}
                     placeholder="Enter your complete billing address including street, city, state, and postal code"
                     style={{
                       border: errors.billingAddress
@@ -265,7 +266,10 @@ export default function DashboardBilling() {
                       )}
                       {voucherApplied && voucherData && (
                         // <div className="text-yellow-1 text-14 mt-10" style={{ color: "#FFD700" }}>
-                        <div className=" text-14 mt-10" style={{ color: COLORS.success }}>
+                        <div
+                          className=" text-14 mt-10"
+                          style={{ color: COLORS.success }}
+                        >
                           ✓ Voucher verified! {voucherData.plan_name} plan (
                           {voucherData.credits} credits)
                         </div>
@@ -317,7 +321,8 @@ export default function DashboardBilling() {
                 <div className="d-flex gap-15 mt-40">
                   {!voucherApplied && (
                     <div className="text-14 text-orange-1 mb-10 w-100">
-                      ⚠️ Please apply a valid voucher code to complete your purchase
+                      ⚠️ Please apply a valid voucher code to complete your
+                      purchase
                     </div>
                   )}
                   <button
@@ -335,10 +340,11 @@ export default function DashboardBilling() {
                   </button>
                   <button
                     type="submit"
-                    className={`button px-40 py-15 ${isSubmitting || !plan || !voucherApplied
-                      ? ""
-                      : "-purple-1 text-white"
-                      }`}
+                    className={`button px-40 py-15 ${
+                      isSubmitting || !plan || !voucherApplied
+                        ? ""
+                        : "-purple-1 text-white"
+                    }`}
                     style={{
                       borderRadius: "8px",
                       backgroundColor:
@@ -395,32 +401,46 @@ export default function DashboardBilling() {
                       <span className="text-16 text-dark-1">
                         {plan.price === null || plan.price === 0
                           ? "N/A"
-                          : `$${typeof plan.price === "number"
-                            ? plan.price.toFixed(2)
-                            : plan.price
-                          }`}
+                          : `$${
+                              typeof plan.price === "number"
+                                ? plan.price.toFixed(2)
+                                : plan.price
+                            }`}
                       </span>
                     </div>
                     {voucherApplied && voucherData && (
                       <>
                         <div className="d-flex justify-between items-center mb-10">
-                          <span className="text-15 " style={{ color: COLORS.success }}>
+                          <span
+                            className="text-15 "
+                            style={{ color: COLORS.success }}
+                          >
                             Voucher Discount
                           </span>
-                          <span className="text-16 " style={{ color: COLORS.success }}>
+                          <span
+                            className="text-16 "
+                            style={{ color: COLORS.success }}
+                          >
                             {plan.price !== null && voucherData.price !== null
                               ? `-$${(plan.price - voucherData.price).toFixed(
-                                2
-                              )}`
+                                  2,
+                                )}`
                               : "N/A"}
                           </span>
                         </div>
                         <div className="mt-10 px-10 py-8 rounded-6 bg-green-3">
-                          <div className="text-12 " style={{ color: COLORS.success }}>
+                          <div
+                            className="text-12 "
+                            style={{ color: COLORS.success }}
+                          >
                             <strong>{voucherData.plan_name}</strong> - Voucher
                             verified
                           </div>
-                          <div className="text-11 " style={{ color: COLORS.success }} mt-5>
+                          <div
+                            className="text-11 "
+                            style={{ color: COLORS.success }}
+                            mt-5
+                          >
                             $ {voucherData.credits} credits will be activated on
                             purchase
                           </div>
@@ -436,10 +456,11 @@ export default function DashboardBilling() {
                         const total = calculateTotal();
                         return total === null || total === 0
                           ? "N/A"
-                          : `$${typeof total === "number"
-                            ? total.toFixed(2)
-                            : total
-                          }`;
+                          : `$${
+                              typeof total === "number"
+                                ? total.toFixed(2)
+                                : total
+                            }`;
                       })()}
                     </span>
                   </div>

@@ -175,7 +175,11 @@ export default function ListTable({
                     <td
                       key={`${row[rowKey] ?? rowIndex}-${col.key}`}
                       className={`p-4 ${
-                        col.key === "checkbox" ? "pl-6 pr-2" : "truncate"
+                        col.key === "checkbox"
+                          ? "pl-6 pr-2"
+                          : col.truncate === false
+                            ? "break-words whitespace-normal"
+                            : "truncate"
                       }`}
                       style={{
                         width: columnWidths[col.key] || col.width || 160,

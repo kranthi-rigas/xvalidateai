@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login, fetchUserProfile } from "../../apiIntegration/auth.js";
-import { Button, GoogleLoginButton } from "../commonComponents";
+import AwsButton from "@/components/common/AwsButton";
+import { GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 
@@ -11,6 +12,35 @@ export default function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const show = useToast();
+
+  //error mapper helper
+  const getLoginErrorMessage = (err) => {
+    const status = err?.status;
+    const apiMessage = (err?.data?.error || "").toLowerCase();
+
+    // 🔐 Invalid credentials
+    if (status === 401) {
+      return "The email or password you entered is incorrect. Please try again.";
+    }
+
+    // 🔒 Account locked
+    if (status === 403) {
+      return "Your account has been temporarily locked. contact support.";
+    }
+
+    // 🚫 Server error
+    if (status >= 500) {
+      return "We’re having trouble signing you in right now. Please try again later.";
+    }
+
+    // 🌐 Network / offline
+    if (!status) {
+      return "Unable to connect. Please check your internet connection.";
+    }
+
+    // Fallback
+    return "Login failed. Please try again.";
+  };
 
   //Refresh helper
   useLayoutEffect(() => {
@@ -115,8 +145,14 @@ export default function LoginForm() {
       localStorage.setItem("user_info", JSON.stringify(userData));
       navigate("/dashboard");
     } catch (err) {
-      console.error("❌ Login failed:", err.message);
-      show(err.message || "Login failed. Please try again.", { type: "error" });
+      console.error("❌ Login failed:", err);
+
+      const message = getLoginErrorMessage(err);
+
+      show(message, {
+        type: "error",
+        duration: 6000, // enterprise standard
+      });
     } finally {
       setLoading(false);
     }
@@ -179,11 +215,11 @@ export default function LoginForm() {
               </div>
             </div>
             <div className="col-12">
-              <Button
+              <AwsButton
                 type="submit"
-                label={loading ? "Logging in..." : "Login"}
-                variant="primary"
-                disabled={loading}
+                label="Login"
+                isLoading={loading}
+                fullWidth
               />
             </div>
           </form>

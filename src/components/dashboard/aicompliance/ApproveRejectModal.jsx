@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import AwsButton from "../../common/AwsButton";
-import ReusableModal from "../../common/ReusableModal";
-import FormField from "../../common/FormField";
+import ReusableModal from "../../common/Reusablemodal";
+import FormField from "../../common/Formfield";
 
 export default function ApproveRejectModal({
   title,

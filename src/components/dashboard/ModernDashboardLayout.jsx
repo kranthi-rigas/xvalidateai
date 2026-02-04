@@ -171,7 +171,7 @@ export default function ModernDashboardLayout() {
                     }
                   }}
                   title={sidebarCollapsed ? item.text : ""}
-                  className={`nav-item flex items-center justify-between ${
+                  className={`nav-item flex items-center justify-between w-full ${
                     sidebarCollapsed ? "px-2" : "px-4"
                   } py-3 text-sm font-medium rounded-lg transition-colors group ${
                     active
