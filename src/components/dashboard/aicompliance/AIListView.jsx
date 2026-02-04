@@ -20,6 +20,8 @@ import usePageLoader from "@/data/usePageLoader";
 import useToast from "../../../hooks/useToast";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import CreditInfoNote from "./CreditInfoNote";
 
 const STATUS_BADGE_MAP = {
   pending_assessment: {
@@ -28,6 +30,11 @@ const STATUS_BADGE_MAP = {
     border: "#FDE68A",
   },
   requested: {
+    bg: "#E0F2FE",
+    color: "#075985",
+    border: "#7DD3FC",
+  },
+  requested_for_scan: {
     bg: "#E0F2FE",
     color: "#075985",
     border: "#7DD3FC",
@@ -89,8 +96,6 @@ export default function AIListView({
     ? rolesRaw.map((r) => String(r).toUpperCase())
     : String(rolesRaw).toUpperCase().split(",");
 
-  const isAdmin = roles.includes("ADMIN");
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
   const [deleteError, setDeleteError] = useState("");
@@ -108,18 +113,28 @@ export default function AIListView({
 
   const isRequested = (row) => row.status === "requested";
 
+  const hasAdminRole = roles.includes("ADMIN");
+  const hasAuditorRole = roles.includes("AUDITOR");
+  const hasAnalystRole = roles.includes("ANALYST");
+
+  const isAdmin = hasAdminRole;
+  const isAuditor = hasAuditorRole;
+  // ✅ Analyst-only = NO higher privilege
+  const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
+
   /* ---------- Add columnWidths state ---------- */
   const [columnWidths, setColumnWidths] = useState({
     checkbox: 60,
     name: 190,
     description: 180,
     status: 200,
-    assessment_status: 120,
+    assessment_status: 122,
     score: 100,
     recommendation: 190,
     lastScanDate: 180,
     requested_by: 220,
     approved_by: 220,
+    createdtime: 180,
   });
 
   const resizingCol = useRef(null);
@@ -140,7 +155,13 @@ export default function AIListView({
   };
 
   useEffect(() => {
-    setLiveProjects(projects || []);
+    setLiveProjects(
+      (projects || []).map((p) => ({
+        ...p,
+        __created_time: p.created_time,
+        __scan_approved_by: p.scan_approved_by,
+      })),
+    );
   }, [projects]);
 
   useEffect(() => {
@@ -176,7 +197,21 @@ export default function AIListView({
         setLiveProjects((prev) =>
           prev.map((p) => {
             const updated = updates.find((u) => u.project_id === p.project_id);
-            return updated ? { ...p, ...updated } : p;
+            return updated
+              ? {
+                  ...p,
+                  // 🔄 only dynamic fields
+                  status: updated.status,
+                  assessment_status: updated.assessment_status,
+                  last_scanned_time: updated.last_scanned_time,
+                  score: updated.score,
+                  recommendation: updated.recommendation,
+
+                  // 🔒 keep immutable values
+                  created_time: p.__created_time,
+                  scan_approved_by: p.__scan_approved_by,
+                }
+              : p;
           }),
         );
       } catch (err) {
@@ -202,14 +237,7 @@ export default function AIListView({
 
   //STATUS LABEL MAPPER
   const getAssessmentStatusLabel = (row) => {
-    // Instructor requested scan
-    if (
-      row.status === "requested" &&
-      row.assessment_status === "not_applicable"
-    ) {
-      return "Requested For Scan";
-    }
-
+    if (row.status === "requested") return "Requested For Scan";
     return row.status ? toTitleCase(row.status) : "-";
   };
 
@@ -358,6 +386,13 @@ export default function AIListView({
       label: "Scan Approved By",
       sortable: false,
       resizable: true,
+    },
+    {
+      key: "createdtime",
+      label: "Created on",
+      sortable: true,
+      resizable: true,
+      sortKey: "created_time",
     },
   ];
 
@@ -519,22 +554,13 @@ export default function AIListView({
     /* ------------------- NAME ------------------- */
     if (key === "name") {
       const text = row.name || "";
+      const isBlocked = row.status === "pending_assessment";
 
-      const isPendingAssessment = row.status === "pending_assessment";
-      const isRequested = row.status === "requested";
+      const tooltipText = isBlocked
+        ? "Assessment is currently in progress."
+        : "";
 
-      // 🔐 BLOCK CONDITIONS
-      const blockedByAssessment = isPendingAssessment;
-      const isBlocked = blockedByAssessment;
-
-      let tooltipText = "";
-
-      if (blockedByAssessment) {
-        tooltipText =
-          "Assessment is currently in progress. Please try again later.";
-      }
-
-      const nameContent = (
+      const content = (
         <span
           style={{
             ...LinkStyle,
@@ -551,25 +577,10 @@ export default function AIListView({
         </span>
       );
 
-      if (isBlocked) {
-        return <WhiteTooltip text={tooltipText}>{nameContent}</WhiteTooltip>;
-      }
-
-      // ✅ ADMIN or allowed users
-      return (
-        <span
-          onClick={() => setOpenedProject(row)}
-          style={{
-            ...LinkStyle,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.name - 20,
-            display: "inline-block",
-          }}
-        >
-          {text}
-        </span>
+      return isBlocked ? (
+        <WhiteTooltip text={tooltipText}>{content}</WhiteTooltip>
+      ) : (
+        <span onClick={() => setOpenedProject(row)}>{content}</span>
       );
     }
 
@@ -759,7 +770,7 @@ export default function AIListView({
     }
     /* ------------------- APPROVED BY ------------------- */
     if (key === "approved_by") {
-      const a = row.approved_by;
+      const a = row.scan_approved_by; // 🔥 UPDATED KEY
       const requester = row.requested_by;
 
       // ✅ Admin created → show "-"
@@ -767,7 +778,7 @@ export default function AIListView({
         return <span>-</span>;
       }
 
-      // ✅ Not approved yet (non-admin created)
+      // ✅ Not approved yet
       if (!a) {
         return (
           <span
@@ -777,12 +788,12 @@ export default function AIListView({
               fontStyle: "italic",
             }}
           >
-            Pending
+            N/A
           </span>
         );
       }
 
-      // ✅ Approved by someone
+      // ✅ Scan approved by someone
       const fullName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
       const email = a.email || "";
 
@@ -823,21 +834,48 @@ export default function AIListView({
       );
     }
 
+    if (key === "createdtime")
+      return (
+        <span style={{ cursor: "default" }}>
+          {row.created_time
+            ? new Date(row.created_time).toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
+            : "-"}
+        </span>
+      );
+
     if (key === "recommendation") return null;
     return row[key] ?? "";
   };
 
-  //helper for delete disabled
+  // helper for delete disabled (ADMIN only usage)
   const isDeleteDisabledForProject = (project) =>
     project.assessment_status === "scan_in_progress";
 
   const actionItems = (() => {
     if (selected.length === 0) return [];
 
+    const project = liveProjects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    // 🚫 ANALYST-ONLY — view only
+    if (isAnalystOnly) {
+      return [];
+    }
+
     // ================= MULTI SELECT =================
     if (selected.length > 1) {
+      if (!isAdmin) return [];
+
       const anyScanInProgress = selected.some((id) => {
-        const p = projects.find((x) => x.project_id === id);
+        const p = liveProjects.find((x) => x.project_id === id);
         return p?.assessment_status === "scan_in_progress";
       });
 
@@ -851,25 +889,24 @@ export default function AIListView({
       ];
     }
 
-    // ================= SINGLE SELECT =================
-    const project = projects.find((p) => p.project_id === selected[0]);
-    if (!project) return [];
-
     const deleteDisabled = project.assessment_status === "scan_in_progress";
 
     // ================= ADMIN =================
     if (isAdmin) {
       const actions = [];
 
-      // 🔹 Scan approval stage
-      if (project.status === "requested") {
+      // 🟦 Scan request stage
+      if (
+        project.status === "requested" ||
+        project.status === "requested_for_scan"
+      ) {
         actions.push(
           { key: "scan_approve", label: "Approve for Scan" },
           { key: "scan_reject", label: "Reject for Scan" },
         );
       }
 
-      // 🔹 Usage approval stage (after scan is fully completed)
+      // 🟩 Scan completed → usage approval stage ONLY
       if (
         project.status === "scan_completed" &&
         project.assessment_status === "completed"
@@ -880,7 +917,7 @@ export default function AIListView({
         );
       }
 
-      // 🔹 Common admin actions
+      // ⚙️ Always available
       actions.push(
         { key: "edit", label: "Edit" },
         {
@@ -894,16 +931,23 @@ export default function AIListView({
       return actions;
     }
 
-    // ================= NON-ADMIN =================
-    return [
-      { key: "edit", label: "Edit" },
-      {
-        key: "delete",
-        label: "Delete",
-        danger: true,
-        disabled: deleteDisabled,
-      },
-    ];
+    // ================= AUDITOR =================
+    if (isAuditor) {
+      const actions = [];
+
+      if (project.status === "pending_assessment") {
+        actions.push({
+          key: "request_scan",
+          label: "Request Scan",
+        });
+      }
+
+      actions.push({ key: "edit", label: "Edit" });
+
+      return actions;
+    }
+
+    return [];
   })();
 
   if (pageLoading) {
@@ -951,7 +995,7 @@ export default function AIListView({
             selected={selected}
             items={actionItems}
             onSelect={(key) => {
-              const project = projects.find(
+              const project = liveProjects.find(
                 (p) => p.project_id === selected[0],
               );
               if (!project) return;
@@ -965,6 +1009,18 @@ export default function AIListView({
                 key === "reject"
               ) {
                 setApprovalAction(key);
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "request_scan") {
+                setApprovalAction("request_scan");
+                setShowApprovalModal(true);
+                return;
+              }
+
+              if (key === "cancel_request") {
+                setApprovalAction("cancel_request");
                 setShowApprovalModal(true);
                 return;
               }
@@ -986,10 +1042,19 @@ export default function AIListView({
             }}
           />
 
-          <AwsButton
-            label="+ Tool Assessment"
-            onClick={() => setShowCreateModal(true)}
-          />
+          <OrgRequiredWrapper
+            disabled={isAnalystOnly}
+            message="You have view-only access"
+          >
+            <AwsButton
+              label="+ Tool Assessment"
+              onClick={() => {
+                if (isAnalystOnly) return;
+                setShowCreateModal(true);
+              }}
+            />
+          </OrgRequiredWrapper>
+
           <AwsSettingsIconButton
             onClick={() => setShowPreferences(true)}
             title="Preferences"
@@ -1071,7 +1136,11 @@ export default function AIListView({
                 ? "Reject Tool for Scan"
                 : approvalAction === "approve"
                   ? "Approve Tool for Usage"
-                  : "Reject Tool for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject Tool for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Tool Assessment"
+                      : "Cancel Assessment Request"
           }
           actionLabel={
             approvalAction === "scan_approve"
@@ -1080,8 +1149,15 @@ export default function AIListView({
                 ? "Reject for Scan"
                 : approvalAction === "approve"
                   ? "Approve for Usage"
-                  : "Reject for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Scan"
+                      : "Cancel Request"
           }
+          /* 🔐 AUDITOR UX FIXES */
+          hideCredits={!["scan_approve"].includes(approvalAction)}
+          hideComment={approvalAction === "cancel_request"}
           onClose={() => {
             setShowApprovalModal(false);
             setApprovalError(false);
@@ -1090,24 +1166,50 @@ export default function AIListView({
             let payload = {};
 
             switch (approvalAction) {
+              // ===== AUDITOR =====
+              case "request_scan":
+                payload = {
+                  action: "request_scan",
+                  status: "requested",
+                };
+                break;
+
+              case "cancel_request":
+                payload = {
+                  action: "cancel_request",
+                  status: "pending_assessment",
+                };
+                break;
+
+              // ===== ADMIN =====
               case "scan_approve":
                 payload = {
                   action: "scan_approve",
                   status: "approved_for_scan",
                 };
                 break;
+
               case "scan_reject":
                 payload = {
                   action: "scan_reject",
                   status: "rejected_for_scan",
                 };
                 break;
+
               case "approve":
-                payload = { action: "approve", status: "approved_for_usage" };
+                payload = {
+                  action: "approve",
+                  status: "approved_for_usage",
+                };
                 break;
+
               case "reject":
-                payload = { action: "reject", status: "rejected_for_usage" };
+                payload = {
+                  action: "reject",
+                  status: "rejected_for_usage",
+                };
                 break;
+
               default:
                 return;
             }
@@ -1118,24 +1220,39 @@ export default function AIListView({
                 comment,
               });
 
-              // ✅ SUCCESS
+              // ✅ Optimistic UI update
+              setLiveProjects((prev) =>
+                prev.map((p) =>
+                  p.project_id === activeProject.project_id
+                    ? {
+                        ...p,
+                        ...payload,
+                        scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.scan_approved_by,
+
+                        __scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.__scan_approved_by,
+                      }
+                    : p,
+                ),
+              );
+
               setApprovalError(false);
               setShowApprovalModal(false);
               setSelected([]);
-              refreshProjects();
             } catch (err) {
-              // 🔴 402 – Insufficient credits
               const message =
                 err?.response?.data?.message ||
                 "Insufficient credits to run this scan.";
 
-              // 🔔 Toast (5 seconds)
               show(message, { type: "error", duration: 10000 });
 
-              // 🔴 Highlight modal
               setApprovalError(true);
 
-              // ⏱ AUTO-CLOSE modal after toast disappears
               setTimeout(() => {
                 setApprovalError(false);
                 setShowApprovalModal(false);

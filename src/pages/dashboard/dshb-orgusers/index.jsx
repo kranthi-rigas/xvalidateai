@@ -1,7 +1,7 @@
 import MetaComponent from "@/components/common/MetaComponent";
 import OrgUsers from "@/components/dashboard/orgusergroups/OrgUsers";
 const metadata = {
-  title: "Dashboard - Users | Academy51",
+  title: "Users || Academy51 - Smart Learning for smarter generation",
   description: "OrgUsers for Academy51",
 };
 

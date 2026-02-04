@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Outer container -->
+  <rect x="4" y="4" width="24" height="24" rx="4"
+        stroke="#9397B2" stroke-width="2"/>
+
+  <!-- Question bubble -->
+  <path
+    d="M10.5 11.5C10.5 9.6 12 8.5 14 8.5H18C20 8.5 21.5 9.6 21.5 11.5C21.5 13.4 20 14.5 18 14.5H16L14 16V14.5H14C12 14.5 10.5 13.4 10.5 11.5Z"
+    stroke="#9397B2"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+
+  <!-- Answer lines -->
+  <path
+    d="M11.5 19.5H20.5M11.5 22.5H18"
+    stroke="#9397B2"
+    stroke-width="1.8"
+    stroke-linecap="round"
+  />
+
+</svg>

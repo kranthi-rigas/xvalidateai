@@ -7,6 +7,7 @@ import HeaderAuth from "@/components/layout/headers/HeaderAuth.jsx";
 import { googleLogin } from "@/apiIntegration/auth.js";
 import { useNavigate } from "react-router-dom";
 import useToast from "@/hooks/useToast";
+import { useContextElement } from "@/context/Context";
 
 const metadata = {
   title: "XVALIDATEAI - Login",
@@ -16,23 +17,34 @@ const metadata = {
 export default function GoogleLoginPage() {
   const navigate = useNavigate();
   const show = useToast();
+  const { refreshUserPlan } = useContextElement();
 
   useEffect(() => {
     const doLogin = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+      if (!code) {
+        show("Google login failed: missing authorization code", {
+          type: "error",
+        });
+        navigate("/auth?mode=login");
+        return;
+      }
       try {
         const res = await googleLogin(code);
         localStorage.setItem("access_token", res.access_token);
         localStorage.setItem("refresh_token", res.refresh_token);
+        localStorage.setItem("user_info", JSON.stringify(res.user));
+        await refreshUserPlan();
         navigate("/dashboard");
       } catch (err) {
-        show(err.message || "Google login failed", { type: "error" });
         console.error("Google login error", err);
+        show(err.message || "Google login failed", { type: "error" });
+        navigate("/auth?mode=login");
       }
     };
     doLogin();
-  }, []);
+  }, [navigate, refreshUserPlan, show]);
 
   return (
     <div className="main-content">
