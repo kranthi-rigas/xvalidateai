@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Outlet, Navigate, useLocation } from "react-router-dom";
 import Preloader from "@/components/common/Preloader";
 import "./ModernDashboardLayout.css";
 import { COLORS } from "@/styles/colors";
 import { useContextElement } from "@/context/Context";
 import { sidebarItems } from "@/data/dashBoardSidebar";
+import Header from "./Header";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
@@ -39,58 +40,7 @@ export default function ModernDashboardLayout() {
     return location.pathname.startsWith(href);
   };
 
-  // Dynamic header content based on route
-  const headerContent = useMemo(() => {
-    const path = location.pathname;
 
-    if (path === "/dashboard" || path === "/dashboard/") {
-      return {
-        title: "Dashboard Overview",
-        description: "Welcome back to your compliance center.",
-      };
-    }
-
-    if (path.startsWith("/dashboard/aicompliance")) {
-      return {
-        title: "AI Compliance",
-        description: "Manage and monitor AI tool compliance assessments.",
-      };
-    }
-
-    if (path.startsWith("/dashboard/ailiteracy")) {
-      return {
-        title: "AI Literacy",
-        description: "Educational resources and training materials.",
-      };
-    }
-
-    if (path.startsWith("/dashboard/organizations")) {
-      return {
-        title: "Organizations",
-        description: "Manage your organization settings and members.",
-      };
-    }
-
-    if (path.startsWith("/dashboard/settings")) {
-      return {
-        title: "Settings",
-        description: "Configure your account and preferences.",
-      };
-    }
-
-    if (path.startsWith("/dashboard/pricing")) {
-      return {
-        title: "Pricing",
-        description: "View and manage your subscription plan.",
-      };
-    }
-
-    // Default fallback
-    return {
-      title: "Dashboard",
-      description: "Welcome back.",
-    };
-  }, [location.pathname]);
 
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
@@ -287,33 +237,7 @@ export default function ModernDashboardLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
         {/* Header */}
-        <header
-          id="header"
-          className="h-20 bg-card border-b border-border flex items-center justify-between px-8 z-10 sticky top-0"
-        >
-          <div>
-            <h1 className="text-2xl font-bold text-primary">
-              {headerContent.title}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {headerContent.description}
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search tools, vendors..."
-                className="pl-10 pr-4 py-2 bg-muted border border-transparent focus:border-primary focus:bg-white rounded-lg text-sm w-64 transition-all outline-none"
-              />
-              <i className="fa-solid fa-search absolute left-3 top-2.5 text-muted-foreground text-sm"></i>
-            </div>
-            <button className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-secondary/10 transition-colors relative">
-              <i className="fa-regular fa-bell"></i>
-              <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-white"></span>
-            </button>
-          </div>
-        </header>
+        <Header />
 
         {/* Scrollable Content Area */}
         <div
