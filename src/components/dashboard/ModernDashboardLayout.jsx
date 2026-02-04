@@ -1,22 +1,53 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet, Navigate, useLocation } from "react-router-dom";
-import Preloader from "@/components/common/Preloader";
+import {
+  Link,
+  Outlet,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import "./ModernDashboardLayout.css";
-import { COLORS } from "@/styles/colors";
 import { useContextElement } from "@/context/Context";
 import { sidebarItems } from "@/data/dashBoardSidebar";
 import Header from "./Header";
+import { logoutUser } from "@/apiIntegration/auth";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem("access_token");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [userRole, setUserRole] = useState("Admin");
   const handleParentClick = (item) => {
     if (!item.children) return;
 
     setOpenMenuId((prev) => (prev === item.id ? null : item.id));
   };
+  // Fetch user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userInfo = localStorage.getItem("user_info");
+        if (userInfo) {
+          const userData = JSON.parse(userInfo);
+          setUserName(
+            `${userData?.first_name || "User"} ${userData?.last_name || ""}`.trim(),
+          );
+          setUserRole(userData?.role || "Admin");
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
   useEffect(() => {
     sidebarItems.forEach((item) => {
       if (item.children?.some((child) => isActiveRoute(child.href))) {
@@ -25,7 +56,42 @@ export default function ModernDashboardLayout() {
     });
   }, [location.pathname]);
 
-  const { userCredits } = useContextElement();
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setShowLogoutModal(false);
+
+      const token =
+        localStorage.getItem("refresh_token") ||
+        sessionStorage.getItem("refresh_token");
+
+      if (token) {
+        await logoutUser(token);
+      }
+
+      // Clear tokens & redirect
+      localStorage.clear();
+      sessionStorage.clear();
+
+      if (setIsLoggedIn) {
+        setIsLoggedIn(false);
+      }
+
+      navigate("/auth?mode=login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      alert("Failed to logout. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const { userCredits, setIsLoggedIn } = useContextElement();
   const isActiveRoute = (href) => {
     if (!href) return false;
 
@@ -39,8 +105,6 @@ export default function ModernDashboardLayout() {
 
     return location.pathname.startsWith(href);
   };
-
-
 
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
@@ -66,6 +130,7 @@ export default function ModernDashboardLayout() {
           >
             <i
               className={`fa-solid ${sidebarCollapsed ? "fa-angles-right" : "fa-angles-left"}`}
+              data-fa-i2svg="false"
             ></i>
           </button>
         </div>
@@ -96,7 +161,7 @@ export default function ModernDashboardLayout() {
 
             return (
               <div key={item.id}>
-                {/* 🔹 PARENT ITEM */}
+                {/* PARENT ITEM */}
                 <Link
                   to={item.children ? "#" : item.href}
                   onClick={(e) => {
@@ -106,20 +171,24 @@ export default function ModernDashboardLayout() {
                     }
                   }}
                   title={sidebarCollapsed ? item.text : ""}
-                  className={`nav-item flex items-center ${
-                    sidebarCollapsed ? "justify-center px-2" : "px-4"
+                  className={`nav-item flex items-center justify-between ${
+                    sidebarCollapsed ? "px-2" : "px-4"
                   } py-3 text-sm font-medium rounded-lg transition-colors group ${
                     active
                       ? "active"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
+                  style={{ display: "inline-flex" }}
                 >
                   {/* LEFT SIDE */}
-                  <div className="flex items-center flex-1">
+                  <div
+                    className={`flex items-center ${sidebarCollapsed ? "" : "flex-1"}`}
+                  >
                     <span
-                      className={`fa-regular fa-building ${
+                      data-fa-i2svg="false"
+                      className={`${item.icon} ${
                         sidebarCollapsed ? "" : "mr-3"
-                      } group-hover:text-primary transition-colors`}
+                      } transition-colors group-hover:text-primary`}
                     />
                     {!sidebarCollapsed && <span>{item.text}</span>}
                   </div>
@@ -130,11 +199,12 @@ export default function ModernDashboardLayout() {
                       className={`fa-solid fa-chevron-right text-xs text-muted-foreground/50 transition-transform ${
                         openMenuId === item.id ? "rotate-90" : ""
                       }`}
+                      data-fa-i2svg="false"
                     />
                   )}
                 </Link>
 
-                {/* 🔹 CHILDREN (THIS is where your snippet goes) */}
+                {/* CHILDREN */}
                 {!sidebarCollapsed &&
                   item.children &&
                   openMenuId === item.id &&
@@ -148,7 +218,8 @@ export default function ModernDashboardLayout() {
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      {child.text}
+                      <span className={`${child.icon} mr-3 text-xs`} />
+                      <span>{child.text}</span>
                     </Link>
                   ))}
               </div>
@@ -156,76 +227,49 @@ export default function ModernDashboardLayout() {
           })}
         </nav>
 
-        {/* Credits Display */}
-        {!sidebarCollapsed && (
-          <div
-            className="px-4 py-3 mx-3 mb-3 rounded-lg border border-border"
-            style={{ backgroundColor: `${COLORS.secondary}08` }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Credits
-              </span>
-              <i
-                className="fa-solid fa-coins"
-                style={{ color: COLORS.secondary, fontSize: "14px" }}
-              ></i>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span
-                className="text-2xl font-bold"
-                style={{ color: COLORS.secondary }}
-              >
-                {userCredits?.remaining ?? 0}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                / {userCredits?.total ?? 0}
-              </span>
-            </div>
-            <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${userCredits?.total ? (userCredits.remaining / userCredits.total) * 100 : 0}%`,
-                  backgroundColor: COLORS.secondary,
-                }}
-              ></div>
-            </div>
-          </div>
-        )}
-
         <div className="p-4 border-t border-sidebar-border">
           <Link
             to="/dashboard/faq"
-            className={`nav-item flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors group mb-2`}
+            className={`nav-item flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors group mb-2`}
             title={sidebarCollapsed ? "FAQ's" : ""}
           >
             <span
               className={`fa-regular fa-circle-question ${sidebarCollapsed ? "" : "mr-3"} group-hover:text-primary transition-colors`}
+              data-fa-i2svg="false"
             ></span>
             {!sidebarCollapsed && <span>FAQ's</span>}
           </Link>
           <div
-            className={`flex items-center ${sidebarCollapsed ? "justify-center" : ""} p-3 bg-muted/50 rounded-lg border border-border`}
+            className={`flex items-center ${sidebarCollapsed ? "justify-center" : ""} p-2 bg-muted/50 rounded-lg border border-border`}
           >
             {sidebarCollapsed ? (
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                RP
+                {userName
+                  .split(" ")
+                  .map((n) => n.charAt(0).toUpperCase())
+                  .join("") || "RP"}
               </div>
             ) : (
               <>
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs mr-3">
-                  RP
+                  {userName
+                    .split(" ")
+                    .map((n) => n.charAt(0).toUpperCase())
+                    .join("") || "RP"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    Rakesh P.
+                    {userName || "User"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    Admin
+                    {userRole || "Admin"}
                   </p>
                 </div>
-                <button className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={handleLogoutClick}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Logout"
+                >
                   <i className="fa-solid fa-arrow-right-from-bracket"></i>
                 </button>
               </>
@@ -247,6 +291,102 @@ export default function ModernDashboardLayout() {
           {isAuthenticated ? <Outlet /> : <Navigate to="/auth?mode=login" />}
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ marginBottom: "16px" }}>
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  backgroundColor: "#fee2e2",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "16px",
+                }}
+              >
+                <i
+                  className="fa-solid fa-power-off"
+                  style={{ fontSize: "24px", color: "#ef4444" }}
+                ></i>
+              </div>
+              <h3
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#1f2937",
+                  marginBottom: "8px",
+                }}
+              >
+                Confirm Logout
+              </h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#6b7280",
+                  lineHeight: "1.5",
+                }}
+              >
+                Are you sure you want to logout? You'll need to sign in again to
+                access your dashboard.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+                marginTop: "24px",
+              }}
+            >
+              <AwsButton
+                label="Cancel"
+                variant="secondary"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+              />
+              <AwsButton
+                label={isLoggingOut ? "Logging out..." : "Logout"}
+                variant="primary"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

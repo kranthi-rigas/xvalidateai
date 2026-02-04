@@ -23,8 +23,11 @@ export default function OrgUsers({ refreshProjects }) {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const show = useToast();
   const orgExists = hasOrganization();
+  const [tableLoading, setTableLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const actionsRef = useRef(null);
 
-  //ADMIN Check helper
+  // ADMIN Check helper
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
   const roles = Array.isArray(userInfo.roles)
@@ -41,9 +44,8 @@ export default function OrgUsers({ refreshProjects }) {
   // Preferences modal
   const [showPreferences, setShowPreferences] = useState(false);
 
-  /* ---------- Add columnWidths state ---------- */
+  /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
-    checkbox: 60,
     email: 220,
     groups: 150,
     roles: 140,
@@ -54,6 +56,7 @@ export default function OrgUsers({ refreshProjects }) {
   const resizingCol = useRef(null);
 
   const startResize = (key, e) => {
+    e.preventDefault();
     resizingCol.current = {
       key,
       startX: e.clientX,
@@ -61,24 +64,23 @@ export default function OrgUsers({ refreshProjects }) {
     };
   };
 
-  const handleResize = (e) => {
-    if (!resizingCol.current) return;
-
-    const { key, startX, startWidth } = resizingCol.current;
-    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
-
-    setColumnWidths((prev) => ({
-      ...prev,
-      [key]: newWidth,
-    }));
-  };
-
   useEffect(() => {
-    window.addEventListener("mousemove", handleResize);
-    window.addEventListener("mouseup", () => (resizingCol.current = null));
+    const onMove = (e) => {
+      if (!resizingCol.current) return;
+      const { key, startX, startWidth } = resizingCol.current;
+      setColumnWidths((prev) => ({
+        ...prev,
+        [key]: Math.max(120, startWidth + (e.clientX - startX)),
+      }));
+    };
 
+    const onUp = () => (resizingCol.current = null);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
     return () => {
-      window.removeEventListener("mousemove", handleResize);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
     };
   }, []);
 
@@ -95,311 +97,315 @@ export default function OrgUsers({ refreshProjects }) {
     }
   }
 
-  // ---------- Filtered ----------
-  const filtered = (users || [])
-    .filter((u) => {
-      const name = `${u.first_name || ""} ${u.last_name || ""}`.trim();
-      const email = u.email || "";
-      return `${name} ${email}`.toLowerCase().includes(search.toLowerCase());
-    })
-    .map((u) => ({ ...u, __isSelected: selected.includes(u.user_id) }));
-
-  // ---------- SORTING ----------
+  /* ---------- SORTING ---------- */
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "asc",
   });
 
-  const handleSort = (key) => {
+  const requestSort = (key) => {
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  //Tooltip
-  // Measure exact pixel-width of text
-  const measureTextWidth = (text, font = "14px Amazon Ember") => {
-    const canvas =
-      measureTextWidth.canvas ||
-      (measureTextWidth.canvas = document.createElement("canvas"));
-    const ctx = canvas.getContext("2d");
-    ctx.font = font;
-    return ctx.measureText(text).width;
+  /* ---------- Table Preferences ---------- */
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  /* ---------- Column Visibility ---------- */
+  const [visibleColumns, setVisibleColumns] = useState(
+    Object.keys(columnWidths),
+  );
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
   };
 
-  // Check if tooltip is needed (text is truncated)
-  const shouldShowTooltip = (value, key) => {
-    if (!value) return false;
+  /* ---------- Filtered + Sorted ---------- */
+  const filtered = (users || [])
+    .filter((u) => {
+      if (!search.trim()) return true;
+      return buildSearchText(u).includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
+      return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
+    });
 
-    const maxWidth = columnWidths[key] - 24; // subtract padding
-    const textWidth = measureTextWidth(value);
+  /* ---------- Search Helper ---------- */
+  function buildSearchText(user) {
+    const name = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+    const email = user.email || "";
+    const roles = (user.roles || []).join(" ");
+    const groups = (user.groups || [])
+      .map((g) => (typeof g.name === "object" ? g.name.name : g.name))
+      .join(" ");
+    const status = user.status || "";
 
-    return textWidth > maxWidth;
-  };
+    return [name, email, roles, groups, status]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
 
-  // Capitalize First Letter
+  /* ---------- Pagination ---------- */
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  /* ---------- Selection ---------- */
+  const toggleSelect = (id) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+
+  const toggleSelectAll = (checked) =>
+    setSelected(checked ? filtered.map((u) => u.user_id) : []);
+
+  /* ---------- Capitalize First Letter ---------- */
   const capitalize = (str) =>
     typeof str === "string"
       ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
       : str;
 
-  // Status → Color Mapping
-  const getStatusColor = (status) => {
-    if (!status) return "#374151"; // default grey
+  /* ---------- Get Status Badge ---------- */
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      invited: {
+        bg: "bg-blue-50",
+        text: "text-blue-700",
+        border: "border-blue-200",
+      },
+      active: {
+        bg: "bg-green-50",
+        text: "text-green-700",
+        border: "border-green-200",
+      },
+      inactive: {
+        bg: "bg-red-50",
+        text: "text-red-700",
+        border: "border-red-200",
+      },
+    };
 
-    const s = status.toLowerCase();
-
-    if (s === "invited") return "#1D4ED8"; // BLUE
-    if (s === "active") return "#059669"; // GREEN
-    if (s === "inactive") return "#DC2626"; // RED
-
-    return "#374151"; // fallback grey
+    const lowerStatus = (status || "").toLowerCase();
+    return (
+      statusMap[lowerStatus] || {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+      }
+    );
   };
 
-  // ---------- Columns ----------
+  /* ---------- Format Date ---------- */
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "-";
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  /* ---------- Columns ---------- */
   const columns = [
     {
       key: "checkbox",
       label: "",
-      width: 50,
-      sortable: false,
+      width: 48,
       resizable: false,
-
-      // ⭐ Select-all should work only if rows exist
       allSelected: filtered.length > 0 && selected.length === filtered.length,
-
-      // ⭐ Select-all toggle: works for all users
-      onToggleAll: (checked) =>
-        setSelected(checked ? filtered.map((u) => u.user_id) : []),
+      onToggleAll: toggleSelectAll,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={selected.includes(row.user_id)}
+          onChange={() => toggleSelect(row.user_id)}
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+        />
+      ),
     },
-
     {
       key: "email",
       label: "Email",
       sortable: true,
       resizable: true,
-      width: 220,
     },
     {
       key: "groups",
       label: "Groups",
       sortable: false,
       resizable: true,
-      width: 150,
     },
     {
       key: "roles",
       label: "Roles",
       sortable: true,
       resizable: true,
-      width: 140,
     },
     {
       key: "status",
       label: "Status",
       sortable: true,
       resizable: true,
-      width: 120,
     },
     {
       key: "created_at",
       label: "Creation Time",
       sortable: true,
       resizable: true,
-      width: 180,
     },
   ];
-  // ---------- Render Cell ----------
+
+  /* ---------- Render Cell ---------- */
   const renderCell = (row, key) => {
-    if (key === "checkbox")
-      return (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.user_id)}
-          onChange={() =>
-            setSelected((prev) =>
-              prev.includes(row.user_id)
-                ? prev.filter((x) => x !== row.user_id)
-                : [...prev, row.user_id],
-            )
-          }
-        />
-      );
+    switch (key) {
+      case "checkbox":
+        return columns[0].render(row);
 
-    // -------------------- EMAIL --------------------
-    if (key === "email") {
-      const text = row.email || "";
-      const showTip = shouldShowTooltip(text, "email");
+      case "email":
+        return (
+          <span className="text-muted-foreground">{row.email || "-"}</span>
+        );
 
-      return (
-        <div
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.email - 20,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? text : ""}
-        >
-          {text}
-        </div>
-      );
+      case "roles": {
+        const rolesList = (row.roles || []).map(capitalize);
+        const text = rolesList.length ? rolesList.join(", ") : "-";
+        return (
+          <span className="text-muted-foreground" title={text}>
+            {text}
+          </span>
+        );
+      }
+
+      case "groups": {
+        const groups =
+          row.groups
+            ?.map((g) => (typeof g.name === "object" ? g.name.name : g.name))
+            .join(", ") || "-";
+
+        return (
+          <span className="truncate text-muted-foreground" title={groups}>
+            {groups}
+          </span>
+        );
+      }
+
+      case "status": {
+        const badge = getStatusBadge(row.status);
+        const statusText = capitalize(row.status || "-");
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+          >
+            {statusText}
+          </span>
+        );
+      }
+
+      case "created_at":
+        return (
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatDate(row.created_at)}
+          </span>
+        );
+
+      default:
+        return row[key] || "-";
     }
-
-    // -------------------- ROLES --------------------
-    if (key === "roles") {
-      const rolesList = (row.roles || []).map(capitalize);
-      const text = rolesList.length ? rolesList.join(", ") : "-";
-      const showTip = shouldShowTooltip(text, "roles");
-      return (
-        <div
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.roles - 20,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? text : ""}
-        >
-          {text}
-        </div>
-      );
-    }
-
-    // -------------------- GROUPS --------------------
-    if (key === "groups") {
-      const groups =
-        row.groups
-          ?.map((g) => (typeof g.name === "object" ? g.name.name : g.name))
-          .join(", ") || "-";
-
-      const showTip = shouldShowTooltip(groups, "groups");
-
-      return (
-        <div
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: columnWidths.groups - 20,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? groups : ""}
-        >
-          {groups}
-        </div>
-      );
-    }
-    // -------------------- STATUS --------------------
-    if (key === "status") {
-      const statusText = capitalize(row.status || "-");
-      const color = getStatusColor(row.status);
-      const showTip = shouldShowTooltip(statusText, "status");
-
-      return (
-        <span
-          style={{
-            padding: "4px 10px",
-            borderRadius: 12,
-            background: "#F3F4F6",
-            color,
-            fontWeight: 600,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? statusText : ""}
-        >
-          {statusText}
-        </span>
-      );
-    }
-
-    // -------------------- CREATED AT --------------------
-    if (key === "created_at") {
-      return row.created_at
-        ? new Date(row.created_at * 1000).toLocaleString()
-        : "-";
-    }
-
-    return row[key] || "-";
   };
 
-  // Table preferences
-  const [pageSize, setPageSize] = useState(25);
-  const [wrapLines, setWrapLines] = useState(false);
-  const [stripedRows, setStripedRows] = useState(false);
-
-  // Column visibility
-  const [visibleColumns, setVisibleColumns] = useState(
-    columns.map((c) => c.key),
+  const visibleTableColumns = columns.filter(
+    (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );
-  const toggleColumn = (key) => {
-    setVisibleColumns((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
-  };
-  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
 
-  // ---------- Table Refresh ---------- //
-  const [tableLoading, setTableLoading] = useState(false);
-  {
-    tableLoading && (
-      <div className="table-refresh-overlay">
-        <div className="table-spinner"></div>
-      </div>
-    );
-  }
+  /* ---------- Actions Menu ---------- */
+  const actionItems = (() => {
+    if (!canManage || selected.length === 0) return [];
+
+    // Multi-select: could add bulk actions here
+    if (selected.length > 1) return [];
+
+    // Single select: add edit/delete actions
+    return [
+      { key: "edit", label: "Edit", disabled: true },
+      { key: "delete", label: "Delete", danger: true, disabled: true },
+    ];
+  })();
 
   if (pageLoading) {
     return <PageLoader loading={true} />;
   }
+
   return (
-    <div className="dashboard__content">
-      <div className="dashboard-body">
-        {/* ---------- TOP BAR ---------- */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            gap: 12,
-          }}
-        >
+    <div className="space-y">
+      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
+        {/* TOOLBAR */}
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search */}
-          <div style={{ flex: 1, maxWidth: 420 }}>
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+            </div>
+
             <input
               type="text"
-              placeholder="Search users…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 16px",
-                borderRadius: 999,
-                border: "1px solid #D1D5DB",
-                background: "#F8F9FC",
-                fontSize: 14,
-                height: 40,
-              }}
+              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+              placeholder="Search users by name, email, role..."
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Refresh Button */}
-            <RefreshButton
-              onRefresh={loadUsers}
-              setTableLoading={setTableLoading}
-            />
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh */}
+            <button
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await loadUsers();
+                setTimeout(() => setTableLoading(false), 300);
+              }}
+              title="Refresh"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right"></i>
+            </button>
 
-            <ActionsMenu
-              selected={selected}
-              onEdit={(id) => alert("Edit user: " + id)}
-              onDelete={() => alert("Delete users: " + selected)}
-            />
+            {/* Actions dropdown */}
+            <div ref={actionsRef} className="relative">
+              <ActionsMenu
+                disabled={!canManage || selected.length === 0}
+                items={actionItems}
+                onSelect={() => {}}
+              />
+            </div>
 
+            {/* Preferences button */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+
+            {/* Invite Users Button */}
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
@@ -409,67 +415,47 @@ export default function OrgUsers({ refreshProjects }) {
               }
             >
               <AwsButton
-                label="Invite Users"
                 onClick={() => {
                   if (!canManage) return;
                   setShowInviteModal(true);
                 }}
+                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
               >
-                <SlUserFollow size={15} />
+                <SlUserFollow size={15} className="mr-2" />
+                Invite Users
               </AwsButton>
             </OrgRequiredWrapper>
-            <AwsSettingsIconButton
-              onClick={() => setShowPreferences(true)}
-              title="Preferences"
-            />
           </div>
         </div>
 
-        {/* ---------- TABLE ---------- */}
-        <div
-          style={{
-            border: "1px solid #E5E7EB",
-            borderRadius: 12,
-            overflow: "hidden",
-            background: "#fff",
-          }}
-        >
-          <div style={{ position: "relative" }}>
-            <ListTable
-              columns={visibleCols}
-              data={filtered.slice(0, pageSize)}
-              rowKey="user_id"
-              renderCell={renderCell}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              columnWidths={columnWidths}
-              startResize={startResize}
-            />
-
-            {tableLoading && (
-              <div className="table-refresh-overlay">
-                <div className="table-spinner"></div>
-              </div>
-            )}
-          </div>
+        {/* TABLE */}
+        <div className="relative flex-1 overflow-hidden">
+          {tableLoading && (
+            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
+          )}
+          <ListTable
+            columns={visibleTableColumns}
+            data={paginatedData}
+            rowKey="user_id"
+            renderCell={renderCell}
+            sortConfig={sortConfig}
+            onSort={requestSort}
+            columnWidths={columnWidths}
+            startResize={startResize}
+            loading={tableLoading}
+            selectedCount={selected.length}
+            selectionCounterLabel="user"
+            pagination={{
+              page,
+              pageSize,
+              total: filtered.length,
+              onPageChange: setPage,
+            }}
+          />
         </div>
+      </section>
 
-        {/* ---------- Pagination ---------- */}
-        <div
-          style={{
-            marginTop: 20,
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
-          }}
-        >
-          <button style={pgBtn}>{"<"}</button>
-          <span style={pageTag}>1</span>
-          <button style={pgBtn}>{">"}</button>
-        </div>
-      </div>
-
-      {/* ---------- MODAL ---------- */}
+      {/* MODALS */}
       {showInviteModal && (
         <InviteUsersModal
           onClose={() => setShowInviteModal(false)}
@@ -502,6 +488,7 @@ export default function OrgUsers({ refreshProjects }) {
           }}
         />
       )}
+
       {showPreferences && (
         <TablePreferencesModal
           open={showPreferences}
@@ -520,18 +507,3 @@ export default function OrgUsers({ refreshProjects }) {
     </div>
   );
 }
-
-/* ---------- Pagination Styles ---------- */
-const pgBtn = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#F3F4F6",
-  border: "1px solid #D1D5DB",
-  cursor: "pointer",
-};
-
-const pageTag = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#EEF2FF",
-};
