@@ -79,6 +79,42 @@ export default function Context({ children }) {
     }
   }, []);
 
+  // Function to reset user state on logout
+  const resetUserState = useCallback(() => {
+    console.log("🔄 resetUserState: Resetting all user state to defaults");
+    setUserPlan("free");
+    setUserCredits(0);
+    setIsLoggedIn(false);
+    setCartProducts([]);
+    setCartCourses([]);
+    setCartEvents([]);
+  }, []);
+
+  // Function to update user plan from localStorage (call after login)
+  const loadUserPlanFromStorage = useCallback(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      setIsLoggedIn(true);
+      const currentPlan = getUserPlan();
+      console.log("🔄 loadUserPlanFromStorage: Loading plan:", currentPlan);
+      setUserPlan(currentPlan);
+      
+      try {
+        const userInfo = localStorage.getItem("user_info");
+        if (userInfo) {
+          const parsed = JSON.parse(userInfo);
+          const credits = parsed?.plan?.credits_remaining || 
+                         parsed?.subscription?.credits_remaining || 
+                         0;
+          setUserCredits(credits);
+          console.log("🔄 loadUserPlanFromStorage: Loading credits:", credits);
+        }
+      } catch (error) {
+        console.error("Error loading user credits:", error);
+      }
+    }
+  }, []);
+
   const addCourseToCart = (id) => {
     if (!cartCourses.filter((elm) => elm.id == id)[0]) {
       const item = {
@@ -146,6 +182,8 @@ export default function Context({ children }) {
     userCredits,
     setUserCredits,
     refreshUserPlan,
+    resetUserState,
+    loadUserPlanFromStorage,
   };
   return (
     <dataContext.Provider value={contextElement}>
