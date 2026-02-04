@@ -13,6 +13,15 @@ const headerContentMap = {
     title: "AI Literacy",
     description: "Educational resources and training materials.",
   },
+  "/dashboard/orgusergroups": {
+    title: "User Groups",
+    description: "Create and manage user groups to organize users and control access across your organization.",
+  },
+  "/dashboard/orgusers": {
+    title: "Users",
+    description: "View, invite, and manage users in your organization, including roles and access status.",
+  },
+
   "/dashboard/organizations": {
     title: "Organizations",
     description: "Manage your organization settings and members.",
