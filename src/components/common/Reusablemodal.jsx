@@ -17,6 +17,7 @@ import COLORS from "../../styles/colors";
  * @param {string} className - Additional classes for modal content
  * @param {boolean} error - Error state (red border + shake animation)
  */
+
 export default function ReusableModal({
   isOpen = false,
   onClose,
