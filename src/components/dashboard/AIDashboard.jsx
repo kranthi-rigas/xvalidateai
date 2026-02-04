@@ -11,14 +11,14 @@ const HIGH_RISK_COLUMNS = [
   { key: "overall", label: "Overall" },
   { key: "privacy", label: "Privacy" },
   { key: "reason", label: "Risk Reasons" },
-  { key: "action", label: "Action" },
+  { key: "action", label: "Action", truncate: false },
 ];
 
 const TOOL_COLUMNS = [
   { key: "name", label: "Tool Name" },
   { key: "category", label: "Category" },
   { key: "overall", label: "Overall" },
-  { key: "recommendation", label: "Recommendation" },
+  { key: "recommendation", label: "Recommendation", truncate: false },
   { key: "usage", label: "Allowed Usage" },
   { key: "grade", label: "Grade Level" },
 ];
@@ -299,6 +299,12 @@ export default function AIDashboard() {
     });
 
     const standards = Object.keys(grouped);
+
+    // Abbreviate labels for display, keep full names for hover
+    const abbreviateLabel = (label) => {
+      return label.length > 40 ? label.substring(0, 17) + "..." : label;
+    };
+
     const compliancePlotData = [
       {
         type: "bar",
@@ -309,8 +315,10 @@ export default function AIDashboard() {
             grouped[s].claimed +
             grouped[s].notVerified,
         ),
-        y: standards,
+        y: standards.map((s) => abbreviateLabel(s)),
+        customdata: standards.map((s) => s),
         orientation: "h",
+        hovertemplate: "<b>%{customdata}</b><br>Count: %{x}<extra></extra>",
         marker: {
           color: standards.map((s) => {
             const total =
@@ -336,7 +344,7 @@ export default function AIDashboard() {
       },
       xaxis: { title: "Number of Tools", gridcolor: "#f1f5f9" },
       yaxis: { autorange: "reversed" },
-      margin: { t: 50, b: 40, l: 200, r: 20 },
+      margin: { t: 50, b: 40, l: 250, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: 450,
@@ -461,12 +469,12 @@ export default function AIDashboard() {
         {/* Charts Column */}
         <div className="col-span-4 space-y-6">
           {/* Recommendation Distribution */}
-          <div className="dashboard-card p-4 h-[320px]">
+          <div className="dashboard-card p-2">
             <div id="chart-recommendation" className="w-full h-full"></div>
           </div>
 
           {/* Intended Users */}
-          <div className="dashboard-card p-4 h-[320px]">
+          <div className="dashboard-card p-2">
             <div id="chart-users" className="w-full h-full"></div>
           </div>
         </div>
