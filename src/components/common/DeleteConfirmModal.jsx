@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import AwsButton from "./AwsButton";
-import ReusableModal from "./ReusableModal";
+import ReusableModal from "./Reusablemodal";
 import useToast from "../../hooks/useToast";
 import { COLORS } from "../../styles/colors";
 
