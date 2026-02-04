@@ -56,4 +56,12 @@ export const sidebarItems = [
         permission: null,
         requiredPlan: null,
     },
+    {
+        id: 7,
+        href: "/dashboard/faqs",
+        icon: "fa-solid fa-circle-question",
+        text: "FAQs",
+        permission: null,
+        requiredPlan: null,
+    },
 ];
