@@ -84,6 +84,10 @@ export default function DashboardPricing() {
     const { userPlan } = useContextElement();
     const currentPlan = userPlan || "free";
 
+    // Debug logging to help identify issues
+    console.log("🔍 DashboardPricing: userPlan from context:", userPlan);
+    console.log("🔍 DashboardPricing: currentPlan resolved to:", currentPlan);
+
     // Helper to check if a plan is below current plan
     const isPlanBelowCurrent = (planId) => {
         const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
