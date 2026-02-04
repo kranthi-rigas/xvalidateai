@@ -1,0 +1,92 @@
+@import '../../styles/design-system/colors.scss';
+@import '../../styles/design-system/typography.scss';
+@import '../../styles/design-system/spacing.scss';
+
+.compliance-badge {
+  @include text-caption;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+
+  .badge-icon {
+    font-weight: $font-weight-bold;
+    font-size: 0.875em;
+  }
+
+  // Size variants
+  &.badge-sm {
+    padding: $spacing-1 $spacing-2;
+    font-size: 0.625rem;
+    gap: $spacing-1;
+  }
+
+  &.badge-md {
+    padding: $spacing-1 $spacing-3;
+    font-size: $font-size-xs;
+  }
+
+  &.badge-lg {
+    padding: $spacing-2 $spacing-4;
+    font-size: $font-size-sm;
+    gap: $spacing-2;
+  }
+
+  // Status variants
+  &.badge-compliant {
+    background-color: $color-success-light;
+    color: $color-success-dark;
+    border: 1px solid color-alpha($color-success, 0.3);
+
+    .badge-icon {
+      color: $color-success;
+    }
+  }
+
+  &.badge-warning {
+    background-color: $color-warning-light;
+    color: darken($color-warning, 20%);
+    border: 1px solid color-alpha($color-warning, 0.3);
+
+    .badge-icon {
+      color: $color-warning;
+    }
+  }
+
+  &.badge-non-compliant {
+    background-color: $color-error-light;
+    color: $color-error-dark;
+    border: 1px solid color-alpha($color-error, 0.3);
+
+    .badge-icon {
+      color: $color-error;
+    }
+  }
+
+  &.badge-pending {
+    background-color: $color-neutral-light;
+    color: $color-neutral-dark;
+    border: 1px solid color-alpha($color-neutral, 0.3);
+
+    .badge-icon {
+      color: $color-neutral;
+    }
+  }
+
+  // Accessibility
+  @include high-contrast {
+    border-width: 2px;
+  }
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+// Made with Bob

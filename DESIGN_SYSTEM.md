@@ -1,429 +1,629 @@
-# XVALIDATEAI Design System Documentation
+# AI Compliance Design System Documentation
 
 ## Overview
-This document outlines the complete design system for the XVALIDATEAI AI Compliance application, based on the logo colors and brand identity.
+
+This design system provides a comprehensive UI/UX framework for AI compliance tools serving diverse users including SMBs, educators, IT administrators, and engineers. It balances enterprise-grade compliance rigor with consumer-grade usability.
+
+## Design Principles
+
+### 1. **Trustworthiness First**
+- Blue-dominant color scheme conveying security and reliability
+- Consistent visual language across all compliance states
+- Clear, unambiguous status indicators
+
+### 2. **Progressive Disclosure**
+- Information hierarchy serving multiple skill levels
+- Role-based views (viewer, editor, admin)
+- Expandable details for technical users
+
+### 3. **Accessibility by Default**
+- WCAG AA/AAA compliance throughout
+- Color-blind safe combinations
+- Keyboard navigation support
+- Screen reader optimized
+
+### 4. **Cross-Cultural Safety**
+- Colors tested for Middle Eastern and Western markets
+- Universal iconography
+- Culturally neutral visual language
 
 ---
 
-## 🎨 Color Palette (Extracted from Logo)
+## Color System
 
-### Primary Colors (Navy Shield from Logo)
-- **Primary**: `#0F3053` (Navy Shield)
-  - Usage: Main brand color, primary buttons, headers, navigation, logo shield
-  - Foreground: `#FFFFFF` (White)
-  - CSS Variable: `--color-primary`
-  - RGB: rgb(15, 48, 83)
-  - Contrast Ratio: 13.2:1 (AAA)
+### Primary Palette
 
-### Secondary Colors (Cyan Mark from Logo)
-- **Secondary**: `#58BFCE` (Cyan/Turquoise Mark)
-  - Usage: Verification icons, trust badges, interactive accents, logo mark
-  - Foreground: `#0F172A` (Deep Navy)
-  - CSS Variable: `--color-secondary`
-  - RGB: rgb(88, 191, 206)
-  - Contrast Ratio: 4.9:1 (AA)
+| Color | Hex | Contrast | Usage |
+|-------|-----|----------|-------|
+| **Trust Blue** | `#0043ce` | 7:1 (AAA) | Brand identity, primary CTAs |
+| **Deep Blue** | `#001d6c` | 12:1 (AAA) | Headers, navigation, hover states |
+| **Sky Blue** | `#a6c8ff` | 3.2:1 on dark | Highlights, active states |
+| **Teal** | `#007d79` | 4.5:1 (AA) | Data visualization, secondary actions |
 
-### Accent Colors
-- **Accent**: `#64748B` (Slate Gray)
-  - Usage: Secondary text, inactive states, subtle UI elements
-  - Foreground: `#FFFFFF` (White)
-  - CSS Variable: `--color-accent`
-  - RGB: rgb(100, 116, 139)
-  - Contrast Ratio: 5.1:1 (AA)
+### Semantic Colors - Compliance States
 
-### Neutral Colors
-- **Background**: `#FAFAFA` (Off-White)
-  - Usage: Main page background
-  - CSS Variable: `--color-background`
-  
-- **Foreground**: `#0F172A` (Deep Navy)
-  - Usage: Primary text color, headings
-  - CSS Variable: `--color-foreground`
-  - RGB: rgb(15, 23, 42)
-  - Contrast Ratio: 16.8:1 (AAA)
+| State | Color | Hex | Application |
+|-------|-------|-----|-------------|
+| **Compliant** | Green | `#198038` | Passing controls, verified status |
+| **Warning** | Amber | `#ff832b` | Needs review, approaching deadline |
+| **Non-Compliant** | Red | `#da1e28` | Failed checks, critical issues |
+| **Pending** | Gray | `#8d8d8d` | Not started, not applicable |
 
-### Card Colors
-- **Card Background**: `#FFFFFF`
-  - Usage: Card containers, panels, modals
-  - CSS Variable: `--color-card`
-  
-- **Card Foreground**: `#0F172A`
-  - Usage: Text on cards
-  - CSS Variable: `--color-card-foreground`
+### Neutral System
 
-- **Popover Background**: `#FFFFFF`
-  - CSS Variable: `--color-popover`
-  
-- **Popover Foreground**: `#0F172A`
-  - CSS Variable: `--color-popover-foreground`
+**Light Mode:**
+- Background: `#f4f4f4`
+- Surface/Cards: `#ffffff`
+- Border: `#c6c6c6`
+- Text Primary: `#161616` (18:1 contrast - AAA)
+- Text Secondary: `#525252` (8:1 contrast - AAA)
 
-### Border & Input Colors
-- **Border**: `#EEEEEE` (Light Gray)
-  - Usage: Dividers, input borders, card outlines
-  - CSS Variable: `--color-border`
-  
-- **Input**: `#FFFFFF`
-  - Usage: Input field backgrounds
-  - CSS Variable: `--color-input`
-  
-- **Ring**: `#94A3B8` (Blue-Gray)
-  - Usage: Focus rings, selection indicators
-  - CSS Variable: `--color-ring`
+**Dark Mode:**
+- Background: `#161616`
+- Surface/Cards: `#262626`
+- Border: `rgba(255,255,255,0.15)`
+- Text Primary: `#f5f5f5`
+- Text Secondary: `#a8a8a8`
 
-### Semantic/Status Colors
+### Color-Blind Safety
 
-**Success/Compliant**
-- **Color**: `#10B981` (Green)
-- **Usage**: Success states, compliant status, positive feedback
-- **Badge Background**: `#D1FAE5`
-- **CSS Variable**: `--color-success`
+All color combinations are tested for:
+- Protanopia (red-blind)
+- Deuteranopia (green-blind)
+- Tritanopia (blue-blind)
 
-**Warning/Attention**
-- **Color**: `#F59E0B` (Amber)
-- **Usage**: Warnings, needs attention, partial compliance
-- **Badge Background**: `#FEF3C7`
-- **CSS Variable**: `--color-warning`
+**Key Pairing:** Blue + Orange remains distinguishable across all forms of color blindness.
 
-**Error/Failed (Destructive)**
-- **Color**: `#EF4444` (Red)
-- **Usage**: Error states, failed assessments, critical issues, delete actions
-- **Foreground**: `#FFFFFF`
-- **Badge Background**: `#FEE2E2`
-- **CSS Variable**: `--color-destructive`
-
-**Info**
-- **Color**: `#3B82F6` (Blue)
-- **Usage**: Information messages, neutral notifications
-- **Badge Background**: `#DBEAFE`
+**Never rely on color alone** - always pair with:
+- Icons
+- Labels
+- Patterns
+- Text descriptions
 
 ---
 
-## 📝 Typography
+## Typography
 
-### Font Families
+### Font Stack
 
-#### Sans-Serif (Primary)
-- **Font**: Inter
-- **Weights**: 300 (Light), 400 (Regular), 500 (Medium), 600 (Semi-Bold), 700 (Bold), 800 (Extra Bold)
-- **Usage**: All UI elements, body text, buttons, forms, navigation
-- **CSS Variable**: `--font-sans`, `--font-primary`
-- **Why Inter**: Designed specifically for digital interfaces, excellent readability, professional appearance
+```scss
+Primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu'
+Monospace: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Roboto Mono'
+```
 
-#### Serif
-- **Font**: Georgia
-- **Weights**: 400 (Regular), 700 (Bold)
-- **Usage**: Long-form content, blog posts, documentation, emphasis
-- **CSS Variable**: `--font-serif`
+### Type Scale (Modular Scale 1.250)
 
-#### Monospace
-- **Font**: JetBrains Mono
-- **Weights**: 400 (Regular), 500 (Medium), 700 (Bold)
-- **Usage**: Code blocks, API documentation, technical data, file paths
-- **CSS Variable**: `--font-mono`
+| Style | Size | Weight | Line Height | Usage |
+|-------|------|--------|-------------|-------|
+| Display 1 | 48px | Bold | 1.25 | Hero sections |
+| Display 2 | 36px | Bold | 1.25 | Page titles |
+| H1 | 30px | Semibold | 1.25 | Section headers |
+| H2 | 24px | Semibold | 1.5 | Subsection headers |
+| H3 | 20px | Semibold | 1.5 | Card titles |
+| H4 | 18px | Medium | 1.5 | Small headers |
+| Body Large | 18px | Regular | 1.75 | Intro text |
+| Body | 16px | Regular | 1.5 | Default text |
+| Body Small | 14px | Regular | 1.5 | Secondary text |
+| Caption | 12px | Regular | 1.5 | Metadata, timestamps |
+| Label | 14px | Medium | 1.5 | Form labels, uppercase |
 
-### Font Sizes
-| Size | Value | Pixels | Usage |
-|------|-------|--------|-------|
-| `--text-xs` | 0.75rem | 12px | Small labels, captions |
-| `--text-sm` | 0.875rem | 14px | Secondary text, metadata |
-| `--text-md` | 0.9375rem | 15px | Body text alternative |
-| `--text-base` | 1rem | 16px | Primary body text |
-| `--text-lg` | 1.125rem | 18px | Subheadings |
-| `--text-xl` | 1.25rem | 20px | Section headings |
-| `--text-2xl` | 1.5rem | 24px | Page titles |
+### Accessibility Requirements
 
-### Font Weights
-| Weight | Value | Usage |
-|--------|-------|-------|
-| `--font-light` | 300 | Light emphasis |
-| `--font-regular` | 400 | Body text |
-| `--font-medium` | 500 | Subtle emphasis |
-| `--font-semibold` | 600 | Subheadings |
-| `--font-bold` | 700 | Headings, strong emphasis |
-| `--font-extrabold` | 800 | Hero text, major headings |
+- Minimum 16px for body text
+- 4.5:1 contrast for normal text (AA)
+- 3:1 contrast for large text (18pt+)
+- 7:1 contrast for AAA compliance
 
-### Typography Scale & Usage
+---
 
-```css
-/* Headings */
-H1: Inter Bold, 48px/56px (3rem/3.5rem), #0F172A
-H2: Inter Bold, 36px/44px (2.25rem/2.75rem), #0F172A
-H3: Inter Semi-Bold, 30px/38px (1.875rem/2.375rem), #0F172A
-H4: Inter Semi-Bold, 24px/32px (1.5rem/2rem), #0F172A
-H5: Inter Medium, 20px/28px (1.25rem/1.75rem), #64748B
-H6: Inter Medium, 18px/26px (1.125rem/1.625rem), #64748B
+## Spacing System
 
-/* Body Text */
-Body Large: Inter Regular, 18px/28px, #0F172A
-Body: Inter Regular, 16px/24px, #0F172A
-Body Small: Inter Regular, 14px/20px, #64748B
-Caption: Inter Regular, 13px/18px, #94A3B8
-Label: Inter Medium, 14px/20px, #0F172A
+### 8px Base Unit
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `spacing-0` | 0 | No spacing |
+| `spacing-1` | 4px | Tight spacing |
+| `spacing-2` | 8px | Base unit |
+| `spacing-3` | 12px | Small gaps |
+| `spacing-4` | 16px | Default spacing |
+| `spacing-5` | 20px | Medium spacing |
+| `spacing-6` | 24px | Large spacing |
+| `spacing-8` | 32px | Section spacing |
+| `spacing-10` | 40px | Major sections |
+| `spacing-12` | 48px | Page sections |
+
+### Border Radius
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `radius-sm` | 4px | Small elements |
+| `radius-md` | 8px | Buttons, inputs |
+| `radius-lg` | 12px | Cards, containers |
+| `radius-xl` | 16px | Large surfaces |
+| `radius-full` | 9999px | Pills, badges |
+
+---
+
+## Components
+
+### 1. Compliance Status Badge
+
+**Purpose:** Visual indicator for compliance states
+
+**Variants:**
+- `compliant` - Green with checkmark
+- `warning` - Amber with warning icon
+- `non-compliant` - Red with X icon
+- `pending` - Gray with circle icon
+
+**Sizes:** `sm`, `md`, `lg`
+
+**Usage:**
+```jsx
+<ComplianceStatusBadge 
+  status="compliant" 
+  label="Verified"
+  size="md"
+  showIcon={true}
+/>
+```
+
+**Accessibility:**
+- `role="status"` for screen readers
+- `aria-label` with full status description
+- Icons are `aria-hidden="true"`
+
+---
+
+### 2. Compliance Score Card
+
+**Purpose:** Display compliance metrics with visual indicators
+
+**Features:**
+- Circular progress ring (0-100%)
+- Color-coded by score threshold:
+  - 90-100%: Green (Excellent)
+  - 75-89%: Blue (Good)
+  - 60-74%: Amber (Warning)
+  - 0-59%: Red (Critical)
+- Trend indicators (up/down/neutral)
+- Optional click interaction
+
+**Usage:**
+```jsx
+<ComplianceScoreCard
+  score={85}
+  title="Overall Compliance"
+  description="Aggregate score across all controls"
+  trend="up"
+  trendValue={5.2}
+  onClick={handleClick}
+/>
+```
+
+**Accessibility:**
+- Keyboard navigable when clickable
+- `role="button"` for interactive cards
+- `aria-valuenow`, `aria-valuemin`, `aria-valuemax` for progress
+
+---
+
+### 3. Compliance Dashboard
+
+**Purpose:** Modular dashboard for AI compliance monitoring
+
+**Features:**
+- Responsive grid layout
+- Category breakdown cards
+- Controls table with filtering
+- Recent activity feed
+- Role-based views
+
+**Layout Breakpoints:**
+- Mobile: 1 column
+- Tablet (768px+): 2 columns
+- Desktop (1024px+): 3 columns
+- Large (1280px+): 4 columns
+
+**Usage:**
+```jsx
+<ComplianceDashboard
+  overallScore={85}
+  controls={controlsData}
+  recentActivity={activityData}
+  userRole="admin"
+  onControlClick={handleControlClick}
+  onViewDetails={handleViewDetails}
+/>
 ```
 
 ---
 
-## 📏 Spacing Scale (8px Base Unit)
+## Buttons
 
-| Variable | Value | Pixels | Usage |
-|----------|-------|--------|-------|
-| `--space-0` | 0 | 0px | No spacing |
-| `--space-0-5` | 0.25rem | 4px | Tight spacing |
-| `--space-1` | 0.5rem | 8px | Small gaps |
-| `--space-2` | 1rem | 16px | Standard spacing |
-| `--space-3` | 1.5rem | 24px | Medium spacing |
-| `--space-4` | 2rem | 32px | Large spacing |
-| `--space-5` | 2.5rem | 40px | Extra large spacing |
-| `--space-6` | 3rem | 48px | Section spacing |
-| `--space-8` | 4rem | 64px | Major section spacing |
-| `--space-10` | 5rem | 80px | Hero spacing |
-| `--space-12` | 6rem | 96px | Large hero spacing |
-| `--space-16` | 8rem | 128px | Extra large sections |
+### Primary Button
+- Background: Trust Blue (`#0043ce`)
+- Text: White
+- Hover: Deep Blue (`#0036a8`)
+- Use for: Primary actions, CTAs
 
----
+### Secondary Button
+- Background: Transparent
+- Border: 2px Trust Blue
+- Text: Trust Blue
+- Use for: Secondary actions
 
-## 🔲 Border Radius
+### Ghost Button
+- Background: Transparent
+- Text: Trust Blue
+- Hover: Light overlay
+- Use for: Tertiary actions, table actions
 
-| Variable | Value | Usage |
-|----------|-------|-------|
-| `--radius-xs` | 2px | Minimal rounding |
-| `--radius-sm` | 6px | Small elements |
-| `--radius` | 10px | **Default radius** - buttons, cards, inputs |
-| `--radius-md` | 10px | Medium elements |
-| `--radius-lg` | 12px | Large containers |
-| `--radius-pill` | 9999px | Fully rounded (pills, badges) |
+### Danger Button
+- Background: Red (`#da1e28`)
+- Text: White
+- Use for: Destructive actions
 
-**Note**: The default border radius is **10px** as specified in the design system.
+**Sizes:** `sm`, `md` (default), `lg`
 
 ---
 
-## 🌑 Shadows & Elevation
+## Form Inputs
 
-### Shadow Specifications
-- **X Offset**: -2px
-- **Y Offset**: 4px
-- **Blur**: 12px (base)
-- **Spread**: 4px (base)
-- **Color**: `#333333`
+### Text Input
+- Border: 2px solid `#c6c6c6`
+- Focus: Border `#0043ce` with 3px ring
+- Error: Border `#da1e28` with error ring
+- Disabled: Gray background, 60% opacity
 
-### Shadow Levels
-| Variable | Value | Usage |
-|----------|-------|-------|
-| `--shadow-0` | none | Flat elements |
-| `--shadow-1` | -2px 4px 12px 4px rgba(51, 51, 51, 0.2) | Cards, buttons |
-| `--shadow-2` | -2px 4px 16px 6px rgba(51, 51, 51, 0.25) | Elevated panels |
-| `--shadow-3` | -2px 4px 20px 8px rgba(51, 51, 51, 0.3) | Modals, popovers |
-| `--shadow-custom` | -2px 4px 12px 4px #333333 | Custom shadow |
+### Select Dropdown
+- Same styling as text input
+- Chevron icon on right
 
----
-
-## 🎯 Z-Index Scale
-
-| Variable | Value | Usage |
-|----------|-------|-------|
-| `--z-below` | -1 | Behind content |
-| `--z-base` | 0 | Base layer |
-| `--z-dropdown` | 100 | Dropdowns, tooltips |
-| `--z-sticky` | 200 | Sticky headers |
-| `--z-modal` | 1000 | Modals, overlays |
-| `--z-max` | 9999 | Top layer |
+### Accessibility:
+- Labels always visible (no placeholder-only)
+- Helper text for guidance
+- Error messages with `role="alert"`
+- Minimum 44x44px touch targets
 
 ---
 
-## ⏱️ Transitions & Timing
+## Tables
 
-| Variable | Value | Usage |
-|----------|-------|-------|
-| `--ease-fast` | 120ms | Quick interactions |
-| `--ease-medium` | 220ms | Standard transitions |
-| `--ease-slow` | 400ms | Smooth animations |
-| `--ease-default` | cubic-bezier(0.215, 0.61, 0.355, 1) | Easing function |
+### Compliance Table
 
----
+**Features:**
+- Sticky header on scroll
+- Hover row highlighting
+- Sortable columns
+- Responsive horizontal scroll
 
-## 📱 Breakpoints
-
-| Variable | Value | Device |
-|----------|-------|--------|
-| `--bp-xs` | 479px | Extra small |
-| `--bp-sm` | 575px | Small |
-| `--bp-md` | 767px | Medium |
-| `--bp-lg` | 991px | Large |
-| `--bp-xl` | 1199px | Extra large |
-| `--bp-xxl` | 1399px | 2X large |
-
----
-
-## 🎨 Usage Guidelines
-
-### Primary Color Usage (Navy Shield #0F3053)
-Use for:
-- Primary action buttons
-- Navigation headers
-- Logo shield background
-- Dark UI backgrounds
-- Active navigation items
-- Important CTAs
-
-### Secondary Color Usage (Cyan Mark #58BFCE)
-Use for:
-- Verification icons and trust badges
-- Logo mark (X and checkmark)
-- Interactive accents
-- Success indicators
-- Hover states on secondary elements
-- Links and interactive text
-
-### Accent Color Usage (Slate Gray #64748B)
-Use for:
-- Secondary text
-- Inactive/disabled states
-- Subtle backgrounds
-- Supporting UI elements
-- Muted content
-
-### Destructive Color Usage (Red #EF4444)
-Use for:
-- Delete buttons
-- Error messages
-- Critical warnings
-- Failed assessments
-- Destructive actions
-
----
-
-## 🧩 UI Component Specifications
-
-### Buttons
-
-**Primary Button (Navy Shield)**
-```css
-background: #0F3053
-color: #FFFFFF
-font: Inter Semi-Bold 16px/24px
-padding: 12px 24px
-border-radius: 10px
-box-shadow: -2px 4px 12px 4px rgba(51, 51, 51, 0.1)
-
-/* Hover State */
-background: #1A4066
-box-shadow: -2px 4px 16px 4px rgba(15, 48, 83, 0.25)
-```
-
-**Secondary Button (Cyan Outlined)**
-```css
-background: transparent
-border: 2px solid #58BFCE
-color: #58BFCE
-font: Inter Semi-Bold 16px/24px
-padding: 10px 22px
-border-radius: 10px
-
-/* Hover State */
-background: rgba(88, 191, 206, 0.08)
-border-color: #3FA5B5
-```
-
-### Navigation
-
-**Sidebar Navigation (Navy Background)**
-```css
-background: #0F3053
-width: 260px
-padding: 24px 0
-
-/* Navigation Item */
-color: rgba(255, 255, 255, 0.8)
-padding: 12px 24px
-font: Inter Medium 15px/22px
-
-/* Hover */
-background: rgba(255, 255, 255, 0.08)
-color: #FFFFFF
-
-/* Active */
-background: rgba(88, 191, 206, 0.15)
-color: #FFFFFF
-border-left: 3px solid #58BFCE
+**Structure:**
+```jsx
+<table className="controls-table">
+  <thead>
+    <tr>
+      <th>Control</th>
+      <th>Status</th>
+      <th>Score</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {/* rows */}
+  </tbody>
+</table>
 ```
 
 ---
 
-## 🔄 Legacy Color Mappings
+## Alerts & Notifications
 
-For backward compatibility, legacy color variables are mapped to the new system:
-- `--color-purple-1` → `--color-primary` (#0F3053 Navy Shield)
-- `--color-purple-4` → `--color-secondary` (#58BFCE Cyan Mark)
-- `--color-dark-1` → `--color-foreground` (#0F172A Deep Navy)
-- `--color-light-3` → `--color-background` (#FAFAFA Off-White)
+### Alert Types
+
+**Success:**
+- Background: `#f0fdf4`
+- Border: Green left border
+- Icon: Checkmark
+
+**Warning:**
+- Background: `#fffbf5`
+- Border: Amber left border
+- Icon: Warning triangle
+
+**Error:**
+- Background: `#fff5f5`
+- Border: Red left border
+- Icon: Error X
+
+**Structure:**
+```jsx
+<div className="alert alert-success">
+  <div className="alert-icon">✓</div>
+  <div className="alert-content">
+    <div className="alert-title">Success</div>
+    <div className="alert-message">Operation completed</div>
+  </div>
+</div>
+```
 
 ---
 
-## 📦 Implementation
+## Progressive Disclosure Patterns
 
-### CSS Variables
-All design tokens are available as CSS custom properties in [`public/assets/css/style-guide/_tokens.scss`](public/assets/css/style-guide/_tokens.scss).
+### 1. Summary → Details
+- Show high-level metrics first
+- Expand for technical details
+- Use accordion or modal patterns
 
-### Usage Example
-```css
-.button-primary {
-  background-color: var(--color-primary);
-  color: var(--color-primary-foreground);
-  border-radius: var(--radius);
-  padding: var(--space-3) var(--space-5);
-  font-family: var(--font-sans);
-  font-weight: var(--font-semibold);
-  box-shadow: var(--shadow-1);
-  transition: all var(--ease-medium) var(--ease-default);
+### 2. Role-Based Views
+- **Viewer:** Read-only, simplified metrics
+- **Editor:** Can update controls, see more details
+- **Admin:** Full access, advanced settings
+
+### 3. Contextual Help
+- Tooltips for definitions
+- Info icons for explanations
+- "Learn more" links to documentation
+
+---
+
+## Responsive Design
+
+### Breakpoints
+
+| Name | Min Width | Columns | Usage |
+|------|-----------|---------|-------|
+| XS | 0px | 1 | Mobile portrait |
+| SM | 640px | 2 | Mobile landscape |
+| MD | 768px | 2-3 | Tablet |
+| LG | 1024px | 3-4 | Desktop |
+| XL | 1280px | 4+ | Large desktop |
+| 2XL | 1536px | 4+ | Wide screens |
+
+### Mobile-First Approach
+- Start with mobile layout
+- Progressively enhance for larger screens
+- Touch targets minimum 44x44px
+- Simplified navigation on mobile
+
+---
+
+## Accessibility Checklist
+
+### WCAG 2.1 AA Compliance
+
+- [ ] Color contrast ratios meet 4.5:1 minimum
+- [ ] All interactive elements keyboard accessible
+- [ ] Focus indicators visible (2px outline)
+- [ ] Form labels always visible
+- [ ] Error messages descriptive and linked to fields
+- [ ] Images have alt text
+- [ ] Semantic HTML structure
+- [ ] ARIA labels for dynamic content
+- [ ] Skip navigation links
+- [ ] Responsive text sizing (no fixed px for body)
+
+### Screen Reader Support
+
+- Use semantic HTML (`<nav>`, `<main>`, `<article>`)
+- ARIA landmarks for page regions
+- `aria-label` for icon-only buttons
+- `aria-live` for dynamic updates
+- `role="status"` for status indicators
+
+### Keyboard Navigation
+
+- Tab order follows visual order
+- Enter/Space activate buttons
+- Escape closes modals/dropdowns
+- Arrow keys for menus/lists
+- Focus trap in modals
+
+---
+
+## Dark Mode Support
+
+All components support dark mode via `prefers-color-scheme: dark` media query.
+
+**Implementation:**
+```scss
+@include dark-mode {
+  background: $color-surface-dark;
+  color: $color-text-primary-dark;
+}
+```
+
+**Key Changes:**
+- Inverted text/background colors
+- Reduced shadow intensity
+- Adjusted border opacity
+- Maintained contrast ratios
+
+---
+
+## Animation & Motion
+
+### Transition Timing
+
+| Property | Duration | Easing |
+|----------|----------|--------|
+| Color | 0.2s | ease-in-out |
+| Transform | 0.2s | ease-in-out |
+| Opacity | 0.15s | ease-in-out |
+| Box Shadow | 0.2s | ease-in-out |
+
+### Reduced Motion
+
+Respect `prefers-reduced-motion: reduce`:
+```scss
+@include reduced-motion {
+  transition: none;
+  animation: none;
+}
+```
+
+---
+
+## File Structure
+
+```
+src/
+├── styles/
+│   └── design-system/
+│       ├── colors.scss          # Color palette & variables
+│       ├── typography.scss      # Font system & mixins
+│       ├── spacing.scss         # Spacing scale & layout
+│       └── components.scss      # Component mixins
+│
+└── components/
+    └── compliance/
+        ├── ComplianceStatusBadge.jsx
+        ├── ComplianceStatusBadge.scss
+        ├── ComplianceScoreCard.jsx
+        ├── ComplianceScoreCard.scss
+        ├── ComplianceDashboard.jsx
+        └── ComplianceDashboard.scss
+```
+
+---
+
+## Usage Examples
+
+### Importing Design System
+
+```scss
+@import '../../styles/design-system/colors.scss';
+@import '../../styles/design-system/typography.scss';
+@import '../../styles/design-system/spacing.scss';
+@import '../../styles/design-system/components.scss';
+```
+
+### Using Mixins
+
+```scss
+.my-button {
+  @include button-primary;
+  @include button-lg;
 }
 
-.button-primary:hover {
-  box-shadow: var(--shadow-2);
+.my-card {
+  @include compliance-card;
+  @include card-hover;
+}
+
+.my-text {
+  @include text-h2;
+  color: $color-primary;
+}
+```
+
+### Using Color Functions
+
+```scss
+.element {
+  background: color-alpha($color-primary, 0.1);
+  color: text-contrast($color-primary);
 }
 ```
 
 ---
 
-## 🔍 Accessibility
+## Browser Support
 
-### Color Contrast (WCAG 2.1 AA Verified)
-All color combinations meet accessibility standards:
-- Navy (#0F3053) on white: ✅ 13.2:1 (AAA)
-- Foreground (#0F172A) on background (#FAFAFA): ✅ 16.8:1 (AAA)
-- Cyan (#58BFCE) with navy text: ✅ 4.9:1 (AA)
-- Slate (#64748B) on white: ✅ 5.1:1 (AA)
+- Chrome/Edge: Last 2 versions
+- Firefox: Last 2 versions
+- Safari: Last 2 versions
+- iOS Safari: Last 2 versions
+- Android Chrome: Last 2 versions
 
-### Focus States
-- Use `--color-ring` (#94A3B8) or `--color-secondary` (#58BFCE) for focus indicators
-- Minimum focus ring width: 2px
-- Focus rings should be visible on all interactive elements
-
----
-
-## 📚 Resources
-
-- **Font: Inter** - [Google Fonts](https://fonts.google.com/specimen/Inter)
-- **Font: JetBrains Mono** - [Google Fonts](https://fonts.google.com/specimen/JetBrains+Mono)
-- **Icon Library: Lucide Icons** - [lucide.dev](https://lucide.dev/)
-- **Color Contrast Checker** - [WebAIM](https://webaim.org/resources/contrastchecker/)
+**Progressive Enhancement:**
+- CSS Grid with flexbox fallback
+- CSS custom properties with SCSS fallback
+- Modern features with graceful degradation
 
 ---
 
-## 📄 Logo Usage
+## Performance Considerations
 
-### Logo Colors (Extracted)
-- **Navy Shield**: #0F3053 rgb(15, 48, 83)
-- **Cyan Mark**: #58BFCE rgb(88, 191, 206)
+### CSS Optimization
+- Use CSS containment for isolated components
+- Minimize repaints with `will-change` sparingly
+- Lazy load non-critical styles
 
-### Clear Space
-Maintain minimum clear space around logo equal to the height of the "X" in XVALIDATEAI.
-
-### Minimum Size
-- Digital: 120px width minimum
-- Print: 1 inch (2.54cm) width minimum
+### Component Optimization
+- Memoize expensive calculations
+- Use React.memo for pure components
+- Virtualize long lists (tables with 100+ rows)
 
 ---
 
-**Last Updated**: January 27, 2026  
-**Version**: 2.0.0 (XVALIDATEAI Brand)  
-**Based on**: Logo color extraction and brand specification
+## Testing Guidelines
+
+### Visual Regression Testing
+- Test all components in light/dark mode
+- Test at all breakpoints
+- Test with different content lengths
+
+### Accessibility Testing
+- Automated: axe-core, Lighthouse
+- Manual: Keyboard navigation
+- Screen reader: NVDA, JAWS, VoiceOver
+
+### Cross-Browser Testing
+- Test in all supported browsers
+- Test on real devices when possible
+- Use BrowserStack for coverage
+
+---
+
+## Maintenance & Updates
+
+### Version Control
+- Semantic versioning for design system
+- Changelog for breaking changes
+- Migration guides for major updates
+
+### Documentation Updates
+- Update when adding new components
+- Document breaking changes
+- Include usage examples
+
+### Feedback Loop
+- Collect user feedback
+- Monitor analytics
+- Iterate based on data
+
+---
+
+## Resources
+
+### Design Tools
+- Figma: Component library
+- Storybook: Component documentation
+- Chromatic: Visual testing
+
+### References
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [IBM Carbon Design System](https://carbondesignsystem.com/)
+- [Material Design](https://material.io/design)
+
+### Color Tools
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+- [Colorblind Simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/)
+
+---
+
+## Support
+
+For questions or contributions:
+- GitHub Issues: [Project Repository]
+- Design Team: design@academy51.com
+- Documentation: [Internal Wiki]
+
+---
+
+**Last Updated:** January 2026  
+**Version:** 1.0.0  
+**Maintained by:** Academy51 Design Team

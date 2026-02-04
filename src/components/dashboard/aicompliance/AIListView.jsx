@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import EditProjectModal from "./EditProjectModal";
 import DeleteConfirmModal from "../../common/DeleteConfirmModal";
 import ActionsMenu from "../../common/ActionsMenu";
-import ListTable, { Td, LinkStyle } from "../../common/ListTable";
+import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import AwsButton from "../../common/AwsButton";
 import ApproveRejectModal from "./ApproveRejectModal";
@@ -956,7 +956,6 @@ export default function AIListView({
   return (
     <div>
       {/* TOP BAR */}
-
       <div
         className="d-flex flex-wrap justify-between items-center y-gap-10"
         style={{
@@ -987,9 +986,7 @@ export default function AIListView({
           <RefreshButton
             onRefresh={async () => {
               setSelected([]); // 🔥 clear checkbox state
-              setTableLoading(true);
               await refreshProjects(); // 🔥 backend API call
-              setTableLoading(false);
             }}
             setTableLoading={setTableLoading}
           />

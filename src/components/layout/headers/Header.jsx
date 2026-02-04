@@ -1,5 +1,5 @@
 import React from "react";
-import { HeaderExplore } from "../component/header-explore";
+import { git eaderExplore } from "../component/header-explore";
 
 import SearchToggle from "../component/SearchToggle";
 import CartToggle from "../component/CartToggle";

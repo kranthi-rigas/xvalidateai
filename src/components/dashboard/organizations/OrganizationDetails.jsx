@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getOrganizations } from "../../../apiIntegration/organization";
 import { SlArrowRight } from "react-icons/sl";
+import { COLORS } from "../../../styles/colors";
 
 export default function OrganizationDetails({ organization, onBack }) {
   if (!organization) {
@@ -18,7 +19,7 @@ export default function OrganizationDetails({ organization, onBack }) {
             animation: "spin 0.7s linear infinite",
           }}
         />
-        <div style={{ color: "#2F5FD9", fontWeight: 600 }}>
+        <div style={{ color: COLORS.primary, fontWeight: 600 }}>
           Loading Organization Details…
         </div>
 
@@ -67,7 +68,7 @@ export default function OrganizationDetails({ organization, onBack }) {
     organization.comment.trim().length > 0;
 
   return (
-    <div className="dashboard__content bg-light-4">
+    <div className="space-y">
       {/* ---------- BREADCRUMB ---------- */}
       <div
         style={{
@@ -79,13 +80,13 @@ export default function OrganizationDetails({ organization, onBack }) {
         }}
       >
         <span
-          style={{ color: "#4F46E5", cursor: "pointer", fontWeight: 500 }}
+          style={{ color: COLORS.primary, cursor: "pointer", fontWeight: 500 }}
           onClick={onBack}
         >
           Organizations
         </span>
-        <SlArrowRight size={12} style={{ color: "#9CA3AF" }} />
-        <span style={{ color: "#374151", fontWeight: 500 }}>
+        <SlArrowRight size={12} style={{ color: COLORS.textLight }} />
+        <span style={{ color: COLORS.textPrimary, fontWeight: 500 }}>
           {organization.name}
         </span>
       </div>

@@ -1,0 +1,206 @@
+/**
+ * AI Compliance Design System - Typography
+ * Optimized for technical content readability and accessibility
+ */
+
+// ============================================================================
+// FONT FAMILIES
+// ============================================================================
+
+$font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+                      'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 
+                      'Helvetica Neue', sans-serif;
+$font-family-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 
+                   'Fira Mono', 'Roboto Mono', monospace;
+$font-family-heading: $font-family-primary;
+
+// ============================================================================
+// FONT WEIGHTS
+// ============================================================================
+
+$font-weight-light: 300;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================================================
+// FONT SIZES - Modular Scale (1.250 - Major Third)
+// ============================================================================
+
+$font-size-xs: 0.75rem;      // 12px
+$font-size-sm: 0.875rem;     // 14px
+$font-size-base: 1rem;       // 16px
+$font-size-md: 1.125rem;     // 18px
+$font-size-lg: 1.25rem;      // 20px
+$font-size-xl: 1.5rem;       // 24px
+$font-size-2xl: 1.875rem;    // 30px
+$font-size-3xl: 2.25rem;     // 36px
+$font-size-4xl: 3rem;        // 48px
+
+// ============================================================================
+// LINE HEIGHTS
+// ============================================================================
+
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+$line-height-loose: 2;
+
+// ============================================================================
+// LETTER SPACING
+// ============================================================================
+
+$letter-spacing-tight: -0.025em;
+$letter-spacing-normal: 0;
+$letter-spacing-wide: 0.025em;
+$letter-spacing-wider: 0.05em;
+
+// ============================================================================
+// TYPOGRAPHY MIXINS
+// ============================================================================
+
+// Display styles
+@mixin text-display-1 {
+  font-family: $font-family-heading;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-tight;
+}
+
+@mixin text-display-2 {
+  font-family: $font-family-heading;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-tight;
+}
+
+// Heading styles
+@mixin text-h1 {
+  font-family: $font-family-heading;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-tight;
+}
+
+@mixin text-h2 {
+  font-family: $font-family-heading;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+@mixin text-h3 {
+  font-family: $font-family-heading;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+@mixin text-h4 {
+  font-family: $font-family-heading;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+// Body text styles
+@mixin text-body-lg {
+  font-family: $font-family-primary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-relaxed;
+  letter-spacing: $letter-spacing-normal;
+}
+
+@mixin text-body {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+@mixin text-body-sm {
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+// Label and UI text
+@mixin text-label {
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-wide;
+  text-transform: uppercase;
+}
+
+@mixin text-caption {
+  font-family: $font-family-primary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+// Code and technical text
+@mixin text-code {
+  font-family: $font-family-mono;
+  font-size: 0.875em;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-normal;
+}
+
+// Button text
+@mixin text-button {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-wide;
+}
+
+@mixin text-button-sm {
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-wide;
+}
+
+// ============================================================================
+// UTILITY CLASSES
+// ============================================================================
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Made with Bob

@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
 import useToast from "../../../hooks/useToast";
-import AIListView from "./AIListView";
+import AIListViewModern from "./AIListViewModern";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
-import ProjectDetails from "./ProjectDetails";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import ProjectDetailsModern from "./ProjectDetailsModern";
+import { COLORS } from "../../../styles/colors";
+import StatisticsCards from "./StatisticsCards"; // ✅ REQUIRED
+import PageLoader from "../../common/PageLoader";
+import usePageLoader from "@/data/usePageLoader";
 
 import {
   getComplianceProjects,
@@ -14,42 +19,43 @@ import {
 export default function AICompliance() {
   const [projects, setProjects] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-
   const [showEditModal, setShowEditModal] = useState(false);
   const [editProjectData, setEditProjectData] = useState(null);
-
   const [openedProject, setOpenedProject] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const pageLoading = usePageLoader([projects]);
 
   const show = useToast();
-
   const didFetchRef = useRef(false);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { project_id: projectIdFromUrl } = useParams();
+
+  /* ---------- INITIAL LOAD ---------- */
   useEffect(() => {
     if (didFetchRef.current) return;
     didFetchRef.current = true;
     loadProjects();
   }, []);
 
-  const location = useLocation();
-  const navigate = useNavigate();
-  const params = useParams();
-  const projectIdFromUrl = params?.project_id;
-
+  /* ---------- RESET ON LIST PAGE ---------- */
   useEffect(() => {
     if (location.pathname === "/dashboard/aicompliance") {
       setOpenedProject(null);
     }
   }, [location.pathname]);
 
+  /* ---------- DIRECT URL OPEN ---------- */
   useEffect(() => {
     if (!projectIdFromUrl) return;
 
     if (
       openedProject &&
       String(openedProject.project_id) === String(projectIdFromUrl)
-    )
+    ) {
       return;
+    }
 
     const localMatch = (projects || []).find(
       (p) => String(p.project_id) === String(projectIdFromUrl),
@@ -73,6 +79,7 @@ export default function AICompliance() {
     })();
   }, [projectIdFromUrl, projects]);
 
+  /* ---------- API ---------- */
   async function loadProjects() {
     try {
       const data = await getComplianceProjects();
@@ -84,97 +91,81 @@ export default function AICompliance() {
   }
 
   async function openProject(project) {
-    // ✅ REQUESTED → OPEN DIRECTLY (NO API)
     if (project.status === "requested") {
-      setOpenedProject({
-        ...project,
-        __mode: "requested", // 🔥 flag for details page
-      });
-      try {
-        navigate(`/dashboard/aicompliance/${project.project_id}`);
-      } catch (e) {
-        /* ignore */
-      }
+      setOpenedProject({ ...project, __mode: "requested" });
+      navigate(`/dashboard/aicompliance/${project.project_id}`);
       return;
     }
 
-    // ✅ ALL OTHER STATUSES → CALL API
     try {
       setLoadingDetails(true);
       const details = await getComplianceProjectDetails(project.project_id);
       setOpenedProject(details);
-      try {
-        navigate(`/dashboard/aicompliance/${details.project_id}`);
-      } catch (e) {
-        // ignore navigation errors
-      }
+      navigate(`/dashboard/aicompliance/${details.project_id}`);
     } catch (err) {
       console.error("Details Fetch Error:", err);
-
       show("Failed to load project details", { type: "error" });
     } finally {
       setLoadingDetails(false);
     }
   }
 
-  /* ---------- LOADING SCREEN ---------- */
+  /* ---------- LOADING ---------- */
   if (loadingDetails) {
-    return (
-      <div style={{ paddingTop: 150, textAlign: "center" }}>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            border: "4px solid #e5e7eb",
-            borderTop: "4px solid #2F5FD9",
-            borderRadius: "50%",
-            margin: "0 auto 12px",
-            animation: "spin 0.7s linear infinite",
-          }}
-        />
-        <div style={{ color: "#2F5FD9", fontWeight: 600 }}>
-          Loading Assessment Report…
-        </div>
-
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
+    return <PageLoader loading={true} message="Loading Assessment Report…" />;
   }
 
-  /* ✅ DETAILS PAGE */
+  /* ---------- DETAILS PAGE ---------- */
   if (openedProject) {
     return (
-      <ProjectDetails
+      <ProjectDetailsModern
         project={openedProject}
         onBack={(shouldRefresh) => {
           if (shouldRefresh) loadProjects();
-          try {
-            navigate("/dashboard/aicompliance");
-          } catch (e) {
-            /* ignore */
-          }
+          navigate("/dashboard/aicompliance");
           setOpenedProject(null);
         }}
       />
     );
   }
+
+  /* ---------- STATISTICS (MUST BE BEFORE RETURN) ---------- */
+  const totalScanned = (projects || []).filter(
+    (p) => p.assessment_status === "completed",
+  ).length;
+
+  const compliantTools = (projects || []).filter(
+    (p) => p.recommendation?.toLowerCase() === "approved",
+  ).length;
+
+  const approvedWithLimits = (projects || []).filter(
+    (p) => p.recommendation?.toLowerCase() === "approved with limitations",
+  ).length;
+
+  const highRiskBlocked = (projects || []).filter(
+    (p) =>
+      p.recommendation?.toLowerCase() === "not recommended" ||
+      (p.score && Number(p.score) < 40),
+  ).length;
+
+  if (pageLoading) return <PageLoader loading />;
+
+  /* ---------- MAIN LIST ---------- */
   return (
-    <div className="dashboard__content">
-      <div className="dashboard-body">
-        <AIListView
-          projects={projects}
-          setShowCreateModal={setShowCreateModal}
-          setOpenedProject={openProject}
-          setShowEditModal={setShowEditModal}
-          setEditProjectData={setEditProjectData}
-          refreshProjects={loadProjects}
-        />
-      </div>
+    <div className="space-y">
+      <StatisticsCards
+        totalScanned={totalScanned}
+        compliantTools={compliantTools}
+        approvedWithLimits={approvedWithLimits}
+        highRiskBlocked={highRiskBlocked}
+      />
+
+      <AIListViewModern
+        projects={projects}
+        setShowCreateModal={setShowCreateModal}
+        setOpenedProject={openProject}
+        refreshProjects={loadProjects}
+      />
 
       {showCreateModal && (
         <CreateProjectModal

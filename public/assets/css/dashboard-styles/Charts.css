@@ -36,7 +36,7 @@
     padding: 1rem;
     color: #111827;
     line-height: 1.6;
-    border-left: 4px solid #6366F1;
+    border-left: 4px solid var(--color-primary);
 }
 
 .value-comntainer {
@@ -48,8 +48,8 @@
     display: inline-block;
     padding: 0.5rem 0.9rem;
     border-radius: 50px;
-    background: #EEF2FF;
-    color: #4F46E5;
+    background: var(--color-purple-3);
+    color: var(--color-primary);
     font-weight: 700;
 }
 
@@ -76,15 +76,11 @@
 /* New chart CSS */
 
 .gauge-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
   text-align: center;
 }
 
 .gauge-label {
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: #374151;
 }

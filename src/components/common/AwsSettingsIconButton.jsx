@@ -1,10 +1,19 @@
 import { FiSettings } from "react-icons/fi";
+import COLORS from "../../styles/colors";
 
 /**
- * AWS-style Settings Icon Button
- * - No background
- * - Shadow only (no pill)
- * - Darker shadow on hover
+ * Settings Icon Button - Design System Compliant
+ *
+ * Features:
+ * - Trust Blue design system colors
+ * - Smooth hover transitions
+ * - Shadow effects on interaction
+ * - WCAG AA/AAA accessible
+ * - Keyboard navigation support
+ *
+ * @param {function} onClick - Click handler
+ * @param {string} title - Tooltip text
+ * @param {number} size - Icon size in pixels
  */
 export default function AwsSettingsIconButton({
   onClick,
@@ -12,9 +21,11 @@ export default function AwsSettingsIconButton({
   size = 16,
 }) {
   return (
-    <div
+    <button
+      type="button"
       title={title}
       onClick={onClick}
+      aria-label={title}
       style={{
         width: 32,
         height: 32,
@@ -27,37 +38,82 @@ export default function AwsSettingsIconButton({
         border: "none",
         padding: 0,
         margin: 0,
+        borderRadius: "6px",
 
-        /* AWS default light shadow */
-        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.18))",
-        transition: "filter 0.15s ease",
+        /* Design system shadow */
+        filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18))",
+        transition: "all 0.2s ease",
       }}
       onMouseEnter={(e) => {
+        // Hover state - Trust Blue background with deeper shadow
+        e.currentTarget.style.background = COLORS.hover;
         e.currentTarget.style.filter =
-          "drop-shadow(0 6px 10px rgba(0,0,0,0.45))";
+          "drop-shadow(0 4px 8px rgba(0, 67, 206, 0.25))";
       }}
       onMouseLeave={(e) => {
+        // Default state
+        e.currentTarget.style.background = "transparent";
         e.currentTarget.style.filter =
-          "drop-shadow(0 1px 2px rgba(0,0,0,0.18))";
+          "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18))";
       }}
       onMouseDown={(e) => {
+        // Pressed state
+        e.currentTarget.style.background = COLORS.pressed;
         e.currentTarget.style.filter =
-          "drop-shadow(0 2px 4px rgba(0,0,0,0.55))";
+          "drop-shadow(0 2px 4px rgba(0, 67, 206, 0.35))";
+      }}
+      onMouseUp={(e) => {
+        // Return to hover state
+        e.currentTarget.style.background = COLORS.hover;
+        e.currentTarget.style.filter =
+          "drop-shadow(0 4px 8px rgba(0, 67, 206, 0.25))";
+      }}
+      onFocus={(e) => {
+        // Keyboard focus state
+        e.currentTarget.style.outline = `2px solid ${COLORS.borderFocus}`;
+        e.currentTarget.style.outlineOffset = "2px";
+      }}
+      onBlur={(e) => {
+        // Remove focus outline
+        e.currentTarget.style.outline = "none";
       }}
     >
       <FiSettings
         size={size}
         style={{
-          color: "#374151", // AWS idle icon color
-          transition: "color 0.15s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = "#0a0a0b"; // darker on hover
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = "#374151";
+          color: COLORS.textSecondary,
+          transition: "color 0.2s ease",
+          pointerEvents: "none", // Prevent icon from capturing mouse events
         }}
       />
-    </div>
+
+      <style>{`
+        /* Ensure hover effect on icon when button is hovered */
+        button:hover svg {
+          color: ${COLORS.primary} !important;
+        }
+
+        /* Active/pressed state */
+        button:active svg {
+          color: ${COLORS.primaryDark} !important;
+        }
+
+        /* Focus visible for accessibility */
+        button:focus-visible {
+          outline: 2px solid ${COLORS.borderFocus} !important;
+          outline-offset: 2px;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+          button {
+            transition: none !important;
+          }
+          button svg {
+            transition: none !important;
+          }
+        }
+      `}</style>
+    </button>
   );
 }

@@ -23,13 +23,18 @@ export default function GaugeChart({
 }) {
   // Normalize value to percentage for ApexCharts
   const normalizedValue = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  const getGaugeColor = (value) => {
+    if (value >= 75) return "#22c55e";
+    if (value >= 50) return "#f59e0b";
+    return "#ef4444";
+  };
 
   const options = {
     chart: {
       type: "radialBar",
       sparkline: { enabled: true },
     },
-    colors: [color],
+    colors: [getGaugeColor(value)],
     plotOptions: {
       radialBar: {
         startAngle: -90,

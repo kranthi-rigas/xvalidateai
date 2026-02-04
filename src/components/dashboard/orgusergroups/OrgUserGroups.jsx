@@ -26,32 +26,23 @@ export default function OrgUserGroups() {
   const pageLoading = usePageLoader([groups]);
   const navigate = useNavigate();
   const orgExists = hasOrganization();
+  const [tableLoading, setTableLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const actionsRef = useRef(null);
 
-  // ---------------- PERMISSION LOGIC (SAME AS OrgUsers) ----------------
-
-  // user info
+  // ADMIN Check helper
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
-  // roles
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
-  // org checks
   const hasOrg = hasOrganization();
 
-  const orgName = (userInfo.organization?.name || "").trim().toLowerCase();
-
-  // default org = treated as NO org
-  const isDefaultOrg = orgName === "academy51" || orgName === "myacademy51";
-
-  // valid org means: exists AND not default
-  const hasValidOrg = hasOrg && !isDefaultOrg;
-
-  // final permission
-  const canManage = isAdmin && hasValidOrg;
+  // FINAL PERMISSION
+  const canManage = hasOrg && isAdmin;
 
   // Modals
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -63,9 +54,76 @@ export default function OrgUserGroups() {
   // Preferences modal
   const [showPreferences, setShowPreferences] = useState(false);
 
-  // ----------------------------------------------------
-  // SAFE NAME NORMALIZER
-  // ----------------------------------------------------
+  /* ---------- Column Widths ---------- */
+  const [columnWidths, setColumnWidths] = useState({
+    name: 200,
+    description: 250,
+    permissions: 250,
+    members: 120,
+    created_at: 180,
+  });
+
+  const resizingCol = useRef(null);
+
+  const startResize = (key, e) => {
+    e.preventDefault();
+    resizingCol.current = {
+      key,
+      startX: e.clientX,
+      startWidth: columnWidths[key],
+    };
+  };
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!resizingCol.current) return;
+      const { key, startX, startWidth } = resizingCol.current;
+      setColumnWidths((prev) => ({
+        ...prev,
+        [key]: Math.max(120, startWidth + (e.clientX - startX)),
+      }));
+    };
+
+    const onUp = () => (resizingCol.current = null);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  /* ---------- SORTING ---------- */
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
+
+  const requestSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  /* ---------- Table Preferences ---------- */
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  /* ---------- Column Visibility ---------- */
+  const [visibleColumns, setVisibleColumns] = useState(
+    Object.keys(columnWidths),
+  );
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+
+  /* ---------- SAFE NAME NORMALIZER ---------- */
   const normalizeName = (value) => {
     if (!value) return "";
     if (typeof value === "string") return value;
@@ -75,32 +133,12 @@ export default function OrgUserGroups() {
     return String(value);
   };
 
-  //Tooltip
-  // Measure exact pixel-width of text
-  const measureTextWidth = (text, font = "14px Amazon Ember") => {
-    const canvas =
-      measureTextWidth.canvas ||
-      (measureTextWidth.canvas = document.createElement("canvas"));
-    const ctx = canvas.getContext("2d");
-    ctx.font = font;
-    return ctx.measureText(text).width;
-  };
-
-  // Check if tooltip is needed (text is truncated)
-  const shouldShowTooltip = (value, key) => {
-    if (!value) return false;
-
-    const maxWidth = (columnWidths[key] || 150) - 24; // subtract padding
-    const textWidth = measureTextWidth(value);
-
-    return textWidth > maxWidth;
-  };
-
-  // Capitalize First Letter
+  /* ---------- Capitalize First Letter ---------- */
   const capitalize = (str) =>
     typeof str === "string"
       ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
       : str;
+
   const fetchGroups = async () => {
     try {
       const res = await getGroups();
@@ -125,51 +163,69 @@ export default function OrgUserGroups() {
     fetchGroups();
   }, []);
 
-  // ----------------------------------------------------
-  // FILTERING
-  // ----------------------------------------------------
+  /* ---------- FILTERING + SORTING ---------- */
   const filtered = (groups || [])
-    .filter((g) => g.name.toLowerCase().includes(search.toLowerCase()))
-    .map((g) => ({
-      ...g,
-      __isSelected: selected.includes(g.group_id),
-    }));
+    .filter((g) => {
+      if (!search.trim()) return true;
+      return buildSearchText(g).includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
+      return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
+    });
 
-  // ---------- SORTING ----------
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: "asc",
-  });
+  /* ---------- Search Helper ---------- */
+  function buildSearchText(group) {
+    const permissions = (group.permissions || []).join(" ");
+    return [group.name, group.description, permissions, group.members]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
 
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
+  /* ---------- Pagination ---------- */
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  /* ---------- Selection ---------- */
+  const toggleSelect = (id) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+
+  const toggleSelectAll = (checked) =>
+    setSelected(checked ? filtered.map((g) => g.group_id) : []);
+
+  /* ---------- Format Date ---------- */
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   };
 
-  // ----------------------------------------------------
-  // CREATE GROUP
-  // ----------------------------------------------------
+  /* ---------- CREATE GROUP ---------- */
   const handleCreateGroup = async (payload) => {
     try {
-      const res = await createGroup(payload); // ← now sends name, desc, permissions, tags, metadata
+      const res = await createGroup(payload);
 
       await fetchGroups();
 
-      show("Group created successfully!", { type: "success" });
-
       return { success: true, data: res };
     } catch (err) {
-      show("Error creating group", { type: "error" });
-
       return { success: false, error: err.message };
     }
   };
 
-  // ----------------------------------------------------
-  // DELETE
-  // ----------------------------------------------------
+  /* ---------- DELETE ---------- */
   const handleConfirmDelete = async () => {
     setDeleteError("");
 
@@ -188,262 +244,191 @@ export default function OrgUserGroups() {
     }
   };
 
-  // ----------------------------------------------------
-  // TABLE COLUMNS
-  // ----------------------------------------------------
-  /* ---------- Add columnWidths state ---------- */
-  const [columnWidths, setColumnWidths] = useState({
-    checkbox: 60,
-    name: 200,
-    description: 250,
-    permissions: 250,
-    members: 120,
-    created_at: 180,
-  });
-
-  const resizingCol = useRef(null);
-
-  const startResize = (key, e) => {
-    resizingCol.current = {
-      key,
-      startX: e.clientX,
-      startWidth: columnWidths[key],
-    };
-  };
-
-  const handleResize = (e) => {
-    if (!resizingCol.current) return;
-
-    const { key, startX, startWidth } = resizingCol.current;
-    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
-
-    setColumnWidths((prev) => ({
-      ...prev,
-      [key]: newWidth,
-    }));
-  };
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleResize);
-    window.addEventListener("mouseup", () => (resizingCol.current = null));
-
-    return () => {
-      window.removeEventListener("mousemove", handleResize);
-    };
-  }, []);
-
+  /* ---------- TABLE COLUMNS ---------- */
   const columns = [
     {
       key: "checkbox",
       label: "",
-      width: 50,
+      width: 48,
+      resizable: false,
       allSelected: filtered.length > 0 && selected.length === filtered.length,
-      onToggleAll: (checked) =>
-        setSelected(checked ? filtered.map((g) => g.group_id) : []),
+      onToggleAll: toggleSelectAll,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={selected.includes(row.group_id)}
+          onChange={() => toggleSelect(row.group_id)}
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+        />
+      ),
     },
     {
       key: "name",
       label: "Group Name",
       sortable: true,
       resizable: true,
-      width: 150,
     },
-    { key: "description", label: "Description", resizable: true },
+    {
+      key: "description",
+      label: "Description",
+      resizable: true,
+    },
     {
       key: "permissions",
       label: "Permissions",
       sortable: true,
       resizable: true,
-      width: 140,
     },
     {
       key: "members",
       label: "Users",
       sortable: true,
       resizable: true,
-      width: 180,
     },
     {
       key: "created_at",
       label: "Created At",
       sortable: true,
       resizable: true,
-      width: 180,
     },
   ];
 
   const renderCell = (row, key) => {
-    if (key === "checkbox")
-      return (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.group_id)}
-          onChange={() =>
-            setSelected((prev) =>
-              prev.includes(row.group_id)
-                ? prev.filter((x) => x !== row.group_id)
-                : [...prev, row.group_id],
-            )
-          }
-        />
-      );
+    switch (key) {
+      case "checkbox":
+        return columns[0].render(row);
 
-    if (key === "name")
-      return (
-        <span
-          style={{ color: "#0972d3", fontWeight: 500, cursor: "pointer" }}
-          onClick={() =>
-            navigate(`/dashboard/orgusergroupdetails/${row.group_id}`)
-          }
-        >
-          {row.name || "-"}
-        </span>
-      );
+      case "name":
+        return (
+          <span
+            className="font-medium text-primary hover:underline cursor-pointer"
+            onClick={() =>
+              navigate(`/dashboard/orgusergroupdetails/${row.group_id}`)
+            }
+          >
+            {row.name || "-"}
+          </span>
+        );
 
-    if (key === "description") {
-      const text = row.description || "-";
+      case "description":
+        return (
+          <span
+            className="truncate text-muted-foreground"
+            title={row.description}
+          >
+            {row.description || "-"}
+          </span>
+        );
 
-      const showTip = shouldShowTooltip(text, "description");
+      case "permissions": {
+        const rolesList = (row.permissions || []).map(capitalize);
+        const text = rolesList.length ? rolesList.join(", ") : "-";
+        return (
+          <span className="text-muted-foreground" title={text}>
+            {text}
+          </span>
+        );
+      }
 
-      return (
-        <div
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: (columnWidths.description || 200) - 20,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? text : ""}
-        >
-          {text}
-        </div>
-      );
+      case "members":
+        return (
+          <span className="text-muted-foreground">{row.members} users</span>
+        );
+
+      case "created_at":
+        return (
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatDate(row.created_at)}
+          </span>
+        );
+
+      default:
+        return row[key] || "-";
     }
-
-    if (key === "permissions") {
-      const rolesList = (row.permissions || []).map(capitalize);
-      const text = rolesList.length ? rolesList.join(", ") : "-";
-
-      const showTip = shouldShowTooltip(text, "permissions");
-
-      return (
-        <div
-          style={{
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: (columnWidths.permissions || 150) - 20,
-            cursor: showTip ? "pointer" : "default",
-          }}
-          title={showTip ? text : ""}
-        >
-          {text}
-        </div>
-      );
-    }
-
-    // ✅ FIXED
-    if (key === "members") return `${row.members} users`;
-
-    if (key === "created_at")
-      return row.created_at ? new Date(row.created_at).toLocaleString() : "-";
-
-    return row[key] || "-";
   };
 
-  // Table preferences
-  const [pageSize, setPageSize] = useState(25);
-  const [wrapLines, setWrapLines] = useState(false);
-  const [stripedRows, setStripedRows] = useState(false);
-
-  // Column visibility
-  const [visibleColumns, setVisibleColumns] = useState(
-    columns.map((c) => c.key),
+  const visibleTableColumns = columns.filter(
+    (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );
-  const toggleColumn = (key) => {
-    setVisibleColumns((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
-  };
-  const visibleCols = columns.filter((c) => visibleColumns.includes(c.key));
 
-  // ----------------------------------------------------
-  // UI
-  // ----------------------------------------------------
-  const [tableLoading, setTableLoading] = useState(false);
-  {
-    tableLoading && (
-      <div className="table-refresh-overlay">
-        <div className="table-spinner"></div>
-      </div>
-    );
-  }
+  /* ---------- Actions Menu ---------- */
+  const actionItems = (() => {
+    if (!canManage || selected.length === 0) return [];
+
+    // Multi-select or single-select: show delete
+    return [{ key: "delete", label: "Delete", danger: true }];
+  })();
 
   if (pageLoading) {
     return <PageLoader loading={true} />;
   }
 
   return (
-    <div className="dashboard__content">
-      <div className="dashboard-body">
-        {/* Toasts are shown via global ToastProvider */}
-
-        {/* ---------- TOP BAR ---------- */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            gap: 12,
-          }}
-        >
+    <div className="space-y">
+      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
+        {/* TOOLBAR */}
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search */}
-          <div style={{ flex: 1, maxWidth: 420 }}>
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+            </div>
+
             <input
               type="text"
-              placeholder="Search groups…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 16px",
-                borderRadius: 999,
-                border: "1px solid #D1D5DB",
-                background: "#F8F9FC",
-                fontSize: 14,
-                height: 40,
-              }}
+              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+              placeholder="Search groups by name, description..."
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <RefreshButton
-              onRefresh={fetchGroups}
-              setTableLoading={setTableLoading}
-            />
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh */}
+            <button
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await fetchGroups();
+                setTimeout(() => setTableLoading(false), 300);
+              }}
+              title="Refresh"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right"></i>
+            </button>
 
-            <ActionsMenu
-              selected={selected}
-              items={
-                canManage
-                  ? [
-                      {
-                        key: "delete",
-                        label: "Delete",
-                        danger: true,
-                        onClick: () => setShowDeleteModal(true),
-                      },
-                    ]
-                  : [] // 🔒 non-admin → icon only, no dropdown items
-              }
-            />
+            {/* Actions dropdown */}
+            <div ref={actionsRef} className="relative">
+              <ActionsMenu
+                disabled={!canManage || selected.length === 0}
+                items={actionItems}
+                onSelect={(key) => {
+                  if (key === "delete") {
+                    setShowDeleteModal(true);
+                  }
+                }}
+              />
+            </div>
 
+            {/* Preferences button */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+
+            {/* Create Group Button */}
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasValidOrg
+                !hasOrg
                   ? "Please create an organization before creating groups"
                   : "Only admin users can create user groups"
               }
@@ -454,103 +439,78 @@ export default function OrgUserGroups() {
                   if (!canManage) return;
                   setShowCreateGroupModal(true);
                 }}
+                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
               />
             </OrgRequiredWrapper>
           </div>
         </div>
 
-        {/* ---------- TABLE ---------- */}
-        <div
-          style={{
-            border: "1px solid #E5E7EB",
-            borderRadius: 12,
-            overflow: "hidden",
-            background: "#fff",
-          }}
-        >
-          <div style={{ position: "relative" }}>
-            <ListTable
-              columns={visibleCols}
-              data={filtered.slice(0, pageSize)}
-              rowKey="group_id"
-              renderCell={renderCell}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              columnWidths={columnWidths}
-              startResize={startResize} // <-- same as user table
-            />
-
-            {tableLoading && (
-              <div className="table-refresh-overlay">
-                <div className="table-spinner"></div>
-              </div>
-            )}
-          </div>
+        {/* TABLE */}
+        <div className="relative flex-1 overflow-hidden">
+          {tableLoading && (
+            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
+          )}
+          <ListTable
+            columns={visibleTableColumns}
+            data={paginatedData}
+            rowKey="group_id"
+            renderCell={renderCell}
+            sortConfig={sortConfig}
+            onSort={requestSort}
+            columnWidths={columnWidths}
+            startResize={startResize}
+            loading={tableLoading}
+            selectedCount={selected.length}
+            selectionCounterLabel="group"
+            pagination={{
+              page,
+              pageSize,
+              total: filtered.length,
+              onPageChange: setPage,
+            }}
+          />
         </div>
+      </section>
 
-        {/* PAGINATION */}
-        <div
-          style={{
-            marginTop: 20,
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
+      {/* MODALS */}
+      {showCreateGroupModal && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroupModal(false)}
+          onCreate={async (payload) => {
+            const result = await handleCreateGroup(payload);
+            if (result.success) {
+              show("Group created successfully!", { type: "success" });
+            }
+            return result;
           }}
-        >
-          <button style={pgBtn}>{"<"}</button>
-          <span style={pageTag}>1</span>
-          <button style={pgBtn}>{">"}</button>
-        </div>
+        />
+      )}
 
-        {/* CREATE MODAL */}
-        {showCreateGroupModal && (
-          <CreateGroupModal
-            onClose={() => setShowCreateGroupModal(false)}
-            onCreate={handleCreateGroup}
-          />
-        )}
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
+        />
+      )}
 
-        {showPreferences && (
-          <TablePreferencesModal
-            open={showPreferences}
-            onClose={() => setShowPreferences(false)}
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            wrapLines={wrapLines}
-            setWrapLines={setWrapLines}
-            stripedRows={stripedRows}
-            setStripedRows={setStripedRows}
-            columns={columns}
-            visibleColumns={visibleColumns}
-            toggleColumn={toggleColumn}
-          />
-        )}
-
-        {/* DELETE MODAL */}
-        {showDeleteModal && (
-          <DeleteConfirmModal
-            onClose={() => setShowDeleteModal(false)}
-            onConfirm={handleConfirmDelete}
-            error={deleteError}
-            title="Delete Group"
-            message="Are you sure you want to delete the selected group(s)?"
-          />
-        )}
-      </div>
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          error={deleteError}
+          title="Delete Group"
+          message="Are you sure you want to delete the selected group(s)?"
+        />
+      )}
     </div>
   );
 }
-
-const pgBtn = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#F3F4F6",
-  border: "1px solid #D1D5DB",
-  cursor: "pointer",
-};
-
-const pageTag = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#EEF2FF",
-};

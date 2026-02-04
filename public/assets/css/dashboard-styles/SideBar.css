@@ -47,6 +47,33 @@
 .sidebar-logo-section {
   border-bottom: 1px solid #eee;
   margin-bottom: 15px;
+  padding: 15px 0;
+}
+
+/* Logo styling */
+.sidebar-logo-section .logo {
+  display: block;
+  max-width: 160px;
+  height: auto;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.sidebar-logo-section .logo-short {
+  display: block;
+  max-width: 40px;
+  height: auto;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* Ensure logo is visible when sidebar is collapsed */
+.sidebar.-dashboard.-is-collapsed .logo-short {
+  display: block !important;
+}
+
+.sidebar.-dashboard.-is-collapsed .logo {
+  display: none;
 }
 
 /* Sidebar toggle button - visible on desktop only */
@@ -146,3 +173,27 @@
     backdrop-filter: blur(2px);
   }
 }
+/* Hide sidebar toggle by default */
+.sidebar-toggle-btn {
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+
+  transition:
+    opacity 220ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Show toggle icon when hovering logo section */
+.sidebar-logo-section:hover .sidebar-toggle-btn {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+@media (max-width: 991px) {
+  .sidebar-toggle-btn {
+    display: none !important;
+  }
+}
+
+

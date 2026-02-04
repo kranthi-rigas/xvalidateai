@@ -1,9 +1,6 @@
 :root {
-  /* Font families */
-  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --font-primary: var(--font-sans);
+  /* Font family */
+  --font-primary: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* Font sizes (rem) */
   --text-xs: 0.75rem;   /* 12px */
@@ -15,77 +12,41 @@
   --text-2xl: 1.5rem;   /* 24px */
 
   /* Font weights */
-  --font-light: 300;
   --font-regular: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-  --font-extrabold: 800;
 
-  /* Primary Colors (Navy Shield from Logo) */
-  --color-primary: #0F3053;
-  --color-primary-foreground: #FFFFFF;
-  
-  /* Secondary Colors (Cyan Mark from Logo) */
-  --color-secondary: #58BFCE;
-  --color-secondary-foreground: #0F172A;
-  
-  /* Accent Colors (Slate Gray) */
-  --color-accent: #64748B;
-  --color-accent-foreground: #FFFFFF;
-  
-  /* Neutral Colors */
-  --color-background: #FAFAFA;
-  --color-foreground: #0F172A;
-  
-  /* Card Colors */
-  --color-card: #FFFFFF;
-  --color-card-foreground: #0F172A;
-  --color-popover: #FFFFFF;
-  --color-popover-foreground: #0F172A;
-  
-  /* Border & Input Colors */
-  --color-border: #EEEEEE;
-  --color-input: #FFFFFF;
-  --color-ring: #94A3B8;
-  
-  /* Destructive Colors */
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FFFFFF;
-  
-  /* Base Colors */
+  /* Colors */
+  --color-shadow: #00000014;
   --color-white: #FFFFFF;
   --color-black: #000000;
-  --white: #fff;
-  --black: #000;
-  
-  /* Legacy color mappings for backward compatibility */
-  --color-dark-1: #0F172A;
+  --color-dark-1: #140342;
   --color-dark-2: #1A064F;
-  --color-dark-3: #64748B;
+  --color-dark-3: #6A7A99;
   --color-dark-4: #242239;
   --color-dark-5: #282664;
   --color-dark-6: #311F61;
   --color-dark-7: #EAE9EF;
   --color-dark-8: #202124;
   --color-dark-9: #333333;
-  --color-light-1: #64748B;
+  --color-light-1: #4F547B;
   --color-light-2: #E4E7EA;
-  --color-light-3: #FAFAFA;
+  --color-light-3: #EEF2F6;
   --color-light-4: #F7F8FB;
-  --color-light-5: #EEEEEE;
+  --color-light-5: #EDEDED;
   --color-light-6: #F5F7FE;
   --color-light-7: #E5F0FD;
-  --color-light-8: #EEEEEE;
-  --color-light-9: #FAFAFA;
+  --color-light-8: #DDDDDD;
+  --color-light-9: #EEF2F6;
   --color-light-10: #F4F3F6;
   --color-light-11: #EBEAFE;
   --color-light-12: #CCE0F8;
-  --color-purple-1: #0F3053;
-  --color-purple-2: #E3EDFD;
-  --color-purple-3: rgba(15, 48, 83, 0.08);
-  --color-purple-4: #58BFCE;
-  --color-purple-5: rgba(88, 191, 206, 0.08);
+  --color-purple-1: var(--color-primary, #0043ce);
+  --color-purple-2: var(--color-primary-light, #a6c8ff);
+  --color-purple-3: var(--color-primary-lighter, #e3edfd);
+  --color-purple-4: var(--color-primary-dark, #001d6c);
+  --color-purple-5: var(--color-primary-lighter, #e3edfd);
   --color-green-1: #00FF84;
   --color-green-2: #DEF5F0;
   --color-green-3: #EEF8F5;
@@ -93,40 +54,41 @@
   --color-green-5: #34A853;
   --color-green-6: #DFF1DD;
   --color-green-7: #D9FFED;
-  --color-orange-1: #0F3053;
-  --color-orange-2: rgba(15, 48, 83, 0.08);
+  --color-orange-1: #E8543E;
+  --color-orange-2: #F7E9E7;
   --color-orange-3: #FDF2EB;
-  --color-orange-4: #58BFCE;
-  --color-orange-5: rgba(88, 191, 206, 0.08);
+  --color-orange-4: #E97D38;
+  --color-orange-5: #FDEEEC;
   --color-orange-6: #E78E34;
   --color-orange-7: #FBEEE1;
   --color-orange-8: #F7941E;
-  --color-red-1: #EF4444;
-  --color-red-2: #FEE2E2;
-  --color-red-3: #DC2626;
+  --color-red-1: #F01E00;
+  --color-red-2: #FCE5E2;
+  --color-red-3: #D93025;
   --color-beige-1: #FEFBF4;
-  --color-blue: #4075FB;
-  --color-blue-1: #2F5FD9;
-  --color-blue-2: #576AFF;
+  --color-blue: var(--color-primary, #0043ce);
+  --color-blue-1: var(--color-primary-dark, #001d6c);
+  --color-blue-2: var(--color-primary, #0043ce);
   --color-blue-3: #E0E9FF;
   --color-blue-4: #508EF0;
   --color-blue-5: #445B95;
   --color-blue-6: #E5EEFD;
   --color-blue-7: #E3E6EF;
-  --color-yellow-1: #F59E0B;
-  --color-yellow-2: #FEF3C7;
+  --color-yellow-1: #E59819;
+  --color-yellow-2: #FDF8EB;
   --color-yellow-3: #ECB53E;
   --color-yellow-4: #F9AB00;
   --color-yellow-5: #FCEDCD;
   --color-info-1: #CDE9F6;
   --color-info-2: #4780AA;
-  --color-warning-1: #FEF3C7;
-  --color-warning-2: #F59E0B;
-  --color-error-1: #FEE2E2;
-  --color-error-2: #EF4444;
+  --color-warning-1: #F7F3D7;
+  --color-warning-2: #927238;
+  --color-error-1: #ECC8C5;
+  --color-error-2: #AB3331;
   --color-success-1: #DEF2D7;
   --color-success-2: #5B7052;
-  --color-shadow: #33333333;
+  --white:#fff;
+  --black:#000;
 
 /* Spacing scale */
   --space-0: 0;
@@ -136,23 +98,22 @@
   --space-4: 1rem;    /* 16px */
   --space-5: 1.5rem;  /* 24px */
   --space-6: 2rem;    /* 32px */
+  --space-7: 2.5rem;  /*40px*/
   --space-8: 3rem;    /* 48px */
   --space-10: 4rem;   /* 64px */
 
   /* Border radius */
   --radius-xs: 2px;
   --radius-sm: 4px;
-  --radius: 10px;
-  --radius-md: 10px;
+  --radius: 8px;
   --radius-lg: 16px;
   --radius-pill: 9999px;
 
   /* Elevation / Shadows */
   --shadow-0: none;
-  --shadow-1: -2px 4px 12px 4px rgba(51, 51, 51, 0.2);
-  --shadow-2: -2px 4px 16px 6px rgba(51, 51, 51, 0.25);
-  --shadow-3: -2px 4px 20px 8px rgba(51, 51, 51, 0.3);
-  --shadow-custom: -2px 4px 12px 4px #333333;
+  --shadow-1: 0 4px 12px rgba(20, 3, 66, 0.06);
+  --shadow-2: 0 10px 30px rgba(20, 3, 66, 0.08);
+  --shadow-3: 0 25px 70px rgba(1, 33, 58, 0.08);
 
   /* Z-index scale */
   --z-below: -1;
@@ -189,29 +150,33 @@
   --op-80: 0.8;
 
   /* Semantic color aliases (use these in components) */
+  --color-primary: var(--color-blue-1);
+  --color-secondary: var(--color-purple-1);
+  --color-accent: var(--color-purple-4);
   --color-success: var(--color-green-5);
-  --color-warning: var(--color-warning-2);
-  --color-danger: var(--color-destructive);
-  --color-muted: var(--color-border);
-  --color-surface: var(--color-card);
-  --text-primary: var(--color-foreground);
-  --text-secondary: var(--color-secondary);
-  --text-muted: var(--color-ring);
+  --color-warning: var(--color-yellow-1);
+  --color-danger: var(--color-red-1);
+  --color-muted: var(--color-light-8);
+  --color-surface: var(--color-white);
+  --color-background: var(--color-light-3);
+  --text-primary: var(--color-dark-1);
+  --text-secondary: var(--color-light-1);
+  --text-muted: #6b6f82;
 
   /* Background aliases used across main.css */
-  --bg-light-1: var(--color-secondary);
-  --bg-light-2: var(--color-border);
-  --bg-dark-1: var(--color-foreground);
+  --bg-light-1: var(--color-light-1);
+  --bg-light-2: var(--color-light-2);
+  --bg-dark-1: var(--color-dark-1);
   --bg-dark-2: var(--color-dark-2);
 
   /* Accent / gradients */
   --accent-color: var(--color-primary);
-  --accent-gradient-1: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  --accent-gradient-1: linear-gradient(90deg, var(--color-purple-1) 0%, var(--color-orange-1) 100%);
 
   /* Form / inputs */
-  --input-bg: var(--color-input);
-  --input-border: var(--color-border);
-  --input-placeholder: rgba(15, 23, 42, 0.35);
-  --focus-ring: rgba(148, 163, 184, 0.12);
-  --focus-outline: 2px solid rgba(148, 163, 184, 0.18);
+  --input-bg: var(--color-white);
+  --input-border: #DDDDDD;
+  --input-placeholder: rgba(20, 3, 66, 0.35);
+  --focus-ring: rgba(99, 78, 255, 0.12);
+  --focus-outline: 2px solid rgba(99,78,255,0.18);
 }

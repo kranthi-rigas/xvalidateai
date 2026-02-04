@@ -1,0 +1,467 @@
+@import '../../styles/design-system/colors.scss';
+@import '../../styles/design-system/typography.scss';
+@import '../../styles/design-system/spacing.scss';
+@import '../../styles/design-system/components.scss';
+
+.compliance-dashboard {
+  width: 100%;
+  max-width: $container-2xl;
+  margin: 0 auto;
+  padding: $spacing-6;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-8;
+
+  // Dashboard Header
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: $spacing-6;
+    flex-wrap: wrap;
+
+    .header-content {
+      flex: 1;
+      min-width: 300px;
+
+      .dashboard-title {
+        @include text-display-2;
+        color: $color-text-primary-light;
+        margin: 0 0 $spacing-2 0;
+      }
+
+      .dashboard-subtitle {
+        @include text-body;
+        color: $color-text-secondary-light;
+        margin: 0;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: $spacing-3;
+      flex-wrap: wrap;
+
+      button {
+        @include button-base;
+        
+        &.btn-primary {
+          @include button-primary;
+        }
+
+        &.btn-secondary {
+          @include button-secondary;
+        }
+      }
+    }
+  }
+
+  // Dashboard Grid Layout
+  .dashboard-grid {
+    display: grid;
+    gap: $spacing-6;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+    @include respond-above($breakpoint-md) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .grid-item {
+      &.span-2 {
+        @include respond-above($breakpoint-md) {
+          grid-column: span 2;
+        }
+      }
+    }
+  }
+
+  // Stat Cards
+  .stat-card {
+    @include compliance-card;
+    text-align: center;
+    padding: $spacing-6;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: $spacing-3;
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: $radius-full;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: $font-size-xl;
+      
+      &.compliant {
+        background-color: $color-success-light;
+        color: $color-success;
+      }
+
+      &.warning {
+        background-color: $color-warning-light;
+        color: $color-warning;
+      }
+
+      &.error {
+        background-color: $color-error-light;
+        color: $color-error;
+      }
+    }
+
+    .stat-value {
+      @include text-display-2;
+      color: $color-primary;
+      font-weight: $font-weight-bold;
+      margin: 0;
+    }
+
+    .stat-label {
+      @include text-body-sm;
+      color: $color-text-secondary-light;
+      margin: 0;
+    }
+  }
+
+  // Dashboard Sections
+  .dashboard-section {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-4;
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: $spacing-4;
+    }
+
+    .section-title {
+      @include text-h2;
+      color: $color-text-primary-light;
+      margin: 0;
+    }
+
+    .section-filters {
+      display: flex;
+      gap: $spacing-3;
+
+      .filter-select {
+        @include input-base;
+        width: auto;
+        min-width: 200px;
+      }
+    }
+  }
+
+  // Category Grid
+  .category-grid {
+    display: grid;
+    gap: $spacing-4;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+
+    @include respond-above($breakpoint-lg) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .category-card {
+    @include compliance-card;
+    cursor: pointer;
+    padding: $spacing-5;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-4;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: $shadow-lg;
+      border-color: $color-primary-light;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $color-focus;
+      outline-offset: 2px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: $spacing-3;
+
+      .category-icon {
+        font-size: $font-size-2xl;
+      }
+
+      .category-name {
+        @include text-h4;
+        color: $color-text-primary-light;
+        margin: 0;
+        flex: 1;
+      }
+    }
+
+    .category-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: $spacing-3;
+
+      .score-value {
+        @include text-display-1;
+        color: $color-primary;
+        font-weight: $font-weight-bold;
+        line-height: 1;
+      }
+    }
+
+    .category-progress {
+      width: 100%;
+      height: 6px;
+      background-color: $color-neutral-light;
+      border-radius: $radius-full;
+      overflow: hidden;
+
+      .progress-bar {
+        height: 100%;
+        border-radius: $radius-full;
+        transition: width 0.6s ease-in-out;
+
+        &.compliant {
+          background: $gradient-success;
+        }
+
+        &.warning {
+          background: $gradient-warning;
+        }
+
+        &.non-compliant {
+          background: linear-gradient(135deg, $color-error 0%, lighten($color-error, 10%) 100%);
+        }
+      }
+    }
+  }
+
+  // Controls Table
+  .controls-table-wrapper {
+    @include compliance-card;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .controls-table {
+    @include compliance-table;
+    box-shadow: none;
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background-color: $color-bg-light;
+      z-index: 10;
+    }
+
+    .control-name {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-1;
+
+      strong {
+        @include text-body;
+        color: $color-text-primary-light;
+      }
+
+      .control-description {
+        @include text-caption;
+        color: $color-text-secondary-light;
+      }
+    }
+
+    .category-tag {
+      @include text-caption;
+      display: inline-block;
+      padding: $spacing-1 $spacing-2;
+      background-color: $color-bg-light;
+      border-radius: $radius-sm;
+      color: $color-text-secondary-light;
+      font-weight: $font-weight-medium;
+      text-transform: capitalize;
+    }
+
+    .score-badge {
+      @include text-body-sm;
+      font-weight: $font-weight-semibold;
+      padding: $spacing-1 $spacing-2;
+      border-radius: $radius-sm;
+
+      &.score-compliant {
+        color: $color-success;
+        background-color: $color-success-bg;
+      }
+
+      &.score-warning {
+        color: $color-warning;
+        background-color: $color-warning-bg;
+      }
+
+      &.score-non-compliant {
+        color: $color-error;
+        background-color: $color-error-bg;
+      }
+    }
+
+    .timestamp {
+      @include text-body-sm;
+      color: $color-text-secondary-light;
+    }
+
+    .btn-ghost {
+      @include button-ghost;
+      @include button-sm;
+    }
+  }
+
+  // Activity List
+  .activity-list {
+    @include compliance-card;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+
+    .activity-item {
+      display: flex;
+      gap: $spacing-4;
+      padding: $spacing-4;
+      border-bottom: 1px solid $color-border-light;
+      transition: background-color 0.15s ease-in-out;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: $overlay-hover-light;
+      }
+
+      .activity-icon {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: $radius-full;
+        background-color: $color-bg-light;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $font-size-lg;
+      }
+
+      .activity-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-1;
+
+        .activity-message {
+          @include text-body-sm;
+          color: $color-text-primary-light;
+          margin: 0;
+        }
+
+        .activity-time {
+          @include text-caption;
+          color: $color-text-secondary-light;
+        }
+      }
+    }
+  }
+
+  // Dark Mode Support
+  @include dark-mode {
+    .dashboard-header {
+      .header-content {
+        .dashboard-title {
+          color: $color-text-primary-dark;
+        }
+
+        .dashboard-subtitle {
+          color: $color-text-secondary-dark;
+        }
+      }
+    }
+
+    .stat-card .stat-label,
+    .section-title,
+    .category-card .category-name,
+    .controls-table .control-name strong,
+    .activity-item .activity-message {
+      color: $color-text-primary-dark;
+    }
+
+    .controls-table .control-description,
+    .controls-table .category-tag,
+    .controls-table .timestamp,
+    .activity-item .activity-time {
+      color: $color-text-secondary-dark;
+    }
+
+    .controls-table thead th {
+      background-color: $color-bg-dark;
+    }
+
+    .category-card .category-progress,
+    .activity-item .activity-icon {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  // Responsive Adjustments
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-4;
+    gap: $spacing-6;
+
+    .dashboard-header {
+      flex-direction: column;
+      align-items: stretch;
+
+      .header-actions {
+        width: 100%;
+
+        button {
+          flex: 1;
+        }
+      }
+    }
+
+    .controls-table-wrapper {
+      border-radius: $radius-md;
+    }
+
+    .controls-table {
+      font-size: $font-size-sm;
+
+      thead th,
+      tbody td {
+        padding: $spacing-3;
+      }
+    }
+  }
+
+  // Accessibility
+  @include reduced-motion {
+    .category-card,
+    .category-progress .progress-bar,
+    .activity-item {
+      transition: none;
+    }
+
+    .category-card:hover {
+      transform: none;
+    }
+  }
+}
+
+// Made with Bob

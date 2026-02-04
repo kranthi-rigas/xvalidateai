@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import ListTable, { LinkStyle as TableLink } from "../../common/ListTable";
+import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
 import ActionsMenu from "../../common/ActionsMenu";
 import AwsButton from "../../common/AwsButton";
@@ -7,7 +7,7 @@ import { useNavigate, Link } from "react-router-dom";
 import OrganizationDetails from "./OrganizationDetails";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
-import { getOrganizations } from "../../../apiIntegration/organization"; // you will create these APIs
+import { getOrganizations } from "../../../apiIntegration/organization";
 import ReviewOrganizationModal from "./ReviewOrganizationModal";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
@@ -35,7 +35,10 @@ export default function OrganizationListView() {
     direction: "asc",
   });
 
-  //action menu helper
+  const [page, setPage] = useState(1);
+  const actionsRef = useRef(null);
+
+  /* ---------- Action Menu Items ---------- */
   const ORG_ACTIONS = [
     { key: "ACTIVATE", label: "Activate" },
     { key: "SUSPEND", label: "Suspend" },
@@ -45,7 +48,6 @@ export default function OrganizationListView() {
 
   /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
-    checkbox: 60,
     name: 220,
     status: 160,
     slug: 180,
@@ -57,6 +59,7 @@ export default function OrganizationListView() {
   const resizingCol = useRef(null);
 
   const startResize = (key, e) => {
+    e.preventDefault();
     resizingCol.current = {
       key,
       startX: e.clientX,
@@ -64,21 +67,40 @@ export default function OrganizationListView() {
     };
   };
 
-  const handleResize = (e) => {
-    if (!resizingCol.current) return;
-    const { key, startX, startWidth } = resizingCol.current;
-
-    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
-
-    setColumnWidths((prev) => ({ ...prev, [key]: newWidth }));
-  };
-
   useEffect(() => {
-    window.addEventListener("mousemove", handleResize);
-    window.addEventListener("mouseup", () => (resizingCol.current = null));
+    const onMove = (e) => {
+      if (!resizingCol.current) return;
+      const { key, startX, startWidth } = resizingCol.current;
+      setColumnWidths((prev) => ({
+        ...prev,
+        [key]: Math.max(120, startWidth + (e.clientX - startX)),
+      }));
+    };
 
-    return () => window.removeEventListener("mousemove", handleResize);
+    const onUp = () => (resizingCol.current = null);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
+
+  /* ---------- Table Preferences ---------- */
+  const [pageSize, setPageSize] = useState(50);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [stripedRows, setStripedRows] = useState(false);
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    Object.keys(columnWidths),
+  );
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) =>
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key],
+    );
+  };
 
   /* ---------- FETCH DATA ---------- */
   const loadOrganizations = async ({ showPageLoader = false } = {}) => {
@@ -100,7 +122,7 @@ export default function OrganizationListView() {
     loadOrganizations({ showPageLoader: true });
   }, []);
 
-  // ---------- ADMIN CHECK ----------
+  /* ---------- ADMIN CHECK ---------- */
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
 
   const roles = Array.isArray(userInfo.roles)
@@ -120,10 +142,7 @@ export default function OrganizationListView() {
     (org) => !DEFAULT_ORGS.includes((org.name || "").toLowerCase()),
   ).length;
 
-  // ❗ ONLY ENTERPRISE can have more than one org
   const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
-
-  // FINAL permission
   const canCreateOrg = isAdmin && !hasReachedOrgLimit;
 
   const createOrgTooltip = !isAdmin
@@ -134,19 +153,35 @@ export default function OrganizationListView() {
 
   /* ---------- SEARCH ---------- */
   const filtered = (organizations || [])
-    .filter((o) => (o.name || "").toLowerCase().includes(search.toLowerCase()))
-    .map((o) => ({
-      ...o,
-      __isSelected: selected.includes(o.org_id),
-    }));
+    .filter((o) => {
+      if (!search.trim()) return true;
+      return buildSearchText(o).includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
+      return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
+    });
+
+  /* ---------- Search Helper ---------- */
+  function buildSearchText(org) {
+    return [org.org_id, org.name, org.status, org.slug, org.email, org.address]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  /* ---------- PAGINATION ---------- */
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filtered.slice(startIndex, endIndex);
 
   /* ---------- SORTING ---------- */
   const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc")
-      direction = "desc";
-
-    setSortConfig({ key, direction });
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
   };
 
   /* ---------- SELECTION ---------- */
@@ -159,16 +194,34 @@ export default function OrganizationListView() {
   const toggleSelectAll = (checked) =>
     setSelected(checked ? filtered.map((x) => x.org_id) : []);
 
+  /* ---------- Actions Menu Items ---------- */
+  const actionItems = (() => {
+    if (!isAdmin || selected.length === 0) return [];
+
+    // Multi-select: no actions
+    if (selected.length > 1) return [];
+
+    // Single select: show all actions
+    return ORG_ACTIONS;
+  })();
+
   /* ---------- TABLE COLUMNS ---------- */
   const columns = [
     {
       key: "checkbox",
       label: "",
-      width: 60,
-      sortable: false,
+      width: 48,
       resizable: false,
       allSelected: filtered.length > 0 && selected.length === filtered.length,
       onToggleAll: toggleSelectAll,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={selected.includes(row.org_id)}
+          onChange={() => toggleSelect(row.org_id)}
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+        />
+      ),
     },
     {
       key: "name",
@@ -182,7 +235,6 @@ export default function OrganizationListView() {
       sortable: true,
       resizable: true,
     },
-
     { key: "slug", label: "Slug", sortable: true, resizable: true },
     { key: "email", label: "Email", sortable: true, resizable: true },
     { key: "address", label: "Address", sortable: false, resizable: true },
@@ -195,84 +247,119 @@ export default function OrganizationListView() {
     },
   ];
 
-  /* ---------- RENDER CELL ---------- */
-  const renderCell = (row, key) => {
-    if (key === "checkbox")
-      return (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.org_id)}
-          onChange={() => toggleSelect(row.org_id)}
-        />
-      );
+  /* ---------- Get Status Badge ---------- */
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      ACTIVE: {
+        bg: "bg-green-50",
+        text: "text-green-700",
+        border: "border-green-200",
+      },
+      SUSPENDED: {
+        bg: "bg-yellow-50",
+        text: "text-yellow-700",
+        border: "border-yellow-200",
+      },
+      DEACTIVATED: {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+      },
+      REJECTED: {
+        bg: "bg-red-50",
+        text: "text-red-700",
+        border: "border-red-200",
+      },
+      PENDING: {
+        bg: "bg-blue-50",
+        text: "text-blue-700",
+        border: "border-blue-200",
+      },
+    };
 
-    if (key === "name")
-      return (
-        <span
-          style={TableLink}
-          onMouseDown={(e) => e.stopPropagation()} // 🔥 critical
-          onClick={(e) => {
-            e.stopPropagation(); // 🔥 critical
-            setViewOrg(row);
-          }}
-        >
-          {row.name || "-"}
-        </span>
-      );
-
-    if (key === "status") {
-      const status = (row.status || "").toUpperCase();
-
-      const colorMap = {
-        ACTIVE: { bg: "#ECFDF5", text: "#065F46" },
-        SUSPENDED: { bg: "#FEF3C7", text: "#92400E" },
-        DEACTIVATED: { bg: "#F3F4F6", text: "#374151" },
-        REJECTED: { bg: "#FEE2E2", text: "#991B1B" },
-        PENDING: { bg: "#E0E7FF", text: "#3730A3" },
-      };
-
-      const colors = colorMap[status] || {
-        bg: "#F3F4F6",
-        text: "#374151",
-      };
-
-      return (
-        <span
-          style={{
-            display: "inline-block",
-            padding: "4px 10px",
-            borderRadius: 999,
-            fontSize: 12.5,
-            fontWeight: 600,
-            background: colors.bg,
-            color: colors.text,
-            textTransform: "capitalize",
-          }}
-        >
-          {status.toLowerCase()}
-        </span>
-      );
-    }
-
-    if (key === "created_at") {
-      if (!row.created_at) return "-";
-
-      const utcDate = new Date(row.created_at + "Z");
-      return utcDate.toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      });
-    }
-
-    return row[key] || "-";
+    const upperStatus = (status || "").toUpperCase();
+    return (
+      statusMap[upperStatus] || {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+      }
+    );
   };
 
-  //page spineer helper
+  /* ---------- Format Date ---------- */
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const utcDate = new Date(dateString + "Z");
+    return utcDate.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  /* ---------- RENDER CELL ---------- */
+  const renderCell = (row, key) => {
+    switch (key) {
+      case "checkbox":
+        return columns[0].render(row);
+
+      case "name":
+        return (
+          <span
+            className="font-medium text-primary hover:underline cursor-pointer"
+            onClick={() => setViewOrg(row)}
+          >
+            {row.name || "-"}
+          </span>
+        );
+
+      case "status": {
+        const badge = getStatusBadge(row.status);
+        const status = (row.status || "").toLowerCase();
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        );
+      }
+
+      case "slug":
+        return <span className="text-muted-foreground">{row.slug || "-"}</span>;
+
+      case "email":
+        return (
+          <span className="text-muted-foreground">{row.email || "-"}</span>
+        );
+
+      case "address":
+        return (
+          <span className="truncate text-muted-foreground" title={row.address}>
+            {row.address || "-"}
+          </span>
+        );
+
+      case "created_at":
+        return (
+          <span className="font-mono text-xs text-muted-foreground">
+            {formatDate(row.created_at)}
+          </span>
+        );
+
+      default:
+        return row[key] || "-";
+    }
+  };
+
+  const visibleTableColumns = columns.filter(
+    (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
+  );
 
   if (pageLoading) {
     return <PageLoader loading={true} />;
@@ -284,65 +371,77 @@ export default function OrganizationListView() {
       onBack={() => setViewOrg(null)}
     />
   ) : (
-    <div className="dashboard__content">
-      <div className="dashboard-body">
-        {/* ---------- TOP BAR ---------- */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            gap: 12,
-          }}
-        >
+    <div className="space-y">
+      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
+        {/* TOOLBAR */}
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search */}
-          <div style={{ flex: 1, maxWidth: 420 }}>
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+            </div>
+
             <input
               type="text"
-              placeholder="Search organizations…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 16px",
-                borderRadius: 999,
-                border: "1px solid #D1D5DB",
-                background: "#F9FAFB",
-                fontSize: 14,
-                height: 40,
-                fontFamily: "Amazon Ember, sans-serif",
-              }}
+              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+              placeholder="Search organizations..."
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <RefreshButton
-              onRefresh={loadOrganizations}
-              setTableLoading={setTableLoading}
-            />
-
-            <ActionsMenu
-              selected={selected}
-              items={isAdmin ? ORG_ACTIONS : []} // 🔥 no items for non-admin
-              disabled={!isAdmin || selected.length !== 1}
-              onSelect={(actionKey) => {
-                if (!isAdmin) return; // 🔒 safety guard
-
-                const orgId = selected[0];
-                const org = organizations.find((o) => o.org_id === orgId);
-
-                if (!org) {
-                  console.error("Selected organization not found");
-                  return;
-                }
-
-                setActiveOrg(org);
-                setSelectedAction(actionKey);
-                setShowReviewModal(true);
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh */}
+            <button
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await loadOrganizations();
+                setTimeout(() => setTableLoading(false), 300);
               }}
-            />
+              title="Refresh"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right"></i>
+            </button>
 
+            {/* Actions dropdown */}
+            <div ref={actionsRef} className="relative">
+              <ActionsMenu
+                disabled={!isAdmin || selected.length !== 1}
+                items={actionItems}
+                onSelect={(actionKey) => {
+                  if (!isAdmin) return;
+
+                  const orgId = selected[0];
+                  const org = organizations.find((o) => o.org_id === orgId);
+
+                  if (!org) {
+                    console.error("Selected organization not found");
+                    return;
+                  }
+
+                  setActiveOrg(org);
+                  setSelectedAction(actionKey);
+                  setShowReviewModal(true);
+                }}
+              />
+            </div>
+
+            {/* Preferences button */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+
+            {/* Create Organization Button */}
             <OrgRequiredWrapper
               disabled={!canCreateOrg}
               message={createOrgTooltip}
@@ -353,105 +452,78 @@ export default function OrganizationListView() {
                   if (!canCreateOrg) return;
                   setShowCreateOrgModal(true);
                 }}
+                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
               />
             </OrgRequiredWrapper>
-
-            <AwsSettingsIconButton
-              onClick={() => setShowPreferences(true)}
-              title="Preferences"
-            />
           </div>
         </div>
 
-        {/* ---------- TABLE ---------- */}
-        <div style={{ position: "relative" }}>
+        {/* TABLE */}
+        <div className="relative flex-1 overflow-hidden">
+          {tableLoading && (
+            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
+          )}
           <ListTable
-            columns={columns}
-            data={filtered}
+            columns={visibleTableColumns}
+            data={paginatedData}
             rowKey="org_id"
             renderCell={renderCell}
             sortConfig={sortConfig}
             onSort={requestSort}
             columnWidths={columnWidths}
             startResize={startResize}
+            loading={tableLoading}
+            selectedCount={selected.length}
+            selectionCounterLabel="organization"
+            pagination={{
+              page,
+              pageSize,
+              total: filtered.length,
+              onPageChange: setPage,
+            }}
           />
-
-          {tableLoading && (
-            <div className="table-refresh-overlay">
-              <div className="table-spinner"></div>
-            </div>
-          )}
         </div>
+      </section>
 
-        {showReviewModal && (
-          <ReviewOrganizationModal
-            organization={activeOrg}
-            action={selectedAction}
-            onClose={() => setShowReviewModal(false)}
-            onSuccess={() => {
-              setShowReviewModal(false);
-              setSelected([]);
-              loadOrganizations();
-            }}
-          />
-        )}
-        {/* ===== CREATE ORGANIZATION MODAL ===== */}
-        {showCreateOrgModal && (
-          <CreateOrganizationModal
-            setShowCreateModal={setShowCreateOrgModal}
-            onSuccess={() => {
-              setShowCreateOrgModal(false);
-              loadOrganizations();
-            }}
-          />
-        )}
-
-        {showPreferences && (
-          <TablePreferencesModal
-            open={showPreferences}
-            onClose={() => setShowPreferences(false)}
-            /* These are REQUIRED props */
-            pageSize={10}
-            setPageSize={() => {}}
-            wrapLines={false}
-            setWrapLines={() => {}}
-            stripedRows={false}
-            setStripedRows={() => {}}
-            columns={columns}
-            visibleColumns={columns.map((c) => c.key)}
-            toggleColumn={() => {}}
-          />
-        )}
-
-        {/* ---------- PAGINATION (Static) ---------- */}
-        <div
-          style={{
-            marginTop: 20,
-            display: "flex",
-            justifyContent: "center",
-            gap: 12,
+      {/* MODALS */}
+      {showReviewModal && (
+        <ReviewOrganizationModal
+          organization={activeOrg}
+          action={selectedAction}
+          onClose={() => setShowReviewModal(false)}
+          onSuccess={() => {
+            setShowReviewModal(false);
+            setSelected([]);
+            loadOrganizations();
           }}
-        >
-          <button style={pgBtn}>{"<"}</button>
-          <span style={pageTag}>1</span>
-          <button style={pgBtn}>{">"}</button>
-        </div>
-      </div>
+        />
+      )}
+
+      {showCreateOrgModal && (
+        <CreateOrganizationModal
+          setShowCreateModal={setShowCreateOrgModal}
+          onSuccess={() => {
+            setShowCreateOrgModal(false);
+            loadOrganizations();
+          }}
+        />
+      )}
+
+      {showPreferences && (
+        <TablePreferencesModal
+          open={showPreferences}
+          onClose={() => setShowPreferences(false)}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          wrapLines={wrapLines}
+          setWrapLines={setWrapLines}
+          stripedRows={stripedRows}
+          setStripedRows={setStripedRows}
+          visibleColumns={visibleColumns}
+          toggleColumn={toggleColumn}
+          columns={columns}
+        />
+      )}
     </div>
   );
 }
-
-/* ---------- Pagination Styles ---------- */
-const pgBtn = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#F3F4F6",
-  border: "1px solid #D1D5DB",
-  cursor: "pointer",
-};
-
-const pageTag = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#EEF2FF",
-};

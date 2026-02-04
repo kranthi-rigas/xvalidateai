@@ -1,67 +1,13 @@
+import { right } from "@popperjs/core";
 import React from "react";
 
-/* ---------- STYLES ---------- */
-export const Th = {
-  padding: "12px 16px",
-  fontSize: 13,
-  fontWeight: 600,
-  color: "#414D5C",
-  background: "#F2F3F3",
-  borderBottom: "1px solid #D5DBE0",
-  fontFamily: "Amazon Ember, sans-serif",
-  textAlign: "left",
-  whiteSpace: "nowrap",
-  position: "sticky",
-  top: 0,
-  zIndex: 10,
-};
-
-export const Td = {
-  padding: "12px 16px",
-  fontSize: 14,
-  color: "#1A1A1A",
-  fontFamily: "Amazon Ember, sans-serif",
-  fontWeight: 400,
-  lineHeight: "20px",
-};
-
-export const LinkStyle = {
-  color: "#0972D3",
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: "pointer",
-  padding: "2px 0",
-  borderRadius: 4,
-  display: "inline-block",
-};
-
-/* ---------- HELPERS ---------- */
-
-// ✅ Safe style guard (prevents Symbol/object crashes)
-const safeStyle = (v) =>
-  v && typeof v === "object" && !Array.isArray(v) ? v : {};
-
-// ✅ Safe cell renderer (prevents React crash)
+/* ---------- SAFE HELPERS ---------- */
 const safeRenderCell = (renderCell, row, key) => {
   try {
-    const value = renderCell(row, key);
-
-    // Allow valid React nodes
+    const value = renderCell?.(row, key);
     if (React.isValidElement(value)) return value;
-
-    // Allow primitive display values
-      if (typeof value === "string") {
-          if (value.includes("http")) {
-              return <a href={value}>{value}</a>;
-          }
-          return value;
-      }
-
-      if (typeof value === "number" || typeof value === "boolean") {
-          return value;
-      }
-
-    // Everything else (Symbol, object, function, etc.)
+    if (typeof value === "string" || typeof value === "number") return value;
+    if (typeof value === "boolean") return String(value);
     return "";
   } catch (err) {
     console.error("ListTable renderCell error:", err);
@@ -95,152 +41,202 @@ function applySorting(data, sortConfig, columns) {
 
 /* ---------- TABLE ---------- */
 export default function ListTable({
-  columns,
-  data,
+  columns = [],
+  data = [],
   rowKey,
   renderCell,
+
+  /* sorting */
   sortConfig,
   onSort,
+
+  /* resizing */
   columnWidths = {},
   startResize,
+  pagination,
+  loading = false,
   hideEmptyMessage = false,
+  selectedCount = 0,
+  selectionCounterLabel = null, // ✅ NEW: Custom label (e.g., "tool", "project", "item")
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
 
-  const arrow = (key) => {
-    if (sortConfig.key !== key) return "⇅";
-    return sortConfig.direction === "asc" ? "▲" : "▼";
+  const totalPages = pagination
+    ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
+    : 1;
+
+  // ✅ Generate dynamic text based on count and label
+  const getSelectionText = () => {
+    if (!selectedCount) return "";
+
+    // If custom label provided, use it (e.g., "tool", "project")
+    if (selectionCounterLabel) {
+      const plural = selectedCount !== 1 ? "s" : "";
+      return `${selectedCount} ${selectionCounterLabel}${plural} selected`;
+    }
+
+    // Default fallback
+    return `${selectedCount} item${selectedCount !== 1 ? "s" : ""} selected`;
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxHeight: "calc(100vh - 320px)",
-        overflow: "auto",
-        position: "relative",
-        border: "1px solid #E5E7EB",
-        borderRadius: 8,
-      }}
-    >
-      <table
+    <div className="relative w-full h-full flex flex-col bg-white border border-border rounded-2xl overflow-hidden">
+      {/* LOADING OVERLAY */}
+      {loading && (
+        <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center">
+          <i className="fa-solid fa-spinner fa-spin text-2xl text-primary" />
+        </div>
+      )}
+
+      {/* ✅ SELECTION COUNTER BANNER */}
+      {selectedCount > 0 && (
+        <div className="shrink-0 bg-blue-50 border-b border-blue-200 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <i className="fa-solid fa-check-circle text-blue-600 text-lg" />
+            <span className="text-sm font-medium text-blue-900">
+              {getSelectionText()}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ SCROLLABLE AREA */}
+      <div
+        className="
+          flex-1
+          overflow-y-scroll
+          overflow-x-auto
+          scrollbar-thin
+          scrollbar-thumb-muted
+          scrollbar-track-transparent
+        "
         style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
-          background: "white",
+          scrollbarGutter: "stable",
+          scrollbarWidth: "thin",
         }}
       >
-        {/* ---------- HEADER ---------- */}
-        <thead>
-          <tr>
-            {columns.map((col, colIndex) => (
-              <th
-                key={col.key}
-                onClick={() => col.sortable && onSort(col.key)}
-                style={{
-                  ...Th,
-                  width: columnWidths[col.key] || col.width || 160,
-                  cursor: col.sortable ? "pointer" : "default",
-                  userSelect: "none",
-                  padding: col.key === "checkbox" ? "0 6px" : "0 16px",
-                  boxShadow: "inset 0 -1px 0 #D5DBE0",
-                }}
-              >
-                {colIndex !== 0 && col.key !== "checkbox" && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      top: "25%",
-                      bottom: "25%",
-                      width: 1,
-                      background: "#D1D5DB",
-                    }}
-                  />
-                )}
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    height: 40,
-                  }}
-                >
-                  {col.key === "checkbox" ? (
-                    <input
-                      type="checkbox"
-                      checked={col.allSelected || false}
-                      onChange={(e) => col.onToggleAll?.(e.target.checked)}
-                    />
-                  ) : (
-                    <>
-                      <span>
-                        {typeof col.label === "string" ? col.label : ""}
-                      </span>
-                      {col.sortable && <span>{arrow(col.key)}</span>}
-                    </>
-                  )}
-                </div>
-
-                {col.resizable && (
-                  <div
-                    onMouseDown={(e) => startResize(col.key, e)}
-                    style={{
-                      position: "absolute",
-                      right: -4,
-                      top: 0,
-                      width: 8,
-                      height: "100%",
-                      cursor: "col-resize",
-                    }}
-                  />
-                )}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        {/* ---------- BODY ---------- */}
-        <tbody>
-          {sortedData.length === 0 && !hideEmptyMessage ? (
+        <table className="w-full table-fixed border-collapse">
+          {/* STICKY HEADER */}
+          <thead className="sticky top-0 z-40 bg-white border-b border-border">
             <tr>
-              <td
-                colSpan={columns.length}
-                style={{ padding: 40, textAlign: "center" }}
-              >
-                No records found.
-              </td>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  onClick={() => col.sortable && onSort(col.key)}
+                  className={`p-4 text-xs font-semibold uppercase tracking-wider
+                    text-muted-foreground group relative select-none
+                    ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
+                  style={{ width: columnWidths[col.key] || col.width || 160 }}
+                >
+                  <div className="flex items-center justify-between">
+                    {col.key === "checkbox" ? (
+                      <input
+                        type="checkbox"
+                        checked={col.allSelected || false}
+                        onChange={(e) => col.onToggleAll?.(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-primary"
+                      />
+                    ) : (
+                      <>
+                        <span>{col.label}</span>
+                        {col.sortable && (
+                          <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100" />
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {col.resizable && (
+                    <div
+                      onMouseDown={(e) => startResize(col.key, e)}
+                      className="absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary cursor-col-resize"
+                    />
+                  )}
+                </th>
+              ))}
             </tr>
-          ) : (
-            sortedData.map((row, rowIndex) => (
-              <tr
-                key={row[rowKey] ?? rowIndex}
-                style={{
-                  borderBottom: "1px solid #E5E7EB",
-                  height: 42,
-                }}
-              >
-                {columns.map((col) => (
-                  <td
-                    key={`${row[rowKey] ?? rowIndex}-${col.key}`}
-                    style={{
-                      ...Td,
-                      padding: col.key === "checkbox" ? "0 6px" : "0 16px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {safeRenderCell(renderCell, row, col.key)}
-                  </td>
-                ))}
+          </thead>
+
+          {/* BODY */}
+          <tbody className="divide-y divide-border text-sm">
+            {sortedData.length === 0 && !hideEmptyMessage ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="p-8 text-center text-muted-foreground"
+                >
+                  No records found
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              sortedData.map((row, rowIndex) => (
+                <tr key={row[rowKey] ?? rowIndex} className="hover:bg-muted/20">
+                  {columns.map((col) => (
+                    <td
+                      key={`${row[rowKey] ?? rowIndex}-${col.key}`}
+                      className={`p-4 ${
+                        col.key === "checkbox"
+                          ? "pl-6 pr-2"
+                          : col.truncate === false
+                            ? "break-words whitespace-normal"
+                            : "truncate"
+                      }`}
+                      style={{
+                        width: columnWidths[col.key] || col.width || 160,
+                      }}
+                    >
+                      {safeRenderCell(renderCell, row, col.key)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ✅ STICKY PAGINATION */}
+      {pagination && totalPages > 0 && (
+        <div className="shrink-0 sticky bottom-0 z-40 bg-white border-t border-border p-6 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {(pagination.page - 1) * pagination.pageSize + 1}–
+              {Math.min(
+                pagination.page * pagination.pageSize,
+                pagination.total,
+              )}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-foreground">
+              {pagination.total}
+            </span>{" "}
+            items
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              disabled={pagination.page === 1}
+              onClick={() => pagination.onPageChange(pagination.page - 1)}
+              className="w-9 h-9 rounded-lg border border-border disabled:opacity-50"
+            >
+              <i className="fa-solid fa-chevron-left text-xs" />
+            </button>
+
+            <button className="w-9 h-9 rounded-lg bg-secondary text-white font-medium">
+              {pagination.page}
+            </button>
+
+            <button
+              disabled={pagination.page === totalPages}
+              onClick={() => pagination.onPageChange(pagination.page + 1)}
+              className="w-9 h-9 rounded-lg border border-border disabled:opacity-50"
+            >
+              <i className="fa-solid fa-chevron-right text-xs" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

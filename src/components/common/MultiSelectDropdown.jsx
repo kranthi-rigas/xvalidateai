@@ -5,6 +5,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { COLORS } from "../../styles/colors";
 
 const MultiSelectDropdown = forwardRef(function MultiSelectDropdown(
   {
@@ -75,7 +76,7 @@ const MultiSelectDropdown = forwardRef(function MultiSelectDropdown(
         }}
       >
         {label}
-        {required && <span style={{ color: "#DC2626", marginLeft: 4 }}>*</span>}
+        {required && <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>}
       </label>
 
       {/* -------- SELECT BOX -------- */}
@@ -167,7 +168,7 @@ const MultiSelectDropdown = forwardRef(function MultiSelectDropdown(
 
       {/* -------- ERROR -------- */}
       {error && (
-        <div style={{ color: "#DC2626", fontSize: 13, marginTop: 4 }}>
+        <div style={{ color: COLORS.error, fontSize: 13, marginTop: 4 }}>
           {error}
         </div>
       )}

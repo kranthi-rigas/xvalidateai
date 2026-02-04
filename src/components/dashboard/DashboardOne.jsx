@@ -4,7 +4,7 @@ import SubjectWisePieChart from "./SubjectWisePieChart";
 import AttemptWiseAreaChart from "./AttemptWiseAreaChart";
 import { fetchAttemptResultsForAnalyticsById } from "@/apiIntegration/attempts";
 import { fetchAllExams } from "@/apiIntegration/mockTests";
-import SingleScore from "@/components/commonComponents/SingleScore";
+import SingleScore from "@/components/commonComponents/SingleScore/SingleScore";
 import ListTable from "@/components/common/ListTable.jsx";
 import Filter from "@/components/commonComponents/Filter";
 import PageLoader from "@/components/common/PageLoader";
@@ -98,7 +98,7 @@ export default function DashboardOne() {
 
           // Filter tests belonging to this exam
           const filtered = d.exams.filter(
-            (item) => item.exam === firstExamName
+            (item) => item.exam === firstExamName,
           );
           setExamsByCategory(filtered);
 
@@ -246,7 +246,7 @@ export default function DashboardOne() {
           <SingleScore
             title="Latest Score"
             value={`${Number(
-              fullAnalyticsData?.data?.latest_score ?? 0
+              fullAnalyticsData?.data?.latest_score ?? 0,
             ).toFixed(2)}%`}
             icon="/dashboardIcons/latestScoreIcon.svg"
             valueColor="#FF2727"
