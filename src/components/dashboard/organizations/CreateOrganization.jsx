@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import AwsButton from "../../common/AwsButton";
 import ReusableModal from "../../common/Reusablemodal";
-import FormField from "../../common/FormField";
+import FormField from "../../common/Formfield";
 import { createOrganization } from "../../../apiIntegration/organization";
 import { fetchUserProfile } from "../../../apiIntegration/auth";
 import useToast from "../../../hooks/useToast";
