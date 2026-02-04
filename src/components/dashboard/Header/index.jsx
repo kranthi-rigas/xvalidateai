@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import HeaderTitle from "./HeaderTitle";
 import HeaderSearch from "./HeaderSearch";
 import HeaderNotifications from "./HeaderNotifications";
+import HeaderCredits from "./HeaderCredits";
 import { useHeaderContent } from "./hooks/useHeaderContent";
 import "./Header.css";
 
@@ -20,6 +21,7 @@ export default function Header() {
         description={headerContent.description} 
       />
       <div className="flex items-center space-x-4">
+        <HeaderCredits />
         {/* <HeaderSearch /> */}
         <HeaderNotifications hasUnread={true} />
       </div>
