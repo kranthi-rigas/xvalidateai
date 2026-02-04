@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import AwsButton from "../../common/AwsButton";
-import ReusableModal from "../../common/ReusableModal";
+import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/FormField";
 import useToast from "../../../hooks/useToast";
 import { reviewOrganization } from "../../../apiIntegration/organization";

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createComplianceProject } from "../../../apiIntegration/compliance";
 import AwsButton from "../../common/AwsButton";
 import useToast from "../../../hooks/useToast";
-import ReusableModal from "../../common/ReusableModal";
+import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/FormField";
 
 export default function CreateProjectModal({

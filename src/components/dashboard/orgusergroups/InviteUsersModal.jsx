@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { getUserAttributes } from "../../../apiIntegration/organization";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
-import ReusableModal from "../../common/ReusableModal";
+import ReusableModal from "../../common/Reusablemodal";
 import useToast from "../../../hooks/useToast";
 import { COLORS } from "../../../styles/colors";
 
