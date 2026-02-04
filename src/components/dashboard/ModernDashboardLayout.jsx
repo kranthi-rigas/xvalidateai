@@ -228,17 +228,6 @@ export default function ModernDashboardLayout() {
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
-          <Link
-            to="/dashboard/faq"
-            className={`nav-item flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors group mb-2`}
-            title={sidebarCollapsed ? "FAQ's" : ""}
-          >
-            <span
-              className={`fa-regular fa-circle-question ${sidebarCollapsed ? "" : "mr-3"} group-hover:text-primary transition-colors`}
-              data-fa-i2svg="false"
-            ></span>
-            {!sidebarCollapsed && <span>FAQ's</span>}
-          </Link>
           <div
             className={`flex items-center ${sidebarCollapsed ? "justify-center" : ""} p-2 bg-muted/50 rounded-lg border border-border`}
           >
