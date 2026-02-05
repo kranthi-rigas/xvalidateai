@@ -376,6 +376,7 @@ export default function AuthPage() {
                         value={formData.confirm_password}
                         onChange={handleChange}
                         icon="fa-lock"
+                        showToggle={false}
                       />
 
                       {/* Country Selection */}

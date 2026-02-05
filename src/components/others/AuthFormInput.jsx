@@ -11,6 +11,7 @@ import React, { useState } from "react";
  * @param {function} onChange - Change handler
  * @param {string} icon - FontAwesome icon class (e.g., "fa-user", "fa-envelope")
  * @param {boolean} required - Whether the field is required
+ * @param {boolean} showToggle - Whether to show password toggle button (default: true)
  */
 export default function AuthFormInput({
   id,
@@ -22,6 +23,7 @@ export default function AuthFormInput({
   onChange,
   icon = "fa-user",
   required = true,
+  showToggle = true,
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordField = type === "password";
@@ -45,9 +47,9 @@ export default function AuthFormInput({
           onChange={onChange}
           required={required}
           className="auth-input"
-          style={isPasswordField ? { paddingRight: "3rem" } : {}}
+          style={isPasswordField && showToggle ? { paddingRight: "3rem" } : {}}
         />
-        {isPasswordField && (
+        {isPasswordField && showToggle && (
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
