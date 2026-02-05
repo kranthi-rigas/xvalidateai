@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyEmail } from "../../apiIntegration/auth";
 import AwsButton from "../common/AwsButton";
 import HeaderAuth from "../layout/headers/HeaderAuth";
+import AuthFooter from "../../components/others/AuthFooter";
 
 export default function VerifyEmail() {
   const [status, setStatus] = useState("loading"); // loading | success | error
@@ -75,7 +76,10 @@ export default function VerifyEmail() {
 
           {status === "success" && (
             <>
-              <h3 className="text-center mb-10" style={{ color: COLORS.success }}>
+              <h3
+                className="text-center mb-10"
+                style={{ color: COLORS.success }}
+              >
                 Email verified successfully
               </h3>
 
@@ -104,7 +108,10 @@ export default function VerifyEmail() {
 
           {status === "already_verified" && (
             <>
-              <h3 className="text-center mb-10" style={{ color: COLORS.primary }}>
+              <h3
+                className="text-center mb-10"
+                style={{ color: COLORS.primary }}
+              >
                 Email already verified
               </h3>
 
@@ -157,19 +164,9 @@ export default function VerifyEmail() {
           )}
         </div>
       </section>
-      {/* ✅ REUSED FOOTER */}
-      <div
-        className="py-30 border-top-light-15"
-        style={{ backgroundColor: COLORS.bgDark }}
-      >
-        <div className="row justify-center items-center text-center y-gap-20">
-          <div className="col-auto">
-            <div className="d-flex items-center h-100 text-white">
-              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </div>
+
+      {/* ✅ Reused Footer */}
+      <AuthFooter />
     </>
   );
 }

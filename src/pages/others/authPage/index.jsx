@@ -322,7 +322,7 @@ export default function AuthPage() {
                         name="first_name"
                         type="text"
                         label="First Name"
-                        placeholder="John"
+                        placeholder="First Name"
                         value={formData.first_name}
                         onChange={handleChange}
                         icon="fa-user"
@@ -332,7 +332,7 @@ export default function AuthPage() {
                         name="last_name"
                         type="text"
                         label="Last Name"
-                        placeholder="Doe"
+                        placeholder="Last Name"
                         value={formData.last_name}
                         onChange={handleChange}
                         icon="fa-user"

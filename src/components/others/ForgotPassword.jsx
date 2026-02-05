@@ -3,6 +3,7 @@ import { COLORS } from "../../styles/colors";
 import HeaderAuth from "../layout/headers/HeaderAuth";
 import AwsButton from "../common/AwsButton";
 import { forgotPassword } from "../../apiIntegration/auth";
+import AuthFooter from "../../components/others/AuthFooter";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -112,18 +113,7 @@ export default function ForgotPassword() {
         </div>
       </section>
       {/* ✅ REUSED FOOTER */}
-      <div
-        className="py-30 border-top-light-15"
-        style={{ backgroundColor: COLORS.bgDark }}
-      >
-        <div className="row justify-center items-center text-center y-gap-20">
-          <div className="col-auto">
-            <div className="d-flex items-center h-100 text-white">
-              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </div>
+      <AuthFooter />
     </>
   );
 }

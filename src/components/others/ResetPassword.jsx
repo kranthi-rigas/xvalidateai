@@ -4,6 +4,7 @@ import HeaderAuth from "../layout/headers/HeaderAuth";
 import AwsButton from "../common/AwsButton";
 import { resetPassword } from "../../apiIntegration/auth";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import AuthFooter from "../../components/others/AuthFooter";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -206,18 +207,7 @@ export default function ResetPassword() {
         </div>
       </section>
       {/* ✅ REUSED FOOTER */}
-      <div
-        className="py-30 border-top-light-15"
-        style={{ backgroundColor: COLORS.bgDark }}
-      >
-        <div className="row justify-center items-center text-center y-gap-20">
-          <div className="col-auto">
-            <div className="d-flex items-center h-100 text-white">
-              MyAcademy 51 © {new Date().getFullYear()}. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </div>
+      <AuthFooter />
     </>
   );
 }

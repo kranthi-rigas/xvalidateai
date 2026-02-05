@@ -28,10 +28,16 @@ export default function AuthFooter() {
             >
               Terms of Service
             </a>
-            <a href="#">Support</a>
+            <a href="mailto:support@academy51.com?subject=Support Request - XVALIDATEAI">
+              <i
+                className="fa-solid fa-envelope"
+                style={{ marginRight: "5px" }}
+              ></i>
+              Support
+            </a>
           </div>
           <div className="auth-page-footer-copyright">
-            © 2026 XVALIDATEAI. All rights reserved.
+            XVALIDATEAI © {new Date().getFullYear()}. All rights reserved.
           </div>
         </div>
       </div>
