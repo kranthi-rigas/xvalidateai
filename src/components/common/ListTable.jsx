@@ -104,14 +104,13 @@ export default function ListTable({
       <div
         className="
           flex-1
-          overflow-y-scroll
+          overflow-y-auto
           overflow-x-auto
           scrollbar-thin
           scrollbar-thumb-muted
           scrollbar-track-transparent
         "
         style={{
-          scrollbarGutter: "stable",
           scrollbarWidth: "thin",
         }}
       >
