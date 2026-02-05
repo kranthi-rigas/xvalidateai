@@ -38,8 +38,15 @@ export default function OrgUsers({ refreshProjects }) {
 
   const hasOrg = hasOrganization();
 
-  // FINAL PERMISSION
-  const canManage = hasOrg && isAdmin;
+  const DEFAULT_ORGS = ["xvalidateai", "myacademy51", "academy51"];
+
+  const orgNameRaw = userInfo?.organization?.name;
+  const orgName = (orgNameRaw || "").toLowerCase();
+
+  /* ⭐ Treat empty/null as default */
+  const isDefaultOrg = !orgName || DEFAULT_ORGS.includes(orgName);
+
+  const canManage = hasOrg && isAdmin && !isDefaultOrg;
 
   // Preferences modal
   const [showPreferences, setShowPreferences] = useState(false);
@@ -409,8 +416,8 @@ export default function OrgUsers({ refreshProjects }) {
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg
-                  ? "Please create an organization before inviting users"
+                !hasOrg || isDefaultOrg
+                  ? "Please create your organization before inviting users"
                   : "Only admin users can invite users"
               }
             >
