@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function AuthFooter() {
   return (
@@ -14,12 +15,12 @@ export default function AuthFooter() {
             </span>
           </div>
           <div className="auth-page-footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <Link to="/privacy-policy">Privacy Policy</Link>
+            <Link to="/terms-and-conditions">Terms of Service</Link>
             <a href="#">Support</a>
           </div>
           <div className="auth-page-footer-copyright">
-            © 2024 XVALIDATEAI. All rights reserved.
+            © 2026 XVALIDATEAI. All rights reserved.
           </div>
         </div>
       </div>
