@@ -30,7 +30,10 @@ export const getReadableApiError = (err) => {
   return err?.message || "Request failed";
 };
 
-export default function CreateOrganizationModal({ setShowCreateModal }) {
+export default function CreateOrganizationModal({
+  setShowCreateModal,
+  onSuccess,
+}) {
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
     name: "",
@@ -151,7 +154,10 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
 
       show("Organization created successfully!", { type: "success" });
 
-      setTimeout(() => setShowCreateModal(false), 1200);
+      setTimeout(() => {
+        setShowCreateModal(false);
+        onSuccess?.(); // ⭐ THIS triggers table refresh
+      }, 800);
     } catch (err) {
       console.error("Create organization error:", err);
 
