@@ -166,23 +166,25 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const categoryScores = getCategoryScores();
 
   return (
-    <div className="project-details-modern">
+    <div className="space-y">
       {/* Top Actions */}
-      <div className="top-actions">
-        <button
-          onClick={() => onBack?.(false)}
-          className="back-button glass-card"
-        >
-          <i className="fa-solid fa-arrow-left"></i> Back to AI Compliance
-        </button>
-        <div className="action-buttons">
-          <button className="action-btn export-button">
-            <i className="fa-solid fa-file-pdf"></i> Export PDF
+      <div className="glass-card report-footer">
+        <div className="top-actions">
+          <button
+            onClick={() => onBack?.(false)}
+            className="back-button glass-card"
+          >
+            <i className="fa-solid fa-arrow-left"></i> Back to AI Compliance
           </button>
+          <div className="action-buttons">
+            <button className="action-btn export-button">
+              <i className="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
 
-          <button className="action-btn share-button glass-card">
-            <i className="fa-solid fa-share-nodes"></i> Share
-          </button>
+            <button className="action-btn share-button glass-card">
+              <i className="fa-solid fa-share-nodes"></i> Share
+            </button>
+          </div>
         </div>
       </div>
 
