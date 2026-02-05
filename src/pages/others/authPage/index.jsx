@@ -463,13 +463,23 @@ export default function AuthPage() {
                     <p>
                       {mode === "signup" ? (
                         <>
-                          Already have an account?
-                          <Link to="/auth?mode=login">Sign in</Link>
+                          Already have an account?{" "}
+                          <Link
+                            to="/auth?mode=login"
+                            className="auth-switch-link"
+                          >
+                            Sign in
+                          </Link>
                         </>
                       ) : (
                         <>
-                          Don't have an account?
-                          <Link to="/auth?mode=signup">Sign up for free</Link>
+                          Don't have an account?{" "}
+                          <Link
+                            to="/auth?mode=signup"
+                            className="auth-switch-link"
+                          >
+                            Sign up for free
+                          </Link>
                         </>
                       )}
                     </p>

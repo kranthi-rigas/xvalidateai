@@ -991,3 +991,87 @@ div:focus-within .password-view {
     display: block !important;
   }
 }
+/* Auth Switch Mode Links */
+.auth-switch-mode {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-switch-mode p {
+  font-size: 14px;
+  color: var(--auth-muted-foreground, #64748B);
+  line-height: 1.5;
+}
+
+.auth-switch-mode a {
+  color: var(--auth-primary, #0F3053);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 0.5rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Hover Effect - Underline Animation */
+.auth-switch-mode a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--auth-secondary, #58BFCE);
+  transition: width 0.3s ease;
+}
+
+.auth-switch-mode a:hover {
+  color: var(--auth-secondary, #58BFCE);
+}
+
+.auth-switch-mode a:hover::after {
+  width: 100%;
+}
+
+/* Focus State for Accessibility */
+.auth-switch-mode a:focus {
+  outline: 2px solid var(--auth-secondary, #58BFCE);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* Active State */
+.auth-switch-mode a:active {
+  transform: translateY(1px);
+}
+.auth-switch-link {
+  position: relative;
+  display: inline-block;
+  font-weight: 600;
+  color: var(--primary-color);
+  transition: transform 0.25s ease;
+}
+
+/* ⭐ Text slide */
+.auth-switch-link:hover {
+  transform: translateX(4px);
+}
+
+/* ⭐ Underline animation */
+.auth-switch-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+
+.auth-switch-link:hover::after {
+  width: 100%;
+}
+.auth-switch-link:hover {
+  transform: translateX(3px) scale(1.03);
+  text-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+}
