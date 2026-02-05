@@ -144,7 +144,10 @@ export default function ModernDashboardLayout() {
         id="sidebar"
         className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}
       >
-        <div className="h-20 flex items-center px-6 border-b border-sidebar-border justify-between">
+        <div
+          className={`h-20 flex items-center border-b border-sidebar-border ${sidebarCollapsed ? "" : "px-6 justify-between"}`}
+        >
+          {/* Expanded Logo */}
           <div
             className={`flex items-center ${sidebarCollapsed ? "hidden" : ""}`}
           >
@@ -154,13 +157,26 @@ export default function ModernDashboardLayout() {
               className="h-10 w-auto"
             />
           </div>
+
+          {/* Collapsed Logo - Clickable */}
+          <div
+            className={`${sidebarCollapsed ? "" : "hidden"}`}
+            title="Expand sidebar"
+          >
+            <img
+              src="/assets/img/logo/collapsed-xvalidateai.png"
+              alt="XVALIDATEAI"
+            />
+          </div>
+
+          {/* Collapse Button - Only Show When Expanded */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`${sidebarCollapsed ? "mx-auto" : ""} w-8 h-8 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors`}
+            className={` rounded-lg flex items-center justify-center text-muted-foreground transition-colors`}
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <i
-              className={`fa-solid ${sidebarCollapsed ? "fa-angles-right" : "fa-angles-left"}`}
+              className={`fa-solid ${sidebarCollapsed ? "fa-angle-right mr-2" : "fa-angles-left"}`}
               data-fa-i2svg="false"
             ></i>
           </button>

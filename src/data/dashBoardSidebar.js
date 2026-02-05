@@ -2,7 +2,7 @@ export const sidebarItems = [
     {
         id: 1,
         href: "/dashboard",
-        icon: "fa-solid fa-gauge",
+        icon: "fa-solid fa-gauge fa-lg",
         text: "Dashboard",
         permission: "dashboard",
         requiredPlan: null,
@@ -10,7 +10,7 @@ export const sidebarItems = [
     {
         id: 2,
         href: "/dashboard/aicompliance",
-        icon: "fa-solid fa-microchip",
+        icon: "fa-solid fa-microchip fa-lg",
         text: "AI Compliance",
         permission: "ai_compliance",
         requiredPlan: null,
@@ -18,7 +18,7 @@ export const sidebarItems = [
     {
         id: 3,
         href: "/dashboard/ailiteracy",
-        icon: "fa-solid fa-graduation-cap",
+        icon: "fa-solid fa-graduation-cap fa-lg",
         text: "AI Literacy",
         permission: "ai_literacy",
         requiredPlan: null,
@@ -30,20 +30,20 @@ export const sidebarItems = [
     },
     {
         id: 4,
-        icon: "fa-regular fa-building",
+        icon: "fa-regular fa-building fa-lg",
         text: "Organization",
         permission: "organization",
         requiredPlan: "business",
         children: [
-            { id: "user-groups", icon: "fa fa-user", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
-            { id: "users", icon: "fa fa-users", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
-            { id: "organizations", icon: "fa fa-sitemap", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
+            { id: "user-groups", icon: "fa fa-user fa-lg", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
+            { id: "users", icon: "fa fa-users fa-lg", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
+            { id: "organizations", icon: "fa fa-sitemap fa-lg", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
         ],
     },
     {
         id: 5,
         href: "/dashboard/settings",
-        icon: "fa-solid fa-cogs",
+        icon: "fa-solid fa-cogs fa-lg",
         text: "Settings",
         permission: "settings",
         requiredPlan: null,
@@ -51,7 +51,7 @@ export const sidebarItems = [
     {
         id: 6,
         href: "/dashboard/pricing",
-        icon: "fa fa-money",
+        icon: "fa fa-money fa-lg",
         text: "Pricing",
         permission: null,
         requiredPlan: null,
@@ -59,7 +59,7 @@ export const sidebarItems = [
     {
         id: 7,
         href: "/dashboard/faqs",
-        icon: "fa-solid fa-circle-question",
+        icon: "fa-solid fa-circle-question fa-lg",
         text: "FAQs",
         permission: null,
         requiredPlan: null,
