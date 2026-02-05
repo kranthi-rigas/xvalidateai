@@ -1,6 +1,7 @@
 import DashboardNotFound from "@/components/dashboard/DashboardNotFound";
 import MetaComponent from "@/components/common/MetaComponent";
-import HeaderAuth from "@/components/layout/headers/HeaderAuth";
+import AuthHeader from "@/components/others/AuthHeader";
+import AuthFooter from "@/components/others/AuthFooter";
 import Preloader from "@/components/common/Preloader";
 
 const metadata = {
@@ -14,7 +15,7 @@ export default function DashboardNotFoundPage() {
       <MetaComponent meta={metadata} />
       <Preloader />
 
-      <HeaderAuth />
+      <AuthHeader />
 
       <div
         style={{
@@ -28,18 +29,7 @@ export default function DashboardNotFoundPage() {
         <DashboardNotFound />
       </div>
 
-      <div
-        className="py-30 border-top-light-15"
-        style={{ backgroundColor: COLORS.bgDark }}
-      >
-        <div className="row justify-center items-center text-center y-gap-20">
-          <div className="col-auto">
-            <div className="d-flex items-center h-100 text-white">
-              Academy 51 © {new Date().getFullYear()}. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* <AuthFooter /> */}
     </div>
   );
 }

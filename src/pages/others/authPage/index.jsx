@@ -452,6 +452,36 @@ export default function AuthPage() {
                     )}
                   </button>
 
+                  {/* Terms Agreement (Signup Only) */}
+                  {mode === "signup" && (
+                    <div className="auth-terms-agreement" style={{ marginTop: "1rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
+                      <p>
+                        By creating an account, you agree to our{" "}
+                        <a
+                           href="https://myacademy51.com/terms-of-use"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`footer-links ${loading ? "disabled-link" : ""}`}
+                          style={{ textDecoration: "underline" }}
+                        >
+                          Terms of Service
+                        </a>
+                        {" "}and{" "}
+                        <a
+                          // href="/privacy-policy"
+                          href="https://myacademy51.com/privacy-policy/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`footer-links ${loading ? "disabled-link" : ""}`}
+                          style={{ textDecoration: "underline" }}
+                        >
+                          Privacy Policy
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  )}
+
                   {/* Social Login Buttons */}
                   <SocialLoginButtons
                     onGoogleClick={handleGoogleLogin}
