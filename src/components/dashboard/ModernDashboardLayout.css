@@ -56,5 +56,36 @@ aside {
   z-index: 50;
   pointer-events: none;
 }
+.role-badge {
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 999px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Admin */
+.role-admin {
+  background-color: #ede9fe;
+  color: #6d28d9;
+}
+
+/* Auditor */
+.role-auditor {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Analyst */
+.role-analyst {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+/* Default */
+.role-default {
+  background-color: #e5e7eb;
+  color: #374151;
+}
 
 /* Made with Bob */

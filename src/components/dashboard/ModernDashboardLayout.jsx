@@ -21,24 +21,55 @@ export default function ModernDashboardLayout() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
-  const [userRole, setUserRole] = useState("Admin");
+  const [userRole, setUserRole] = useState("User");
   const handleParentClick = (item) => {
     if (!item.children) return;
 
     setOpenMenuId((prev) => (prev === item.id ? null : item.id));
   };
+
   // Fetch user data on mount
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadUserData = () => {
       try {
         const userInfo = localStorage.getItem("user_info");
+
         if (userInfo) {
           const userData = JSON.parse(userInfo);
-          setUserName(
-            `${userData?.first_name || "User"} ${userData?.last_name || ""}`.trim(),
-          );
-          setUserRole(userData?.role || "Admin");
+
+          const fullName =
+            `${userData?.first_name || "User"} ${userData?.last_name || ""}`.trim();
+
+          const roleRaw = userData?.roles?.[0] || userData?.role || "User";
+
+          const formattedRole =
+            roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1).toLowerCase();
+
+          // ⭐ Badge Class Mapping
+          let badgeClass = "role-badge";
+
+          switch (roleRaw.toUpperCase()) {
+            case "ADMIN":
+              badgeClass += " role-admin";
+              break;
+
+            case "AUDITOR":
+              badgeClass += " role-auditor";
+              break;
+
+            case "ANALYST":
+              badgeClass += " role-analyst";
+              break;
+
+            default:
+              badgeClass += " role-default";
+          }
+
+          setUserName(fullName);
+          setUserRole(formattedRole);
+          setRoleBadgeClass(badgeClass);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -250,9 +281,7 @@ export default function ModernDashboardLayout() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {userName || "User"}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {userRole || "Admin"}
-                  </p>
+                  <span className={roleBadgeClass}>{userRole}</span>
                 </div>
                 <button
                   onClick={handleLogoutClick}
