@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 export default function AuthFooter() {
   return (
@@ -15,8 +14,20 @@ export default function AuthFooter() {
             </span>
           </div>
           <div className="auth-page-footer-links">
-            <Link to="/privacy-policy">Privacy Policy</Link>
-            <Link to="/terms-and-conditions">Terms of Service</Link>
+            <a
+              href="https://myacademy51.com/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="https://myacademy51.com/terms-of-use/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Terms of Service
+            </a>
             <a href="#">Support</a>
           </div>
           <div className="auth-page-footer-copyright">
