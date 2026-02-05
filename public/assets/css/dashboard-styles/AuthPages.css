@@ -19,10 +19,32 @@
   border-radius: 10px;
 }
 
+/* Password input container should be relatively positioned */
+.password-container {
+  position: relative;
+}
+
+/* Ensure password fields and their containers handle focus properly */
+.auth-form input[type="password"]:focus,
+.sign-up input[type="password"]:focus,
+.auth-form input[name="password"]:focus,
+.sign-up input[name="password"]:focus,
+.auth-form input[name="confirmPassword"]:focus,
+.sign-up input[name="confirmPassword"]:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  /* No transform for password inputs to keep button positioning stable */
+}
+
 .auth-form input:focus,
 .sign-up input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+/* Only apply transform to inputs that don't have icons or password toggle buttons */
+.auth-form input:not([type="password"]):not([name="password"]):not([name="confirmPassword"]):not(.auth-input):focus,
+.sign-up input:not([type="password"]):not([name="password"]):not([name="confirmPassword"]):not(.auth-input):focus {
   transform: translateY(-1px);
 }
 
@@ -110,6 +132,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s ease;
+  pointer-events: auto;
+}
+
+.password-view:hover {
+  color: var(--color-primary);
+}
+
+.password-view:focus {
+  outline: none;
+  color: var(--color-primary);
+}
+
+/* Ensure button stays visible when parent input is focused */
+div:focus-within .password-view {
+  visibility: visible;
+  opacity: 1;
 }
 
 .password-miss-match {
@@ -120,6 +164,8 @@
   color: var(--color-error);
   font-size: 18px;
   font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .password-match {
@@ -130,6 +176,24 @@
   color: var(--color-success);
   font-size: 18px;
   font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Ensure match/mismatch indicators stay visible when parent input is focused */
+div:focus-within .password-match,
+div:focus-within .password-miss-match {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* General rule to ensure any absolutely positioned icons in form containers stay visible */
+.auth-form div:focus-within > *[class*="icon"],
+.sign-up div:focus-within > *[class*="icon"],
+.auth-input-wrapper:focus-within > *[class*="icon"],
+div:focus-within .password-view {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* ========================================
@@ -605,6 +669,13 @@
   transform: translateY(-50%);
   pointer-events: none;
   color: var(--auth-muted-foreground, #64748B);
+  z-index: 10;
+}
+
+/* Ensure auth input icons stay visible when parent input is focused */
+.auth-input-wrapper:focus-within .auth-input-icon {
+  visibility: visible;
+  opacity: 1;
 }
 
 .auth-input {

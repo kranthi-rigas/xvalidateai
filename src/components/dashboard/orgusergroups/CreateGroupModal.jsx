@@ -4,7 +4,7 @@ import { getUserAttributes } from "../../../apiIntegration/organization";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
 import ReusableModal from "../../common/Reusablemodal";
-import FormField from "../../common/Formfield";
+import FormField from "../../common/FormField";
 import useToast from "../../../hooks/useToast";
 
 export default function CreateGroupModal({ onClose, onCreate }) {

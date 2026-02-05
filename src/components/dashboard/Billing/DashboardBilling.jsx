@@ -75,6 +75,7 @@ export default function DashboardBilling() {
       return;
     }
 
+    console.log("Applying voucher:", formData.voucherCode.trim());
     setIsApplyingVoucher(true);
     setErrors((prev) => ({
       ...prev,
@@ -84,13 +85,19 @@ export default function DashboardBilling() {
     try {
       // Call API to verify voucher (not redeem)
       const response = await verifyVoucher(formData.voucherCode.trim());
+      console.log("Voucher verification response:", response);
 
       // Handle successful voucher verification
       if (response && response.valid) {
         setVoucherApplied(true);
         setVoucherData(response);
+        console.log("Voucher applied successfully");
+      } else {
+        console.log("Voucher verification failed - invalid response");
+        throw new Error("Voucher verification failed");
       }
     } catch (error) {
+      console.error("Voucher verification error:", error);
       // Handle voucher verification error
       setErrors((prev) => ({
         ...prev,
@@ -126,8 +133,10 @@ export default function DashboardBilling() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submission started", { voucherApplied, plan, formData });
 
     if (!validateForm()) {
+      console.log("Form validation failed");
       return;
     }
 
@@ -136,10 +145,14 @@ export default function DashboardBilling() {
     try {
       // If voucher is applied, redeem it now
       if (voucherApplied && formData.voucherCode.trim()) {
+        console.log("Attempting to redeem voucher:", formData.voucherCode.trim());
+        
         const redeemResponse = await redeemVoucher(
           formData.voucherCode.trim(),
           plan?.id || null,
         );
+
+        console.log("Voucher redeemed successfully:", redeemResponse);
 
         show(
           `Subscription activated successfully! You now have ${redeemResponse.subscription.credits} credits.`,
@@ -150,25 +163,18 @@ export default function DashboardBilling() {
         await refreshUserPlan();
         navigate("/dashboard/pricing");
       } else {
-        // Process regular payment without voucher
-        console.log("Processing payment:", {
-          plan: plan?.name,
-          billingAddress: formData.billingAddress,
-          total: calculateTotal(),
-        });
-
-        show("Payment processed successfully!", { type: "success" });
-
-        //Full page refresh to reload all data
-        window.location.href = "/dashboard/pricing";
+        console.log("No voucher applied - this should not happen as button should be disabled");
+        show("Please apply a valid voucher to complete purchase.", { type: "error" });
       }
     } catch (error) {
-      show("Failed to complete purchase. Please try again.", { type: "error" });
-      console.error("Purchase error:", error);
+      console.error("Purchase error details:", error);
+      show(
+        error.message || "Failed to complete purchase. Please try again.", 
+        { type: "error" }
+      );
       setErrors((prev) => ({
         ...prev,
-        submit:
-          error.message || "Failed to complete purchase. Please try again.",
+        submit: error.message || "Failed to complete purchase. Please try again.",
       }));
     } finally {
       setIsSubmitting(false);

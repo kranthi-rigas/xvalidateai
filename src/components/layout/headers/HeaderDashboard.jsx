@@ -29,7 +29,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
   const [planType, setPlanType] = useState("");
   const [credits, setCredits] = useState(0); // stat to store credits
 
-  const { setUserPlan, setIsLoggedIn, setUserCredits } = useContextElement();
+  const { setUserPlan, setIsLoggedIn, setUserCredits, resetUserState } = useContextElement();
 
   const cartRef = useRef(null);
   const cartButtonRef = useRef(null);
@@ -163,6 +163,9 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
       // Clear tokens & redirect
       localStorage.clear();
       sessionStorage.clear();
+
+      // Reset Context state to defaults
+      resetUserState();
 
       navigate("/auth?mode=login");
     } catch (err) {

@@ -6,6 +6,7 @@ import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
 import CountrySelect from "@/components/common/CountrySelect";
+import { useContextElement } from "@/context/Context";
 
 // Auth Components
 import AuthHeader from "@/components/others/AuthHeader";
@@ -32,6 +33,7 @@ export default function AuthPage() {
   });
   const navigate = useNavigate();
   const show = useToast();
+  const { loadUserPlanFromStorage } = useContextElement();
   
   // Country and phone hook for signup
   const {
@@ -111,12 +113,16 @@ export default function AuthPage() {
       if (state === savedState) {
         const userInfo = decodeJWT(idToken);
         localStorage.setItem("user_info", JSON.stringify(userInfo));
+        
+        // Update Context state with new user's plan
+        loadUserPlanFromStorage();
+        
         navigate("/dashboard");
       } else {
         console.error("❌ Invalid OAuth state");
       }
     }
-  }, [navigate]);
+  }, [navigate, loadUserPlanFromStorage]);
 
   // Decode JWT token
   const decodeJWT = (token) => {
@@ -189,6 +195,10 @@ export default function AuthPage() {
         localStorage.setItem("refresh_token", res.refresh_token);
         const userData = await fetchUserProfile(res.access_token);
         localStorage.setItem("user_info", JSON.stringify(userData));
+        
+        // Update Context state with new user's plan
+        loadUserPlanFromStorage();
+        
         navigate("/dashboard");
       }
     } catch (err) {
