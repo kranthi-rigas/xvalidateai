@@ -29,12 +29,12 @@ export default function AuthPage() {
     last_name: "",
     confirm_password: "",
     country: "",
-    phone: ""
+    phone: "",
   });
   const navigate = useNavigate();
   const show = useToast();
   const { loadUserPlanFromStorage } = useContextElement();
-  
+
   // Country and phone hook for signup
   const {
     countries,
@@ -43,13 +43,54 @@ export default function AuthPage() {
     phoneCode,
     setPhone,
     onCountryChange,
-    validatePhone
+    validatePhone,
   } = useCountryPhone();
 
   const metadata = {
     title: mode === "login" ? "Login - XVALIDATEAI" : "Sign up - XVALIDATEAI",
     description: "XVALIDATEAI authentication page",
   };
+
+  // ⭐ SCROLL TO TOP - Watch mode changes
+  useLayoutEffect(() => {
+    const scrollToTop = () => {
+      // Scroll main window
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // Scroll all potential containers
+      const selectors = [
+        ".auth-page",
+        ".auth-main",
+        ".auth-section",
+        ".auth-form-container",
+        "main",
+        "#root",
+      ];
+
+      selectors.forEach((selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el) => {
+          el.scrollTop = 0;
+          el.scrollLeft = 0;
+        });
+      });
+    };
+
+    // Execute immediately
+    scrollToTop();
+
+    // Execute after render
+    const timeouts = [
+      setTimeout(scrollToTop, 0),
+      setTimeout(scrollToTop, 10),
+      setTimeout(scrollToTop, 50),
+      setTimeout(scrollToTop, 100),
+    ];
+
+    return () => timeouts.forEach(clearTimeout);
+  }, [mode]);
 
   // Error mapper helper
   const getLoginErrorMessage = (err) => {
@@ -68,13 +109,6 @@ export default function AuthPage() {
     }
     return "Login failed. Please try again.";
   };
-
-  // Refresh helper
-  useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, []);
 
   // OAuth Configuration
   const generateState = () =>
@@ -113,10 +147,10 @@ export default function AuthPage() {
       if (state === savedState) {
         const userInfo = decodeJWT(idToken);
         localStorage.setItem("user_info", JSON.stringify(userInfo));
-        
+
         // Update Context state with new user's plan
         loadUserPlanFromStorage();
-        
+
         navigate("/dashboard");
       } else {
         console.error("❌ Invalid OAuth state");
@@ -146,7 +180,7 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       if (mode === "signup") {
         // Validate passwords match
@@ -155,14 +189,17 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        
+
         // Validate password strength
         if (formData.password.length < 8) {
-          show("Password must be at least 8 characters long", { type: "error", duration: 4000 });
+          show("Password must be at least 8 characters long", {
+            type: "error",
+            duration: 4000,
+          });
           setLoading(false);
           return;
         }
-        
+
         // Validate phone number
         const phoneError = validatePhone();
         if (phoneError) {
@@ -170,7 +207,7 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        
+
         // Sign up
         const signupData = {
           email: formData.email,
@@ -178,34 +215,44 @@ export default function AuthPage() {
           first_name: formData.first_name,
           last_name: formData.last_name,
           country: selectedCountry?.label || "",
-          phone: phone
+          phone: phone,
         };
-        
+
         await signup(signupData);
-        show("Account created successfully! Please check your email to verify your account.", { type: "success", duration: 6000 });
-        
+        show(
+          "Account created successfully! Please check your email to verify your account.",
+          { type: "success", duration: 6000 },
+        );
+
         // Redirect to login after 2 seconds
         setTimeout(() => {
           navigate("/auth?mode=login");
         }, 2000);
       } else {
         // Login
-        const res = await login({ email: formData.email, password: formData.password });
+        const res = await login({
+          email: formData.email,
+          password: formData.password,
+        });
         localStorage.setItem("access_token", res.access_token);
         localStorage.setItem("refresh_token", res.refresh_token);
         const userData = await fetchUserProfile(res.access_token);
         localStorage.setItem("user_info", JSON.stringify(userData));
-        
+
         // Update Context state with new user's plan
         loadUserPlanFromStorage();
-        
+
         navigate("/dashboard");
       }
     } catch (err) {
-      console.error(`❌ ${mode === "signup" ? "Signup" : "Login"} failed:`, err);
-      const message = mode === "signup"
-        ? err.message || "Sign up failed. Please try again."
-        : getLoginErrorMessage(err);
+      console.error(
+        `❌ ${mode === "signup" ? "Signup" : "Login"} failed:`,
+        err,
+      );
+      const message =
+        mode === "signup"
+          ? err.message || "Sign up failed. Please try again."
+          : getLoginErrorMessage(err);
       show(message, { type: "error", duration: 6000 });
     } finally {
       setLoading(false);
@@ -220,15 +267,23 @@ export default function AuthPage() {
     }));
   };
 
-
-
   return (
     <>
       <MetaComponent meta={metadata} />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossOrigin="anonymous"
+      />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
 
       <div className="auth-page auth-page-container">
         {/* Header */}
@@ -250,8 +305,8 @@ export default function AuthPage() {
                   </span>
                 </h1>
                 <p className="auth-form-subtitle">
-                  {mode === "signup" 
-                    ? "Sign up to start your compliance journey" 
+                  {mode === "signup"
+                    ? "Sign up to start your compliance journey"
                     : "Sign in to access your compliance dashboard"}
                 </p>
               </div>
@@ -322,7 +377,7 @@ export default function AuthPage() {
                         onChange={handleChange}
                         icon="fa-lock"
                       />
-                      
+
                       {/* Country Selection */}
                       <div className="auth-input-group">
                         <label className="auth-input-label">Country</label>
@@ -334,24 +389,24 @@ export default function AuthPage() {
                           />
                         </div>
                       </div>
-                      
+
                       {/* Phone Number */}
                       <div className="auth-input-group">
                         <label className="auth-input-label">Phone Number</label>
                         <div className="auth-phone-group">
                           <div className="auth-country-code">
-                            {phoneCode || '+--'}
+                            {phoneCode || "+--"}
                           </div>
                           <input
                             type="tel"
                             placeholder="Enter phone number"
                             value={phone}
                             onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, '');
+                              const value = e.target.value.replace(/\D/g, "");
                               setPhone(value);
                             }}
                             className="auth-input auth-phone-input"
-                            style={{ paddingLeft: '1rem' }}
+                            style={{ paddingLeft: "1rem" }}
                             disabled={!selectedCountry}
                           />
                         </div>
@@ -366,7 +421,10 @@ export default function AuthPage() {
                         <input type="checkbox" id="remember" name="remember" />
                         <span>Remember me</span>
                       </label>
-                      <Link to="/forgot-password" className="auth-forgot-password">
+                      <Link
+                        to="/forgot-password"
+                        className="auth-forgot-password"
+                      >
                         Forgot password?
                       </Link>
                     </div>
@@ -379,9 +437,18 @@ export default function AuthPage() {
                     className="auth-submit-btn"
                   >
                     {loading
-                      ? (mode === "signup" ? "Creating Account..." : "Signing In...")
-                      : (mode === "signup" ? "Create Account" : "Sign In")}
-                    {!loading && <i className="fa-solid fa-arrow-right" style={{ marginLeft: "0.5rem" }}></i>}
+                      ? mode === "signup"
+                        ? "Creating Account..."
+                        : "Signing In..."
+                      : mode === "signup"
+                        ? "Create Account"
+                        : "Sign In"}
+                    {!loading && (
+                      <i
+                        className="fa-solid fa-arrow-right"
+                        style={{ marginLeft: "0.5rem" }}
+                      ></i>
+                    )}
                   </button>
 
                   {/* Social Login Buttons */}

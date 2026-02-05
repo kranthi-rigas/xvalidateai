@@ -34,6 +34,10 @@ const headerContentMap = {
     title: "Pricing",
     description: "View and manage your subscription plan.",
   },
+  "/dashboard/faqs": {
+  title: "FAQs",
+  description: "Access quick answers about AI compliance, governance policies, platform features, and implementation guidance.",
+},
 };
 
 export function useHeaderContent(pathname) {
