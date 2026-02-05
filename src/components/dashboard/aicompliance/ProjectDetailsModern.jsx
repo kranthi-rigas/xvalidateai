@@ -35,7 +35,6 @@ const formatToLocalDateTime = (utcString) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZoneName: "short",
   });
 };
 
@@ -48,15 +47,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const isAdmin = userInfo?.effective_role === "admin";
 
-  const dateString = project.created_at
-    ? new Date(project.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "-";
+  const dateString = formatToLocalDateTime(
+    project.created_at || project.last_scanned_time,
+  );
 
   const handleModalAction = async (comments) => {
     try {
@@ -183,10 +176,11 @@ export default function ProjectDetailsModern({ project, onBack }) {
           <i className="fa-solid fa-arrow-left"></i> Back to AI Compliance
         </button>
         <div className="action-buttons">
-          <button className="export-button">
+          <button className="action-btn export-button">
             <i className="fa-solid fa-file-pdf"></i> Export PDF
           </button>
-          <button className="share-button glass-card">
+
+          <button className="action-btn share-button glass-card">
             <i className="fa-solid fa-share-nodes"></i> Share
           </button>
         </div>
@@ -398,6 +392,52 @@ export default function ProjectDetailsModern({ project, onBack }) {
           </div>
         </div>
       </div>
+      {/* Recommendations */}
+      {project.recommendation && (
+        <div
+          className="glass-card recommendations animate-fade-in"
+          style={{ animationDelay: "0.8s" }}
+        >
+          <div className="section-header">
+            <div className="section-icon warning">
+              <i className="fa-solid fa-lightbulb"></i>
+            </div>
+            <h3>Recommendations & Next Steps</h3>
+          </div>
+
+          <div className="recommendation-content">
+            <div className="recommendation-box success">
+              <i className="fa-solid fa-circle-check"></i>
+              <div>
+                <h4>Final Recommendation</h4>
+                <p>{project.recommendation}</p>
+              </div>
+            </div>
+
+            {project.assessment?.summary?.implementation_guidelines && (
+              <div className="recommendation-box warning">
+                <i className="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                  <h4>Implementation Guidelines</h4>
+                  <p>{project.assessment.summary.implementation_guidelines}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="recommendation-box info">
+              <i className="fa-solid fa-clock"></i>
+              <div>
+                <h4>Ongoing Monitoring Required</h4>
+                <p>
+                  Schedule quarterly reviews of tool performance, privacy
+                  practices, and student outcomes. Reassess annually or upon
+                  major platform updates.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detailed Evaluation Tables */}
       {project.assessment?.evaluation &&
@@ -509,53 +549,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </div>
           );
         })}
-
-      {/* Recommendations */}
-      {project.recommendation && (
-        <div
-          className="glass-card recommendations animate-fade-in"
-          style={{ animationDelay: "0.8s" }}
-        >
-          <div className="section-header">
-            <div className="section-icon warning">
-              <i className="fa-solid fa-lightbulb"></i>
-            </div>
-            <h3>Recommendations & Next Steps</h3>
-          </div>
-
-          <div className="recommendation-content">
-            <div className="recommendation-box success">
-              <i className="fa-solid fa-circle-check"></i>
-              <div>
-                <h4>Final Recommendation</h4>
-                <p>{project.recommendation}</p>
-              </div>
-            </div>
-
-            {project.assessment?.summary?.implementation_guidelines && (
-              <div className="recommendation-box warning">
-                <i className="fa-solid fa-triangle-exclamation"></i>
-                <div>
-                  <h4>Implementation Guidelines</h4>
-                  <p>{project.assessment.summary.implementation_guidelines}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="recommendation-box info">
-              <i className="fa-solid fa-clock"></i>
-              <div>
-                <h4>Ongoing Monitoring Required</h4>
-                <p>
-                  Schedule quarterly reviews of tool performance, privacy
-                  practices, and student outcomes. Reassess annually or upon
-                  major platform updates.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Admin Actions */}
       {isRequested && isAdmin && (

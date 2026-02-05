@@ -232,12 +232,29 @@ export async function createOrganization(payload) {
     }),
   });
 
+  // ⭐ Preserve status + backend error object
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Failed to create organization");
+    let data = null;
+
+    try {
+      data = await res.json(); // Try parsing JSON error
+    } catch {
+      data = { error: await res.text() }; // fallback
+    }
+
+    const error = new Error(
+      data?.error || data?.message || "Failed to create organization"
+    );
+
+    // ✅ Axios-like error structure
+    error.response = {
+      status: res.status,
+      data: data,
+    };
+
+    throw error;
   }
 
-  // ✅ IMPORTANT
   return res.json();
 }
 

@@ -6,6 +6,30 @@ import { createOrganization } from "../../../apiIntegration/organization";
 import { fetchUserProfile } from "../../../apiIntegration/auth";
 import useToast from "../../../hooks/useToast";
 
+export const getReadableApiError = (err) => {
+  const status = err?.response?.status;
+  const data = err?.response?.data;
+
+  console.log("API Error Status:", status);
+  console.log("API Error Data:", data);
+
+  // 🔴 SERVER ERRORS (5xx or unknown)
+  if (!status || status >= 500) {
+    return "Something went wrong on our side. Please try again later.";
+  }
+
+  // 🟠 CLIENT ERRORS (4xx)
+  if (status >= 400 && status < 500) {
+    if (typeof data === "string") return data;
+
+    if (typeof data === "object" && data !== null) {
+      return data.error || data.message || data.detail || "Request failed";
+    }
+  }
+
+  return err?.message || "Request failed";
+};
+
 export default function CreateOrganizationModal({ setShowCreateModal }) {
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
@@ -77,35 +101,6 @@ export default function CreateOrganizationModal({ setShowCreateModal }) {
   const isFormValid = () => {
     const errs = validate();
     return Object.keys(errs).length === 0;
-  };
-
-  const getReadableApiError = (err) => {
-    const status = err?.response?.status;
-    const data = err?.response?.data;
-
-    // 🔴 SERVER ERRORS → ALWAYS GENERIC
-    if (!status || status >= 500) {
-      return "Something went wrong on our side. Please try again later.";
-    }
-
-    // 🟠 CLIENT ERRORS (4xx) → show backend message if available
-    if (status >= 400 && status < 500) {
-      if (typeof data === "string") {
-        return data;
-      }
-
-      if (typeof data === "object" && data !== null) {
-        if (data.error) return String(data.error);
-        if (data.message) return String(data.message);
-      }
-    }
-
-    // 🔹 Fallback (network / unknown)
-    if (typeof err?.message === "string") {
-      return err.message;
-    }
-
-    return "Request failed";
   };
 
   /* ---------- SUBMIT ---------- */

@@ -228,6 +228,11 @@ export default function AIDashboard() {
       { displayModeBar: false, responsive: true },
     );
 
+    // Force resize to ensure full space is used
+    setTimeout(() => {
+      window.Plotly.Plots.resize("chart-recommendation");
+    }, 100);
+
     // Chart: Intended Users
     const usersDistribution =
       dashboardAnalytics.distributions?.intended_users || [];
@@ -268,6 +273,11 @@ export default function AIDashboard() {
       displayModeBar: false,
       responsive: true,
     });
+
+    // Force resize to ensure full space is used
+    setTimeout(() => {
+      window.Plotly.Plots.resize("chart-users");
+    }, 100);
 
     // Chart: Compliance Distribution (Horizontal Bar)
     const complianceRaw = dashboardAnalytics.distributions?.compliance || [];
@@ -356,6 +366,11 @@ export default function AIDashboard() {
       complianceLayout,
       { displayModeBar: false, responsive: true },
     );
+
+    // Force resize to ensure full space is used
+    setTimeout(() => {
+      window.Plotly.Plots.resize("chart-compliance");
+    }, 100);
   };
 
   if (loading || !dashboardAnalytics) {
@@ -412,30 +427,8 @@ export default function AIDashboard() {
         />
       </section>
 
-      {/* High Risk & Charts Row */}
+      {/* Score Gauges, Recommendation & Intended Users Row */}
       <section className="grid grid-cols-12 gap-6">
-        {/* High Risk Alert Box */}
-        <div className="col-span-8 dashboard-card flex flex-col overflow-hidden">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center text-amber-800">
-              <i className="fa-solid fa-triangle-exclamation mr-2"></i>
-              <h3 className="font-bold text-lg">
-                High-Risk Tools Requiring Immediate Attention
-              </h3>
-            </div>
-          </div>
-          <div className="p-0 overflow-x-auto flex-1">
-            <ListTable
-              data={highRiskTools.slice(0, 3)}
-              columns={HIGH_RISK_COLUMNS}
-              renderCell={renderHighRiskCell}
-              tableClassName="custom-table"
-              getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
-              hideEmptyMessage
-            />
-          </div>
-        </div>
-
         {/* Score Gauges */}
         <div className="col-span-4 dashboard-card p-6 flex flex-col">
           <h3 className="font-bold text-foreground mb-6">
@@ -462,25 +455,45 @@ export default function AIDashboard() {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Charts & Table Row */}
-      <section className="grid grid-cols-12 gap-6">
-        {/* Charts Column */}
-        <div className="col-span-4 space-y-6">
-          {/* Recommendation Distribution */}
-          <div className="dashboard-card p-2">
-            <div id="chart-recommendation" className="w-full h-full"></div>
-          </div>
-
-          {/* Intended Users */}
-          <div className="dashboard-card p-2">
-            <div id="chart-users" className="w-full h-full"></div>
-          </div>
+        {/* Recommendation Distribution */}
+        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+          <div id="chart-recommendation" className="w-full h-full"></div>
         </div>
 
-        {/* Main Table Column */}
-        <div className="col-span-8 dashboard-card flex flex-col overflow-hidden h-[664px]">
+        {/* Intended Users */}
+        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+          <div id="chart-users" className="w-full h-full"></div>
+        </div>
+      </section>
+
+      {/* High Risk Alert Box */}
+      <section className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center text-amber-800">
+              <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+              <h3 className="font-bold text-lg">
+                High-Risk Tools Requiring Immediate Attention
+              </h3>
+            </div>
+          </div>
+          <div className="p-0 overflow-x-auto flex-1">
+            <ListTable
+              data={highRiskTools.slice(0, 3)}
+              columns={HIGH_RISK_COLUMNS}
+              renderCell={renderHighRiskCell}
+              tableClassName="custom-table"
+              getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
+              hideEmptyMessage
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Complete Tool Information Table */}
+      <section className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
           <div className="px-6 py-5 border-b flex justify-between items-center bg-white">
             <h5>Complete Tool Information</h5>
           </div>

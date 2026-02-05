@@ -41,8 +41,15 @@ export default function OrgUserGroups() {
 
   const hasOrg = hasOrganization();
 
-  // FINAL PERMISSION
-  const canManage = hasOrg && isAdmin;
+  const DEFAULT_ORGS = ["xvalidateai", "myacademy51", "academy51"];
+
+  const orgNameRaw = userInfo?.organization?.name;
+  const orgName = (orgNameRaw || "").toLowerCase();
+
+  /* ⭐ Treat empty/null as default */
+  const isDefaultOrg = !orgName || DEFAULT_ORGS.includes(orgName);
+
+  const canManage = hasOrg && isAdmin && !isDefaultOrg;
 
   // Modals
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -398,7 +405,6 @@ export default function OrgUserGroups() {
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
-
             {/* Actions dropdown */}
             <div ref={actionsRef} className="relative">
               <ActionsMenu
@@ -411,7 +417,6 @@ export default function OrgUserGroups() {
                 }}
               />
             </div>
-
             {/* Preferences button */}
             <button
               onClick={() => setShowPreferences(true)}
@@ -428,8 +433,8 @@ export default function OrgUserGroups() {
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg
-                  ? "Please create an organization before creating groups"
+                !hasOrg || isDefaultOrg
+                  ? "Please create your organization before creating groups"
                   : "Only admin users can create user groups"
               }
             >

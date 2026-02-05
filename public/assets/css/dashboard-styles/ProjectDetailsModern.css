@@ -1,11 +1,14 @@
 /* Glassmorphic Project Details Styles */
 
 .project-details-modern {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 100%;   /* 🔥 Removes 1400 restriction */
+
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px clamp(16px, 4vw, 40px);
+
   background: #FFFFFF;
-  min-height: 100vh;
+  border-radius: 20px;
   position: relative;
 }
 
@@ -985,7 +988,25 @@
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
 
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  height: 40px;
+  padding: 0 16px;
+
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
 
 
