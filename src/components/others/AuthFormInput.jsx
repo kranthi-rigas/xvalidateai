@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 /**
  * AuthFormInput - Reusable input field with icon for auth forms
@@ -23,6 +23,10 @@ export default function AuthFormInput({
   icon = "fa-user",
   required = true,
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPasswordField = type === "password";
+  const inputType = isPasswordField ? (showPassword ? "text" : "password") : type;
+
   return (
     <div className="auth-input-group">
       <label htmlFor={id} className="auth-input-label">
@@ -33,7 +37,7 @@ export default function AuthFormInput({
           <i className={`fa-solid ${icon}`}></i>
         </div>
         <input
-          type={type}
+          type={inputType}
           id={id}
           name={name}
           placeholder={placeholder}
@@ -41,7 +45,21 @@ export default function AuthFormInput({
           onChange={onChange}
           required={required}
           className="auth-input"
+          style={isPasswordField ? { paddingRight: "3rem" } : {}}
         />
+        {isPasswordField && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="password-view"
+            title={showPassword ? "Hide password" : "Show password"}
+          >
+            <i 
+              key={showPassword ? "hide" : "show"}
+              className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+            ></i>
+          </button>
+        )}
       </div>
     </div>
   );
