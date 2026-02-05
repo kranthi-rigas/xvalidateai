@@ -45,6 +45,8 @@ import VerifyEmail from "./components/others/VerifyEmail";
 import AIDashboardPage from "./pages/dashboard/dshb-aianalytics";
 import AILiteracyPage from "./pages/dashboard/dashboard-ailiteracy";
 import FaqsPage from "./pages/dashboard/dashboard-faqs";
+import PrivacyPolicyPage from "./pages/others/privacy-policy";
+import TermsAndConditionsPage from "./pages/others/terms-and-conditions";
 
 function App() {
   useEffect(() => {
@@ -128,6 +130,11 @@ function App() {
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="login/google" element={<GoogleLoginPage />} />
+              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route
+                path="terms-and-conditions"
+                element={<TermsAndConditionsPage />}
+              />
             </Route>
           </Routes>
           <ScrollTopBehaviour />
