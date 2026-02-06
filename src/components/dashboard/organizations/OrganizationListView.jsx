@@ -133,8 +133,9 @@ export default function OrganizationListView() {
 
   const planType = userInfo?.plan?.plan_type?.toUpperCase() || "FREE";
   const isEnterprisePlan = planType === "ENTERPRISE";
+  const isFreePlan = planType === "FREE";
 
-  const DEFAULT_ORGS = ["academy51", "myacademy51"];
+  const DEFAULT_ORGS = ["academy51", "myacademy51", "xvalidateai"];
 
   const orgList = organizations || [];
 
@@ -143,13 +144,15 @@ export default function OrganizationListView() {
   ).length;
 
   const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
-  const canCreateOrg = isAdmin && !hasReachedOrgLimit;
+  const canCreateOrg = isAdmin && !hasReachedOrgLimit && !isFreePlan;
 
   const createOrgTooltip = !isAdmin
     ? "Only admin users can create an organization"
-    : hasReachedOrgLimit
-      ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
-      : "";
+    : isFreePlan
+      ? "As per your Free plan, creating organizations is not available. Please upgrade to the Business plan to avail this feature."
+      : hasReachedOrgLimit
+        ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
+        : "";
 
   /* ---------- SEARCH ---------- */
   const filtered = (organizations || [])
@@ -447,12 +450,22 @@ export default function OrganizationListView() {
               message={createOrgTooltip}
             >
               <AwsButton
-                label="+ Create Organization"
+                label={
+                  isFreePlan
+                    ? "🔒 Create Organization"
+                    : "+ Create Organization"
+                }
+                aria-disabled={!canCreateOrg}
                 onClick={() => {
                   if (!canCreateOrg) return;
                   setShowCreateOrgModal(true);
                 }}
-                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
+                className={`flex items-center px-5 py-2.5 rounded-lg text-sm font-medium transition-all
+    ${
+      canCreateOrg
+        ? "bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 transform hover:scale-[1.02]"
+        : "bg-gray-100 text-gray-700 border border-gray-300 cursor-not-allowed hover:bg-gray-100"
+    }`}
               />
             </OrgRequiredWrapper>
           </div>

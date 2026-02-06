@@ -14,11 +14,11 @@ export default function HeaderCredits() {
       if (token) {
         const userData = await fetchUserProfile(token);
         if (userData?.plan) {
-          setCreditsRemaining(userData.plan.credits_used || 0);
+          setCreditsRemaining(userData.plan.credits_remaining || 0);
           setCreditsTotal(userData.plan.credits || 0);
           // Update context as well
           if (setUserCredits) {
-            setUserCredits(userData.plan.credits_used || 0);
+            setUserCredits(userData.plan.credits_remaining || 0);
           }
         }
       }
