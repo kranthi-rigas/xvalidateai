@@ -39,35 +39,89 @@ const formatToLocalDateTime = (utcString) => {
 };
 
 export default function ProjectDetailsModern({ project, onBack }) {
-  const score = Math.max(0, Math.min(100, Number(project.score) || 0));
-  const [showModal, setShowModal] = useState(false);
-  const [actionType, setActionType] = useState("");
+  const showScoreStatuses = [
+    "scan_completed",
+    "approved_for_usage",
+    "rejected_for_usage",
+  ];
 
+  const hasValidScore =
+    showScoreStatuses.includes(project.status) &&
+    project.assessment_status === "completed" &&
+    project.score !== null &&
+    project.score !== undefined;
+
+  const score = hasValidScore
+    ? Math.max(0, Math.min(100, Number(project.score)))
+    : 0;
+
+  // ✅ NEW (modal state only)
   const isRequested = project.status === "requested";
+  const [showModal, setShowModal] = useState(false);
+  const [actionType, setActionType] = useState(null); // approve | reject
+
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
-  const isAdmin = userInfo?.effective_role === "admin";
+  const roles = userInfo?.roles || [];
+  const isAdmin = roles.includes("ADMIN");
 
   const dateString = formatToLocalDateTime(
     project.created_at || project.last_scanned_time,
   );
 
-  const handleModalAction = async (comments) => {
-    try {
-      await updateComplianceProject(project.project_id, {
-        status: actionType,
-        comments,
-      });
-      setShowModal(false);
-      onBack?.(true);
-    } catch (err) {
-      console.error("Action failed:", err);
-      alert("Failed to process request. Please try again.");
+  const handleApproveReject = async (comment) => {
+    let payload = {};
+
+    switch (actionType) {
+      case "scan_approve":
+        payload = { action: "scan_approve", status: "approved_for_scan" };
+        break;
+      case "scan_reject":
+        payload = { action: "scan_reject", status: "rejected_for_scan" };
+        break;
+      case "approve":
+        payload = { action: "approve", status: "approved_for_usage" };
+        break;
+      case "reject":
+        payload = { action: "reject", status: "rejected_for_usage" };
+        break;
+      default:
+        return;
     }
+
+    await updateComplianceProject(project.project_id, {
+      ...payload,
+      comment,
+    });
+
+    setShowModal(false);
+    onBack?.(true);
   };
+  const showScanActions =
+    project.status === "requested" || project.status === "requested_for_scan";
+
+  const showUsageActions =
+    project.status === "scan_completed" &&
+    project.assessment_status === "completed";
+
+  const showAdminActions = showScanActions || showUsageActions;
 
   // Get recommendation badge
   const getRecommendationBadge = () => {
-    const rec = (project.recommendation || "").toLowerCase();
+    const allowedStatuses = [
+      "scan_completed",
+      "approved_for_usage",
+      "rejected_for_usage",
+    ];
+
+    if (
+      !allowedStatuses.includes(project.status) ||
+      project.assessment_status !== "completed" ||
+      !project.recommendation
+    ) {
+      return null;
+    }
+    const rec = project.recommendation.toLowerCase();
+
     if (rec.includes("approved") && !rec.includes("limitation")) {
       return {
         icon: "fa-check-circle",
@@ -94,7 +148,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
       };
     }
   };
-
   const badge = getRecommendationBadge();
 
   // Calculate category scores from evaluation
@@ -198,9 +251,11 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </p>
           </div>
           <div className="header-badges">
-            <div className={`badge ${badge.class}`}>
-              <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
-            </div>
+            {badge && (
+              <div className={`badge ${badge.class}`}>
+                <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
+              </div>
+            )}
             <p className="date-text">Generated: {dateString}</p>
           </div>
         </div>
@@ -284,7 +339,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           </div>
 
           {/* Right: Overall Score */}
-          {!isRequested && (
+          {hasValidScore && (
             <div className="score-container glass-card">
               <p className="score-label">Overall Compliance Score</p>
               <Plot
@@ -552,46 +607,60 @@ export default function ProjectDetailsModern({ project, onBack }) {
           );
         })}
 
-      {/* Admin Actions */}
-      {isRequested && isAdmin && (
-        <div className="admin-actions glass-card">
-          <div className="action-buttons-grid">
-            <AwsButton
-              label="Approve for Scan"
-              variant="primary"
-              onClick={() => {
-                setActionType("scan_approve");
-                setShowModal(true);
-              }}
-            />
-            <AwsButton
-              label="Reject for Scan"
-              variant="secondary"
-              onClick={() => {
-                setActionType("scan_reject");
-                setShowModal(true);
-              }}
-            />
-            <AwsButton
-              label="Approve for Usage"
-              variant="primary"
-              onClick={() => {
-                setActionType("approve");
-                setShowModal(true);
-              }}
-            />
-            <AwsButton
-              label="Reject for Usage"
-              variant="secondary"
-              onClick={() => {
-                setActionType("reject");
-                setShowModal(true);
-              }}
-            />
+      {/* ================= ADMIN ACTIONS ================= */}
+      {isAdmin && showAdminActions && (
+        <div className="glass-card mt-6 p-6">
+          <div className="flex justify-center">
+            {showScanActions && (
+              <div className="flex flex-wrap justify-center gap-3">
+                <AwsButton
+                  onClick={() => {
+                    setActionType("scan_approve");
+                    setShowModal(true);
+                  }}
+                  className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm transition"
+                >
+                  Approve for Scan
+                </AwsButton>
+
+                <AwsButton
+                  onClick={() => {
+                    setActionType("scan_reject");
+                    setShowModal(true);
+                  }}
+                  className="px-5 py-2.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition"
+                >
+                  Reject for Scan
+                </AwsButton>
+              </div>
+            )}
+
+            {showUsageActions && (
+              <div className="flex flex-wrap justify-center gap-3">
+                <AwsButton
+                  onClick={() => {
+                    setActionType("approve");
+                    setShowModal(true);
+                  }}
+                  className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow-sm transition"
+                >
+                  Approve for Usage
+                </AwsButton>
+
+                <AwsButton
+                  onClick={() => {
+                    setActionType("reject");
+                    setShowModal(true);
+                  }}
+                  className="px-5 py-2.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition"
+                >
+                  Reject for Usage
+                </AwsButton>
+              </div>
+            )}
           </div>
         </div>
       )}
-
       {/* Report Footer */}
       <div className="glass-card report-footer">
         <p className="footer-text">
@@ -605,10 +674,31 @@ export default function ProjectDetailsModern({ project, onBack }) {
       {/* Modal */}
       {showModal && (
         <ApproveRejectModal
-          isOpen={showModal}
+          title={
+            actionType === "scan_approve"
+              ? "Approve Tool for Scan"
+              : actionType === "scan_reject"
+                ? "Reject Tool for Scan"
+                : actionType === "approve"
+                  ? "Approve Tool for Usage"
+                  : actionType === "reject"
+                    ? "Reject Tool for Usage"
+                    : ""
+          }
+          actionLabel={
+            actionType === "scan_approve"
+              ? "Approve for Scan"
+              : actionType === "scan_reject"
+                ? "Reject for Scan"
+                : actionType === "approve"
+                  ? "Approve for Usage"
+                  : actionType === "reject"
+                    ? "Reject for Usage"
+                    : ""
+          }
+          hideCredits={actionType !== "scan_approve"}
           onClose={() => setShowModal(false)}
-          onSubmit={handleModalAction}
-          actionType={actionType}
+          onConfirm={handleApproveReject}
         />
       )}
     </div>

@@ -11,6 +11,7 @@ import EditProjectModal from "./EditProjectModal";
 import DeleteConfirmModal from "../../common/DeleteConfirmModal";
 import ApproveRejectModal from "./ApproveRejectModal";
 import ListTable from "../../common/ListTable";
+import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 
 import {
   updateComplianceProject,
@@ -147,6 +148,13 @@ export default function AIListViewModern({
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = (userInfo?.roles || []).map((r) => r.toUpperCase());
   const isAdmin = roles.includes("ADMIN");
+  const hasAdminRole = roles.includes("ADMIN");
+  const hasAuditorRole = roles.includes("AUDITOR");
+  const hasAnalystRole = roles.includes("ANALYST");
+
+  const isAuditor = hasAuditorRole;
+  // ✅ Analyst-only = NO higher privilege
+  const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
 
   /* ---------------- DATA ---------------- */
   useEffect(() => {
@@ -188,7 +196,9 @@ export default function AIListViewModern({
     const pollable = liveProjects.filter(
       (p) =>
         p &&
-        (p.assessment_status === "queued" ||
+        (p.status === "approved_for_scan" ||
+          p.status === "scan_in_progress" ||
+          p.assessment_status === "queued" ||
           p.assessment_status === "in_progress"),
     );
 
@@ -212,7 +222,21 @@ export default function AIListViewModern({
             return p;
           }
 
-          return updated ? { ...p, ...updated } : p;
+          return updated
+            ? {
+                ...p,
+                // 🔄 only dynamic fields
+                status: updated.status,
+                assessment_status: updated.assessment_status,
+                last_scanned_time: updated.last_scanned_time,
+                score: updated.score,
+                recommendation: updated.recommendation,
+
+                // 🔒 keep immutable values
+
+                scan_approved_by: p.__scan_approved_by,
+              }
+            : p;
         }),
       );
     }, 3000);
@@ -301,7 +325,7 @@ export default function AIListViewModern({
   // Get status badge styling
   const getStatusBadge = (status) => {
     const statusMap = {
-      completed: {
+      scan_completed: {
         bg: "bg-yellow-50",
         text: "text-yellow-700",
         border: "border-yellow-200",
@@ -329,7 +353,7 @@ export default function AIListViewModern({
         bg: "bg-gray-50",
         text: "text-gray-700",
         border: "border-gray-200",
-        label: "Requested",
+        label: "Requested for Scan",
       },
     };
 
@@ -413,61 +437,6 @@ export default function AIListViewModern({
       second: "2-digit",
     });
   };
-
-  /* ---------------- ACTIONS MENU ---------------- */
-  const actionItems = (() => {
-    if (!selected.length) return [];
-
-    // ✅ MULTI SELECT → DELETE ONLY
-    if (selected.length > 1) {
-      return [
-        {
-          key: "delete",
-          label: "Delete",
-          danger: true,
-        },
-      ];
-    }
-
-    // SINGLE SELECT
-    const project = liveProjects.find((p) => p.project_id === selected[0]);
-    if (!project) return [];
-
-    const deleteDisabled = project.assessment_status === "scan_in_progress";
-
-    const items = [];
-
-    if (isAdmin) {
-      if (project.status === "requested") {
-        items.push(
-          { key: "scan_approve", label: "Approve for Scan" },
-          { key: "scan_reject", label: "Reject for Scan" },
-        );
-      }
-
-      if (
-        project.status === "scan_completed" &&
-        project.assessment_status === "completed"
-      ) {
-        items.push(
-          { key: "approve", label: "Approve for Usage" },
-          { key: "reject", label: "Reject for Usage" },
-        );
-      }
-    }
-
-    items.push(
-      { key: "edit", label: "Edit" },
-      {
-        key: "delete",
-        label: "Delete",
-        danger: true,
-        disabled: deleteDisabled,
-      },
-    );
-
-    return items;
-  })();
 
   const columns = [
     {
@@ -656,7 +625,7 @@ export default function AIListViewModern({
       }
 
       case "approved_by": {
-        const a = project.approved_by;
+        const a = project.scan_approved_by;
         if (!a)
           return (
             <span className="text-sm italic text-muted-foreground">N/A</span>
@@ -681,6 +650,97 @@ export default function AIListViewModern({
   const visibleTableColumns = columns.filter(
     (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );
+
+  const actionItems = (() => {
+    if (selected.length === 0) return [];
+
+    const project = liveProjects.find((p) => p.project_id === selected[0]);
+    if (!project) return [];
+
+    // 🚫 ANALYST-ONLY — view only
+    if (isAnalystOnly) {
+      return [];
+    }
+
+    // ================= MULTI SELECT =================
+    if (selected.length > 1) {
+      if (!isAdmin) return [];
+
+      const anyScanInProgress = selected.some((id) => {
+        const p = liveProjects.find((x) => x.project_id === id);
+        return p?.assessment_status === "scan_in_progress";
+      });
+
+      return [
+        {
+          key: "delete",
+          label: "Delete",
+          danger: true,
+          disabled: anyScanInProgress,
+        },
+      ];
+    }
+
+    const deleteDisabled = project.assessment_status === "scan_in_progress";
+
+    // ================= ADMIN =================
+    if (isAdmin) {
+      const actions = [];
+
+      // 🟦 Scan request stage
+      if (
+        project.status === "requested" ||
+        project.status === "requested_for_scan"
+      ) {
+        actions.push(
+          { key: "scan_approve", label: "Approve for Scan" },
+          { key: "scan_reject", label: "Reject for Scan" },
+        );
+      }
+
+      // 🟩 Scan completed → usage approval stage ONLY
+      if (
+        project.status === "scan_completed" &&
+        project.assessment_status === "completed"
+      ) {
+        actions.push(
+          { key: "approve", label: "Approve for Usage" },
+          { key: "reject", label: "Reject for Usage" },
+        );
+      }
+
+      // ⚙️ Always available
+      actions.push(
+        { key: "edit", label: "Edit" },
+        {
+          key: "delete",
+          label: "Delete",
+          danger: true,
+          disabled: deleteDisabled,
+        },
+      );
+
+      return actions;
+    }
+
+    // ================= AUDITOR =================
+    if (isAuditor) {
+      const actions = [];
+
+      if (project.status === "pending_assessment") {
+        actions.push({
+          key: "request_scan",
+          label: "Request Scan",
+        });
+      }
+
+      actions.push({ key: "edit", label: "Edit" });
+
+      return actions;
+    }
+
+    return [];
+  })();
 
   if (pageLoading) return <PageLoader loading />;
 
@@ -726,7 +786,7 @@ export default function AIListViewModern({
                 disabled={selected.length === 0}
                 items={actionItems}
                 onSelect={(key) => {
-                  const project = projects.find(
+                  const project = liveProjects.find(
                     (p) => p.project_id === selected[0],
                   );
                   if (!project) return;
@@ -744,12 +804,25 @@ export default function AIListViewModern({
                     return;
                   }
 
+                  if (key === "request_scan") {
+                    setApprovalAction("request_scan");
+                    setShowApprovalModal(true);
+                    return;
+                  }
+
+                  if (key === "cancel_request") {
+                    setApprovalAction("cancel_request");
+                    setShowApprovalModal(true);
+                    return;
+                  }
+
                   if (key === "edit") {
                     setEditProjectData(project);
                     setShowEditModal(true);
                   }
 
                   if (key === "delete") {
+                    // 🔒 FINAL GUARD
                     if (project.assessment_status === "scan_in_progress") {
                       return;
                     }
@@ -774,13 +847,19 @@ export default function AIListViewModern({
             </button>
 
             {/* Tool Assessment */}
-            <AwsButton
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
+            <OrgRequiredWrapper
+              disabled={isAnalystOnly}
+              message="You have view-only access"
             >
-              <i className="fa-solid fa-plus mr-2"></i>
-              Tool Assessment
-            </AwsButton>
+              <AwsButton
+                onClick={() => setShowCreateModal(true)}
+                disabled={isAnalystOnly}
+                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
+              >
+                <i className="fa-solid fa-plus mr-2"></i>
+                Tool Assessment
+              </AwsButton>
+            </OrgRequiredWrapper>
           </div>
         </div>
 
@@ -852,7 +931,11 @@ export default function AIListViewModern({
                 ? "Reject Tool for Scan"
                 : approvalAction === "approve"
                   ? "Approve Tool for Usage"
-                  : "Reject Tool for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject Tool for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Tool Assessment"
+                      : "Cancel Assessment Request"
           }
           actionLabel={
             approvalAction === "scan_approve"
@@ -861,8 +944,15 @@ export default function AIListViewModern({
                 ? "Reject for Scan"
                 : approvalAction === "approve"
                   ? "Approve for Usage"
-                  : "Reject for Usage"
+                  : approvalAction === "reject"
+                    ? "Reject for Usage"
+                    : approvalAction === "request_scan"
+                      ? "Request Scan"
+                      : "Cancel Request"
           }
+          /* 🔐 AUDITOR UX FIXES */
+          hideCredits={!["scan_approve"].includes(approvalAction)}
+          hideComment={approvalAction === "cancel_request"}
           onClose={() => {
             setShowApprovalModal(false);
             setApprovalError(false);
@@ -871,24 +961,50 @@ export default function AIListViewModern({
             let payload = {};
 
             switch (approvalAction) {
+              // ===== AUDITOR =====
+              case "request_scan":
+                payload = {
+                  action: "request_scan",
+                  status: "requested",
+                };
+                break;
+
+              case "cancel_request":
+                payload = {
+                  action: "cancel_request",
+                  status: "pending_assessment",
+                };
+                break;
+
+              // ===== ADMIN =====
               case "scan_approve":
                 payload = {
                   action: "scan_approve",
                   status: "approved_for_scan",
                 };
                 break;
+
               case "scan_reject":
                 payload = {
                   action: "scan_reject",
                   status: "rejected_for_scan",
                 };
                 break;
+
               case "approve":
-                payload = { action: "approve", status: "approved_for_usage" };
+                payload = {
+                  action: "approve",
+                  status: "approved_for_usage",
+                };
                 break;
+
               case "reject":
-                payload = { action: "reject", status: "rejected_for_usage" };
+                payload = {
+                  action: "reject",
+                  status: "rejected_for_usage",
+                };
                 break;
+
               default:
                 return;
             }
@@ -899,16 +1015,36 @@ export default function AIListViewModern({
                 comment,
               });
 
+              // ✅ Optimistic UI update
+              setLiveProjects((prev) =>
+                prev.map((p) =>
+                  p.project_id === activeProject.project_id
+                    ? {
+                        ...p,
+                        ...payload,
+                        scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.scan_approved_by,
+
+                        __scan_approved_by:
+                          approvalAction === "scan_approve"
+                            ? userInfo
+                            : p.__scan_approved_by,
+                      }
+                    : p,
+                ),
+              );
+
               setApprovalError(false);
               setShowApprovalModal(false);
               setSelected([]);
-              refreshProjects();
             } catch (err) {
               const message =
                 err?.response?.data?.message ||
                 "Insufficient credits to run this scan.";
 
-              toast(message, { type: "error", duration: 10000 });
+              show(message, { type: "error", duration: 10000 });
 
               setApprovalError(true);
 

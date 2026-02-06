@@ -12,7 +12,7 @@ export default function CreateProjectModal({
   /* ---------- ROLE ---------- */
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
-  const isInstructor = roles.includes("INSTRUCTOR");
+  const isInstructor = roles.includes("AUDITOR");
 
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
