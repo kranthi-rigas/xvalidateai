@@ -145,7 +145,7 @@ export default function ModernDashboardLayout() {
         className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}
       >
         <div
-          className={`h-20 flex items-center border-b border-sidebar-border justify-between px-1`}
+          className={`h-20 flex items-center border-b border-sidebar-border justify-between ${sidebarCollapsed ? "px-2" : "px-6"}`}
         >
           {/* Expanded Logo */}
           <div
