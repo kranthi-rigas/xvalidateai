@@ -462,9 +462,9 @@ export default function AuthPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`footer-links ${loading ? "disabled-link" : ""}`}
-                          style={{ textDecoration: "underline" }}
+                          // style={{ textDecoration: "underline" }}
                         >
-                          Terms of Service
+                          Terms&nbsp;of&nbsp;Service
                         </a>
                         {" "}and{" "}
                         <a
@@ -473,7 +473,7 @@ export default function AuthPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`footer-links ${loading ? "disabled-link" : ""}`}
-                          style={{ textDecoration: "underline" }}
+                          // style={{ textDecoration: "underline" }}
                         >
                           Privacy Policy
                         </a>
