@@ -53,6 +53,7 @@ export default function AuthPage() {
     description: "XVALIDATEAI authentication page",
   };
 
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   //Prefill email for invitation user
   useEffect(() => {
     if (invitedEmail && isValidEmail(invitedEmail)) {
