@@ -21,6 +21,7 @@ import AuthSecurityBadges from "@/components/others/AuthSecurityBadges";
 export default function AuthPage() {
   const [emailLocked, setEmailLocked] = useState(false);
   const [searchParams] = useSearchParams();
+  const invitedEmail = searchParams.get("email");
   const mode = searchParams.get("mode") || "login";
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,7 +58,7 @@ export default function AuthPage() {
     if (invitedEmail && isValidEmail(invitedEmail)) {
       setFormData((prev) => ({
         ...prev,
-        email: decodeURIComponent(invitedEmail),
+        email: invitedEmail,
       }));
       setEmailLocked(true);
     }
