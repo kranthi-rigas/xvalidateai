@@ -10,6 +10,8 @@ import { COLORS } from "../../../styles/colors";
 import StatisticsCards from "./StatisticsCards"; // ✅ REQUIRED
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
+import { useContextElement } from "@/context/Context";
+import { fetchUserProfile } from "@/apiIntegration/auth";
 
 import {
   getComplianceProjects,
@@ -31,6 +33,7 @@ export default function AICompliance() {
   const location = useLocation();
   const navigate = useNavigate();
   const { project_id: projectIdFromUrl } = useParams();
+  const { setUserCredits } = useContextElement();
 
   /* ---------- INITIAL LOAD ---------- */
   useEffect(() => {
@@ -84,6 +87,15 @@ export default function AICompliance() {
     try {
       const data = await getComplianceProjects();
       setProjects(data?.projects || []);
+
+      // Update credits immediately after scan/action completes
+      const token = localStorage.getItem("access_token");
+      if (token && setUserCredits) {
+        const userData = await fetchUserProfile(token);
+        if (userData?.plan?.credits_used !== undefined) {
+          setUserCredits(userData.plan.credits_used);
+        }
+      }
     } catch (err) {
       console.error("Fetch Error:", err);
       setProjects([]);

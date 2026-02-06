@@ -145,7 +145,7 @@ export default function ModernDashboardLayout() {
         className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}
       >
         <div
-          className={`h-20 flex items-center border-b border-sidebar-border ${sidebarCollapsed ? "" : "px-6 justify-between"}`}
+          className={`h-20 flex items-center border-b border-sidebar-border justify-between ${sidebarCollapsed ? "px-2" : "px-6"}`}
         >
           {/* Expanded Logo */}
           <div
@@ -164,8 +164,9 @@ export default function ModernDashboardLayout() {
             title="Expand sidebar"
           >
             <img
-              src="/assets/img/logo/collapsed-xvalidateai.png"
+              src="/assets/img/general/collapsed-app-logo.png"
               alt="XVALIDATEAI"
+              className="w-10 mx-auto"
             />
           </div>
 

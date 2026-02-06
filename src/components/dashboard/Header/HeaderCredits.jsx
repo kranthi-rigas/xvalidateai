@@ -30,7 +30,7 @@ export default function HeaderCredits() {
   useEffect(() => {
     loadCredits();
 
-    // Refetch every 30 seconds to keep credits updated
+    // Refetch every 30 seconds as fallback
     const interval = setInterval(loadCredits, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -41,18 +41,6 @@ export default function HeaderCredits() {
       setCreditsRemaining(userCredits);
     }
   }, [userCredits]);
-
-  // Listen for custom event when plan is purchased
-  useEffect(() => {
-    const handlePlanPurchase = () => {
-      // Immediately reload credits when plan is purchased
-      loadCredits();
-    };
-
-    window.addEventListener("planPurchased", handlePlanPurchase);
-    return () =>
-      window.removeEventListener("planPurchased", handlePlanPurchase);
-  }, []);
 
   return (
     <div className="flex items-center px-3 py-1.5 rounded-lg border border-border bg-muted/50">
