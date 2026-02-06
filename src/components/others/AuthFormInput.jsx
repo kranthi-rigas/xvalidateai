@@ -55,6 +55,7 @@ export default function AuthFormInput({
             onClick={() => setShowPassword(!showPassword)}
             className="password-view"
             title={showPassword ? "Hide password" : "Show password"}
+            tabIndex={-1}
           >
             <i 
               key={showPassword ? "hide" : "show"}
