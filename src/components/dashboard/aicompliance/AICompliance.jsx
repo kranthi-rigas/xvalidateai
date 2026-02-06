@@ -92,8 +92,8 @@ export default function AICompliance() {
       const token = localStorage.getItem("access_token");
       if (token && setUserCredits) {
         const userData = await fetchUserProfile(token);
-        if (userData?.plan?.credits_used !== undefined) {
-          setUserCredits(userData.plan.credits_used);
+        if (userData?.plan?.credits_remaining !== undefined) {
+          setUserCredits(userData.plan.credits_remaining);
         }
       }
     } catch (err) {
