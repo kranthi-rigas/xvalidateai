@@ -19,6 +19,7 @@ import AuthSecurityBadges from "@/components/others/AuthSecurityBadges";
 // CSS is loaded via public/assets/css/dashboard-styles/AuthPages.css
 
 export default function AuthPage() {
+  const [emailLocked, setEmailLocked] = useState(false);
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "login";
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,17 @@ export default function AuthPage() {
     title: mode === "login" ? "Login - XVALIDATEAI" : "Sign up - XVALIDATEAI",
     description: "XVALIDATEAI authentication page",
   };
+
+  //Prefill email for invitation user
+  useEffect(() => {
+    if (invitedEmail && isValidEmail(invitedEmail)) {
+      setFormData((prev) => ({
+        ...prev,
+        email: decodeURIComponent(invitedEmail),
+      }));
+      setEmailLocked(true);
+    }
+  }, [invitedEmail]);
 
   // ⭐ SCROLL TO TOP - Watch mode changes
   useLayoutEffect(() => {
@@ -348,7 +360,11 @@ export default function AuthPage() {
                     label="Email Address"
                     placeholder="you@company.com"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly={emailLocked}
+                    onChange={(e) => {
+                      if (emailLocked) return; // 🔐 block manual edits
+                      handleChange(e);
+                    }}
                     icon="fa-envelope"
                   />
 
@@ -451,22 +467,30 @@ export default function AuthPage() {
                       ></i>
                     )}
                   </button>
-                  
+
                   {/* Terms Agreement (Signup Only) */}
                   {mode === "signup" && (
-                    <div className="auth-terms-agreement" style={{ marginTop: "1rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
+                    <div
+                      className="auth-terms-agreement"
+                      style={{
+                        marginTop: "1rem",
+                        textAlign: "center",
+                        fontSize: "0.875rem",
+                        color: "#64748b",
+                      }}
+                    >
                       <p>
                         By creating an account, you agree to our{" "}
                         <a
-                           href="https://myacademy51.com/terms-of-use"
+                          href="https://myacademy51.com/terms-of-use"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`footer-links ${loading ? "disabled-link" : ""}`}
                           style={{ textDecoration: "underline" }}
                         >
                           Terms of Service
-                        </a>
-                        {" "}and{" "}
+                        </a>{" "}
+                        and{" "}
                         <a
                           // href="/privacy-policy"
                           href="https://myacademy51.com/privacy-policy/"

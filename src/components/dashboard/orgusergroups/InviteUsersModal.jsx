@@ -121,7 +121,6 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       const result = await onInvite(chipEmails, rolesSelected, selectedGroups);
 
       if (result?.success) {
-        show("Users invited successfully!", { type: "success" });
         onClose();
       }
     } catch (err) {
@@ -142,6 +141,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   };
 
   /* ---------- CHIP INPUT STYLE ---------- */
+  /* ---------- CHIP INPUT STYLE ---------- */
   const chipBoxStyle = () => {
     const hasError =
       (submitted || touched.emails) &&
@@ -155,25 +155,28 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       minHeight: 48,
       borderRadius: 12,
 
-      border: isFocused
-        ? `1.5px solid ${COLORS.borderFocus || "#2563EB"}`
-        : hasError
-          ? `1.5px solid ${COLORS.error || "#DC2626"}`
+      // Single border - no double ring
+      border: hasError
+        ? `2px solid ${COLORS.error || "#DC2626"}`
+        : isFocused
+          ? `2px solid ${COLORS.borderFocus || "#2563EB"}`
           : `1px solid ${COLORS.borderLight || "#D1D5DB"}`,
 
-      boxShadow: isFocused
-        ? `0 0 0 3px ${COLORS.focusRing || "rgba(37,99,235,0.25)"}`
-        : hasError
-          ? `0 0 0 3px ${COLORS.errorLight || "rgba(220,38,38,0.25)"}`
-          : "none",
+      boxShadow: "none",
+      outline: "none",
 
       background: COLORS.surfaceLight || "#F9FAFB",
       padding: "6px 10px",
       display: "flex",
       flexWrap: "wrap",
       gap: 6,
-      transition: "all 0.15s ease",
+      transition: "border 0.15s ease",
       cursor: "text",
+
+      // Force remove any inherited properties
+      WebkitAppearance: "none",
+      MozAppearance: "none",
+      appearance: "none",
     };
   };
 
