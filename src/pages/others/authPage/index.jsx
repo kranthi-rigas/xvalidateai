@@ -487,21 +487,21 @@ export default function AuthPage() {
                           href="https://myacademy51.com/terms-of-use"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`footer-links ${loading ? "disabled-link" : ""}`}
-                          style={{ textDecoration: "underline" }}
+                          className={`auth-switch-link ${loading ? "disabled-link" : ""}`}
+                          // style={{ textDecoration: "underline" }}
                         >
-                          Terms of Service
-                        </a>{" "}
-                        and{" "}
+                          Terms&nbsp;of&nbsp;Service&nbsp;
+                        </a>
+                        {"  "}and{" "}
                         <a
                           // href="/privacy-policy"
                           href="https://myacademy51.com/privacy-policy/"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`footer-links ${loading ? "disabled-link" : ""}`}
-                          style={{ textDecoration: "underline" }}
+                          className={`auth-switch-link ${loading ? "disabled-link" : ""}`}
+                          // style={{ textDecoration: "underline" }}
                         >
-                          Privacy Policy
+                          &nbsp;Privacy&nbsp;Policy
                         </a>
                         .
                       </p>

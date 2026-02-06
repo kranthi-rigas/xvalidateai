@@ -2,6 +2,7 @@ import DashboardNotFound from "@/components/dashboard/DashboardNotFound";
 import MetaComponent from "@/components/common/MetaComponent";
 import HeaderAuth from "@/components/layout/headers/HeaderAuth";
 import Preloader from "@/components/common/Preloader";
+import { COLORS } from "@/styles/colors";
 
 const metadata = {
   title: "Page Not Found || Academy51",
@@ -28,7 +29,7 @@ export default function DashboardNotFoundPage() {
         <DashboardNotFound />
       </div>
 
-      <div
+      {/* <div
         className="py-30 border-top-light-15"
         style={{ backgroundColor: COLORS.bgDark }}
       >
@@ -39,7 +40,7 @@ export default function DashboardNotFoundPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
