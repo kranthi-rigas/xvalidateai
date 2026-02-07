@@ -6,14 +6,17 @@ export default function AwsButton({
   disabled = false,
   onClick,
   children,
-  variant = "primary" // "primary" or "secondary"
+  variant = "primary", // "primary" or "secondary"
 }) {
   const [hover, setHover] = useState(false);
 
+  const isSuccess = variant === "success";
+  const isDanger = variant === "danger";
+  const isOutlineDanger = variant === "outlineDanger";
   // Design system colors
   const primaryBg = COLORS.primary; // #0043ce Trust Blue
   const primaryHoverBg = COLORS.primaryDark; // #001d6c
-  
+
   // Secondary (outline) button colors
   const secondaryBg = "transparent";
   const secondaryHoverBg = COLORS.bgSecondary; // #f4f4f4
@@ -47,31 +50,57 @@ export default function AwsButton({
         background: disabled
           ? COLORS.bgSecondary
           : isPrimary
-          ? hover
-            ? primaryHoverBg
-            : primaryBg
-          : hover
-          ? secondaryHoverBg
-          : secondaryBg,
+            ? hover
+              ? primaryHoverBg
+              : primaryBg
+            : isSuccess
+              ? hover
+                ? "#047857"
+                : "#059669" // emerald hover / normal
+              : isDanger
+                ? hover
+                  ? "#b91c1c"
+                  : "#dc2626" // red solid
+                : isOutlineDanger
+                  ? hover
+                    ? "#dc2626"
+                    : "transparent"
+                  : hover
+                    ? secondaryHoverBg
+                    : secondaryBg,
 
         // Text color
         color: disabled
           ? COLORS.textMuted
-          : isPrimary
-          ? COLORS.white
-          : secondaryText,
+          : isPrimary || isSuccess || isDanger
+            ? COLORS.white
+            : isOutlineDanger && hover
+              ? COLORS.white
+              : secondaryText,
 
         // Border
         border: `1px solid ${
           disabled
             ? COLORS.borderLight
             : isPrimary
-            ? hover
-              ? primaryHoverBg
-              : primaryBg
-            : hover
-            ? COLORS.borderDark
-            : secondaryBorder
+              ? hover
+                ? primaryHoverBg
+                : primaryBg
+              : isSuccess
+                ? hover
+                  ? "#047857"
+                  : "#059669"
+                : isDanger
+                  ? hover
+                    ? "#b91c1c"
+                    : "#dc2626"
+                  : isOutlineDanger
+                    ? hover
+                      ? "#dc2626"
+                      : "#dc2626"
+                    : hover
+                      ? COLORS.borderDark
+                      : secondaryBorder
         }`,
       }}
     >

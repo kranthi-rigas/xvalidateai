@@ -19,6 +19,7 @@ import {
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
 import AwsButton from "@/components/common/AwsButton";
+import CreditInfoNote from "./CreditInfoNote";
 
 export default function AIListViewModern({
   projects,
@@ -951,7 +952,7 @@ export default function AIListViewModern({
                       : "Cancel Request"
           }
           /* 🔐 AUDITOR UX FIXES */
-          hideCredits={!["scan_approve"].includes(approvalAction)}
+          showCreditsNote={isAdmin && approvalAction === "scan_approve"}
           hideComment={approvalAction === "cancel_request"}
           onClose={() => {
             setShowApprovalModal(false);

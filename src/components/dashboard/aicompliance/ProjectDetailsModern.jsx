@@ -4,6 +4,7 @@ import { COLORS } from "@/styles/colors";
 import AwsButton from "../../common/AwsButton";
 import { updateComplianceProject } from "../../../apiIntegration/compliance";
 import ApproveRejectModal from "./ApproveRejectModal";
+import CreditInfoNote from "./CreditInfoNote";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -613,22 +614,24 @@ export default function ProjectDetailsModern({ project, onBack }) {
           <div className="flex justify-center">
             {showScanActions && (
               <div className="flex flex-wrap justify-center gap-3">
+                {/* Approve for Scan */}
                 <AwsButton
+                  variant="primary"
                   onClick={() => {
                     setActionType("scan_approve");
                     setShowModal(true);
                   }}
-                  className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm transition"
                 >
                   Approve for Scan
                 </AwsButton>
 
+                {/* Reject for Scan */}
                 <AwsButton
+                  variant="outlineDanger"
                   onClick={() => {
                     setActionType("scan_reject");
                     setShowModal(true);
                   }}
-                  className="px-5 py-2.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition"
                 >
                   Reject for Scan
                 </AwsButton>
@@ -637,22 +640,24 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
             {showUsageActions && (
               <div className="flex flex-wrap justify-center gap-3">
+                {/* Approve for Usage */}
                 <AwsButton
+                  variant="success"
                   onClick={() => {
                     setActionType("approve");
                     setShowModal(true);
                   }}
-                  className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium shadow-sm transition"
                 >
                   Approve for Usage
                 </AwsButton>
 
+                {/* Reject for Usage */}
                 <AwsButton
+                  variant="danger"
                   onClick={() => {
                     setActionType("reject");
                     setShowModal(true);
                   }}
-                  className="px-5 py-2.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium transition"
                 >
                   Reject for Usage
                 </AwsButton>
@@ -696,7 +701,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     ? "Reject for Usage"
                     : ""
           }
-          hideCredits={actionType !== "scan_approve"}
+          showCreditsNote={actionType === "scan_approve"}
           onClose={() => setShowModal(false)}
           onConfirm={handleApproveReject}
         />

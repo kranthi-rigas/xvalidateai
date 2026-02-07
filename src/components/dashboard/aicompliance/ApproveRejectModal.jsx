@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import AwsButton from "../../common/AwsButton";
 import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/Formfield";
+import CreditInfoNote from "./CreditInfoNote";
 
 export default function ApproveRejectModal({
   title,
@@ -9,6 +10,7 @@ export default function ApproveRejectModal({
   onConfirm,
   onClose,
   hasError = false,
+  showCreditsNote = false,
 }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,6 +77,8 @@ export default function ApproveRejectModal({
         fieldRef={commentRef}
         helperText="Optional: Add any additional notes or context"
       />
+      {/* ✅ Show only when allowed */}
+      {showCreditsNote && <CreditInfoNote />}
     </ReusableModal>
   );
 }

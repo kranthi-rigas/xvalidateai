@@ -4,6 +4,7 @@ import AwsButton from "../../common/AwsButton";
 import useToast from "../../../hooks/useToast";
 import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/Formfield";
+import CreditInfoNote from "./CreditInfoNote";
 
 export default function CreateProjectModal({
   setShowCreateModal,
@@ -12,7 +13,11 @@ export default function CreateProjectModal({
   /* ---------- ROLE ---------- */
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
-  const isInstructor = roles.includes("AUDITOR");
+
+  const isAdmin = roles.includes("ADMIN");
+  const isAuditor = roles.includes("AUDITOR");
+
+  const showCreditsNote = isAdmin && !isAuditor;
 
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
@@ -125,11 +130,11 @@ export default function CreateProjectModal({
     try {
       await createComplianceProject({
         ...form,
-        status: isInstructor ? "requested" : "pending_assessment",
+        status: isAuditor ? "requested" : "pending_assessment",
       });
 
       show(
-        isInstructor
+        isAuditor
           ? "Request submitted successfully!"
           : "Tool created successfully!",
         { type: "success" },
@@ -179,10 +184,10 @@ export default function CreateProjectModal({
       <AwsButton
         label={
           saving
-            ? isInstructor
+            ? isAuditor
               ? "Requesting…"
               : "Saving…"
-            : isInstructor
+            : isAuditor
               ? "Request"
               : "Save & Evaluate"
         }
@@ -236,7 +241,7 @@ export default function CreateProjectModal({
         required
         placeholder="Enter a short description..."
         type="textarea"
-        rows={2}
+        rows={1}
         fieldRef={fieldRefs.description}
         helperText={`${form.description.length}/100 characters`}
       />
@@ -266,9 +271,15 @@ export default function CreateProjectModal({
         required
         placeholder="Explain the reason for adopting this tool..."
         type="textarea"
-        rows={3}
+        rows={2}
         fieldRef={fieldRefs.justification}
       />
+      {/* ✅ Credit Message BELOW buttons */}
+      {showCreditsNote && (
+        <div className="pt-1">
+          <CreditInfoNote text="Each assessment consumes 10 credits." />
+        </div>
+      )}
     </ReusableModal>
   );
 }
