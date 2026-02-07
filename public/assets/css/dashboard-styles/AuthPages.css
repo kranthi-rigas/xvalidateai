@@ -259,12 +259,7 @@ div:focus-within .password-view {
 }
 
 .auth-gradient-text {
-  background: linear-gradient(135deg, var(--auth-primary, #0F3053) 0%, var(--auth-secondary, #58BFCE) 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: auth-gradient-shift 3s ease infinite;
+  color: var(--auth-primary, #0043ce);
 }
 
 /* Scanline Effect */

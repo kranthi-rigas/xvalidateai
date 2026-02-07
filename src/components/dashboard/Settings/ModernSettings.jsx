@@ -68,7 +68,7 @@ export default function ModernSettings() {
       {activeTab === "edit" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
           {/* Avatar Section */}
-          <div className="p-6 sm:p-8 border-b border-border bg-gradient-to-r from-blue-50/50 to-transparent">
+          <div className="p-6 sm:p-8 border-b border-border bg-blue-50/50">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
               <div className="relative group flex-shrink-0">
                 <div className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden" style={{ backgroundColor: COLORS.primary }}>

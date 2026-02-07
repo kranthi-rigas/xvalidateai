@@ -49,10 +49,7 @@ body {
 
 /* Gradient Text */
 .gradient-text {
-    background: linear-gradient(135deg, #0F3053 0%, #58BFCE 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #0f3357;
 }
 
 /* Navigation Items */
