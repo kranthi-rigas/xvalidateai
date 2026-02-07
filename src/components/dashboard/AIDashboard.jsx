@@ -485,7 +485,7 @@ export default function AIDashboard() {
         {/* Radar Chart */}
         <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
           <div className="flex items-center justify-between px-2">
-            <h4>Quality Comparison</h4>
+            <h5>Quality Comparison</h5>
             <div className="flex items-center gap-2 w-full max-w-[600px]">
               <label className="text-sm font-medium whitespace-nowrap">
                 Select Tools (Max 5):
