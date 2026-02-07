@@ -1007,7 +1007,9 @@
   cursor: pointer;
   white-space: nowrap;
 }
-
+.badge i {
+  line-height: 0;
+}
 
 
 /* Made with Bob */

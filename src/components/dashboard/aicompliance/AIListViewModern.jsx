@@ -19,7 +19,6 @@ import {
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
 import AwsButton from "@/components/common/AwsButton";
-import CreditInfoNote from "./CreditInfoNote";
 
 export default function AIListViewModern({
   projects,
@@ -150,8 +149,8 @@ export default function AIListViewModern({
   const roles = (userInfo?.roles || []).map((r) => r.toUpperCase());
   const isAdmin = roles.includes("ADMIN");
   const hasAdminRole = roles.includes("ADMIN");
-  const hasAuditorRole = roles.includes("AUDITOR");
-  const hasAnalystRole = roles.includes("ANALYST");
+  const hasAuditorRole = roles.includes("MANAGER");
+  const hasAnalystRole = roles.includes("USER");
 
   const isAuditor = hasAuditorRole;
   // ✅ Analyst-only = NO higher privilege

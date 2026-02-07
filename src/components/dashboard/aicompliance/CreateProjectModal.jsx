@@ -15,7 +15,7 @@ export default function CreateProjectModal({
   const roles = userInfo?.roles || [];
 
   const isAdmin = roles.includes("ADMIN");
-  const isAuditor = roles.includes("AUDITOR");
+  const isAuditor = roles.includes("MANAGER");
 
   const showCreditsNote = isAdmin && !isAuditor;
 

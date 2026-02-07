@@ -15,7 +15,7 @@ export default function EditProjectModal({
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
-  const isAuditor = roles.includes("AUDITOR");
+  const isAuditor = roles.includes("MANAGER");
 
   // Show credit note only for Admin evaluation
   const showCreditsNote = isAdmin && !isAuditor;
