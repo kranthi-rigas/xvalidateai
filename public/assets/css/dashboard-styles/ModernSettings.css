@@ -1,0 +1,37 @@
+/* Modern Settings Component Styles */
+
+/* Avatar Section */
+.modern-settings-avatar {
+  background-color: var(--primary-color);
+}
+
+.modern-settings-avatar-camera-btn {
+  background-color: var(--secondary-color);
+}
+
+/* Update Profile Button */
+.modern-settings-update-btn {
+  background-color: var(--primary-color);
+}
+
+.modern-settings-update-btn:hover {
+  background-color: var(--primary-hover-color, rgba(0, 0, 0, 0.9));
+}
+
+/* Change Password Button */
+.modern-settings-password-btn {
+  background-color: var(--primary-color);
+}
+
+.modern-settings-password-btn:disabled {
+  background-color: var(--muted-color, #9ca3af);
+}
+
+.modern-settings-password-btn:hover:not(:disabled) {
+  background-color: var(--primary-hover-color, rgba(0, 0, 0, 0.9));
+}
+
+/* Close Account Section */
+.modern-settings-close-account-title {
+  color: var(--error-color, #dc2626);
+}

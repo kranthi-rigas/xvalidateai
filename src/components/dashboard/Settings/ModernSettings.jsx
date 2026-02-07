@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { COLORS } from "@/styles/colors";
-import { updatePassword } from "@/apiIntegration/auth"; 
+import { updatePassword } from "@/apiIntegration/auth";
+import "./ModernSettings.css"; 
 
 
 
@@ -40,6 +41,14 @@ export default function ModernSettings() {
   const togglePasswordVisibility = (field) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
+
+  // Set CSS variables for colors
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-color', COLORS.primary);
+    document.documentElement.style.setProperty('--secondary-color', COLORS.secondary);
+    document.documentElement.style.setProperty('--error-color', COLORS.error);
+    document.documentElement.style.setProperty('--muted-color', COLORS.muted);
+  }, []);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -158,10 +167,10 @@ export default function ModernSettings() {
           <div className="p-6 sm:p-8 border-b border-border bg-blue-50/50">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
               <div className="relative group flex-shrink-0">
-                <div className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden" style={{ backgroundColor: COLORS.primary }}>
+                <div className="modern-settings-avatar w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden">
                   <span>RP</span>
                 </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm transition-colors border-2 border-white" style={{ backgroundColor: COLORS.secondary }}>
+                <button className="modern-settings-avatar-camera-btn absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm transition-colors border-2 border-white">
                   <i className="fa-solid fa-camera text-xs"></i>
                 </button>
               </div>
@@ -368,8 +377,7 @@ export default function ModernSettings() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center"
-                  style={{ backgroundColor: COLORS.primary }}
+                  className="modern-settings-update-btn bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center"
                 >
                   <i className="fa-solid fa-check mr-2"></i>
                   Update Profile
@@ -435,11 +443,7 @@ export default function ModernSettings() {
                     onClick={() => togglePasswordVisibility("current")}
                     className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {/* <i className={`fa-solid ${showPasswords.current ? "fa-eye-slash" : "fa-eye"}`}></i> */}
-                    <i
-                      key = {showPasswords.current ? "eye-slash" : "eye"}
-                      className={`fa-solid fa-${showPasswords.current ? "eye-slash" : "eye"}`}>
-                    </i>
+                    <i className={`fa-solid ${showPasswords.current ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
               </div>
@@ -472,11 +476,7 @@ export default function ModernSettings() {
                     onClick={() => togglePasswordVisibility("new")}
                     className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {/* <i className={`fa-solid ${showPasswords.new ? "fa-eye-slash" : "fa-eye"}`}></i> */}
-                    <i
-                      key = {showPasswords.new ? "eye-slash" : "eye"}
-                      className={`fa-solid fa-${showPasswords.new ? "eye-slash" : "eye"}`}>
-                    </i>
+                    <i className={`fa-solid ${showPasswords.new ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -511,22 +511,16 @@ export default function ModernSettings() {
                     onClick={() => togglePasswordVisibility("confirm")}
                     className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {/* <i className={`fa-solid ${showPasswords.confirm ? "fa-eye-slash" : "fa-eye"}`}></i> */}
-                    <i
-                      key = {showPasswords.confirm ? "eye-slash" : "eye"}
-                      className={`fa-solid fa-${showPasswords.confirm ? "eye-slash" : "eye"}`}>
-                    </i>
+                    <i className={`fa-solid ${showPasswords.confirm ? "fa-eye-slash" : "fa-eye"}`}></i>
                   </button>
                 </div>
                 {/* Live validation message */}
                 {passwordForm.confirm_password && (
                   <p className={`text-xs ${passwordsMatch ? "text-green-600" : "text-red-600"}`}>
                     {passwordsMatch ? (
-                      // <span><i className="fa-solid fa-check mr-1"></i>Passwords match</span>
-                      <span>Passwords match</span>
+                      <span><i className="fa-solid fa-check mr-1"></i>Passwords match</span>
                     ) : (
-                      // <span><i className="fa-solid fa-xmark mr-1"></i>Passwords do not match</span>
-                      <span>Passwords do not match</span>
+                      <span><i className="fa-solid fa-xmark mr-1"></i>Passwords do not match</span>
                     )}
                   </p>
                 )}
@@ -553,10 +547,9 @@ export default function ModernSettings() {
               <button
                 type="submit"
                 disabled={passwordLoading || !passwordsMatch}
-                className="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: passwordLoading ? COLORS.muted : COLORS.primary }}
+                className="modern-settings-password-btn bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {/* {passwordLoading ? (
+                {passwordLoading ? (
                   <>
                     <i className="fa-solid fa-spinner fa-spin mr-2"></i>
                     Updating...
@@ -566,11 +559,7 @@ export default function ModernSettings() {
                     <i className="fa-solid fa-key mr-2"></i>
                     Change Password
                   </>
-                )} */}
-                <>
-                    <i className="fa-solid fa-key mr-2"></i>
-                    Change Password
-                  </>
+                )}
               </button>
             </div>
           </form>
@@ -603,7 +592,7 @@ export default function ModernSettings() {
 
       {activeTab === "close" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-          <h2 className="text-xl font-semibold mb-6" style={{ color: COLORS.error }}>Close Account</h2>
+          <h2 className="modern-settings-close-account-title text-xl font-semibold mb-6">Close Account</h2>
           <p className="text-muted-foreground mb-6">
             Permanently delete your account and all associated data.
           </p>
