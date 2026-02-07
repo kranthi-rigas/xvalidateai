@@ -7,6 +7,7 @@ import ApproveRejectModal from "./ApproveRejectModal";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Plotly from "plotly.js-dist-min";
+import { useContextElement } from "@/context/Context";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -48,9 +49,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPdfRendering, setIsPdfRendering] = useState(false);
-
-  // If you are not using plan system, temporarily disable this
-  const isFreePlan = false;
 
   const handleDownloadPDF = async () => {
     if (isDownloading || isFreePlan) return;
@@ -680,7 +678,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                       value: score,
                       number: {
                         suffix: "%",
-                        font: { size: 42, color: COLORS.primary, weight: 800 },
+                        font: { size: 25, color: COLORS.primary, weight: 500 },
                       },
                       gauge: {
                         axis: {
