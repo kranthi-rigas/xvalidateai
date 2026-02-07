@@ -340,7 +340,7 @@ export default function DashboardPricing() {
                                       height: "20px",
                                       minWidth: "20px",
                                       fontSize: "11px",
-                                      backgroundColor: COLORS.success,
+                                      backgroundColor: "#0f3357",
                                     }}
                                   >
                                     ✓
