@@ -32,7 +32,7 @@ export default function StatisticsCards({
       ),
     },
     {
-      label: "Compliant Tools",
+      label: "Approved Tools",
       value: compliantTools,
       color: "green",
       bgColor: "#D1FAE5",
@@ -80,26 +80,21 @@ export default function StatisticsCards({
       ),
     },
     {
-      label: "High Risk / Blocked",
+      label: "High Risk",
       value: highRiskBlocked,
       color: "red",
       bgColor: "#FEE2E2",
       textColor: "#DC2626",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
-          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            d="M18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604M18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604M18.364 18.364L5.63604 5.63604"
-            stroke="#DC2626"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M12 2L22 20H2L12 2Z" fill="#DC2626" />
+          <rect x="11" y="9" width="2" height="6" fill="white" rx="1" />
+          <rect x="11" y="16.5" width="2" height="2" fill="white" rx="1" />
         </svg>
       ),
     },

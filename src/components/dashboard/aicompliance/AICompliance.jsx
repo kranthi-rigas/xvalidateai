@@ -147,7 +147,8 @@ export default function AICompliance() {
   ).length;
 
   const compliantTools = (projects || []).filter(
-    (p) => p.recommendation?.toLowerCase() === "approved",
+    (p) => p.status?.toLowerCase() === "approved_for_usage",
+    // p.assessment_status?.toLowerCase() === "completed",
   ).length;
 
   const approvedWithLimits = (projects || []).filter(
