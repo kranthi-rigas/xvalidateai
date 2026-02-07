@@ -55,11 +55,11 @@ export default function ModernDashboardLayout() {
               badgeClass += " role-admin";
               break;
 
-            case "AUDITOR":
+            case "MANAGER":
               badgeClass += " role-auditor";
               break;
 
-            case "ANALYST":
+            case "USER":
               badgeClass += " role-analyst";
               break;
 
