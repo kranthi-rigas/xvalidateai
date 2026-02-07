@@ -122,10 +122,19 @@
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.header-top-spacer {
+  flex: 1;
+}
+
+.header-top-center {
+  text-align: center;
+  flex: 1;
 }
 
 .gradient-text {
@@ -141,7 +150,11 @@
 }
 
 .header-badges {
-  text-align: right;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .date-text {

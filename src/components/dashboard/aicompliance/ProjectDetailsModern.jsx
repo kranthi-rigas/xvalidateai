@@ -244,15 +244,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
       {/* Report Header Card */}
       <div className="glass-card report-header animate-fade-in">
-        <div className="header-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ flex: 1 }}></div>
-          <div style={{ textAlign: 'center', flex: 1 }}>
+        <div className="header-top">
+          <div className="header-top-spacer"></div>
+          <div className="header-top-center">
             <h1 className="gradient-text"> Assessment Report</h1>
             <p className="subtitle">
               Comprehensive compliance and quality evaluation
             </p>
           </div>
-          <div className="header-badges" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <div className="header-badges">
             {badge && (
               <div className={`badge ${badge.class}`}>
                 <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
