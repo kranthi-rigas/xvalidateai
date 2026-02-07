@@ -635,8 +635,8 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 <div className="detail-row">
                   <span className="detail-label">Approved By:</span>
                   <span className="detail-value secondary">
-                    {project.approved_by
-                      ? formatUser(project.approved_by)
+                    {project.scan_approved_by
+                      ? formatUser(project.scan_approved_by)
                       : "-"}
                   </span>
                 </div>
@@ -721,6 +721,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 <h4 className="certifications-title">
                   Compliance Certifications
                 </h4>
+
                 <div className="certification-badges">
                   {project.compliance_followed.map((cert, idx) => (
                     <span key={idx} className="badge badge-success">
@@ -728,6 +729,91 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </span>
                   ))}
                 </div>
+
+                {/* 🔹 Admin Link Actions */}
+                {isAdmin && showAdminActions && (
+                  <div className="mt-4 w-full flex justify-center items-center gap-4 text-sm font-medium">
+                    {showScanActions && (
+                      <>
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("scan_approve");
+                            setShowModal(true);
+                          }}
+                        >
+                          Approve for Scan
+                        </span>
+
+                        <span style={{ color: "#8d8d8d" }}>|</span>
+
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("scan_reject");
+                            setShowModal(true);
+                          }}
+                        >
+                          Reject for Scan
+                        </span>
+                      </>
+                    )}
+
+                    {showUsageActions && (
+                      <>
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("approve");
+                            setShowModal(true);
+                          }}
+                        >
+                          Approve for Usage
+                        </span>
+
+                        <span style={{ color: "#8d8d8d" }}>|</span>
+
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("reject");
+                            setShowModal(true);
+                          }}
+                        >
+                          Reject for Usage
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
         </div>
@@ -947,64 +1033,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
           })}
       </div>
 
-      {/* ================= ADMIN ACTIONS ================= */}
-      {isAdmin && showAdminActions && (
-        <div className="glass-card mt-6 p-6">
-          <div className="flex justify-center">
-            {showScanActions && (
-              <div className="flex flex-wrap justify-center gap-3">
-                {/* Approve for Scan */}
-                <AwsButton
-                  variant="primary"
-                  onClick={() => {
-                    setActionType("scan_approve");
-                    setShowModal(true);
-                  }}
-                >
-                  Approve for Scan
-                </AwsButton>
-
-                {/* Reject for Scan */}
-                <AwsButton
-                  variant="outlineDanger"
-                  onClick={() => {
-                    setActionType("scan_reject");
-                    setShowModal(true);
-                  }}
-                >
-                  Reject for Scan
-                </AwsButton>
-              </div>
-            )}
-
-            {showUsageActions && (
-              <div className="flex flex-wrap justify-center gap-3">
-                {/* Approve for Usage */}
-                <AwsButton
-                  variant="success"
-                  onClick={() => {
-                    setActionType("approve");
-                    setShowModal(true);
-                  }}
-                >
-                  Approve for Usage
-                </AwsButton>
-
-                {/* Reject for Usage */}
-                <AwsButton
-                  variant="danger"
-                  onClick={() => {
-                    setActionType("reject");
-                    setShowModal(true);
-                  }}
-                >
-                  Reject for Usage
-                </AwsButton>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       {/* Report Footer */}
       <div className="glass-card report-footer">
         <p className="footer-text">

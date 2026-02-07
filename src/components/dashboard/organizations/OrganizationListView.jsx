@@ -50,7 +50,6 @@ export default function OrganizationListView() {
   const [columnWidths, setColumnWidths] = useState({
     name: 220,
     status: 160,
-    slug: 180,
     email: 230,
     address: 300,
     created_at: 180,
@@ -168,7 +167,7 @@ export default function OrganizationListView() {
 
   /* ---------- Search Helper ---------- */
   function buildSearchText(org) {
-    return [org.org_id, org.name, org.status, org.slug, org.email, org.address]
+    return [org.org_id, org.name, org.status, org.email, org.address]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -238,7 +237,7 @@ export default function OrganizationListView() {
       sortable: true,
       resizable: true,
     },
-    { key: "slug", label: "Slug", sortable: true, resizable: true },
+
     { key: "email", label: "Email", sortable: true, resizable: true },
     { key: "address", label: "Address", sortable: false, resizable: true },
     {
@@ -332,9 +331,6 @@ export default function OrganizationListView() {
           </span>
         );
       }
-
-      case "slug":
-        return <span className="text-muted-foreground">{row.slug || "-"}</span>;
 
       case "email":
         return (
