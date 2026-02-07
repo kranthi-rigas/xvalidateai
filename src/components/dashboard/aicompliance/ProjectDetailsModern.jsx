@@ -4,7 +4,7 @@ import { COLORS } from "@/styles/colors";
 import AwsButton from "../../common/AwsButton";
 import { updateComplianceProject } from "../../../apiIntegration/compliance";
 import ApproveRejectModal from "./ApproveRejectModal";
-import CreditInfoNote from "./CreditInfoNote";
+import { useContextElement } from "@/context/Context";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -64,6 +64,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
+
+  // Detect user plan (handles several possible shapes in user_info)
+  const { userPlan } = useContextElement();
+  const isFreePlan = userPlan === "free";
 
   const dateString = formatToLocalDateTime(
     project.created_at || project.last_scanned_time,
@@ -464,149 +468,206 @@ export default function ProjectDetailsModern({ project, onBack }) {
           </div>
 
           <div className="recommendation-content">
-            <div className="recommendation-box success">
-              <i className="fa-solid fa-circle-check"></i>
-              <div>
-                <h4>Final Recommendation</h4>
-                <p>{project.recommendation}</p>
-              </div>
-            </div>
+            {!isFreePlan ? (
+              <>
+                <div className="recommendation-box success">
+                  <i className="fa-solid fa-circle-check"></i>
+                  <div>
+                    <h4>Final Recommendation</h4>
+                    <p>{project.recommendation}</p>
+                  </div>
+                </div>
 
-            {project.assessment?.summary?.implementation_guidelines && (
-              <div className="recommendation-box warning">
-                <i className="fa-solid fa-triangle-exclamation"></i>
-                <div>
-                  <h4>Implementation Guidelines</h4>
-                  <p>{project.assessment.summary.implementation_guidelines}</p>
+                {project.assessment?.summary?.implementation_guidelines && (
+                  <div className="recommendation-box warning">
+                    <i className="fa-solid fa-triangle-exclamation"></i>
+                    <div>
+                      <h4>Implementation Guidelines</h4>
+                      <p>
+                        {project.assessment.summary.implementation_guidelines}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="recommendation-box info">
+                  <i className="fa-solid fa-clock"></i>
+                  <div>
+                    <h4>Ongoing Monitoring Required</h4>
+                    <p>
+                      Schedule quarterly reviews of tool performance, privacy
+                      practices, and student outcomes. Reassess annually or upon
+                      major platform updates.
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="recommendation-locked">
+                <div className="recommendation-box locked">
+                  <i className="fa-solid fa-lock"></i>
+                  <div>
+                    <h4>Recommendations Locked</h4>
+                    <p>
+                      Upgrade your plan to view detailed recommendations and
+                      next steps.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
-
-            <div className="recommendation-box info">
-              <i className="fa-solid fa-clock"></i>
-              <div>
-                <h4>Ongoing Monitoring Required</h4>
-                <p>
-                  Schedule quarterly reviews of tool performance, privacy
-                  practices, and student outcomes. Reassess annually or upon
-                  major platform updates.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
-      {/* Detailed Evaluation Tables */}
-      {project.assessment?.evaluation &&
-        project.assessment.evaluation.map((section, idx) => {
-          const sectionScore = parseFloat(section.average_score) || 0;
-          const sectionScoreClass =
-            sectionScore >= 4.0
-              ? "score-excellent"
-              : sectionScore >= 3.5
-                ? "score-warning"
-                : "score-poor";
-
-          return (
+      {/* Detailed Evaluation Tables (blurs + locked overlay for free plans) */}
+      {project.assessment?.evaluation && (
+        <div style={{ position: "relative" }}>
+          {isFreePlan && (
             <div
-              key={idx}
-              className="glass-card detailed-section animate-fade-in"
-              style={{ animationDelay: `${0.6 + idx * 0.1}s` }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 50,
+                pointerEvents: "auto",
+                background: "rgba(255,255,255,0.65)",
+              }}
             >
-              <div className="detailed-header">
-                <h3 className="detailed-title">
-                  <i className="fa-solid fa-gavel"></i>
-                  {section.title}
-                </h3>
-                <div className="section-score-badge">
-                  <span className="score-label">Average Score</span>
-                  <span className={`score-value ${sectionScoreClass}`}>
-                    {section.average_score}/5.0
-                  </span>
-                </div>
-              </div>
-
-              {section.description && (
-                <div className="section-summary-box">
-                  <i className="fa-solid fa-info-circle"></i>
-                  <p>{section.description}</p>
-                </div>
-              )}
-
-              <div className="detailed-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "5%" }}>
-                        <i className="fa-solid fa-hashtag"></i>
-                      </th>
-                      <th style={{ width: "25%" }}>
-                        <i className="fa-solid fa-list-check"></i> Criteria
-                      </th>
-                      <th className="score-col" style={{ width: "10%" }}>
-                        <i className="fa-solid fa-star"></i> Score
-                      </th>
-                      <th style={{ width: "12%" }}>
-                        <i className="fa-solid fa-circle-check"></i> Status
-                      </th>
-                      <th style={{ width: "48%" }}>
-                        <i className="fa-solid fa-file-lines"></i> Detailed
-                        Observation
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.evaluation?.map((item, cidx) => {
-                      const criterionScore = parseFloat(item.score) || 0;
-                      const scoreClass =
-                        criterionScore >= 4.0
-                          ? "score-excellent"
-                          : criterionScore >= 3.5
-                            ? "score-warning"
-                            : "score-poor";
-                      const statusIcon =
-                        criterionScore >= 4.0
-                          ? "fa-circle-check"
-                          : criterionScore >= 3.5
-                            ? "fa-circle-exclamation"
-                            : "fa-circle-xmark";
-                      const statusText =
-                        criterionScore >= 4.0
-                          ? "Excellent"
-                          : criterionScore >= 3.5
-                            ? "Good"
-                            : "Needs Improvement";
-
-                      return (
-                        <tr key={cidx}>
-                          <td className="index-cell">{cidx + 1}</td>
-                          <td className="criterion-name-cell">
-                            <strong>{item.criteria}</strong>
-                          </td>
-                          <td className="score-cell">
-                            <span className={`score-badge ${scoreClass}`}>
-                              {item.score}/5.0
-                            </span>
-                          </td>
-                          <td className="status-cell">
-                            <span className={`status-badge ${scoreClass}`}>
-                              <i className={`fa-solid ${statusIcon}`}></i>
-                              {statusText}
-                            </span>
-                          </td>
-                          <td className="observation-cell">
-                            {item.observation}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div style={{ textAlign: "center", maxWidth: 560, padding: 20 }}>
+                <i
+                  className="fa-solid fa-lock"
+                  style={{ fontSize: 40, color: "#374151" }}
+                ></i>
+                <h4 style={{ marginTop: 12 }}>Detailed Evaluation Locked</h4>
+                <p style={{ margin: 0 }}>
+                  Upgrade your plan to view detailed evaluation tables and
+                  insights.
+                </p>
               </div>
             </div>
-          );
-        })}
+          )}
+
+          <div
+            style={{
+              filter: isFreePlan ? "blur(6px) grayscale(40%)" : "none",
+              transition: "filter .2s",
+              pointerEvents: isFreePlan ? "none" : "auto",
+            }}
+          >
+            {project.assessment.evaluation.map((section, idx) => {
+              const sectionScore = parseFloat(section.average_score) || 0;
+              const sectionScoreClass =
+                sectionScore >= 4.0
+                  ? "score-excellent"
+                  : sectionScore >= 3.5
+                    ? "score-warning"
+                    : "score-poor";
+
+              return (
+                <div
+                  key={idx}
+                  className="glass-card detailed-section animate-fade-in"
+                  style={{ animationDelay: `${0.6 + idx * 0.1}s` }}
+                >
+                  <div className="detailed-header">
+                    <h3 className="detailed-title">
+                      <i className="fa-solid fa-gavel"></i>
+                      {section.title}
+                    </h3>
+                    <div className="section-score-badge">
+                      <span className="score-label">Average Score</span>
+                      <span className={`score-value ${sectionScoreClass}`}>
+                        {section.average_score}/5.0
+                      </span>
+                    </div>
+                  </div>
+
+                  {section.description && (
+                    <div className="section-summary-box">
+                      <i className="fa-solid fa-info-circle"></i>
+                      <p>{section.description}</p>
+                    </div>
+                  )}
+
+                  <div className="detailed-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style={{ width: "5%" }}>
+                            <i className="fa-solid fa-hashtag"></i>
+                          </th>
+                          <th style={{ width: "25%" }}>
+                            <i className="fa-solid fa-list-check"></i> Criteria
+                          </th>
+                          <th className="score-col" style={{ width: "10%" }}>
+                            <i className="fa-solid fa-star"></i> Score
+                          </th>
+                          <th style={{ width: "12%" }}>
+                            <i className="fa-solid fa-circle-check"></i> Status
+                          </th>
+                          <th style={{ width: "48%" }}>
+                            <i className="fa-solid fa-file-lines"></i> Detailed
+                            Observation
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.evaluation?.map((item, cidx) => {
+                          const criterionScore = parseFloat(item.score) || 0;
+                          const scoreClass =
+                            criterionScore >= 4.0
+                              ? "score-excellent"
+                              : criterionScore >= 3.5
+                                ? "score-warning"
+                                : "score-poor";
+                          const statusIcon =
+                            criterionScore >= 4.0
+                              ? "fa-circle-check"
+                              : criterionScore >= 3.5
+                                ? "fa-circle-exclamation"
+                                : "fa-circle-xmark";
+                          const statusText =
+                            criterionScore >= 4.0
+                              ? "Excellent"
+                              : criterionScore >= 3.5
+                                ? "Good"
+                                : "Needs Improvement";
+
+                          return (
+                            <tr key={cidx}>
+                              <td className="index-cell">{cidx + 1}</td>
+                              <td className="criterion-name-cell">
+                                <strong>{item.criteria}</strong>
+                              </td>
+                              <td className="score-cell">
+                                <span className={`score-badge ${scoreClass}`}>
+                                  {item.score}/5.0
+                                </span>
+                              </td>
+                              <td className="status-cell">
+                                <span className={`status-badge ${scoreClass}`}>
+                                  <i className={`fa-solid ${statusIcon}`}></i>
+                                  {statusText}
+                                </span>
+                              </td>
+                              <td className="observation-cell">
+                                {item.observation}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ================= ADMIN ACTIONS ================= */}
       {isAdmin && showAdminActions && (
