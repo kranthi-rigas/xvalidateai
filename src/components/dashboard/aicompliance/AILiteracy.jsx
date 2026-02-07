@@ -85,7 +85,7 @@ export default function AILiteracy() {
   }
 
   return (
-    <div className="dashboard__content">
+    <div className="spicy-y">
       <div className="dashboard-body">
         {/* ---------- HEADER ---------- */}
         <div

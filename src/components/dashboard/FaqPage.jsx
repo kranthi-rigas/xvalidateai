@@ -41,7 +41,7 @@ export default function FaqPage() {
   if (pageLoading) return <PageLoader loading />;
 
   return (
-    <div className="dashboard__content">
+    <div className="spicy-y">
       <div className="dashboard-body">
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
