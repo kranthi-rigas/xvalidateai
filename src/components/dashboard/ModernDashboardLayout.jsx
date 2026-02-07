@@ -27,7 +27,13 @@ export default function ModernDashboardLayout() {
   const handleParentClick = (item) => {
     if (!item.children) return;
 
-    setOpenMenuId((prev) => (prev === item.id ? null : item.id));
+    // If sidebar is collapsed, expand it first and open the menu
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+      setOpenMenuId(item.id);
+    } else {
+      setOpenMenuId((prev) => (prev === item.id ? null : item.id));
+    }
   };
 
   // Fetch user data on mount
@@ -148,27 +154,30 @@ export default function ModernDashboardLayout() {
           className={`h-20 flex items-center border-b border-sidebar-border justify-between ${sidebarCollapsed ? "px-2" : "px-6"}`}
         >
           {/* Expanded Logo */}
-          <div
-            className={`flex items-center ${sidebarCollapsed ? "hidden" : ""}`}
+          <Link
+            to="/dashboard"
+            className={`flex items-center cursor-pointer hover:opacity-80 transition-opacity ${sidebarCollapsed ? "hidden" : ""}`}
+            title="Go to dashboard"
           >
             <img
               src="/assets/img/logo/xvalidateai-logo.svg"
               alt="XVALIDATEAI"
               className="h-10 w-auto"
             />
-          </div>
+          </Link>
 
           {/* Collapsed Logo - Clickable */}
-          <div
-            className={`${sidebarCollapsed ? "" : "hidden"}`}
-            title="Expand sidebar"
+          <Link
+            to="/dashboard"
+            className={`${sidebarCollapsed ? "" : "hidden"} cursor-pointer hover:opacity-80 transition-opacity`}
+            title="Go to dashboard"
           >
             <img
               src="/assets/img/general/collapsed-app-logo.png"
               alt="XVALIDATEAI"
               className="w-10 mx-auto"
             />
-          </div>
+          </Link>
 
           {/* Collapse Button - Only Show When Expanded */}
           <button
