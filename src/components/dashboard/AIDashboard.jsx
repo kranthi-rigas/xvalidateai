@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
-import GaugeChart from "@/components/Charts/GaugeChart";
 import ListTable from "@/components/common/ListTable";
+import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool" },
@@ -136,6 +136,8 @@ const renderToolCell = (tool, key) => {
 export default function AIDashboard() {
   const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
 
   useEffect(() => {
     // Fetch dashboard data
@@ -165,19 +167,28 @@ export default function AIDashboard() {
     }
   }, [loading, dashboardAnalytics]);
 
-  // Calculate pillar averages
-  const pillarAverages = useMemo(() => {
-    if (!dashboardAnalytics?.tool_kpis?.length) return null;
-    const tools = dashboardAnalytics.tool_kpis;
-    const count = tools.length;
-    const sum = (key) => tools.reduce((acc, t) => acc + (t[key] || 0), 0);
-    return {
-      privacy: Math.round(sum("privacy_safety_score") / count),
-      instructional: Math.round(sum("instructional_impact_score") / count),
-      usability: Math.round(sum("usability_score") / count),
-      dataQuality: Math.round(sum("data_quality_score") / count),
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (e) => {
+      if (dropdownOpen && !e.target.closest("[data-dropdown-container]")) {
+        setDropdownOpen(false);
+      }
     };
-  }, [dashboardAnalytics]);
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [dropdownOpen]);
+
+  useEffect(() => {
+    if (
+      dashboardAnalytics?.tool_kpis?.length &&
+      selectedRadarToolIds.length === 0
+    ) {
+      setSelectedRadarToolIds(
+        dashboardAnalytics.tool_kpis.slice(0, 5).map((t) => t.project_id),
+      );
+    }
+  }, [dashboardAnalytics, selectedRadarToolIds.length]);
 
   const initializeCharts = () => {
     if (!dashboardAnalytics) return;
@@ -236,10 +247,24 @@ export default function AIDashboard() {
     // Chart: Intended Users
     const usersDistribution =
       dashboardAnalytics.distributions?.intended_users || [];
+    console.log("Intended Users Distribution:", usersDistribution);
+
+    // Sanitize legend labels for display using regex but keep original names
+    // available in hover via `customdata`.
+    const sanitizeLegendLabel = (name) => {
+      if (!name) return "Unknown";
+      // Remove parenthetical content and anything after a dash, trim whitespace
+      return name
+        .replace(/\s*\(.*\)\s*$/g, "")
+        .replace(/\s*-\s*.*/g, "")
+        .trim();
+    };
+
     const usersPlotData = [
       {
         values: usersDistribution.map((d) => d.value),
-        labels: usersDistribution.map((d) => d.name),
+        labels: usersDistribution.map((d) => sanitizeLegendLabel(d.name)),
+        customdata: usersDistribution.map((d) => d.name),
         type: "pie",
         hole: 0.6,
         marker: {
@@ -253,6 +278,7 @@ export default function AIDashboard() {
           ],
         },
         textinfo: "none",
+        hovertemplate: "<b>%{customdata}</b><br>Count: %{value}<extra></extra>",
       },
     ];
 
@@ -372,6 +398,18 @@ export default function AIDashboard() {
       window.Plotly.Plots.resize("chart-compliance");
     }, 100);
   };
+  useEffect(() => {
+    if (selectedRadarToolIds.length === 5) {
+      setDropdownOpen(false);
+    }
+  }, [selectedRadarToolIds]);
+  const visibleRadarTools = React.useMemo(() => {
+    if (!dashboardAnalytics?.tool_kpis) return [];
+
+    return dashboardAnalytics.tool_kpis.filter((tool) =>
+      selectedRadarToolIds.includes(tool.project_id),
+    );
+  }, [dashboardAnalytics, selectedRadarToolIds]);
 
   if (loading || !dashboardAnalytics) {
     return <PageLoader loading={true} />;
@@ -380,6 +418,21 @@ export default function AIDashboard() {
   const overview = dashboardAnalytics.overview || {};
   const highRiskTools = dashboardAnalytics.high_risk_tools || [];
   const allTools = dashboardAnalytics.tool_kpis || [];
+
+  const toggleRadarTool = (toolId) => {
+    setSelectedRadarToolIds((prev) => {
+      if (prev.includes(toolId)) {
+        return prev.filter((id) => id !== toolId);
+      }
+      if (prev.length < 5) {
+        return [...prev, toolId];
+      }
+      return prev;
+    });
+  };
+  const removeRadarTool = (toolId) => {
+    setSelectedRadarToolIds((prev) => prev.filter((id) => id !== toolId));
+  };
 
   return (
     <div className="space-y-8">
@@ -427,35 +480,97 @@ export default function AIDashboard() {
         />
       </section>
 
-      {/* Score Gauges, Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-12 gap-6">
-        {/* Score Gauges */}
-        <div className="col-span-4 dashboard-card p-6 flex flex-col">
-          <h3 className="font-bold text-foreground mb-6">
-            Overall Compliance Health
-          </h3>
-          <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <div className="grid grid-cols-2 w-full">
-              <GaugeChart
-                value={pillarAverages?.privacy ?? 0}
-                label="Privacy & Safety"
-              />
-              <GaugeChart
-                value={pillarAverages?.instructional ?? 0}
-                label="Instructional Impact"
-              />
-              <GaugeChart
-                value={pillarAverages?.usability ?? 0}
-                label="Usability"
-              />
-              <GaugeChart
-                value={pillarAverages?.dataQuality ?? 0}
-                label="Data Quality"
-              />
+      {/* Quality & Risk Charts */}
+      <section>
+        {/* Radar Chart */}
+        <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
+          <div className="flex items-center justify-between px-2">
+            <h4>Quality Comparison</h4>
+            <div className="flex items-center gap-2 w-full max-w-[600px]">
+              <label className="text-sm font-medium whitespace-nowrap">
+                Select Tools (Max 5):
+              </label>
+              <div className="relative flex-1" data-dropdown-container>
+                {/* Multi-Select Input with Pills */}
+                <div
+                  className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer bg-white flex items-center flex-wrap gap-2 min-h-[38px]"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                >
+                  {selectedRadarToolIds.length === 0 ? (
+                    <span className="text-gray-400 text-sm">
+                      Select tools...
+                    </span>
+                  ) : (
+                    selectedRadarToolIds.map((toolId) => {
+                      const tool = allTools.find(
+                        (t) => t.project_id === toolId,
+                      );
+
+                      return (
+                        <div
+                          key={toolId}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
+                        >
+                          <span>{tool?.tool_name}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRadarTool(toolId);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-bold"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Dropdown List with Checkboxes */}
+                {dropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 bg-white rounded shadow-lg z-10 max-h-64 overflow-y-auto">
+                    {allTools.map((tool) => {
+                      const isSelected = selectedRadarToolIds.includes(
+                        tool.project_id,
+                      );
+                      const isDisabled =
+                        selectedRadarToolIds.length >= 5 && !isSelected;
+
+                      return (
+                        <label
+                          key={tool.project_id}
+                          className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={isDisabled}
+                            onChange={() => toggleRadarTool(tool.project_id)}
+                            className="mr-3"
+                          />
+                          <span className="text-sm">{tool.tool_name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+          <div className="flex-1">
+            <RadarQualityChart
+              key={selectedRadarToolIds.join(",")}
+              tools={visibleRadarTools}
+            />
+          </div>
         </div>
+      </section>
 
+      {/* Recommendation & Intended Users Row */}
+      <section className="grid grid-cols-8 gap-6">
         {/* Recommendation Distribution */}
         <div className="col-span-4 dashboard-card p-2 h-[450px]">
           <div id="chart-recommendation" className="w-full h-full"></div>
