@@ -33,6 +33,7 @@
     "gsap": "^3.12.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.553.0",
     "mammoth": "^1.11.0",
     "pdfjs-dist": "^5.4.449",
