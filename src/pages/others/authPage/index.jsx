@@ -298,7 +298,7 @@ export default function AuthPage() {
         rel="stylesheet"
       />
 
-      <div className="auth-page auth-page-container">
+      <div className="auth-page auth-page-container" data-mode={mode}>
         {/* Header */}
         <AuthHeader />
 
