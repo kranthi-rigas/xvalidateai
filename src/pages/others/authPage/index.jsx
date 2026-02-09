@@ -310,7 +310,7 @@ export default function AuthPage() {
           <div className="auth-bg-orb auth-bg-orb--2"></div>
 
           {/* Left Column - Hero Section */}
-          <AuthHeroSection />
+          <AuthHeroSection mode={mode} />
 
           {/* Right Column - Form Section */}
           <section className="auth-form-section">
@@ -333,26 +333,29 @@ export default function AuthPage() {
                   {/* Signup Only Fields */}
                   {mode === "signup" && (
                     <>
-                      <AuthFormInput
-                        id="first_name"
-                        name="first_name"
-                        type="text"
-                        label="First Name"
-                        placeholder="First Name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                        icon="fa-user"
-                      />
-                      <AuthFormInput
-                        id="last_name"
-                        name="last_name"
-                        type="text"
-                        label="Last Name"
-                        placeholder="Last Name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                        icon="fa-user"
-                      />
+                      {/* Name Fields - Side by Side */}
+                      <div className="auth-form-row">
+                        <AuthFormInput
+                          id="first_name"
+                          name="first_name"
+                          type="text"
+                          label="First Name"
+                          placeholder="First Name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          icon="fa-user"
+                        />
+                        <AuthFormInput
+                          id="last_name"
+                          name="last_name"
+                          type="text"
+                          label="Last Name"
+                          placeholder="Last Name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          icon="fa-user"
+                        />
+                      </div>
                     </>
                   )}
 
@@ -372,21 +375,19 @@ export default function AuthPage() {
                     icon="fa-envelope"
                   />
 
-                  {/* Password Field */}
-                  <AuthFormInput
-                    id="password"
-                    name="password"
-                    type="password"
-                    label="Password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    icon="fa-key"
-                  />
-
-                  {/* Confirm Password (Signup Only) */}
-                  {mode === "signup" && (
-                    <>
+                  {/* Password Fields - Side by Side for Signup */}
+                  {mode === "signup" ? (
+                    <div className="auth-form-row">
+                      <AuthFormInput
+                        id="password"
+                        name="password"
+                        type="password"
+                        label="Password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleChange}
+                        icon="fa-key"
+                      />
                       <AuthFormInput
                         id="confirm_password"
                         name="confirm_password"
@@ -398,7 +399,23 @@ export default function AuthPage() {
                         icon="fa-lock"
                         showToggle={false}
                       />
+                    </div>
+                  ) : (
+                    <AuthFormInput
+                      id="password"
+                      name="password"
+                      type="password"
+                      label="Password"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      icon="fa-key"
+                    />
+                  )}
 
+                  {/* Country & Phone - Separate Fields (Signup Only) */}
+                  {mode === "signup" && (
+                    <>
                       {/* Country Selection */}
                       <div className="auth-input-group">
                         <label className="auth-input-label">Country</label>
@@ -435,6 +452,7 @@ export default function AuthPage() {
                     </>
                   )}
 
+
                   {/* Forgot Password (Login Only) */}
                   {mode === "login" && (
                     <div className="auth-form-options">
@@ -447,6 +465,7 @@ export default function AuthPage() {
                       </Link>
                     </div>
                   )}
+
 
                   {/* Submit Button */}
                   <button
@@ -522,7 +541,7 @@ export default function AuthPage() {
                             to="/auth?mode=signup"
                             className="auth-switch-link"
                           >
-                            Request a Demo
+                            Sign up
                           </Link>
                         </>
                       )}

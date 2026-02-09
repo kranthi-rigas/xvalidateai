@@ -7,6 +7,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -93,6 +94,7 @@
     color 180ms ease,
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .footer-links:hover {
   color: var(--color-primary) !important;
   transform: translateX(4px);
@@ -188,9 +190,9 @@ div:focus-within .password-miss-match {
 }
 
 /* General rule to ensure any absolutely positioned icons in form containers stay visible */
-.auth-form div:focus-within > *[class*="icon"],
-.sign-up div:focus-within > *[class*="icon"],
-.auth-input-wrapper:focus-within > *[class*="icon"],
+.auth-form div:focus-within>*[class*="icon"],
+.sign-up div:focus-within>*[class*="icon"],
+.auth-input-wrapper:focus-within>*[class*="icon"],
 div:focus-within .password-view {
   visibility: visible !important;
   opacity: 1 !important;
@@ -229,24 +231,51 @@ div:focus-within .password-view {
 
 /* Keyframe Animations */
 @keyframes auth-float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 @keyframes auth-pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes auth-scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100%);
+  }
 }
 
 @keyframes auth-gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Animation Utility Classes */
@@ -399,8 +428,8 @@ div:focus-within .password-view {
 .auth-grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(rgba(15, 48, 83, 0.03) 1px, transparent 1px), 
-                    linear-gradient(90deg, rgba(15, 48, 83, 0.03) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(15, 48, 83, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 48, 83, 0.03) 1px, transparent 1px);
   background-size: 60px 60px;
 }
 
@@ -991,6 +1020,7 @@ div:focus-within .password-view {
     display: block !important;
   }
 }
+
 /* Auth Switch Mode Links */
 .auth-switch-mode {
   text-align: center;
@@ -1043,6 +1073,7 @@ div:focus-within .password-view {
 .auth-switch-mode a:active {
   transform: translateY(1px);
 }
+
 .auth-switch-link {
   position: relative;
   display: inline-block;
@@ -1071,6 +1102,7 @@ div:focus-within .password-view {
 .auth-switch-link:hover::after {
   width: 100%;
 }
+
 .auth-switch-link:hover {
   transform: translateX(3px) scale(1.03);
   text-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
@@ -1232,6 +1264,44 @@ div:focus-within .password-view {
   color: var(--auth-muted-foreground, #64748B);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Value Propositions (Signup) */
+.auth-hero-value-props {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.auth-hero-value-prop {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.auth-hero-value-prop:hover {
+  box-shadow: 0 12px 40px rgba(15, 48, 83, 0.12);
+  transform: translateY(-2px);
+}
+
+.auth-hero-value-icon {
+  font-size: 1.75rem;
+  color: var(--auth-secondary, #58BFCE);
+  margin-bottom: 0.75rem;
+}
+
+.auth-hero-value-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--auth-primary, #0F3053);
+  margin-bottom: 0.5rem;
+}
+
+.auth-hero-value-desc {
+  font-size: 0.875rem;
+  color: var(--auth-muted-foreground, #64748B);
+  line-height: 1.5;
 }
 
 /* Certification Badges */
@@ -1412,6 +1482,49 @@ div:focus-within .password-view {
   line-height: 1.5;
 }
 
+/* 2-Column Form Row for Side-by-Side Fields */
+.auth-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Merged Country & Phone Field */
+.auth-country-phone-merged {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 0.75rem;
+}
+
+.auth-country-select-wrapper {
+  width: 100%;
+}
+
+.auth-phone-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.auth-phone-input-wrapper .auth-country-code {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 0.75rem;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(88, 191, 206, 0.2);
+  border-radius: 0.75rem;
+  min-width: 70px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--auth-muted-foreground, #64748B);
+  justify-content: center;
+}
+
+.auth-phone-input-wrapper .auth-phone-input {
+  flex: 1;
+  padding-left: 1rem !important;
+}
+
 /* Responsive - Stack on Mobile */
 @media (max-width: 1023px) {
   .auth-main-2col {
@@ -1447,6 +1560,11 @@ div:focus-within .password-view {
     max-width: 400px;
   }
 
+  .auth-hero-value-props {
+    width: 100%;
+    max-width: 400px;
+  }
+
   .auth-hero-certifications {
     flex-wrap: wrap;
     justify-content: center;
@@ -1476,6 +1594,10 @@ div:focus-within .password-view {
     grid-template-columns: 1fr;
   }
 
+  .auth-hero-value-props {
+    grid-template-columns: 1fr;
+  }
+
   .auth-hero-certifications {
     flex-direction: column;
     gap: 0.75rem;
@@ -1484,5 +1606,15 @@ div:focus-within .password-view {
   .auth-form-section .auth-login-card {
     padding: 1.5rem;
     border-radius: 1.5rem;
+  }
+
+  /* Stack form rows on mobile */
+  .auth-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack country/phone on mobile */
+  .auth-country-phone-merged {
+    grid-template-columns: 1fr;
   }
 }
