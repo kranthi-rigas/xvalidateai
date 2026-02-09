@@ -1,4 +1,5 @@
 import React from "react";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function Notifications({ activeTab }) {
   const handleSubmit = (e) => {
@@ -190,9 +191,11 @@ export default function Notifications({ activeTab }) {
 
         <div className="row pt-30">
           <div className="col-12">
-            <button className="button -md -purple-1 text-white">
-              Save Changes
-            </button>
+            <AwsButton
+              label="Save Changes"
+              variant="primary"
+              onClick={() => { }}
+            />
           </div>
         </div>
       </form>

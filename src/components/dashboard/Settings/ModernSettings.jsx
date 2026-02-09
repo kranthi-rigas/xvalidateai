@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { COLORS } from "@/styles/colors";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function ModernSettings() {
   const [activeTab, setActiveTab] = useState("edit");
@@ -27,31 +28,28 @@ export default function ModernSettings() {
         <nav className="flex space-x-8" aria-label="Tabs">
           <button
             onClick={() => setActiveTab("edit")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${
-              activeTab === "edit"
-                ? "text-primary border-b-2 border-secondary"
-                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-            }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "edit"
+              ? "text-primary border-b-2 border-secondary"
+              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+              }`}
           >
             Edit Profile
           </button>
           <button
             onClick={() => setActiveTab("password")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${
-              activeTab === "password"
-                ? "text-primary border-b-2 border-secondary"
-                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-            }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "password"
+              ? "text-primary border-b-2 border-secondary"
+              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+              }`}
           >
             Password
           </button>
           <button
             onClick={() => setActiveTab("preferences")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${
-              activeTab === "preferences"
-                ? "text-primary border-b-2 border-secondary"
-                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-            }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "preferences"
+              ? "text-primary border-b-2 border-secondary"
+              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+              }`}
           >
             Preferences
           </button>
@@ -273,20 +271,18 @@ export default function ModernSettings() {
 
               {/* Form Actions */}
               <div className="flex items-center justify-between pt-6 border-t border-border">
-                <button
-                  type="button"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                <AwsButton
+                  label="Cancel"
+                  variant="secondary"
+                  onClick={() => { }}
+                />
+                <AwsButton
+                  label="Update Profile"
+                  variant="primary"
+                  onClick={() => { }}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center"
-                  style={{ backgroundColor: COLORS.primary }}
-                >
-                  <i className="fa-solid fa-check mr-2"></i>
-                  Update Profile
-                </button>
+                  <i className="fa-solid fa-check"></i>
+                </AwsButton>
               </div>
             </form>
           </div>

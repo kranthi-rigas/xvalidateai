@@ -790,8 +790,8 @@ div:focus-within .password-view {
 /* Submit Button */
 .auth-submit-btn {
   width: 100%;
-  background: var(--auth-primary, #0F3053);
-  color: var(--auth-primary-foreground, #ffffff);
+  background: #10b981;
+  color: #ffffff;
   font-weight: 600;
   padding: 0.75rem;
   border-radius: 12px;

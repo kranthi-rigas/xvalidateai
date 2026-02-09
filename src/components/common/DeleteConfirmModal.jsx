@@ -49,37 +49,12 @@ export default function DeleteConfirmModal({
         onClick={onClose}
         disabled={deleting}
       />
-      <button
-        style={{
-          ...deleteButtonStyle,
-          ...(isHovered && !deleting ? deleteButtonHoverStyle : {}),
-          ...(deleting && deleteButtonDisabledStyle),
-        }}
+      <AwsButton
+        label={deleting ? "Deleting…" : "Delete"}
+        variant="danger"
         onClick={handleDelete}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         disabled={deleting}
-      >
-        {deleting && (
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              animation: "spin 1s linear infinite",
-            }}
-          >
-            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity="0.25" />
-            <path d="M21 12a9 9 0 01-9 9" />
-          </svg>
-        )}
-        {deleting ? "Deleting…" : "Delete"}
-      </button>
+      />
     </>
   );
 
