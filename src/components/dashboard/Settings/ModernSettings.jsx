@@ -120,7 +120,7 @@ export default function ModernSettings() {
                       id="firstName"
                       name="firstName"
                       defaultValue="Rakesh"
-                      className="block w-full pl-10 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+                      className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export default function ModernSettings() {
                       id="lastName"
                       name="lastName"
                       defaultValue="Polepeddi"
-                      className="block w-full pl-10 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+                      className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                   </div>
                 </div>
@@ -161,7 +161,7 @@ export default function ModernSettings() {
                       id="email"
                       name="email"
                       defaultValue="rakesh@academy51.com"
-                      className="block w-full pl-10 pr-24 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+                      className="block w-full pl-11 pr-24 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                     <span className="absolute right-3 pointer-events-none">
                       <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
@@ -183,7 +183,7 @@ export default function ModernSettings() {
                     <select
                       id="country"
                       name="country"
-                      className="block w-full pl-10 pr-10 py-2.5 bg-white border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground appearance-none cursor-pointer"
+                      className="block w-full pl-11 pr-10 py-2.5 bg-white border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground appearance-none cursor-pointer"
                     >
                       <option value="">Select country</option>
                       <option value="US">United States</option>
@@ -226,7 +226,7 @@ export default function ModernSettings() {
                         id="phone"
                         name="phone"
                         placeholder="98765 43210"
-                        className="block w-full pl-10 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+                        className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                       />
                     </div>
                   </div>
@@ -246,7 +246,7 @@ export default function ModernSettings() {
                       id="jobTitle"
                       name="jobTitle"
                       placeholder="e.g. Senior Developer"
-                      className="block w-full pl-10 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+                      className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                   </div>
                 </div>
