@@ -12,6 +12,7 @@ import DeleteConfirmModal from "../../common/DeleteConfirmModal";
 import ApproveRejectModal from "./ApproveRejectModal";
 import ListTable from "../../common/ListTable";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import { HiPlus } from "react-icons/hi";
 
 import {
   updateComplianceProject,
@@ -873,9 +874,9 @@ export default function AIListViewModern({
               <AwsButton
                 onClick={() => setShowCreateModal(true)}
                 disabled={isAnalystOnly}
-                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
+                className="flex items-center px-5 py-2.5 shadow-md transition-all transform hover:scale-[1.02]"
               >
-                <i className="fa-solid fa-plus mr-2"></i>
+                <HiPlus size={18} className="mr-2" />
                 Tool Assessment
               </AwsButton>
             </OrgRequiredWrapper>

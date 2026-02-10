@@ -20387,3 +20387,18 @@ footer {
 .main-content > .border-top-light-15 {
   margin-top: auto;
 }
+
+.tool-assessment-btn svg,
+.tool-assessment-btn svg * {
+fill: white !important;
+}
+
+.tool-assessment-btn:hover svg,
+.tool-assessment-btn:hover svg * {
+fill: white !important;
+background: transparent !important;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

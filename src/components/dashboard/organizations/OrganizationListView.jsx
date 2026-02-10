@@ -446,6 +446,7 @@ export default function OrganizationListView() {
               message={createOrgTooltip}
             >
               <AwsButton
+                //disabled={!canCreateOrg}
                 label={
                   isFreePlan
                     ? "🔒 Create Organization"
@@ -456,12 +457,7 @@ export default function OrganizationListView() {
                   if (!canCreateOrg) return;
                   setShowCreateOrgModal(true);
                 }}
-                className={`flex items-center px-5 py-2.5 rounded-lg text-sm font-medium transition-all
-    ${
-      canCreateOrg
-        ? "bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 transform hover:scale-[1.02]"
-        : "bg-gray-100 text-gray-700 border border-gray-300 cursor-not-allowed hover:bg-gray-100"
-    }`}
+                className="flex items-center px-5 py-2.5 rounded-lg text-sm font-medium shadow-md transition-all transform hover:scale-[1.02]"
               />
             </OrgRequiredWrapper>
           </div>
