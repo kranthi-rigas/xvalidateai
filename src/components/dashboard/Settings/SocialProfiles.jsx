@@ -1,4 +1,5 @@
 import React from "react";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function SocialProfiles({ activeTab }) {
   const handleSubmit = (e) => {
@@ -42,9 +43,11 @@ export default function SocialProfiles({ activeTab }) {
         </div>
 
         <div className="col-12">
-          <button className="button -md -purple-1 text-white">
-            Save Social Profile
-          </button>
+          <AwsButton
+            label="Save Social Profile"
+            variant="primary"
+            onClick={() => { }}
+          />
         </div>
       </form>
     </div>

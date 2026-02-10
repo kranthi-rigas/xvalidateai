@@ -2,16 +2,11 @@ import React from "react";
 
 export default function AuthFooter() {
   return (
-    <footer className="auth-page-footer">
+    <footer className="auth-page-footer frosted-nav">
       <div className="auth-page-footer-content">
         <div className="auth-page-footer-inner">
-          <div className="auth-page-footer-logo">
-            <div className="auth-page-footer-logo-icon">
-              <i className="fa-solid fa-shield-halved"></i>
-            </div>
-            <span className="auth-page-footer-logo-text">
-              XVALIDATE<span>AI</span>
-            </span>
+          <div className="auth-page-footer-copyright">
+            © {new Date().getFullYear()} XVALIDATEAI INC. ALL RIGHTS RESERVED.
           </div>
           <div className="auth-page-footer-links">
             <a
@@ -29,15 +24,8 @@ export default function AuthFooter() {
               Terms of Service
             </a>
             <a href="mailto:support@academy51.com?subject=Support Request - XVALIDATEAI">
-              <i
-                className="fa-solid fa-envelope"
-                style={{ marginRight: "5px" }}
-              ></i>
               Support
             </a>
-          </div>
-          <div className="auth-page-footer-copyright">
-            XVALIDATEAI © {new Date().getFullYear()}. All rights reserved.
           </div>
         </div>
       </div>
