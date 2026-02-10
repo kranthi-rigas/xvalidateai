@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getUserAttributes } from "../../../apiIntegration/organization";
+import SingleSelectDropdown from "../../common/SingleSelectDropdown";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
 import AwsButton from "../../common/AwsButton";
 import ReusableModal from "../../common/Reusablemodal";
@@ -17,7 +18,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   const rolesRef = useRef(null);
   const chipInputRef = useRef(null);
 
-  const [rolesSelected, setRolesSelected] = useState([]);
+  const [rolesSelected, setRolesSelected] = useState("");
   const [selectedGroups, setSelectedGroups] = useState([]);
 
   /* ---------- VALIDATION STATE ---------- */
@@ -55,7 +56,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       errs.emails = "At least one email is required.";
     }
 
-    if (rolesSelected.length === 0) {
+    if (!rolesSelected) {
       errs.roles = "Select at least one role.";
     }
 
@@ -118,7 +119,11 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
     try {
       setLoading(true);
-      const result = await onInvite(chipEmails, rolesSelected, selectedGroups);
+      const result = await onInvite(
+        chipEmails,
+        [rolesSelected], // 👈 wrap single role
+        selectedGroups,
+      );
 
       if (result?.success) {
         onClose();
@@ -316,14 +321,14 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       </div>
 
       {/* ROLES */}
-      <MultiSelectDropdown
+      <SingleSelectDropdown
         ref={rolesRef}
-        label="Assign to Role(s)"
+        label="Assign to Role"
         required
         options={roles.map((r) => ({ label: r, value: r }))}
         selected={rolesSelected}
-        onChange={(arr) => {
-          setRolesSelected(arr);
+        onChange={(val) => {
+          setRolesSelected(val);
           setErrors((p) => ({ ...p, roles: "" }));
         }}
         error={(submitted || touched.roles) && errors.roles}

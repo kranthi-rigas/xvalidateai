@@ -276,22 +276,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
           node.style.setProperty("font-size", "14px", "important");
           node.style.setProperty("font-weight", "700", "important");
         });
-        /* ---------------- REMOVE GAUGE COMPLETELY ---------------- */
-        clone.querySelectorAll(".js-plotly-plot").forEach((node) => {
-          const scoreText = document.createElement("div");
-          scoreText.innerText = `${score}%`;
-          scoreText.style.fontSize = "32px";
-          scoreText.style.fontWeight = "700";
-          scoreText.style.color = "#111111";
-          scoreText.style.textAlign = "center";
-          scoreText.style.marginTop = "20px";
-
-          node.parentNode.replaceChild(scoreText, node);
-        });
-        clone.querySelectorAll(".section-icon").forEach((node) => {
-          node.style.setProperty("background", "#ffffff", "important");
-          node.style.setProperty("border", "1px solid #111111", "important");
-        });
 
         /* Professional Average Score Box for PDF */
         clone.querySelectorAll(".section-score-badge").forEach((node) => {

@@ -74,7 +74,7 @@ export default function AIListViewModern({
     status: 180,
     assessment_status: 160,
     score: 120,
-    recommendation: 200,
+    recommendation: 210,
     description: 260,
     last_scanned_time: 180,
     requested_by: 220,
@@ -218,7 +218,7 @@ export default function AIListViewModern({
           );
 
           // 🔒 NEVER touch completed rows again
-          if (p.assessment_status === "completed") {
+          if (p.assessment_status === "completed" && !updated) {
             return p;
           }
 
@@ -269,7 +269,7 @@ export default function AIListViewModern({
         icon: "fa-spinner",
         spinning: true,
         color: "text-muted-foreground",
-        value: "--",
+        value: "",
       };
     }
 
@@ -281,7 +281,7 @@ export default function AIListViewModern({
     return {
       icon: "fa-circle-minus",
       color: "text-muted-foreground",
-      value: "--",
+      value: "",
     };
   };
 
@@ -372,33 +372,50 @@ export default function AIListViewModern({
     const recMap = {
       approved: {
         bg: "bg-green-50",
+        icon: "fa-check-circle",
+        class: "badge-success",
         text: "text-green-700",
         border: "border-green-200",
-        label: "Fully Approved",
+        label: "Approved",
       },
       "approved with limitations": {
         bg: "bg-yellow-50",
+        icon: "fa-circle-exclamation",
+        class: "badge-warning",
         text: "text-yellow-700",
         border: "border-yellow-200",
         label: "Approved with limitations",
       },
       "not recommended": {
         bg: "bg-red-50",
+        icon: "fa-circle-xmark",
+        class: "badge-error",
         text: "text-red-700",
         border: "border-red-200",
         label: "Not Recommended",
       },
+      error: {
+        bg: "bg-red-50",
+        icon: "fa-triangle-exclamation",
+        class: "badge-warning",
+        text: "text-red-700",
+        border: "border-red-200",
+        label: "Error",
+      },
     };
 
-    const rec = (recommendation || "").toLowerCase();
-    const config = recMap[rec] || {
-      bg: "bg-gray-50",
-      text: "text-gray-600",
-      border: "border-gray-200",
-      label: "Pending Review",
-    };
+    const rec = (recommendation || "").toLowerCase().trim();
 
-    return config;
+    return (
+      recMap[rec] || {
+        bg: "bg-gray-50",
+        icon: "fa-clock", // ✅ default icon added
+        class: "badge-default",
+        text: "text-gray-600",
+        border: "border-gray-200",
+        label: "Pending Review",
+      }
+    );
   };
 
   //search helper
@@ -410,7 +427,7 @@ export default function AIListViewModern({
       project.name,
       formatStatus(project.status),
       formatStatus(project.assessment_status),
-      scoreDisplay?.value !== "--" ? scoreDisplay.value : null,
+      scoreDisplay?.value !== "" ? scoreDisplay.value : null,
       project.recommendation,
       project.requested_by?.first_name,
       project.requested_by?.last_name,
@@ -576,10 +593,12 @@ export default function AIListViewModern({
 
       case "recommendation": {
         const badge = getRecommendationBadge(project.recommendation);
+
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
+            <i className={`fa-solid ${badge.icon} text-[11px]`}></i>
             {badge.label}
           </span>
         );
