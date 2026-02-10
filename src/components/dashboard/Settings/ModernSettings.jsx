@@ -6,50 +6,37 @@ export default function ModernSettings() {
   const [activeTab, setActiveTab] = useState("edit");
 
   return (
-    <div className="w-full">
-      {/* Page Header */}
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-primary mb-2">Profile Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your personal information and preferences.
-          </p>
-        </div>
-        <div className="hidden sm:block">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            Account Active
-          </span>
-        </div>
-      </div>
-
+    <div className="spicy-y">
       {/* Tabs */}
       <div className="mb-8 border-b border-border">
         <nav className="flex space-x-8" aria-label="Tabs">
           <button
             onClick={() => setActiveTab("edit")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "edit"
-              ? "text-primary border-b-2 border-secondary"
-              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-              }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${
+              activeTab === "edit"
+                ? "text-primary border-b-2 border-secondary"
+                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+            }`}
           >
             Edit Profile
           </button>
           <button
             onClick={() => setActiveTab("password")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "password"
-              ? "text-primary border-b-2 border-secondary"
-              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-              }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${
+              activeTab === "password"
+                ? "text-primary border-b-2 border-secondary"
+                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+            }`}
           >
             Password
           </button>
           <button
             onClick={() => setActiveTab("preferences")}
-            className={`py-4 px-1 text-sm font-medium transition-colors ${activeTab === "preferences"
-              ? "text-primary border-b-2 border-secondary"
-              : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
-              }`}
+            className={`py-4 px-1 text-sm font-medium transition-colors ${
+              activeTab === "preferences"
+                ? "text-primary border-b-2 border-secondary"
+                : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300 border-b-2"
+            }`}
           >
             Preferences
           </button>
@@ -69,15 +56,23 @@ export default function ModernSettings() {
           <div className="p-6 sm:p-8 border-b border-border bg-gradient-to-r from-blue-50/50 to-transparent">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
               <div className="relative group flex-shrink-0">
-                <div className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden" style={{ backgroundColor: COLORS.primary }}>
+                <div
+                  className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden"
+                  style={{ backgroundColor: COLORS.primary }}
+                >
                   <span>RP</span>
                 </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm transition-colors border-2 border-white" style={{ backgroundColor: COLORS.secondary }}>
+                <button
+                  className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm transition-colors border-2 border-white"
+                  style={{ backgroundColor: COLORS.secondary }}
+                >
                   <i className="fa-solid fa-camera text-xs"></i>
                 </button>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-primary mb-1">Your Avatar</h3>
+                <h3 className="text-lg font-semibold text-primary mb-1">
+                  Your Avatar
+                </h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   PNG or JPG no bigger than 800px wide and tall.
                 </p>
@@ -149,7 +144,10 @@ export default function ModernSettings() {
 
                 {/* Email */}
                 <div className="space-y-2 md:col-span-2">
-                  <label htmlFor="email" className="text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="email"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Email Address
                   </label>
                   <div className="relative flex items-center">
@@ -173,7 +171,10 @@ export default function ModernSettings() {
 
                 {/* Country */}
                 <div className="space-y-2">
-                  <label htmlFor="country" className="text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="country"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Country
                   </label>
                   <div className="relative flex items-center">
@@ -201,7 +202,10 @@ export default function ModernSettings() {
 
                 {/* Phone */}
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="phone"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Phone Number
                   </label>
                   <div className="flex gap-2 sm:gap-3">
@@ -234,7 +238,10 @@ export default function ModernSettings() {
 
                 {/* Job Title */}
                 <div className="space-y-2">
-                  <label htmlFor="jobTitle" className="text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="jobTitle"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Job Title
                   </label>
                   <div className="relative flex items-center">
@@ -253,7 +260,10 @@ export default function ModernSettings() {
 
                 {/* Bio */}
                 <div className="space-y-2 md:col-span-2">
-                  <label htmlFor="bio" className="text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="bio"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Bio{" "}
                     <span className="text-muted-foreground font-normal ml-1">
                       (Optional)
@@ -265,7 +275,9 @@ export default function ModernSettings() {
                     className="block w-full p-3 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground resize-none"
                     placeholder="Brief description for your profile..."
                   ></textarea>
-                  <p className="text-xs text-muted-foreground text-right">0/250 characters</p>
+                  <p className="text-xs text-muted-foreground text-right">
+                    0/250 characters
+                  </p>
                 </div>
               </div>
 
@@ -274,12 +286,12 @@ export default function ModernSettings() {
                 <AwsButton
                   label="Cancel"
                   variant="secondary"
-                  onClick={() => { }}
+                  onClick={() => {}}
                 />
                 <AwsButton
                   label="Update Profile"
                   variant="primary"
-                  onClick={() => { }}
+                  onClick={() => {}}
                 >
                   <i className="fa-solid fa-check"></i>
                 </AwsButton>
@@ -291,7 +303,9 @@ export default function ModernSettings() {
 
       {activeTab === "password" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          <h2 className="text-xl font-semibold text-primary mb-6">Change Password</h2>
+          <h2 className="text-xl font-semibold text-primary mb-6">
+            Change Password
+          </h2>
           <p className="text-muted-foreground mb-6">
             Update your password to keep your account secure.
           </p>
@@ -301,7 +315,9 @@ export default function ModernSettings() {
 
       {activeTab === "preferences" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          <h2 className="text-xl font-semibold text-primary mb-6">Preferences</h2>
+          <h2 className="text-xl font-semibold text-primary mb-6">
+            Preferences
+          </h2>
           <p className="text-muted-foreground mb-6">
             Customize your experience and notification settings.
           </p>
@@ -311,7 +327,12 @@ export default function ModernSettings() {
 
       {activeTab === "close" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-          <h2 className="text-xl font-semibold mb-6" style={{ color: COLORS.error }}>Close Account</h2>
+          <h2
+            className="text-xl font-semibold mb-6"
+            style={{ color: COLORS.error }}
+          >
+            Close Account
+          </h2>
           <p className="text-muted-foreground mb-6">
             Permanently delete your account and all associated data.
           </p>
