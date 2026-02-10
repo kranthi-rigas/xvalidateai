@@ -557,7 +557,6 @@ div:focus-within .password-view {
 }
 
 .auth-status-dot--success {
-  background: #10b981;
 }
 
 .auth-status-dot--warning {
@@ -579,7 +578,6 @@ div:focus-within .password-view {
   align-items: center;
   margin-top: 0.75rem;
   font-size: 0.75rem;
-  color: #10b981;
   font-weight: 500;
 }
 
@@ -790,7 +788,6 @@ div:focus-within .password-view {
 /* Submit Button */
 .auth-submit-btn {
   width: 100%;
-  background: #10b981;
   color: #ffffff;
   font-weight: 600;
   padding: 0.75rem;

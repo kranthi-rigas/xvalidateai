@@ -7,6 +7,7 @@ export default function AwsButton({
   onClick,
   children,
   variant = "primary", // "primary" or "secondary"
+  type = "button", // "button" or "submit"
 }) {
   const [hover, setHover] = useState(false);
 
@@ -14,19 +15,20 @@ export default function AwsButton({
   const isDanger = variant === "danger";
   const isOutlineDanger = variant === "outlineDanger";
   // Design system colors
-  const primaryBg = COLORS.primary; // #0043ce Trust Blue
-  const primaryHoverBg = COLORS.primaryDark; // #001d6c
+  const primaryBg = "#0F3053";
+  const primaryHoverBg = "#0a2238";
 
   // Secondary (outline) button colors
   const secondaryBg = "transparent";
   const secondaryHoverBg = COLORS.bgSecondary; // #f4f4f4
-  const secondaryBorder = COLORS.border; // #c6c6c6
-  const secondaryText = COLORS.textPrimary; // #161616
+  const secondaryBorder = "#0F3053";
+  const secondaryText = "#0F3053";
 
   const isPrimary = variant === "primary";
 
   return (
     <button
+      type={type}
       disabled={disabled}
       onClick={!disabled ? onClick : undefined}
       onMouseEnter={() => setHover(true)}
@@ -55,8 +57,8 @@ export default function AwsButton({
               : primaryBg
             : isSuccess
               ? hover
-                ? "#047857"
-                : "#059669" // emerald hover / normal
+                ? primaryHoverBg
+                : primaryBg
               : isDanger
                 ? hover
                   ? "#b91c1c"
@@ -88,8 +90,8 @@ export default function AwsButton({
                 : primaryBg
               : isSuccess
                 ? hover
-                  ? "#047857"
-                  : "#059669"
+                  ? primaryHoverBg
+                  : primaryBg
                 : isDanger
                   ? hover
                     ? "#b91c1c"

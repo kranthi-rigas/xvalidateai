@@ -6,6 +6,7 @@ import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
 import CountrySelect from "@/components/common/CountrySelect";
+import AwsButton from "@/components/common/AwsButton";
 import { useContextElement } from "@/context/Context";
 
 // Auth Components
@@ -468,25 +469,24 @@ export default function AuthPage() {
 
 
                   {/* Submit Button */}
-                  <button
+                  <AwsButton
                     type="submit"
                     disabled={loading}
-                    className="auth-submit-btn"
+                    label={
+                      loading
+                        ? mode === "signup"
+                          ? "Creating Account..."
+                          : "Signing In..."
+                        : mode === "signup"
+                          ? "Create Account"
+                          : "Sign In"
+                    }
+                    variant="primary"
                   >
-                    {loading
-                      ? mode === "signup"
-                        ? "Creating Account..."
-                        : "Signing In..."
-                      : mode === "signup"
-                        ? "Create Account"
-                        : "Sign In"}
                     {!loading && (
-                      <i
-                        className="fa-solid fa-arrow-right"
-                        style={{ marginLeft: "0.5rem" }}
-                      ></i>
+                      <i className="fa-solid fa-arrow-right"></i>
                     )}
-                  </button>
+                  </AwsButton>
 
                   {/* Terms Agreement (Signup Only) */}
                   {mode === "signup" && (
