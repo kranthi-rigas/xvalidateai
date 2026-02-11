@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cancelPaypalSubscription } from "@/apiIntegration/vouchers";
 import AuthHeader from "@/components/others/AuthHeader";
 import AuthFooter from "@/components/others/AuthFooter";
 import { useContextElement } from "@/context/Context";
