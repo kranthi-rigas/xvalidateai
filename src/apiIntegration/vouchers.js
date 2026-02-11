@@ -82,45 +82,16 @@ export async function redeemVoucher(voucherCode, planId = null) {
 
 //PayPal Integration API Function
 export async function createPaypalSubscription(payload) {
-  const res = await fetchWithAuth("/subscriptions/paypal", {
+  const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/paypal`, {
     method: "POST",
     body: JSON.stringify({
-      plan_type: payload.planType, // FREE | PREMIUM | BUSINESS
+      plan_type: payload, // FREE | PREMIUM | BUSINESS
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
     throw new Error(err || "Failed to create PayPal subscription");
-  }
-
-  return res.json();
-}
-//
-export async function confirmPaypalSubscription(subscriptionId) {
-  const res = await fetchWithAuth("/subscriptions/paypal/confirm", {
-    method: "POST",
-    body: JSON.stringify({
-      subscription_id: subscriptionId,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Failed to confirm PayPal subscription");
-  }
-
-  return res.json();
-}
-export async function cancelPaypalSubscription(reason = "User requested cancellation") {
-  const res = await fetchWithAuth("/subscriptions/paypal/cancel", {
-    method: "POST",
-    body: JSON.stringify({ reason }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Failed to cancel subscription");
   }
 
   return res.json();
