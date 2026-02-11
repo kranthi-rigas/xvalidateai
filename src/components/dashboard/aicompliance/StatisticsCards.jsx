@@ -12,7 +12,7 @@ export default function StatisticsCards({
       value: totalScanned,
       color: "indigo",
       bgColor: "#EEF2FF",
-      textColor: "#4F46E5",
+      textColor: "#0F3053",
       icon: (
         <svg
           width="20"
@@ -23,7 +23,7 @@ export default function StatisticsCards({
         >
           <path
             d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-            stroke="#4F46E5"
+            stroke="#0F3053"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
