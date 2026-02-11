@@ -12,10 +12,10 @@ const pricingPlans = [
     iconColor: COLORS.secondary,
     price: 0,
     period: "yearly",
-    credits: 20,
+    credits: 2,
     popular: false,
     features: [
-      { text: "20 credits included", included: true },
+      { text: "2 Scans included", included: true },
       { text: "Downloadable Report", included: false },
       { text: "Priority support", included: false },
       { text: "Downloadable Report", included: false },
@@ -35,12 +35,12 @@ const pricingPlans = [
     iconColor: COLORS.primary,
     price: null,
     period: "yearly",
-    credits: 100,
+    credits: 10,
     popular: true,
     buttonText: "Get Premium",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "100 credits included", included: true },
+      { text: "10 Scans included", included: true },
       { text: "Downloadable Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: false },
@@ -59,12 +59,12 @@ const pricingPlans = [
     iconColor: COLORS.success,
     price: null,
     period: "yearly",
-    credits: 300,
+    credits: 30,
     popular: false,
     buttonText: "Get Business",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "300 credits included", included: true },
+      { text: "30 Scans included", included: true },
       { text: "Downloadable Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: true },
@@ -265,7 +265,7 @@ export default function DashboardPricing() {
                               }}
                             >
                               <i className="fa-solid fa-coins mr-1"></i>
-                              {plan.credits} credits included
+                              {plan.credits} Scans included
                             </div>
                           )}
                         </div>
