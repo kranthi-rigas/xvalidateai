@@ -33,6 +33,11 @@ export default function DashboardBilling() {
   const handlePaypalCheckout = async () => {
     if (!plan) return;
 
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setIsPaying(true);
     console.log(plan);
 
