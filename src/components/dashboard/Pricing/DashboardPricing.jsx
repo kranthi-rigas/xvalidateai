@@ -2,6 +2,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import { useEffect } from "react";
 
 const pricingPlans = [
   {
@@ -103,6 +106,9 @@ export default function DashboardPricing() {
   const getPrice = (price) => {
     return price;
   };
+  useEffect(() => {
+    AOS.refresh();
+  }, []);
 
   const handlePlanClick = (plan) => {
     // Navigate to billing page with plan data, or dashboard for free plan
