@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthHeader from "@/components/others/AuthHeader";
 import AuthFooter from "@/components/others/AuthFooter";
@@ -6,15 +6,23 @@ import "./SubscriptionSuccess.css";
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
+  const [secondsLeft, setSecondsLeft] = useState(30);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate("/dashboard/pricing", {
-        state: { status: "success" },
+    const countdown = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdown);
+          navigate("/dashboard/pricing", {
+            state: { status: "success" },
+          });
+          return 0;
+        }
+        return prev - 1;
       });
-    }, 3000);
+    }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => clearInterval(countdown);
   }, [navigate]);
 
   return (
@@ -24,8 +32,8 @@ const SubscriptionSuccess = () => {
       <div className="subscription-container">
         <div className="success-icon">✔</div>
         <h2>Success 🎉</h2>
-        <p>Your subscription has been successfully activated.</p>
-        <p>Redirecting to pricing page...</p>
+        <p>Your subscription is being activated.</p>
+        <p>Redirecting in {secondsLeft} seconds...</p>
       </div>
 
       <AuthFooter />
