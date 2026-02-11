@@ -20097,37 +20097,54 @@ body.sidebar-collapsed .dashboard__content {
 
 /* ----------- SPINNER ----------- */
 .page-spinner {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: inline-block;
-    position: relative;
-    background: conic-gradient(
-        from 0deg,
-        #4285f4 0deg,
-        #ea4335 90deg,
-        #fbbc04 180deg,
-        #34a853 270deg,
-        #4285f4 360deg
-    );
-    animation: playstore-rotate 1.4s linear infinite;
+  position: relative;
+  width: 40px;
+  height: 40px;
 }
 
-.page-spinner::before {
-    content: '';
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    background: #fff;
+.page-spinner div {
+  position: absolute;
+  width: 3px;
+  height: 10px;
+  background: #0F3053; /* Apple system gray */
+  border-radius: 2px;
+  top: 15px;
+  left: 18px;
+  transform-origin: 2px -8px;
+  animation: appleSpin 1s linear infinite;
 }
 
-@keyframes playstore-rotate {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+/* 12 spokes */
+.page-spinner div:nth-child(1)  { transform: rotate(0deg);   animation-delay: -0.916s; }
+.page-spinner div:nth-child(2)  { transform: rotate(30deg);  animation-delay: -0.833s; }
+.page-spinner div:nth-child(3)  { transform: rotate(60deg);  animation-delay: -0.75s; }
+.page-spinner div:nth-child(4)  { transform: rotate(90deg);  animation-delay: -0.666s; }
+.page-spinner div:nth-child(5)  { transform: rotate(120deg); animation-delay: -0.583s; }
+.page-spinner div:nth-child(6)  { transform: rotate(150deg); animation-delay: -0.5s; }
+.page-spinner div:nth-child(7)  { transform: rotate(180deg); animation-delay: -0.416s; }
+.page-spinner div:nth-child(8)  { transform: rotate(210deg); animation-delay: -0.333s; }
+.page-spinner div:nth-child(9)  { transform: rotate(240deg); animation-delay: -0.25s; }
+.page-spinner div:nth-child(10) { transform: rotate(270deg); animation-delay: -0.166s; }
+.page-spinner div:nth-child(11) { transform: rotate(300deg); animation-delay: -0.083s; }
+.page-spinner div:nth-child(12) { transform: rotate(330deg); animation-delay: 0s; }
+.page-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* 👈 this centers spinner + text */
+  justify-content: center;
+  text-align: center;    /* 👈 this centers the text itself */
+  gap: 14px;
+}
+
+.page-loader-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #001d6c; /* Apple system gray */
+  letter-spacing: 0.2px;
+}
+@keyframes appleSpin {
+  0% { opacity: 1; }
+  100% { opacity: 0.1; }
 }
 /* Match <button> styling with sidebar <a> links */
 .sidebar.-dashboard .sidebar__item button {
