@@ -1,0 +1,46 @@
+.subscription-container {
+  text-align: center;
+  margin-top: 120px;
+  padding: 20px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid #e5e5e5;
+  border-top: 6px solid #0f3053; /* PayPal blue */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success-icon {
+  font-size: 48px;
+  color: #28a745;
+  margin-bottom: 15px;
+}
+
+.error-icon {
+  font-size: 48px;
+  color: #dc3545;
+  margin-bottom: 15px;
+}
+.subscription-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.subscription-container {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 20px;
+}

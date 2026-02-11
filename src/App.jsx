@@ -45,8 +45,8 @@ import VerifyEmail from "./components/others/VerifyEmail";
 import AIDashboardPage from "./pages/dashboard/dshb-aianalytics";
 import AILiteracyPage from "./pages/dashboard/dashboard-ailiteracy";
 import FaqsPage from "./pages/dashboard/dashboard-faqs";
-import PrivacyPolicyPage from "./pages/others/privacy-policy";
-import TermsAndConditionsPage from "./pages/others/terms-and-conditions";
+import SubscriptionSuccess from "./components/dashboard/Billing/SubscriptionSuccess";
+import SubscriptionCancel from "./components/dashboard/Billing/SubscriptionCancel";
 
 function App() {
   useEffect(() => {
@@ -122,6 +122,15 @@ function App() {
                 <Route path="pricing" element={<DshbPricingPage />} />
                 <Route path="pricing/billing" element={<DshbBillingPage />} />
               </Route>
+              {/* ✅ PayPal Return Pages */}
+              <Route
+                path="subscription/success"
+                element={<SubscriptionSuccess />}
+              />
+              <Route
+                path="subscription/cancel"
+                element={<SubscriptionCancel />}
+              />
 
               <Route path="not-found" element={<DashboardNotFoundPage />} />
               <Route path="*" element={<DashboardNotFoundPage />} />
@@ -130,11 +139,6 @@ function App() {
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="login/google" element={<GoogleLoginPage />} />
-              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route
-                path="terms-and-conditions"
-                element={<TermsAndConditionsPage />}
-              />
             </Route>
           </Routes>
           <ScrollTopBehaviour />

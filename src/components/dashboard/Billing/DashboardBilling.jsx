@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
+import {
+  verifyVoucher,
+  redeemVoucher,
+  createPaypalSubscription,
+} from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
@@ -33,15 +37,14 @@ export default function DashboardBilling() {
 
     try {
       const response = await createPaypalSubscription(plan.type);
-      // PREMIUM or BUSINESS
 
-      if (response.approval_url) {
-        window.location.href = response.approval_url;
-      } else {
-        throw new Error("Failed to create PayPal subscription");
-      }
+      // Since backend directly activates subscription
+      show("Subscription activated successfully 🎉", { type: "success" });
+
+      // Optional: redirect to dashboard or refresh user data
+      window.location.href = "/dashboard";
     } catch (error) {
-      show(error.message || "PayPal checkout failed", { type: "error" });
+      show(error.message || "Subscription failed", { type: "error" });
     } finally {
       setIsPaying(false);
     }
