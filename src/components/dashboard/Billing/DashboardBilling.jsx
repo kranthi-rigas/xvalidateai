@@ -34,9 +34,10 @@ export default function DashboardBilling() {
     if (!plan) return;
 
     setIsPaying(true);
+    console.log(plan);
 
     try {
-      const response = await createPaypalSubscription(plan.type);
+      const response = await createPaypalSubscription(plan.name);
 
       if (response && response.approval_url) {
         window.location.href = response.approval_url;
@@ -44,7 +45,7 @@ export default function DashboardBilling() {
         throw new Error("Failed to create PayPal subscription");
       }
     } catch (error) {
-      show(error.message || "Subscription failed", { type: "error" });
+      show(error.message || "Subscription failed", { planType: "error" });
     } finally {
       setIsPaying(false);
     }
