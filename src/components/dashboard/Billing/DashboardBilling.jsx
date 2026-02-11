@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
+import {
+  verifyVoucher,
+  redeemVoucher,
+  createPaypalSubscription,
+} from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
@@ -33,15 +37,14 @@ export default function DashboardBilling() {
 
     try {
       const response = await createPaypalSubscription(plan.type);
-      // PREMIUM or BUSINESS
 
-      if (response.approval_url) {
+      if (response && response.approval_url) {
         window.location.href = response.approval_url;
       } else {
         throw new Error("Failed to create PayPal subscription");
       }
     } catch (error) {
-      show(error.message || "PayPal checkout failed", { type: "error" });
+      show(error.message || "Subscription failed", { type: "error" });
     } finally {
       setIsPaying(false);
     }
@@ -196,19 +199,25 @@ export default function DashboardBilling() {
         show("Please apply a valid voucher to complete purchase.", {
           type: "error",
         });
+        console.log(
+          "No voucher applied - this should not happen as button should be disabled",
+        );
+        show("Please apply a valid voucher to complete purchase.", {
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Purchase error details:", error);
-      show(error.message || "Failed to complete purchase. Please try again.", {
-        type: "error",
-      });
+
+      const errorMessage =
+        error.message || "Failed to complete purchase. Please try again.";
+
+      show(errorMessage, { type: "error" });
+
       setErrors((prev) => ({
         ...prev,
-        submit:
-          error.message || "Failed to complete purchase. Please try again.",
+        submit: errorMessage,
       }));
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -223,7 +232,6 @@ export default function DashboardBilling() {
           >
             <div className="py-30 px-30">
               <h2 className="text-20 fw-600 mb-30">Billing Details</h2>
-
               <form onSubmit={handleSubmit}>
                 {/* Billing Address */}
                 <div className="mb-30">
@@ -319,6 +327,7 @@ export default function DashboardBilling() {
                           height: "4rem",
                           flexShrink: 0,
                           color: "#0f3053",
+                          color: "#0f3053",
                         }}
                       >
                         {isApplyingVoucher ? "Verifying..." : "Apply"}
@@ -349,6 +358,7 @@ export default function DashboardBilling() {
                   </div>
                 )}
 
+                {/* PayPal Button */}
                 {/* Checkout Section */}
                 <div className="mt-10 space-y-6">
                   {/* Buttons Row */}
