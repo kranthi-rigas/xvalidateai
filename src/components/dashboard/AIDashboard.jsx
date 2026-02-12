@@ -4,24 +4,28 @@ import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
-import { AlignCenter } from "lucide-react";
 
 const HIGH_RISK_COLUMNS = [
-  { key: "tool", label: "Tool" },
-  { key: "vendor", label: "Vendor" },
-  { key: "overall", label: "Overall" },
-  { key: "privacy", label: "Privacy" },
-  { key: "reason", label: "Risk Reasons" },
-  { key: "action", label: "Action", truncate: false },
+  { key: "tool", label: "Tool", resizable: true },
+  { key: "vendor", label: "Vendor", resizable: true },
+  { key: "overall", label: "Overall", resizable: true },
+  { key: "privacy", label: "Privacy", resizable: true },
+  { key: "reason", label: "Risk Reasons", resizable: true },
+  { key: "action", label: "Action", truncate: false, resizable: true },
 ];
 
 const TOOL_COLUMNS = [
-  { key: "name", label: "Tool Name" },
-  { key: "overall", label: "Overall" },
-  { key: "recommendation", label: "Recommendation", truncate: false },
-  { key: "usage", label: "Allowed Usage" },
-  { key: "restricted_usage", label: "Restricted Usage" },
-  { key: "intended_users", label: "Intended Users" },
+  { key: "name", label: "Tool Name", resizable: true },
+  { key: "overall", label: "Overall", resizable: true },
+  {
+    key: "recommendation",
+    label: "Recommendation",
+    truncate: false,
+    resizable: true,
+  },
+  { key: "usage", label: "Allowed Usage", resizable: true },
+  { key: "restricted_usage", label: "Restricted Usage", resizable: true },
+  { key: "intended_users", label: "Intended Users", resizable: true },
 ];
 
 const renderHighRiskCell = (tool, key) => {
@@ -89,10 +93,7 @@ const renderToolCell = (tool, key) => {
 
     case "restricted_usage":
       return (
-        <span
-          className="text-xs max-w-[200px] truncate"
-          title={tool.allowed_usage}
-        >
+        <span className="text-xs max-w-[200px]">
           {tool.restricted_usage || "Not specified"}
         </span>
       );
@@ -119,10 +120,7 @@ const renderToolCell = (tool, key) => {
 
     case "usage":
       return (
-        <span
-          className="text-xs max-w-[200px] truncate"
-          title={tool.allowed_usage}
-        >
+        <span className="text-xs max-w-[200px]">
           {tool.allowed_usage || "Not specified"}
         </span>
       );
@@ -597,6 +595,8 @@ export default function AIDashboard() {
               tableClassName="custom-table"
               getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
               hideEmptyMessage
+              enableExport={true}
+              exportFileName="high-risk-tools-info"
             />
           </div>
         </div>
@@ -608,13 +608,15 @@ export default function AIDashboard() {
           <div className="px-6 py-5 border-b flex justify-between items-center bg-white">
             <h3 className="font-bold text-lg">Complete Tool Information</h3>
           </div>
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-x-auto relative">
             <ListTable
               data={allTools.slice(0, 10)}
               columns={TOOL_COLUMNS}
               renderCell={renderToolCell}
               tableClassName="custom-table"
               hideEmptyMessage
+              enableExport={true}
+              exportFileName="complete-tool-info"
             />
           </div>
         </div>

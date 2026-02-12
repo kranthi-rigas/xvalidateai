@@ -1,5 +1,7 @@
-import { right } from "@popperjs/core";
+import { createPortal } from "react-dom";
 import React from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 /* ---------- SAFE HELPERS ---------- */
 const safeRenderCell = (renderCell, row, key) => {
@@ -51,19 +53,180 @@ export default function ListTable({
   onSort,
 
   /* resizing */
-  columnWidths = {},
-  startResize,
   pagination,
   loading = false,
   hideEmptyMessage = false,
   selectedCount = 0,
-  selectionCounterLabel = null, // ✅ NEW: Custom label (e.g., "tool", "project", "item")
+  selectionCounterLabel = null,
+
+  enableExport = false,
+  exportFileName = "table-export",
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
 
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
     : 1;
+
+  const handleExport = () => {
+    if (!data?.length) return;
+
+    const exportData = data.map((row) => {
+      const obj = {};
+
+      columns.forEach((col) => {
+        if (col.key === "checkbox") return;
+
+        const value = safeRenderCell(renderCell, row, col.key);
+
+        const extractText = (node) => {
+          if (typeof node === "string" || typeof node === "number") {
+            return node;
+          }
+          if (React.isValidElement(node) && node.props?.children) {
+            return React.Children.toArray(node.props.children)
+              .map(extractText)
+              .join(" ");
+          }
+          return "";
+        };
+
+        obj[col.label] = extractText(value);
+      });
+
+      return obj;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `${exportFileName}-${Date.now()}.xlsx`);
+  };
+
+  const TruncatedCell = ({ children }) => {
+    const ref = React.useRef(null);
+    const [isOverflowing, setIsOverflowing] = React.useState(false);
+    const [position, setPosition] = React.useState(null);
+
+    const getTextContent = (node) => {
+      if (typeof node === "string" || typeof node === "number") {
+        return String(node);
+      }
+      if (React.isValidElement(node) && node.props?.children) {
+        return React.Children.toArray(node.props.children)
+          .map(getTextContent)
+          .join(" ");
+      }
+      return "";
+    };
+
+    const textContent = getTextContent(children);
+
+    React.useEffect(() => {
+      const el = ref.current;
+      if (el) {
+        setIsOverflowing(el.scrollWidth > el.clientWidth);
+      }
+    }, [children]);
+
+    const handleMouseEnter = () => {
+      if (!ref.current) return;
+
+      const rect = ref.current.getBoundingClientRect();
+
+      setPosition({
+        top: rect.bottom + window.scrollY + 6,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    };
+
+    const handleMouseLeave = () => {
+      setPosition(null);
+    };
+
+    return (
+      <>
+        <div
+          ref={ref}
+          className="truncate w-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {children}
+        </div>
+
+        {isOverflowing &&
+          position &&
+          createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: position.top,
+                left: position.left,
+                minWidth: position.width,
+                maxWidth: 500,
+              }}
+              className="bg-gray-900 text-white text-xs rounded-md px-3 py-2 shadow-2xl whitespace-normal break-words z-[99999]"
+            >
+              {textContent}
+            </div>,
+            document.body,
+          )}
+      </>
+    );
+  };
+
+  const [widths, setWidths] = React.useState(() => {
+    const initial = {};
+    columns.forEach((col) => {
+      initial[col.key] = col.key === "checkbox" ? 60 : col.width || 160;
+    });
+
+    return initial;
+  });
+
+  const resizingRef = React.useRef(null);
+
+  const startResize = (key, e) => {
+    e.preventDefault();
+    resizingRef.current = {
+      key,
+      startX: e.clientX,
+      startWidth: widths[key],
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", stopResize);
+  };
+
+  const onMouseMove = (e) => {
+    if (!resizingRef.current) return;
+
+    const { key, startX, startWidth } = resizingRef.current;
+    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
+
+    setWidths((prev) => ({
+      ...prev,
+      [key]: newWidth,
+    }));
+  };
+
+  const stopResize = () => {
+    resizingRef.current = null;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", stopResize);
+  };
 
   // ✅ Generate dynamic text based on count and label
   const getSelectionText = () => {
@@ -100,6 +263,18 @@ export default function ListTable({
         </div>
       )}
 
+      {enableExport && (
+        <div className="flex justify-end px-6 py-3 border-b bg-white">
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 transition"
+          >
+            <i className="fa-solid fa-file-excel mr-2" />
+            Export to Excel
+          </button>
+        </div>
+      )}
+
       {/* ✅ SCROLLABLE AREA */}
       <div
         className="
@@ -125,7 +300,7 @@ export default function ListTable({
                   className={`p-4 text-xs font-semibold uppercase tracking-wider
                     text-muted-foreground group relative select-none
                     ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
-                  style={{ width: columnWidths[col.key] || col.width || 160 }}
+                  style={{ width: widths[col.key] }}
                 >
                   <div className="flex items-center justify-between">
                     {col.key === "checkbox" ? (
@@ -181,10 +356,17 @@ export default function ListTable({
                             : "truncate"
                       }`}
                       style={{
-                        width: columnWidths[col.key] || col.width || 160,
+                        width: widths[col.key],
+                        minWidth: widths[col.key],
                       }}
                     >
-                      {safeRenderCell(renderCell, row, col.key)}
+                      {col.truncate === false ? (
+                        safeRenderCell(renderCell, row, col.key)
+                      ) : (
+                        <TruncatedCell>
+                          {safeRenderCell(renderCell, row, col.key)}
+                        </TruncatedCell>
+                      )}
                     </td>
                   ))}
                 </tr>
