@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import useToast from "../../../hooks/useToast";
 import AwsButton from "../../common/AwsButton";
 import PageLoader from "@/components/common/PageLoader";
+import COLORS from "@/styles/colors";
 
 const QUIZ_QUESTIONS = [
   {
@@ -94,10 +95,10 @@ export default function AILiteracy() {
             textAlign: "center",
           }}
         >
-          <h2 style={{ fontWeight: 700, color: "#111827" }}>
+          <h2 style={{ fontWeight: 700, color: COLORS.textPrimary }}>
             AI Literacy – Compliance Awareness
           </h2>
-          <p style={{ color: "#6B7280", marginTop: 6 }}>
+          <p style={{ color: COLORS.textMuted, marginTop: 6 }}>
             Test your understanding of AI regulations, privacy, risk, and
             responsible AI practices.
           </p>
@@ -110,17 +111,17 @@ export default function AILiteracy() {
               <div
                 key={q.id}
                 style={{
-                  border: "1px solid #E5E7EB",
+                  border: `1px solid ${COLORS.borderLight}`,
                   borderRadius: 12,
                   padding: 20,
-                  background: "#FFFFFF",
+                  background: COLORS.bgPrimary,
                 }}
               >
                 <div
                   style={{
                     fontWeight: 600,
                     marginBottom: 12,
-                    color: "#111827",
+                    color: COLORS.textPrimary,
                   }}
                 >
                   {index + 1}. {q.question}
@@ -139,8 +140,11 @@ export default function AILiteracy() {
                         cursor: "pointer",
                         padding: "8px 12px",
                         borderRadius: 8,
-                        border: "1px solid #E5E7EB",
-                        background: answers[q.id] === i ? "#EEF2FF" : "#FFFFFF",
+                        border: `1px solid ${COLORS.borderLight}`,
+                        background:
+                          answers[q.id] === i
+                            ? COLORS.primaryLighter
+                            : COLORS.bgPrimary,
                       }}
                     >
                       <input
@@ -170,10 +174,10 @@ export default function AILiteracy() {
           /* ---------- RESULTS ---------- */
           <div
             style={{
-              border: "1px solid #E5E7EB",
+              border: `1px solid ${COLORS.borderLight}`,
               borderRadius: 12,
               padding: 32,
-              background: "#FFFFFF",
+              background: COLORS.bgPrimary,
               textAlign: "center",
             }}
           >
@@ -185,7 +189,7 @@ export default function AILiteracy() {
               Score: {score} / {QUIZ_QUESTIONS.length}
             </div>
 
-            <div style={{ color: "#6B7280", marginBottom: 20 }}>
+            <div style={{ color: COLORS.textMuted, marginBottom: 20 }}>
               {score >= 4
                 ? "Great job! You have a strong understanding of AI compliance."
                 : "Good effort! Review AI compliance fundamentals to improve."}

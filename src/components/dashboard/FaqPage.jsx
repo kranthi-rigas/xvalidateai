@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import PageLoader from "@/components/common/PageLoader";
+import COLORS from "@/styles/colors";
 
 const FAQS = [
   {
@@ -45,12 +46,14 @@ export default function FaqPage() {
       <div className="dashboard-body">
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827" }}>
+          <h2
+            style={{ fontSize: 28, fontWeight: 800, color: COLORS.textPrimary }}
+          >
             Frequently Asked Questions
           </h2>
           <p
             style={{
-              color: "#6B7280",
+              color: COLORS.textMuted,
               marginTop: 8,
               fontSize: 15,
               maxWidth: 640,
@@ -67,9 +70,9 @@ export default function FaqPage() {
           style={{
             maxWidth: 900,
             margin: "0 auto",
-            background: "#FFFFFF",
+            background: COLORS.bgPrimary,
             borderRadius: 16,
-            border: "1px solid #E5E7EB",
+            border: `1px solid ${COLORS.borderLight}`,
             boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
             overflow: "hidden",
           }}
@@ -81,9 +84,8 @@ export default function FaqPage() {
               <div
                 key={index}
                 style={{
-                  borderBottom:
-                    index !== FAQS.length - 1 ? "1px solid #E5E7EB" : "none",
-                  background: isOpen ? "#F9FAFB" : "#FFFFFF",
+                  borderBottom: `1px solid ${COLORS.borderLight}`,
+                  background: isOpen ? COLORS.bgTertiary : COLORS.bgPrimary,
                   transition: "background 0.2s ease",
                 }}
               >
@@ -106,7 +108,7 @@ export default function FaqPage() {
                     style={{
                       fontSize: 16,
                       fontWeight: 600,
-                      color: "#111827",
+                      color: COLORS.textPrimary,
                     }}
                   >
                     {item.q}
@@ -117,7 +119,7 @@ export default function FaqPage() {
                     style={{
                       transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                       transition: "transform 0.2s ease",
-                      color: "#6B7280",
+                      color: COLORS.textMuted,
                     }}
                   />
                 </button>
@@ -141,7 +143,7 @@ export default function FaqPage() {
                         padding: "0 24px 22px",
                         fontSize: 14.5,
                         lineHeight: 1.7,
-                        color: "#374151",
+                        color: COLORS.textSecondary,
                         opacity: isOpen ? 1 : 0,
                         transform: isOpen
                           ? "translateY(0)"
@@ -164,7 +166,7 @@ export default function FaqPage() {
             marginTop: 32,
             textAlign: "center",
             fontSize: 14,
-            color: "#6B7280",
+            color: COLORS.textMuted,
           }}
         >
           <div
@@ -172,16 +174,19 @@ export default function FaqPage() {
               marginTop: 32,
               textAlign: "center",
               fontSize: 14,
-              color: "#6B7280",
+              color: COLORS.textMuted,
             }}
           >
             Still have questions? Reach us at{" "}
             <a
               href="mailto:support@academy51.com"
-              className="text-purple-1 fw-500"
-              style={{ textDecoration: "none" }}
+              style={{
+                textDecoration: "none",
+                color: COLORS.primary,
+                fontWeight: 600,
+              }}
             >
-              support@academy51.com
+              support@xvalidateai.com
             </a>
           </div>
         </div>

@@ -6,7 +6,7 @@ import "./SubscriptionSuccess.css";
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
-  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [secondsLeft, setSecondsLeft] = useState(15);
 
   useEffect(() => {
     const countdown = setInterval(() => {
