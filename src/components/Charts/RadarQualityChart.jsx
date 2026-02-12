@@ -11,15 +11,15 @@ function RadarQualityChart({ tools = [] }) {
       </div>
     );
   }
-
+  console.log("Rendering RadarQualityChart with tools:", tools);
   const series = tools
     .map((tool) => {
       const data = [
+        Number(tool.overall_score),
         Number(tool.privacy_safety_score),
         Number(tool.instructional_impact_score),
         Number(tool.usability_score),
         Number(tool.data_quality_score),
-        Number(tool.overall_score),
       ];
 
       // filter out tools with invalid data
@@ -79,11 +79,11 @@ function RadarQualityChart({ tools = [] }) {
 
     xaxis: {
       categories: [
+        "Overall Score",
         "Privacy & Safety",
         "Instructional Impact",
         "Usability",
         "Data Quality",
-        "Overall Score",
       ],
     },
 
