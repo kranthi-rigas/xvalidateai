@@ -13,9 +13,20 @@ const SubscriptionSuccess = () => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdown);
-          navigate("/dashboard/pricing", {
-            state: { status: "success" },
-          });
+          const countdown = setInterval(() => {
+            setSecondsLeft((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdown);
+                navigate("/dashboard/pricing", {
+                  state: { status: "success" },
+                });
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(countdown);
           return 0;
         }
         return prev - 1;
@@ -30,6 +41,10 @@ const SubscriptionSuccess = () => {
       <AuthHeader />
 
       <div className="subscription-container">
+        <div className="success-icon">✔</div>
+        <h2>Success 🎉</h2>
+        <p>Your subscription is being activated.</p>
+        <p>Redirecting in {secondsLeft} seconds...</p>
         <div className="success-icon">✔</div>
         <h2>Success 🎉</h2>
         <p>Your subscription is being activated.</p>

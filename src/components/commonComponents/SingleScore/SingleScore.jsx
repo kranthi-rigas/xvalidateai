@@ -7,7 +7,7 @@ export default function SingleScore({
   icon,
   iconBg = "bg-primary/10",
   iconColor = "text-primary",
-  trendText = "from last month",
+  trendText = "",
   highlightValue = false,
 }) {
   return (
