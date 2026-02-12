@@ -21,7 +21,6 @@ import useToast from "../../../hooks/useToast";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
-import CreditInfoNote from "./CreditInfoNote";
 
 const STATUS_BADGE_MAP = {
   pending_assessment: {
@@ -122,38 +121,6 @@ export default function AIListView({
   // ✅ Analyst-only = NO higher privilege
   const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
 
-  /* ---------- Add columnWidths state ---------- */
-  const [columnWidths, setColumnWidths] = useState({
-    checkbox: 60,
-    name: 190,
-    description: 180,
-    status: 200,
-    assessment_status: 122,
-    score: 100,
-    recommendation: 190,
-    lastScanDate: 180,
-    requested_by: 220,
-    approved_by: 220,
-    createdtime: 180,
-  });
-
-  const resizingCol = useRef(null);
-
-  const startResize = (key, e) => {
-    resizingCol.current = {
-      key,
-      startX: e.clientX,
-      startWidth: columnWidths[key],
-    };
-  };
-
-  const handleResize = (e) => {
-    if (!resizingCol.current) return;
-    const { key, startX, startWidth } = resizingCol.current;
-    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
-    setColumnWidths((prev) => ({ ...prev, [key]: newWidth }));
-  };
-
   useEffect(() => {
     setLiveProjects(
       (projects || []).map((p) => ({
@@ -221,12 +188,6 @@ export default function AIListView({
 
     return () => clearInterval(interval);
   }, [liveProjects]);
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleResize);
-    window.addEventListener("mouseup", () => (resizingCol.current = null));
-    return () => window.removeEventListener("mousemove", handleResize);
-  }, []);
 
   // 🔤 Convert snake_case / lowercase to Title Case
   const toTitleCase = (value = "") =>
@@ -1077,8 +1038,6 @@ export default function AIListView({
           renderCell={renderCell}
           sortConfig={sortConfig}
           onSort={requestSort}
-          columnWidths={columnWidths}
-          startResize={startResize}
           tableBodyStyle={{
             opacity: tableLoading ? 0 : 1,
             pointerEvents: tableLoading ? "none" : "auto",
