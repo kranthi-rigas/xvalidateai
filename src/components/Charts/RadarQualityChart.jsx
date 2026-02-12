@@ -11,7 +11,7 @@ function RadarQualityChart({ tools = [] }) {
       </div>
     );
   }
-  console.log("Rendering RadarQualityChart with tools:", tools);
+
   const series = tools
     .map((tool) => {
       const data = [
