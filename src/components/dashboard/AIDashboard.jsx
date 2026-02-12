@@ -4,6 +4,7 @@ import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
+import { useNavigate } from "react-router-dom";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
@@ -28,16 +29,20 @@ const TOOL_COLUMNS = [
   { key: "intended_users", label: "Intended Users", resizable: true },
 ];
 
-const renderHighRiskCell = (tool, key) => {
+const renderHighRiskCell = (navigate) => (tool, key) => {
   switch (key) {
     case "tool":
       return (
-        <div className="flex items-center">
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={() => navigate(`/dashboard/aicompliance/${tool.project_id}`)}
+        >
           <div className="w-8 h-8 rounded bg-blue-600 text-white flex items-center justify-center mr-3 font-bold text-xs">
             {tool.project_name?.substring(0, 2).toUpperCase() || "??"}
           </div>
+
           <div>
-            <div className="font-semibold text-destructive">
+            <div className="font-semibold text-destructive hover:underline">
               {tool.project_name}
             </div>
             <div className="text-xs text-muted-foreground">AI Tool</div>
@@ -81,14 +86,19 @@ const renderHighRiskCell = (tool, key) => {
   }
 };
 
-const renderToolCell = (tool, key) => {
+const renderToolCell = (navigate) => (tool, key) => {
   switch (key) {
     case "name":
       return (
-        <>
-          <div className="font-semibold text-primary">{tool.tool_name}</div>
+        <div
+          className="cursor-pointer"
+          onClick={() => navigate(`/dashboard/aicompliance/${tool.project_id}`)}
+        >
+          <div className="font-semibold text-primary hover:underline">
+            {tool.tool_name}
+          </div>
           <div className="text-xs text-muted-foreground">{tool.developer}</div>
-        </>
+        </div>
       );
 
     case "restricted_usage":
@@ -142,6 +152,7 @@ export default function AIDashboard() {
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch dashboard data
@@ -591,7 +602,7 @@ export default function AIDashboard() {
             <ListTable
               data={highRiskTools.slice(0, 3)}
               columns={HIGH_RISK_COLUMNS}
-              renderCell={renderHighRiskCell}
+              renderCell={renderHighRiskCell(navigate)}
               tableClassName="custom-table"
               getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
               hideEmptyMessage
@@ -612,7 +623,7 @@ export default function AIDashboard() {
             <ListTable
               data={allTools.slice(0, 10)}
               columns={TOOL_COLUMNS}
-              renderCell={renderToolCell}
+              renderCell={renderToolCell(navigate)}
               tableClassName="custom-table"
               hideEmptyMessage
               enableExport={true}
