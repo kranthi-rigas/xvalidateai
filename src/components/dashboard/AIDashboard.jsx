@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
+import ToolsHeatmap from "@/components/common/HeatMap";
+import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
 
@@ -205,7 +207,7 @@ export default function AIDashboard() {
     }
   }, [dashboardAnalytics, selectedRadarToolIds.length]);
 
-  const initializeCharts = () => {
+  const initializeCharts = React.useCallback(() => {
     if (!dashboardAnalytics) return;
 
     // Chart: Recommendation Distribution
@@ -244,6 +246,7 @@ export default function AIDashboard() {
       margin: { t: 40, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
+      responsive: true,
     };
 
     window.Plotly.newPlot(
@@ -406,7 +409,8 @@ export default function AIDashboard() {
     setTimeout(() => {
       window.Plotly.Plots.resize("chart-compliance");
     }, 100);
-  };
+  }, [dashboardAnalytics]);
+
   useEffect(() => {
     if (selectedRadarToolIds.length === 5) {
       setDropdownOpen(false);
@@ -485,7 +489,6 @@ export default function AIDashboard() {
         />
       </section>
 
-      {/* Quality & Risk Charts */}
       <section>
         {/* Radar Chart */}
         <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
@@ -574,6 +577,16 @@ export default function AIDashboard() {
         </div>
       </section>
 
+      <div className="grid grid-cols-1 gap-6">
+        <div className="dashboard-card p-6">
+          <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
+        </div>
+
+        <div className="dashboard-card p-6">
+          <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
+        </div>
+      </div>
+
       {/* Recommendation & Intended Users Row */}
       <section className="grid grid-cols-8 gap-6">
         {/* Recommendation Distribution */}
@@ -603,8 +616,6 @@ export default function AIDashboard() {
               data={highRiskTools.slice(0, 3)}
               columns={HIGH_RISK_COLUMNS}
               renderCell={renderHighRiskCell(navigate)}
-              tableClassName="custom-table"
-              getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
               hideEmptyMessage
               enableExport={true}
               exportFileName="high-risk-tools-info"

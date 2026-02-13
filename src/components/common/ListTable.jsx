@@ -190,7 +190,7 @@ export default function ListTable({
   const [widths, setWidths] = React.useState(() => {
     const initial = {};
     columns.forEach((col) => {
-      initial[col.key] = col.key === "checkbox" ? 60 : col.width || 160;
+      initial[col.key] = col.key === "checkbox" ? 60 : col.width || 260;
     });
 
     return initial;
