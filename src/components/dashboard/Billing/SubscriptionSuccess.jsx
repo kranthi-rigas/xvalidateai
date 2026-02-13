@@ -1,39 +1,55 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthHeader from "@/components/others/AuthHeader";
 import AuthFooter from "@/components/others/AuthFooter";
+import { useContextElement } from "@/context/Context";
 import "./SubscriptionSuccess.css";
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
-  const [secondsLeft, setSecondsLeft] = useState(15);
+  const { refreshUserPlan } = useContextElement();
 
   useEffect(() => {
-    const countdown = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          navigate("/dashboard/pricing", {
-            state: { status: "success" },
-          });
-          return 0;
-        }
-        return prev - 1;
+    const timer = setTimeout(async () => {
+      await refreshUserPlan(); // Refresh latest plan
+      navigate("/dashboard/pricing", {
+        state: { status: "success" },
       });
-    }, 1000);
+    }, 15000); // 15 seconds wait
 
-    return () => clearInterval(countdown);
-  }, [navigate]);
+    return () => clearTimeout(timer);
+  }, [navigate, refreshUserPlan]);
 
   return (
     <div className="subscription-page">
       <AuthHeader />
 
       <div className="subscription-container">
-        <div className="success-icon">✔</div>
-        <h2>Success 🎉</h2>
-        <p>Your subscription is being activated.</p>
-        <p>Redirecting in {secondsLeft} seconds...</p>
+        {/* Success Icon */}
+        <div className="success-icon">
+          <i className="fa-solid fa-circle-check"></i>
+        </div>
+
+        <h2>Payment Successful 🎉</h2>
+        <p className="subtitle">Your subscription is being activated.</p>
+
+        {/* Spinner */}
+        <div className="spinner"></div>
+
+        <p className="redirect-text">
+          Please wait while we activate your plan...
+        </p>
+
+        {/* Payment Gateway Icons */}
+        <div className="payment-icons">
+          <img
+            src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
+            alt="PayPal"
+          />
+          <i className="fa-brands fa-cc-visa"></i>
+          <i className="fa-brands fa-cc-mastercard"></i>
+          <i className="fa-brands fa-cc-amex"></i>
+        </div>
       </div>
 
       <AuthFooter />
