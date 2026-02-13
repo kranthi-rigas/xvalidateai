@@ -1,36 +1,38 @@
 import React, { useState } from "react";
 import { COLORS } from "@/styles/colors";
+import ButtonLoader from "./ButtonLoader";
 
 export default function AwsButton({
   label,
   disabled = false,
+  loading = false, // ✅ NEW
   onClick,
   children,
-  variant = "primary", // "primary" or "secondary"
-  type = "button", // "button" or "submit"
+  variant = "primary",
+  type = "button",
 }) {
   const [hover, setHover] = useState(false);
 
   const isSuccess = variant === "success";
   const isDanger = variant === "danger";
   const isOutlineDanger = variant === "outlineDanger";
-  // Design system colors
+  const isPrimary = variant === "primary";
+
   const primaryBg = "#0F3053";
   const primaryHoverBg = "#007d79";
 
-  // Secondary (outline) button colors
   const secondaryBg = "transparent";
-  const secondaryHoverBg = "#007d79"; // becomes solid on hover
+  const secondaryHoverBg = "#007d79";
   const secondaryBorder = "#0F3053";
   const secondaryText = "#0F3053";
 
-  const isPrimary = variant === "primary";
+  const isDisabled = disabled || loading; // ✅ auto-disable while loading
 
   return (
     <button
       type={type}
-      disabled={disabled}
-      onClick={!disabled ? onClick : undefined}
+      disabled={isDisabled}
+      onClick={!isDisabled ? onClick : undefined}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className="lh-1 tool-assessment-btn"
@@ -44,12 +46,11 @@ export default function AwsButton({
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
-        cursor: disabled ? "not-allowed" : "pointer",
+        cursor: isDisabled ? "not-allowed" : "pointer",
         transition: "all 0.2s ease",
         whiteSpace: "nowrap",
 
-        // Background
-        background: disabled
+        background: isDisabled
           ? COLORS.bgSecondary
           : isPrimary
             ? hover
@@ -68,21 +69,21 @@ export default function AwsButton({
                     ? "#dc2626"
                     : "transparent"
                   : hover
-                    ? secondaryHoverBg // 👈 solid on hover
+                    ? secondaryHoverBg
                     : secondaryBg,
 
-        color: disabled
+        color: isDisabled
           ? COLORS.textMuted
           : isPrimary || isSuccess || isDanger
             ? COLORS.white
             : isOutlineDanger && hover
               ? COLORS.white
               : hover
-                ? COLORS.white // 👈 secondary text becomes white on hover
+                ? COLORS.white
                 : secondaryText,
 
         border: `1px solid ${
-          disabled
+          isDisabled
             ? COLORS.borderLight
             : isPrimary
               ? hover
@@ -102,7 +103,14 @@ export default function AwsButton({
         }`,
       }}
     >
-      {children && <span style={{ display: "flex" }}>{children}</span>}
+      {/* ✅ Spinner shows only when loading */}
+      {loading && <ButtonLoader />}
+
+      {/* ✅ Hide icon while loading */}
+      {!loading && children && (
+        <span style={{ display: "flex" }}>{children}</span>
+      )}
+
       {label}
     </button>
   );
