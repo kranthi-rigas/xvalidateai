@@ -65,3 +65,54 @@
   font-size: 32px;
   color: #555;
 }
+/* Error Icon */
+.error-icon {
+  font-size: 60px;
+  color: #dc3545;
+  margin-bottom: 20px;
+}
+
+.cancel-message {
+  margin-top: 10px;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Cancel Buttons */
+.cancel-actions {
+  margin-top: 25px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cancel-primary {
+  background-color: #0f3053;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.cancel-primary:hover {
+  background-color: #0c2744;
+}
+
+.cancel-secondary {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.cancel-secondary:hover {
+  background-color: #f5f5f5;
+}
