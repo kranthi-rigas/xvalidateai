@@ -24,6 +24,7 @@ export default function AuthFooter() {
               Terms of Service
             </a>
             <a href="mailto:support@academy51.com?subject=Support Request - XVALIDATEAI">
+            <i className="fa-solid fa-envelope" style={{ marginRight: "0.5rem" }}></i>
               Support
             </a>
           </div>
