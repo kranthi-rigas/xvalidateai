@@ -11,7 +11,7 @@ export default function CreditInfoNote({
         gap: 8,
         marginTop: 14,
         fontSize: 13,
-        color: "#1E40AF", // 🔵 info blue
+        color: "#1D4ED8", // 🔵 info blue
       }}
     >
       {/* Info icon */}
@@ -24,7 +24,7 @@ export default function CreditInfoNote({
           height: 18,
           borderRadius: "50%",
           background: "#DBEAFE", // soft blue bg
-          color: "#1E3A8A",
+          color: "#0f3053",
           fontWeight: 700,
           fontSize: 12,
         }}
