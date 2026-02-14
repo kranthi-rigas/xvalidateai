@@ -15,16 +15,14 @@ const pricingPlans = [
     iconColor: COLORS.secondary,
     price: 0,
     period: "yearly",
-    credits: 2,
+    credits: 20,
     popular: false,
     features: [
-      { text: "2 Scans included", included: true },
+      { text: "2 Scans included(20 Credits)", included: true },
+      { text: "Basic Report", included: true },
       { text: "Downloadable Report", included: false },
       { text: "Priority support", included: false },
-      { text: "Downloadable Report", included: false },
       { text: "Create organizations", included: false },
-      { text: "Download content", included: false },
-      { text: "Share content", included: false },
       { text: "AI Analytics", included: false },
       { text: "Business workflow", included: false },
       { text: "Customizability", included: false },
@@ -36,19 +34,18 @@ const pricingPlans = [
     description: "Best for growing learners",
     icon: "fa-solid fa-star",
     iconColor: COLORS.primary,
-    price: null,
-    period: "yearly",
-    credits: 10,
+    price: 1000,
+    period: "Annually",
+    credits: 100,
     popular: true,
     buttonText: "Get Premium",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "10 Scans included", included: true },
+      { text: "10 Scans included(100 Credits)", included: true },
       { text: "Downloadable Report", included: true },
+      { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: false },
-      { text: "Download content", included: false },
-      { text: "Share content", included: false },
       { text: "AI Analytics", included: false },
       { text: "Business workflow", included: false },
       { text: "Customizability", included: false },
@@ -60,19 +57,18 @@ const pricingPlans = [
     description: "For organizations",
     icon: "fa-solid fa-building",
     iconColor: COLORS.success,
-    price: null,
-    period: "yearly",
-    credits: 30,
+    price: 3000,
+    period: "Annually",
+    credits: 300,
     popular: false,
     buttonText: "Get Business",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "30 Scans included", included: true },
+      { text: "30 Scans included(300 Credits)", included: true },
       { text: "Downloadable Report", included: true },
+      { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: true },
-      { text: "Download content", included: true },
-      { text: "Share content", included: true },
       { text: "AI Analytics", included: true },
       { text: "Business workflow", included: true },
       { text: "Customizability", included: true },
@@ -271,7 +267,7 @@ export default function DashboardPricing() {
                               }}
                             >
                               <i className="fa-solid fa-coins mr-1"></i>
-                              {plan.credits} Scans included
+                              {plan.credits} Credits included
                             </div>
                           )}
                         </div>
@@ -395,10 +391,10 @@ export default function DashboardPricing() {
                   <p className="text-14 text-light-1">
                     For any questions or enterprise inquiries, contact us at{" "}
                     <a
-                      href="mailto:support@academy51.com"
+                      href="mailto:support@xvalidateai.com"
                       className="text-purple-1 fw-500"
                     >
-                      support@academy51.com
+                      support@xvalidateai.com
                     </a>
                   </p>
                 </div>

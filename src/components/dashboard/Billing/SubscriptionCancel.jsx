@@ -12,7 +12,7 @@ const SubscriptionCancel = () => {
       navigate("/dashboard/pricing", {
         state: { status: "cancelled" },
       });
-    }, 3000);
+    }, 8000); // Wait 8 seconds before redirect
 
     return () => clearTimeout(timer);
   }, [navigate]);
@@ -22,10 +22,48 @@ const SubscriptionCancel = () => {
       <AuthHeader />
 
       <div className="subscription-container">
-        <div className="error-icon">✖</div>
-        <h2>Subscription Cancelled</h2>
-        <p>Your payment was cancelled.</p>
-        <p>Redirecting to pricing page...</p>
+        {/* Cancel Icon */}
+        <div className="error-icon">
+          <i className="fa-solid fa-circle-xmark"></i>
+        </div>
+
+        <h2>Payment Cancelled</h2>
+
+        <p className="subtitle">Your transaction was not completed.</p>
+
+        <div className="cancel-message">
+          No charges were made to your account.
+          <br />
+          You can try again or choose a different plan.
+        </div>
+
+        {/* Action Buttons */}
+        <div className="cancel-actions">
+          <button
+            className="cancel-primary"
+            onClick={() => navigate("/dashboard/pricing")}
+          >
+            Back to Pricing
+          </button>
+
+          <button
+            className="cancel-secondary"
+            onClick={() => navigate("/dashboard/pricing")}
+          >
+            Try Again
+          </button>
+        </div>
+
+        {/* Payment Icons */}
+        <div className="payment-icons">
+          <img
+            src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
+            alt="PayPal"
+          />
+          <i className="fa-brands fa-cc-visa"></i>
+          <i className="fa-brands fa-cc-mastercard"></i>
+          <i className="fa-brands fa-cc-amex"></i>
+        </div>
       </div>
 
       <AuthFooter />

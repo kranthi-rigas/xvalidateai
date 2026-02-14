@@ -20422,4 +20422,19 @@ background: transparent !important;
 
 .sidebar-collapse-btn:hover {
   color: black;
+/* 🔵 Common button spinner */
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #0f3053;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
