@@ -71,6 +71,7 @@ export default function AIListViewModern({
 
   /* ---------------- COLUMN RESIZE ---------------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     name: 220,
     status: 180,
     assessment_status: 160,

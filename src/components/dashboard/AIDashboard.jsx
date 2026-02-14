@@ -283,7 +283,7 @@ export default function AIDashboard() {
 
         // ✅ Filter only scan_completed tools
         const filteredToolKpis = (data.tool_kpis || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) => tool.recommendation != "Not Assessed",
         );
 
         setDashboardAnalytics({
@@ -546,7 +546,7 @@ export default function AIDashboard() {
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
-          value={overview.total_projects || 0}
+          value={overview.total_projects + 1 - overview.rejected_count || 0}
           icon="fa-solid fa-database"
           iconBg="bg-blue-500/10"
           iconColor="text-blue-500"
@@ -694,7 +694,7 @@ export default function AIDashboard() {
 
       {/* High Risk Alert Box */}
       <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
           <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
@@ -705,7 +705,7 @@ export default function AIDashboard() {
           </div>
           <div className="p-0 overflow-x-auto flex-1">
             <ListTable
-              data={highRiskTools.slice(0, 3)}
+              data={highRiskTools}
               columns={HIGH_RISK_COLUMNS}
               renderCell={renderHighRiskCell(navigate)}
               hideEmptyMessage
@@ -724,7 +724,7 @@ export default function AIDashboard() {
           </div>
           <div className="flex-1 overflow-x-auto relative">
             <ListTable
-              data={allTools.slice(0, 10)}
+              data={allTools}
               columns={TOOL_COLUMNS}
               renderCell={renderToolCell(navigate)}
               tableClassName="custom-table"
