@@ -157,10 +157,23 @@ export default function AIDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch dashboard data
     fetchDashboardAnalytics()
       .then((data) => {
-        setDashboardAnalytics(data);
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+
+        // ✅ Filter only scan_completed tools
+        const filteredToolKpis = (data.tool_kpis || []).filter(
+          (tool) => tool.status === "scan_completed",
+        );
+
+        setDashboardAnalytics({
+          ...data,
+          tool_kpis: filteredToolKpis,
+        });
+
         setLoading(false);
       })
       .catch((err) => {
@@ -603,7 +616,7 @@ export default function AIDashboard() {
       {/* High Risk Alert Box */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
               <h3 className="font-bold text-lg">
@@ -627,7 +640,7 @@ export default function AIDashboard() {
       {/* Complete Tool Information Table */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="px-6 py-5 border-b flex justify-between items-center bg-white">
+          <div className="px-6 py-5 border-b flex justify-center items-center bg-white">
             <h3 className="font-bold text-lg">Complete Tool Information</h3>
           </div>
           <div className="flex-1 overflow-x-auto relative">

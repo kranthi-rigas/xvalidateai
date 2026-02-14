@@ -5,6 +5,7 @@ import useToast from "../../../hooks/useToast";
 import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/Formfield";
 import CreditInfoNote from "./CreditInfoNote";
+import { useContextElement } from "@/context/Context";
 
 export default function EditProjectModal({
   project,
@@ -16,6 +17,7 @@ export default function EditProjectModal({
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
   const isAuditor = roles.includes("MANAGER");
+  const { refreshUserPlan } = useContextElement();
 
   // Show credit note only for Admin evaluation
   const showCreditsNote = isAdmin && !isAuditor;
@@ -120,6 +122,11 @@ export default function EditProjectModal({
 
       setShowEditModal(false);
       refreshProjects?.();
+      try {
+        await refreshUserPlan?.();
+      } catch (planErr) {
+        show("Plan refresh failed:", { type: "error" });
+      }
     } catch (err) {
       const rawMessage = err?.response?.data?.message || err?.message || "";
 
