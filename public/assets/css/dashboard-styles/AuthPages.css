@@ -313,7 +313,7 @@ div:focus-within .password-view {
 /* Login Card Hover Effect */
 .auth-login-card {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   background: var(--auth-card, #ffffff);
   border: 1px solid var(--auth-border, #E2E8F0);
   border-radius: 1rem;
@@ -358,8 +358,6 @@ div:focus-within .password-view {
 }
 
 .auth-header-content {
-  max-width: 1440px;
-  margin: 0 auto;
   padding: 1.25rem 2rem;
   display: flex;
   align-items: center;
@@ -1354,6 +1352,7 @@ div:focus-within .password-view {
   padding-bottom: 5rem;
   position: relative;
   z-index: 10;
+  overflow-x: hidden;
   overflow-y: auto;
   height: calc(100vh - 4rem);
   scrollbar-width: thin;
