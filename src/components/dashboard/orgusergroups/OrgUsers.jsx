@@ -53,6 +53,7 @@ export default function OrgUsers({ refreshProjects }) {
 
   /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     email: 220,
     groups: 150,
     roles: 140,
@@ -234,14 +235,6 @@ export default function OrgUsers({ refreshProjects }) {
       resizable: false,
       allSelected: filtered.length > 0 && selected.length === filtered.length,
       onToggleAll: toggleSelectAll,
-      render: (row) => (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.user_id)}
-          onChange={() => toggleSelect(row.user_id)}
-          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-        />
-      ),
     },
     {
       key: "email",
@@ -279,7 +272,14 @@ export default function OrgUsers({ refreshProjects }) {
   const renderCell = (row, key) => {
     switch (key) {
       case "checkbox":
-        return columns[0].render(row);
+        return (
+          <input
+            type="checkbox"
+            checked={selected.includes(row.user_id)}
+            onChange={() => toggleSelect(row.user_id)}
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          />
+        );
 
       case "email":
         return (
@@ -312,6 +312,7 @@ export default function OrgUsers({ refreshProjects }) {
       case "status": {
         const badge = getStatusBadge(row.status);
         const statusText = capitalize(row.status || "-");
+
         return (
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}

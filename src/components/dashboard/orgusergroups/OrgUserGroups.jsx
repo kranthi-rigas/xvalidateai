@@ -63,6 +63,7 @@ export default function OrgUserGroups() {
 
   /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     name: 200,
     description: 250,
     permissions: 250,
@@ -260,14 +261,6 @@ export default function OrgUserGroups() {
       resizable: false,
       allSelected: filtered.length > 0 && selected.length === filtered.length,
       onToggleAll: toggleSelectAll,
-      render: (row) => (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.group_id)}
-          onChange={() => toggleSelect(row.group_id)}
-          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-        />
-      ),
     },
     {
       key: "name",
@@ -303,7 +296,14 @@ export default function OrgUserGroups() {
   const renderCell = (row, key) => {
     switch (key) {
       case "checkbox":
-        return columns[0].render(row);
+        return (
+          <input
+            type="checkbox"
+            checked={selected.includes(row.group_id)}
+            onChange={() => toggleSelect(row.group_id)}
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          />
+        );
 
       case "name":
         return (
@@ -330,6 +330,7 @@ export default function OrgUserGroups() {
       case "permissions": {
         const rolesList = (row.permissions || []).map(capitalize);
         const text = rolesList.length ? rolesList.join(", ") : "-";
+
         return (
           <span className="text-muted-foreground" title={text}>
             {text}

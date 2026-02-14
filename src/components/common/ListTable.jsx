@@ -306,12 +306,15 @@ export default function ListTable({
                   <th
                     key={col.key}
                     onClick={() => col.sortable && onSort(col.key)}
-                    className={`p-4 text-xs font-semibold uppercase tracking-wider
-            text-muted-foreground group relative select-none
-            ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
+                    className={`p-4 text-xs font-semibold uppercase tracking-wider text-center
+    text-muted-foreground group relative select-none
+    border-r border-border
+    ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}
+    ${col.key === columns[columns.length - 1]?.key ? "border-r-0" : ""}
+  `}
                     style={{ width }}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-center gap-2">
                       {col.key === "checkbox" ? (
                         <input
                           type="checkbox"
@@ -367,7 +370,7 @@ export default function ListTable({
                     return (
                       <td
                         key={`${row[rowKey] ?? rowIndex}-${col.key}`}
-                        className={`p-4 ${
+                        className={`p-4 text-center ${
                           col.key === "checkbox"
                             ? "pl-6 pr-2"
                             : col.truncate === false
