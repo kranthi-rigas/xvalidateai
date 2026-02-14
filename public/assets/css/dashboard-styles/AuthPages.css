@@ -662,6 +662,7 @@ div:focus-within .password-view {
   width: 100%;
   padding: 2rem;
   box-sizing: border-box;
+  margin: 0 !important; 
 }
 
 .auth-input-group {
@@ -1183,7 +1184,8 @@ div:focus-within .password-view {
   padding: 2rem 3rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 3rem;
   position: sticky;
   top: 4rem;
   height: calc(100vh - 4rem);
@@ -1197,7 +1199,7 @@ div:focus-within .password-view {
 }
 
 .auth-page[data-mode="signup"] .auth-hero {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .auth-hero-content {
@@ -1391,7 +1393,7 @@ div:focus-within .password-view {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--auth-primary, #0F3053);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0rem;
 }
 
 .auth-form-section .auth-form-subtitle {
