@@ -2,8 +2,8 @@ import MetaComponent from "@/components/common/MetaComponent";
 import AICompliance from "@/components/dashboard/aicompliance/AICompliance";
 
 const metadata = {
-  title: "AI Compliance || Academy51 - Smart Learning for smarter generation",
-  description: "AICompliance for Academy51",
+  title: "AI Compliance || XValidate",
+  description: "AICompliance for XValidate",
 };
 
 export default function DshbAICompliance() {
