@@ -25,6 +25,9 @@ export default function ToolsHeatmap({ tools }) {
     },
     dataLabels: {
       enabled: true,
+      style: {
+        colors: ["#000"],
+      },
     },
     colors: ["#3b82f6"],
     plotOptions: {
@@ -41,7 +44,11 @@ export default function ToolsHeatmap({ tools }) {
     },
     title: {
       text: "Tool Score Heatmap",
-      style: { fontSize: "16px", fontWeight: 600 },
+      align: "center",
+      style: {
+        fontSize: "16px",
+        fontWeight: 600,
+      },
     },
   };
 
