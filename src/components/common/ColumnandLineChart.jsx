@@ -34,6 +34,7 @@ export default function ToolsCombinedChart({ tools }) {
     ],
     title: {
       text: "Overall Score vs Compliance Count",
+      align: "center",
       style: { fontSize: "16px", fontWeight: 600 },
     },
   };

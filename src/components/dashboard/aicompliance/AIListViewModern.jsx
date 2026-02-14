@@ -71,6 +71,7 @@ export default function AIListViewModern({
 
   /* ---------------- COLUMN RESIZE ---------------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     name: 220,
     status: 180,
     assessment_status: 160,
@@ -331,41 +332,68 @@ export default function AIListViewModern({
         text: "text-yellow-700",
         border: "border-yellow-200",
         label: "Scan Completed",
+        icon: "fa-clipboard-check",
       },
+
       approved_for_usage: {
         bg: "bg-green-50",
         text: "text-green-700",
         border: "border-green-200",
         label: "Approved For Usage",
+        icon: "fa-circle-check",
       },
+
       rejected_for_usage: {
         bg: "bg-red-50",
         text: "text-red-700",
         border: "border-red-200",
         label: "Rejected For Usage",
+        icon: "fa-circle-xmark",
       },
+
       scan_in_progress: {
         bg: "bg-blue-50",
         text: "text-blue-700",
         border: "border-blue-200",
         label: "Scan In Progress",
+        icon: "fa-spinner",
+        spinning: true,
       },
+
       requested: {
         bg: "bg-gray-50",
         text: "text-gray-700",
         border: "border-gray-200",
         label: "Requested for Scan",
+        icon: "fa-clock",
+      },
+
+      approved_for_scan: {
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        border: "border-emerald-200",
+        label: "Approved For Scan",
+        icon: "fa-shield-check",
+      },
+
+      rejected_for_scan: {
+        bg: "bg-orange-50",
+        text: "text-orange-700",
+        border: "border-orange-200",
+        label: "Rejected For Scan",
+        icon: "fa-ban",
       },
     };
 
-    const config = statusMap[status] || {
-      bg: "bg-gray-50",
-      text: "text-gray-700",
-      border: "border-gray-200",
-      label: formatStatus(status),
-    };
-
-    return config;
+    return (
+      statusMap[status] || {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+        label: formatStatus(status),
+        icon: "fa-circle-question",
+      }
+    );
   };
 
   // Get recommendation badge styling
@@ -550,15 +578,20 @@ export default function AIListViewModern({
 
       case "status": {
         const badge = getStatusBadge(project.status);
+
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
+            <i
+              className={`fa-solid ${badge.icon} text-[11px] ${
+                badge.spinning ? "fa-spin" : ""
+              }`}
+            ></i>
             {badge.label}
           </span>
         );
       }
-
       case "assessment_status":
         return (
           <span className="text-muted-foreground">
@@ -570,7 +603,9 @@ export default function AIListViewModern({
         const s = getScoreDisplay(project);
 
         return (
-          <div className={`flex items-center gap-2 font-semibold ${s.color}`}>
+          <div
+            className={`flex items-center justify-center w-full gap-2 font-semibold ${s.color}`}
+          >
             {s.icon === "warning" ? (
               <span
                 key={`${project.project_id}-warning`}
@@ -1060,18 +1095,37 @@ export default function AIListViewModern({
               setShowApprovalModal(false);
               setSelected([]);
             } catch (err) {
-              const message =
-                err?.response?.data?.message ||
-                "Insufficient credits to run this scan.";
+              const rawMessage =
+                err?.response?.data?.message || err?.message || "";
 
-              show(message, { type: "error", duration: 10000 });
+              const isInsufficientCredits =
+                rawMessage.toLowerCase().includes("insufficient") ||
+                rawMessage.toLowerCase().includes("credit");
 
-              setApprovalError(true);
+              let message = "Something went wrong. Please try again.";
 
-              setTimeout(() => {
-                setApprovalError(false);
-                setShowApprovalModal(false);
-              }, 5000);
+              // ✅ ONLY override message for Approve-for-Scan
+              if (approvalAction === "scan_approve" && isInsufficientCredits) {
+                message = "Insufficient credits to run this scan.";
+              } else if (rawMessage) {
+                message = rawMessage;
+              }
+
+              toast(message, { type: "error", duration: 10000 });
+
+              // ❗ show red modal state ONLY for credit error on scan approval
+              const showCreditError =
+                approvalAction === "scan_approve" && isInsufficientCredits;
+
+              setApprovalError(showCreditError);
+
+              // ⏳ auto-close only for credit error
+              if (showCreditError) {
+                setTimeout(() => {
+                  setApprovalError(false);
+                  setShowApprovalModal(false);
+                }, 5000);
+              }
             }
           }}
         />
