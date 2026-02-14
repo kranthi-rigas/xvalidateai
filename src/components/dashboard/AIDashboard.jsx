@@ -156,11 +156,141 @@ export default function AIDashboard() {
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
   const navigate = useNavigate();
 
+  const NORMALIZATION_RULES = {
+    Students: ["student", "k-12", "school", "learner"],
+    Educators: [
+      "teacher",
+      "educator",
+      "faculty",
+      "professor",
+      "instructor",
+      "educational institution",
+    ],
+    Parents: ["parent", "guardian"],
+    "General Public": [
+      "general public",
+      "public",
+      "content creator",
+      "advertiser",
+    ],
+    "Enterprise / Business": [
+      "enterprise",
+      "business",
+      "organization",
+      "company",
+    ],
+    "Developers / IT": [
+      "developer",
+      "data scientist",
+      "it",
+      "engineer",
+      "administrator",
+    ],
+    Government: ["government", "agency", "public sector"],
+    Researchers: ["researcher", "research"],
+  };
+
+  const normalizeAudience = (text = "") => {
+    const lower = text.toLowerCase();
+    const matched = new Set();
+
+    Object.entries(NORMALIZATION_RULES).forEach(([category, keywords]) => {
+      keywords.forEach((keyword) => {
+        if (lower.includes(keyword)) {
+          matched.add(category);
+        }
+      });
+    });
+
+    if (matched.size === 0) {
+      matched.add("Others");
+    }
+
+    return Array.from(matched);
+  };
+
+  const normalizedAudienceCounts = React.useMemo(() => {
+    if (!dashboardAnalytics?.tool_kpis) return {};
+
+    const counts = {};
+
+    dashboardAnalytics.tool_kpis.forEach((tool) => {
+      const categories = normalizeAudience(tool.intended_users);
+
+      categories.forEach((category) => {
+        counts[category] = (counts[category] || 0) + 1;
+      });
+    });
+
+    return counts;
+  }, [dashboardAnalytics]);
+  const COMPLIANCE_RULES = {
+    GDPR: ["gdpr"],
+    "CCPA / CPRA": ["ccpa", "cpra", "california consumer privacy act"],
+    COPPA: ["coppa", "children's online privacy protection act"],
+    "SOC 2": ["soc 2"],
+    "SOC 3": ["soc 3"],
+    "ISO 27001": ["iso 27001", "iso/iec 27001"],
+    "ISO 27017": ["iso/iec 27017"],
+    "ISO 27018": ["iso/iec 27018"],
+    "Digital Services Act": ["digital services act", "dsa"],
+    "Privacy Shield": ["privacy shield"],
+    "Standard Contractual Clauses": ["standard contractual clauses", "scc"],
+    "PCI DSS": ["pci dss"],
+    FERPA: ["ferpa"],
+    HIPAA: ["hipaa"],
+    FedRAMP: ["fedramp"],
+    "ePrivacy Directive": ["eprivacy directive"],
+    "WCAG 2.1": ["wcag 2.1"],
+    "Section 508": ["section 508"],
+    "Data Protection Act (UK)": ["data protection act"],
+    "EU-US Data Privacy Framework": ["data privacy framework"],
+    "NIST Cybersecurity Framework": ["nist"],
+  };
+
+  const normalizeCompliance = (name = "") => {
+    const lower = name.toLowerCase();
+
+    for (const [standard, keywords] of Object.entries(COMPLIANCE_RULES)) {
+      if (keywords.some((keyword) => lower.includes(keyword))) {
+        return standard;
+      }
+    }
+
+    return "Other / Misc";
+  };
+
+  const normalizedComplianceCounts = React.useMemo(() => {
+    if (!dashboardAnalytics?.distributions?.compliance) return {};
+
+    const counts = {};
+
+    dashboardAnalytics.distributions.compliance.forEach(({ name, value }) => {
+      const normalized = normalizeCompliance(name);
+      counts[normalized] = (counts[normalized] || 0) + value;
+    });
+
+    return counts;
+  }, [dashboardAnalytics]);
+
   useEffect(() => {
-    // Fetch dashboard data
     fetchDashboardAnalytics()
       .then((data) => {
-        setDashboardAnalytics(data);
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+
+        // ✅ Filter only scan_completed tools
+        const filteredToolKpis = (data.tool_kpis || []).filter(
+          (tool) => tool.recommendation != "Not Assessed",
+        );
+
+        setDashboardAnalytics({
+          ...data,
+          tool_kpis: filteredToolKpis,
+        });
+
         setLoading(false);
       })
       .catch((err) => {
@@ -262,8 +392,9 @@ export default function AIDashboard() {
     }, 100);
 
     // Chart: Intended Users
-    const usersDistribution =
-      dashboardAnalytics.distributions?.intended_users || [];
+    const usersDistribution = Object.entries(normalizedAudienceCounts).map(
+      ([name, value]) => ({ name, value }),
+    );
 
     // Sanitize legend labels for display using regex but keep original names
     // available in hover via `customdata`.
@@ -320,67 +451,19 @@ export default function AIDashboard() {
     // Chart: Compliance Distribution (Horizontal Bar)
     const complianceRaw = dashboardAnalytics.distributions?.compliance || [];
 
-    const normalizeStatus = (name) => {
-      const n = name.toLowerCase();
-      if (n.includes("partial")) return "partial";
-      if (n.includes("claimed")) return "claimed";
-      if (n.includes("not")) return "notVerified";
-      return "full";
-    };
-
-    const normalizeStandard = (name) =>
-      name
-        .replace(/- partial.*/i, "")
-        .replace(/- not.*/i, "")
-        .replace(/- claimed.*/i, "")
-        .trim();
-
-    const grouped = {};
-    complianceRaw.forEach(({ name, value }) => {
-      const standard = normalizeStandard(name);
-      const status = normalizeStatus(name);
-
-      if (!grouped[standard]) {
-        grouped[standard] = { full: 0, partial: 0, claimed: 0, notVerified: 0 };
-      }
-      grouped[standard][status] += value;
-    });
-
-    const standards = Object.keys(grouped);
-
-    // Abbreviate labels for display, keep full names for hover
-    const abbreviateLabel = (label) => {
-      return label.length > 40 ? label.substring(0, 17) + "..." : label;
-    };
+    const sortedCompliance = Object.entries(normalizedComplianceCounts).sort(
+      (a, b) => b[1] - a[1],
+    );
 
     const compliancePlotData = [
       {
         type: "bar",
-        x: standards.map(
-          (s) =>
-            grouped[s].full +
-            grouped[s].partial +
-            grouped[s].claimed +
-            grouped[s].notVerified,
-        ),
-        y: standards.map((s) => abbreviateLabel(s)),
-        customdata: standards.map((s) => s),
+        x: sortedCompliance.map(([, value]) => value),
+        y: sortedCompliance.map(([name]) => name),
         orientation: "h",
-        hovertemplate: "<b>%{customdata}</b><br>Count: %{x}<extra></extra>",
+        hovertemplate: "<b>%{y}</b><br>Count: %{x}<extra></extra>",
         marker: {
-          color: standards.map((s) => {
-            const total =
-              grouped[s].full +
-              grouped[s].partial +
-              grouped[s].claimed +
-              grouped[s].notVerified;
-            const fullPercent = (grouped[s].full / total) * 100;
-            return fullPercent >= 80
-              ? "#10b981"
-              : fullPercent >= 50
-                ? "#3b82f6"
-                : "#f59e0b";
-          }),
+          color: "#3b82f6",
         },
       },
     ];
@@ -388,10 +471,19 @@ export default function AIDashboard() {
     const complianceLayout = {
       title: {
         text: "Compliance Standard Distribution",
-        font: { size: 18, family: "Inter", color: "#0F3053", weight: 700 },
+        font: {
+          size: 18,
+          family: "Inter",
+          color: "#0F3053",
+        },
       },
-      xaxis: { title: "Number of Tools", gridcolor: "#f1f5f9" },
-      yaxis: { autorange: "reversed" },
+      xaxis: {
+        title: "Number of Tools",
+        gridcolor: "#f1f5f9",
+      },
+      yaxis: {
+        autorange: "reversed",
+      },
       margin: { t: 50, b: 40, l: 250, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
@@ -454,7 +546,7 @@ export default function AIDashboard() {
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
-          value={overview.total_projects || 0}
+          value={overview.total_projects + 1 - overview.rejected_count || 0}
           icon="fa-solid fa-database"
           iconBg="bg-blue-500/10"
           iconColor="text-blue-500"
@@ -602,8 +694,8 @@ export default function AIDashboard() {
 
       {/* High Risk Alert Box */}
       <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
               <h3 className="font-bold text-lg">
@@ -613,7 +705,7 @@ export default function AIDashboard() {
           </div>
           <div className="p-0 overflow-x-auto flex-1">
             <ListTable
-              data={highRiskTools.slice(0, 3)}
+              data={highRiskTools}
               columns={HIGH_RISK_COLUMNS}
               renderCell={renderHighRiskCell(navigate)}
               hideEmptyMessage
@@ -627,12 +719,12 @@ export default function AIDashboard() {
       {/* Complete Tool Information Table */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="px-6 py-5 border-b flex justify-between items-center bg-white">
+          <div className="px-6 py-5 border-b flex justify-center items-center bg-white">
             <h3 className="font-bold text-lg">Complete Tool Information</h3>
           </div>
           <div className="flex-1 overflow-x-auto relative">
             <ListTable
-              data={allTools.slice(0, 10)}
+              data={allTools}
               columns={TOOL_COLUMNS}
               renderCell={renderToolCell(navigate)}
               tableClassName="custom-table"

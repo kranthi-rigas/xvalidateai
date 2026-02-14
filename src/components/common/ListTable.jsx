@@ -61,6 +61,9 @@ export default function ListTable({
 
   enableExport = false,
   exportFileName = "table-export",
+
+  columnWidths,
+  startResize,
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
 
@@ -187,23 +190,24 @@ export default function ListTable({
     );
   };
 
-  const [widths, setWidths] = React.useState(() => {
+  const isWidthControlled = !!columnWidths;
+
+  const [internalWidths, setInternalWidths] = React.useState(() => {
     const initial = {};
     columns.forEach((col) => {
       initial[col.key] = col.key === "checkbox" ? 60 : col.width || 260;
     });
-
     return initial;
   });
 
   const resizingRef = React.useRef(null);
 
-  const startResize = (key, e) => {
+  const startInternalResize = (key, e) => {
     e.preventDefault();
     resizingRef.current = {
       key,
       startX: e.clientX,
-      startWidth: widths[key],
+      startWidth: internalWidths[key],
     };
 
     document.addEventListener("mousemove", onMouseMove);
@@ -216,7 +220,7 @@ export default function ListTable({
     const { key, startX, startWidth } = resizingRef.current;
     const newWidth = Math.max(80, startWidth + (e.clientX - startX));
 
-    setWidths((prev) => ({
+    setInternalWidths((prev) => ({
       ...prev,
       [key]: newWidth,
     }));
@@ -293,41 +297,51 @@ export default function ListTable({
           {/* STICKY HEADER */}
           <thead className="sticky top-0 z-40 bg-white border-b border-border">
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => col.sortable && onSort(col.key)}
-                  className={`p-4 text-xs font-semibold uppercase tracking-wider
-                    text-muted-foreground group relative select-none
-                    ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
-                  style={{ width: widths[col.key] }}
-                >
-                  <div className="flex items-center justify-between">
-                    {col.key === "checkbox" ? (
-                      <input
-                        type="checkbox"
-                        checked={col.allSelected || false}
-                        onChange={(e) => col.onToggleAll?.(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-primary"
-                      />
-                    ) : (
-                      <>
-                        <span>{col.label}</span>
-                        {col.sortable && (
-                          <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100" />
-                        )}
-                      </>
-                    )}
-                  </div>
+              {columns.map((col) => {
+                const width = isWidthControlled
+                  ? columnWidths?.[col.key]
+                  : internalWidths?.[col.key];
 
-                  {col.resizable && (
-                    <div
-                      onMouseDown={(e) => startResize(col.key, e)}
-                      className="absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary cursor-col-resize"
-                    />
-                  )}
-                </th>
-              ))}
+                return (
+                  <th
+                    key={col.key}
+                    onClick={() => col.sortable && onSort(col.key)}
+                    className={`p-4 text-xs font-semibold uppercase tracking-wider
+            text-muted-foreground group relative select-none
+            ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
+                    style={{ width }}
+                  >
+                    <div className="flex items-center justify-between">
+                      {col.key === "checkbox" ? (
+                        <input
+                          type="checkbox"
+                          checked={col.allSelected || false}
+                          onChange={(e) => col.onToggleAll?.(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-primary"
+                        />
+                      ) : (
+                        <>
+                          <span>{col.label}</span>
+                          {col.sortable && (
+                            <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100" />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {col.resizable && (
+                      <div
+                        onMouseDown={(e) =>
+                          isWidthControlled
+                            ? startResize?.(col.key, e)
+                            : startInternalResize(col.key, e)
+                        }
+                        className="absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary cursor-col-resize"
+                      />
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
@@ -345,30 +359,36 @@ export default function ListTable({
             ) : (
               sortedData.map((row, rowIndex) => (
                 <tr key={row[rowKey] ?? rowIndex} className="hover:bg-muted/20">
-                  {columns.map((col) => (
-                    <td
-                      key={`${row[rowKey] ?? rowIndex}-${col.key}`}
-                      className={`p-4 ${
-                        col.key === "checkbox"
-                          ? "pl-6 pr-2"
-                          : col.truncate === false
-                            ? "break-words whitespace-normal"
-                            : "truncate"
-                      }`}
-                      style={{
-                        width: widths[col.key],
-                        minWidth: widths[col.key],
-                      }}
-                    >
-                      {col.truncate === false ? (
-                        safeRenderCell(renderCell, row, col.key)
-                      ) : (
-                        <TruncatedCell>
-                          {safeRenderCell(renderCell, row, col.key)}
-                        </TruncatedCell>
-                      )}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                    const width = isWidthControlled
+                      ? columnWidths?.[col.key]
+                      : internalWidths?.[col.key];
+
+                    return (
+                      <td
+                        key={`${row[rowKey] ?? rowIndex}-${col.key}`}
+                        className={`p-4 ${
+                          col.key === "checkbox"
+                            ? "pl-6 pr-2"
+                            : col.truncate === false
+                              ? "break-words whitespace-normal"
+                              : "truncate"
+                        }`}
+                        style={{
+                          width,
+                          minWidth: width,
+                        }}
+                      >
+                        {col.truncate === false ? (
+                          safeRenderCell(renderCell, row, col.key)
+                        ) : (
+                          <TruncatedCell>
+                            {safeRenderCell(renderCell, row, col.key)}
+                          </TruncatedCell>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}

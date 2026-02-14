@@ -2,7 +2,7 @@ import ModernSettings from "@/components/dashboard/Settings/ModernSettings";
 import MetaComponent from "@/components/common/MetaComponent";
 
 const metadata = {
-  title: "Settings || Academy51 - Smart Learning for smarter generation",
+  title: "Settings || XValidate",
   description:
     "Elevate your e-learning content with Educrat, the most impressive LMS template for online courses, education and LMS platforms.",
 };

@@ -182,7 +182,7 @@ export default function ModernDashboardLayout() {
           {/* Collapse Button - Only Show When Expanded */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={` rounded-lg flex items-center justify-center text-muted-foreground transition-colors`}
+            className={` sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors`}
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <i

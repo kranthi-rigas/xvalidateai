@@ -20419,6 +20419,11 @@ background: transparent !important;
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.sidebar-collapse-btn:hover {
+  color: black;
+}
+
 /* 🔵 Common button spinner */
 .btn-spinner {
   width: 14px;
