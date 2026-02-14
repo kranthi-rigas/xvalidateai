@@ -519,7 +519,9 @@ export default function ModernSettings() {
                 </div>
                 {/* Live validation message */}
                 {passwordForm.confirm_password && (
-                  <p className={`text-xs ${passwordsMatch ? "text-green-600" : "text-red-600"}`}>
+                  <p
+                  key={passwordsMatch? true : false} 
+                  className={`text-xs ${passwordsMatch ? "text-green-600" : "text-red-600"}`}>
                     {passwordsMatch ? (
                       <span><i className="fa-solid fa-check mr-1"></i>Passwords match</span>
                     ) : (
