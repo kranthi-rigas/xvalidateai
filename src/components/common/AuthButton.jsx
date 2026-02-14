@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { COLORS } from "@/styles/colors";
 
-export default function AwsButton({
+export default function AuthButton({
   label,
   disabled = false,
   onClick,
@@ -35,9 +35,9 @@ export default function AwsButton({
       onMouseLeave={() => setHover(false)}
       className="lh-1 tool-assessment-btn"
       style={{
-        padding: "8px 20px",
-        minHeight: 36,
-        fontSize: "14px",
+        padding: "14px 32px",
+        minHeight: 48,
+        fontSize: "16px",
         fontWeight: 500,
         borderRadius: 8,
         display: "inline-flex",

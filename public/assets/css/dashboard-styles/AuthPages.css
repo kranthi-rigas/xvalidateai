@@ -1135,11 +1135,12 @@ div:focus-within .password-view {
 
 /* 2-Column Main Layout */
 .auth-main-2col {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   padding-top: 4rem;
   position: relative;
   background: linear-gradient(to bottom right, #fafafa, rgba(88, 191, 206, 0.05), #f8fafc);
+  overflow: hidden;
 }
 
 /* Background Grid Pattern */
@@ -1190,18 +1191,20 @@ div:focus-within .password-view {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  position: relative;
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
   z-index: 10;
+  overflow: hidden;
 }
 
-/* Signup-specific: Move hero section up to be fully visible without scrolling */
+/* Signup-specific adjustments */
 .auth-page[data-mode="signup"] .auth-main-2col {
-  padding-top: 5rem;
+  padding-top: 4rem;
 }
 
 .auth-page[data-mode="signup"] .auth-hero {
-  justify-content: flex-start;
-  padding-top: 3.5rem;
+  justify-content: center;
 }
 
 .auth-hero-content {
@@ -1344,11 +1347,34 @@ div:focus-within .password-view {
 .auth-form-section {
   width: 50%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem;
+  padding-top: 3rem;
+  padding-bottom: 5rem;
   position: relative;
   z-index: 10;
+  overflow-y: auto;
+  height: calc(100vh - 4rem);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(88, 191, 206, 0.3) transparent;
+}
+
+.auth-form-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-form-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-form-section::-webkit-scrollbar-thumb {
+  background: rgba(88, 191, 206, 0.3);
+  border-radius: 3px;
+}
+
+.auth-form-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(88, 191, 206, 0.5);
 }
 
 .auth-form-section .auth-form-container {
@@ -1538,6 +1564,8 @@ div:focus-within .password-view {
     flex-direction: column;
     padding-top: 5rem;
     padding-bottom: 5rem;
+    height: auto;
+    overflow: auto;
   }
 
   .auth-hero {
@@ -1545,6 +1573,10 @@ div:focus-within .password-view {
     padding: 2rem 1.5rem;
     text-align: center;
     align-items: center;
+    position: relative;
+    top: 0;
+    height: auto;
+    overflow: visible;
   }
 
   .auth-hero-content {
@@ -1580,6 +1612,8 @@ div:focus-within .password-view {
   .auth-form-section {
     width: 100%;
     padding: 1.5rem;
+    height: auto;
+    overflow: visible;
   }
 
   .auth-nav-links {
