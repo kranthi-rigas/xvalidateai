@@ -30,7 +30,7 @@ const SubscriptionSuccess = () => {
           <i className="fa-solid fa-circle-check"></i>
         </div>
 
-        <h2>Payment Successful 🎉</h2>
+        <h2>Payment Successful</h2>
         <p className="subtitle">Your subscription is being activated.</p>
 
         {/* Spinner */}

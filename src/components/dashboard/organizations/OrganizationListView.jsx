@@ -48,6 +48,7 @@ export default function OrganizationListView() {
 
   /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     name: 220,
     status: 160,
     email: 230,
@@ -216,14 +217,6 @@ export default function OrganizationListView() {
       resizable: false,
       allSelected: filtered.length > 0 && selected.length === filtered.length,
       onToggleAll: toggleSelectAll,
-      render: (row) => (
-        <input
-          type="checkbox"
-          checked={selected.includes(row.org_id)}
-          onChange={() => toggleSelect(row.org_id)}
-          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-        />
-      ),
     },
     {
       key: "name",
@@ -237,7 +230,6 @@ export default function OrganizationListView() {
       sortable: true,
       resizable: true,
     },
-
     { key: "email", label: "Email", sortable: true, resizable: true },
     { key: "address", label: "Address", sortable: false, resizable: true },
     {
@@ -308,7 +300,14 @@ export default function OrganizationListView() {
   const renderCell = (row, key) => {
     switch (key) {
       case "checkbox":
-        return columns[0].render(row);
+        return (
+          <input
+            type="checkbox"
+            checked={selected.includes(row.org_id)}
+            onChange={() => toggleSelect(row.org_id)}
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          />
+        );
 
       case "name":
         return (
@@ -323,6 +322,7 @@ export default function OrganizationListView() {
       case "status": {
         const badge = getStatusBadge(row.status);
         const status = (row.status || "").toLowerCase();
+
         return (
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
@@ -355,7 +355,6 @@ export default function OrganizationListView() {
         return row[key] || "-";
     }
   };
-
   const visibleTableColumns = columns.filter(
     (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );

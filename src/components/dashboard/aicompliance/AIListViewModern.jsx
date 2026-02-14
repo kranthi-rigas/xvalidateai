@@ -603,7 +603,9 @@ export default function AIListViewModern({
         const s = getScoreDisplay(project);
 
         return (
-          <div className={`flex items-center gap-2 font-semibold ${s.color}`}>
+          <div
+            className={`flex items-center justify-center w-full gap-2 font-semibold ${s.color}`}
+          >
             {s.icon === "warning" ? (
               <span
                 key={`${project.project_id}-warning`}
