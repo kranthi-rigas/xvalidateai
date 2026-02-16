@@ -647,11 +647,14 @@ div:focus-within .password-view {
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  text-align: center;
+  
 }
 
 .auth-form-subtitle {
   color: var(--auth-muted-foreground, #64748B);
   font-size: 1.125rem;
+  text-align: center;
 }
 
 /* Form Elements */

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
 import { updatePassword } from "@/apiIntegration/auth";
@@ -6,6 +6,32 @@ import { updatePassword } from "@/apiIntegration/auth";
 
 export default function ModernSettings() {
   const [activeTab, setActiveTab] = useState("edit");
+  const [userData, setUserData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    country: "",
+  });
+
+  // Load user data from localStorage on mount
+  useEffect(() => {
+    try {
+      const userInfo = localStorage.getItem("user_info");
+      if (userInfo) {
+        const parsed = JSON.parse(userInfo);
+        setUserData({
+          first_name: parsed.first_name || "",
+          last_name: parsed.last_name || "",
+          email: parsed.email || "",
+          phone: parsed.phone || "",
+          country: parsed.country || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  }, []);
 
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
@@ -64,13 +90,13 @@ export default function ModernSettings() {
         new_password: passwordForm.new_password,
       });
 
-      setPasswordSuccess("Password changed successfully! Redirecting to login...");
+      setPasswordSuccess("Password changed successfully! Redirecting to home...");
 
       // Clear storage and redirect after 2 seconds
       setTimeout(() => {
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace("/login");
+        window.location.replace("/");
       }, 2000);
     } catch (err) {
       // Handle token errors after password change
@@ -80,7 +106,7 @@ export default function ModernSettings() {
       ) {
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace("/login");
+        window.location.replace("/");
         return;
       }
 
@@ -142,7 +168,10 @@ export default function ModernSettings() {
                   className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white overflow-hidden"
                   style={{ backgroundColor: COLORS.primary }}
                 >
-                  <span>RP</span>
+                  <span>
+                    {(userData.first_name?.[0] || "").toUpperCase()}
+                    {(userData.last_name?.[0] || "").toUpperCase()}
+                  </span>
                 </div>
                 <button
                   className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm transition-colors border-2 border-white"
@@ -196,7 +225,7 @@ export default function ModernSettings() {
                       type="text"
                       id="firstName"
                       name="firstName"
-                      defaultValue="Rakesh"
+                      value={userData.first_name}
                       className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                   </div>
@@ -218,7 +247,7 @@ export default function ModernSettings() {
                       type="text"
                       id="lastName"
                       name="lastName"
-                      defaultValue="Polepeddi"
+                      value={userData.last_name}
                       className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                   </div>
@@ -240,7 +269,7 @@ export default function ModernSettings() {
                       type="email"
                       id="email"
                       name="email"
-                      defaultValue="rakesh@academy51.com"
+                      value={userData.email}
                       className="block w-full pl-11 pr-24 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                     />
                     <span className="absolute right-3 pointer-events-none">
@@ -312,6 +341,7 @@ export default function ModernSettings() {
                         id="phone"
                         name="phone"
                         placeholder="98765 43210"
+                        value={userData.phone}
                         className="block w-full pl-11 pr-3 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
                       />
                     </div>
