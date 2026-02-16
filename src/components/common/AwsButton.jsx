@@ -10,6 +10,7 @@ export default function AwsButton({
   children,
   variant = "primary",
   type = "button",
+  size = "md", // ✅ NEW - "sm" | "md" | "lg"
 }) {
   const [hover, setHover] = useState(false);
 
@@ -26,6 +27,15 @@ export default function AwsButton({
   const secondaryBorder = "#0F3053";
   const secondaryText = "#0F3053";
 
+  // ✅ Size configurations
+  const sizeConfig = {
+    sm: { padding: "6px 16px", minHeight: 32, fontSize: "12px" },
+    md: { padding: "8px 20px", minHeight: 36, fontSize: "14px" },
+    lg: { padding: "14px 32px", minHeight: 48, fontSize: "16px" },
+  };
+
+  const currentSize = sizeConfig[size] || sizeConfig.md;
+
   const isDisabled = disabled || loading; // ✅ auto-disable while loading
 
   return (
@@ -37,9 +47,7 @@ export default function AwsButton({
       onMouseLeave={() => setHover(false)}
       className="lh-1 tool-assessment-btn"
       style={{
-        padding: "8px 20px",
-        minHeight: 36,
-        fontSize: "14px",
+        ...currentSize,
         fontWeight: 500,
         borderRadius: 8,
         display: "inline-flex",

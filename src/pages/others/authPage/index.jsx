@@ -6,7 +6,7 @@ import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
 import CountrySelect from "@/components/common/CountrySelect";
-import AuthButton from "@/components/common/AuthButton";
+import AwsButton from "@/components/common/AwsButton";
 import { useContextElement } from "@/context/Context";
 
 // Auth Components
@@ -469,9 +469,10 @@ export default function AuthPage() {
 
 
                   {/* Submit Button */}
-                  <AuthButton
+                  <AwsButton
                     type="submit"
                     disabled={loading}
+                    size="lg"
                     label={
                       loading
                         ? mode === "signup"
@@ -486,7 +487,7 @@ export default function AuthPage() {
                     {!loading && (
                       <i className="fa-solid fa-arrow-right"></i>
                     )}
-                  </AuthButton>
+                  </AwsButton>
 
                   {/* Terms Agreement (Signup Only) */}
                   {mode === "signup" && (
