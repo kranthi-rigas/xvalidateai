@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+// import {AwsButton} from "@/components/common/AwsButton";    
+import AwsButton from "@/components/common/AwsButton";
 
 export default function DashboardNotFound() {
     const navigate = useNavigate();
@@ -27,13 +29,16 @@ export default function DashboardNotFound() {
 
                         {/* Action Buttons */}
                         <div className="d-flex justify-center gap-3 flex-wrap">
-                            <button
+                           
+                            <AwsButton
+                                label="back to home"
+                                size="lg"
                                 onClick={handleGoBack}
-                                className="button -md -purple-1 text-white"
-                            >
-                                {/* <i className="icon-arrow-left mr-10"></i> */}
-                                Back to Home
-                            </button>
+                                // className="button -md -purple-1 text-white"
+                            />      
+
+                            
+                            
 
                         </div>
 

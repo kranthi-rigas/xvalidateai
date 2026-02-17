@@ -472,6 +472,8 @@ export default function AuthPage() {
                   <AwsButton
                     type="submit"
                     disabled={loading}
+                    size="lg"
+                    loading={loading}
                     label={
                       loading
                         ? mode === "signup"
