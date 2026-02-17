@@ -772,14 +772,39 @@ div:focus-within .password-view {
 }
 
 .auth-forgot-password {
+  position: relative;
+  display: inline-block;
   font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-primary-dark, #0F3357) !important;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: transform 0.25s ease;
+}
+
+/* ⭐ Text slide */
+.auth-forgot-password:hover {
+  transform: translateX(4px);
+}
+
+/* ⭐ Underline animation */
+.auth-forgot-password::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+
+.auth-forgot-password:hover::after {
+  width: 100%;
 }
 
 .auth-forgot-password:hover {
-  color: var(--color-primary-dark, #0F3357) !important;
+  transform: translateX(3px) scale(1.03);
+  text-shadow: 0 0 6px rgba(15, 51, 87, 0.3) !important;
 }
 
 /* Submit Button */
