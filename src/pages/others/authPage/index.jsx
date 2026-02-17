@@ -473,6 +473,7 @@ export default function AuthPage() {
                     type="submit"
                     disabled={loading}
                     size="lg"
+                    loading={loading}
                     label={
                       loading
                         ? mode === "signup"

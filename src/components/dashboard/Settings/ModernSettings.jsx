@@ -581,6 +581,7 @@ export default function ModernSettings() {
               </button>
               <AwsButton
                 type="submit"
+                loading={passwordLoading}
                 label={passwordLoading ? "Updating..." : "Change Password"}
                 variant="primary"
                 disabled={passwordLoading || !passwordsMatch}
