@@ -773,13 +773,13 @@ div:focus-within .password-view {
 
 .auth-forgot-password {
   font-size: 0.875rem;
-  color: var(--auth-secondary, #58BFCE);
+  color: var(--color-primary-dark, #0F3357) !important;
   text-decoration: none;
   transition: color 0.3s;
 }
 
 .auth-forgot-password:hover {
-  color: var(--auth-primary, #0F3053);
+  color: var(--color-primary-dark, #0F3357) !important;
 }
 
 /* Submit Button */
@@ -1028,7 +1028,7 @@ div:focus-within .password-view {
 }
 
 .auth-switch-mode a {
-  color: var(--auth-primary, #0F3053);
+  color: var(--color-primary-dark, #0F3357);
   font-weight: 600;
   text-decoration: none;
   margin-left: 0.5rem;
@@ -1044,12 +1044,12 @@ div:focus-within .password-view {
   height: 2px;
   bottom: -2px;
   left: 0;
-  background-color: var(--auth-secondary, #58BFCE);
+  background-color: var(--color-primary-dark, #0F3357);
   transition: width 0.3s ease;
 }
 
 .auth-switch-mode a:hover {
-  color: var(--auth-secondary, #58BFCE);
+  color: var(--color-primary-dark, #0F3357);
 }
 
 .auth-switch-mode a:hover::after {
@@ -1058,7 +1058,7 @@ div:focus-within .password-view {
 
 /* Focus State for Accessibility */
 .auth-switch-mode a:focus {
-  outline: 2px solid var(--auth-secondary, #58BFCE);
+  outline: 2px solid var(--color-primary-dark, #0F3357);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -1072,7 +1072,7 @@ div:focus-within .password-view {
   position: relative;
   display: inline-block;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--color-primary-dark, #0F3357) !important;
   transition: transform 0.25s ease;
 }
 
@@ -1099,7 +1099,7 @@ div:focus-within .password-view {
 
 .auth-switch-link:hover {
   transform: translateX(3px) scale(1.03);
-  text-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+  text-shadow: 0 0 6px rgba(15, 51, 87, 0.3) !important;
 }
 
 /* ========================================
