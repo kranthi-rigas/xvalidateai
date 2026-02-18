@@ -47,6 +47,7 @@ import AILiteracyPage from "./pages/dashboard/dashboard-ailiteracy";
 import FaqsPage from "./pages/dashboard/dashboard-faqs";
 import SubscriptionSuccess from "./components/dashboard/Billing/SubscriptionSuccess";
 import SubscriptionCancel from "./components/dashboard/Billing/SubscriptionCancel";
+import AuditLogsPage from "./pages/dashboard/dashboard-audittrail";
 
 function App() {
   useEffect(() => {
@@ -102,7 +103,9 @@ function App() {
                 <Route path="dashboard" element={<DshbDashboardPage />} />
                 <Route index element={<AIDashboardPage />} />
                 <Route path="ailiteracy" element={<AILiteracyPage />} />
+
                 <Route path="faqs" element={<FaqsPage />} />
+                <Route path="audittrail" element={<AuditLogsPage />} />
                 <Route path="forums" element={<DshbForumsPage />} />
                 <Route path="grades" element={<DshbGradesPage />} />
                 <Route path="messages" element={<DshbMessagesPage />} />
