@@ -77,7 +77,7 @@ export default function AuthPage() {
       const selectors = [
         ".auth-page",
         ".auth-main",
-        ".auth-section",
+        ".auth-form-section",
         ".auth-form-container",
         "main",
         "#root",
