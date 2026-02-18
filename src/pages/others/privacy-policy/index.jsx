@@ -1,4 +1,3 @@
-import PageLinks from "@/components/common/PageLinks";
 import Preloader from "@/components/common/Preloader";
 import AuthFooter from "@/components/others/AuthFooter";
 import AuthHeader from "@/components/others/AuthHeader";
@@ -8,9 +7,9 @@ import MetaComponent from "@/components/common/MetaComponent";
 
 const metadata = {
   title:
-    "Privacy Policy || XVALIDATEAI - AI Compliance Assessment Platform",
+    "Privacy Policy || MyAcademy51 - AI Compliance Assessment Platform",
   description:
-    "Learn how XVALIDATEAI collects, uses, and protects your personal information.",
+    "Learn how MyAcademy51 collects, uses, and protects your personal information.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -21,7 +20,6 @@ export default function PrivacyPolicyPage() {
 
       <AuthHeader />
       <div className="content-wrapper js-content-wrapper overflow-hidden">
-        <PageLinks />
         <PrivacyPolicy />
         <AuthFooter />
       </div>

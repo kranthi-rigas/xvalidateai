@@ -9,18 +9,10 @@ export default function AuthFooter() {
             © {new Date().getFullYear()} XVALIDATEAI INC. ALL RIGHTS RESERVED.
           </div>
           <div className="auth-page-footer-links">
-            <a
-              href="https://myacademy51.com/privacy-policy/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
               Privacy Policy
             </a>
-            <a
-              href="https://myacademy51.com/terms-of-use/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="/terms" target="_blank" rel="noopener noreferrer">
               Terms of Service
             </a>
             <a href="mailto:support@academy51.com?subject=Support Request - XVALIDATEAI">
