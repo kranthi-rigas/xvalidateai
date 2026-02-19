@@ -179,14 +179,14 @@ export default function FaqPage() {
           >
             Still have questions? Reach us at{" "}
             <a
-              href="mailto:support@academy51.com"
+              href="mailto:support@xvalidateai.com"
               style={{
                 textDecoration: "none",
                 color: COLORS.primary,
                 fontWeight: 600,
               }}
             >
-              support@xvalidateai.com
+              support@xvalidate.com
             </a>
           </div>
         </div>
