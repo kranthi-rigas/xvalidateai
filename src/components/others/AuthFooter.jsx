@@ -15,7 +15,7 @@ export default function AuthFooter() {
             <a href="/terms" target="_blank" rel="noopener noreferrer">
               Terms of Service
             </a>
-            <a href="mailto:support@academy51.com?subject=Support Request - XVALIDATEAI">
+            <a href="mailto:support@xvalidateai.com?subject=Support Request - XVALIDATEAI">
             <i className="fa-solid fa-envelope" style={{ marginRight: "0.5rem" }}></i>
               Support
             </a>
