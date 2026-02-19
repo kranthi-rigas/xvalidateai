@@ -101,7 +101,7 @@ export default function ModernDashboardLayout() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      setShowLogoutModal(false);
+      // setShowLogoutModal(false);
 
       const token =
         localStorage.getItem("refresh_token") ||
@@ -422,6 +422,7 @@ export default function ModernDashboardLayout() {
                 size="lg"
               />
               <AwsButton
+                loading={isLoggingOut}
                 label={isLoggingOut ? "Logging out..." : "Logout"}
                 variant="primary"
                 onClick={handleLogout}
