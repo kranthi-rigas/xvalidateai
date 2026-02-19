@@ -424,7 +424,7 @@ export default function ModernDashboardLayout() {
               <AwsButton
                 loading={isLoggingOut}
                 label={isLoggingOut ? "Logging out..." : "Logout"}
-                variant="primary"
+                variant="danger"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 size="lg"
