@@ -3,6 +3,64 @@ import React from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+function DisabledTooltipButton({
+  disabled,
+  tooltip,
+  onClick,
+  children,
+  className,
+}) {
+  const ref = React.useRef(null);
+  const [position, setPosition] = React.useState(null);
+
+  const handleMouseEnter = () => {
+    if (!disabled || !ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + window.scrollX + rect.width / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition(null);
+  };
+
+  return (
+    <>
+      <div
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-block"
+      >
+        <button disabled={disabled} onClick={onClick} className={className}>
+          {children}
+        </button>
+      </div>
+
+      {disabled &&
+        position &&
+        createPortal(
+          <div
+            style={{
+              position: "absolute",
+              top: position.top,
+              left: position.left,
+              transform: "translate(-50%, -100%)",
+            }}
+            className="bg-gray-900 text-white text-xs px-3 py-2 rounded-md shadow-2xl z-[99999] whitespace-nowrap"
+          >
+            {tooltip}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
 /* ---------- SAFE HELPERS ---------- */
 const safeRenderCell = (renderCell, row, key) => {
   try {
@@ -60,6 +118,7 @@ export default function ListTable({
   selectionCounterLabel = null,
 
   enableExport = false,
+  isDisableExport = false,
   exportFileName = "table-export",
 
   columnWidths,
@@ -269,13 +328,20 @@ export default function ListTable({
 
       {enableExport && (
         <div className="flex justify-end px-6 py-3 border-b bg-white">
-          <button
+          <DisabledTooltipButton
+            disabled={isDisableExport}
+            tooltip="Upgrade plan to export"
             onClick={handleExport}
-            className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 transition"
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition
+    ${
+      isDisableExport
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-primary text-white hover:opacity-90"
+    }`}
           >
             <i className="fa-solid fa-file-excel mr-2" />
             Export to Excel
-          </button>
+          </DisabledTooltipButton>
         </div>
       )}
 
