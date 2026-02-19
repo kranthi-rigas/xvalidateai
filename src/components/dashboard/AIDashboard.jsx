@@ -547,7 +547,7 @@ export default function AIDashboard() {
   return (
     <div className="space-y-8">
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-4 gap-6">
+      <section id="stats-section" className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
@@ -588,10 +588,10 @@ export default function AIDashboard() {
 
       <section>
         {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="font-bold text-lg">Quality Comparison</h3>
-            <div className="flex items-center gap-2 w-full max-w-[600px]">
+        <div className="dashboard-card p-4 mb-4 h-[420px] flex flex-col">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 mb-2">
+            <h3 className="font-bold text-lg shrink-0">Quality Comparison</h3>
+            <div className="flex items-center gap-2 w-full md:max-w-[600px]">
               <label className="text-sm font-medium whitespace-nowrap">
                 Select Tools (Max 5):
               </label>

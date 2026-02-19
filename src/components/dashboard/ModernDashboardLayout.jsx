@@ -182,45 +182,53 @@ export default function ModernDashboardLayout() {
               } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-all duration-300`
         }
       >
+        {/* Sidebar top bar:
+             Mobile  → logo centered, ✕ button pinned right
+             Desktop → logo left, collapse button right (justify-between) */}
         <div
-          className={`h-20 flex items-center border-b border-sidebar-border justify-between ${effectiveCollapsed ? "px-2" : "px-6"}`}
+          className={`h-20 relative flex items-center border-b border-sidebar-border
+            ${mobileSidebarOpen ? "justify-center" : `justify-between ${effectiveCollapsed ? "px-2" : "px-6"}`}`}
         >
           {/* Expanded Logo */}
-          <Link
-            to="/dashboard"
-            className={`flex items-center cursor-pointer hover:opacity-80 transition-opacity ${effectiveCollapsed ? "hidden" : ""}`}
-            title="Go to dashboard"
-          >
-            <img
-              src="/assets/img/logo/xvalidateai-logo.svg"
-              alt="XVALIDATEAI"
-              className="h-10 w-auto"
-            />
-          </Link>
+          {!effectiveCollapsed && (
+            <Link
+              to="/dashboard"
+              className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+              title="Go to dashboard"
+            >
+              <img
+                src="/assets/img/logo/xvalidateai-logo.svg"
+                alt="XVALIDATEAI"
+                className="h-10 w-auto"
+              />
+            </Link>
+          )}
 
-          {/* Collapsed Logo - Clickable */}
-          <Link
-            to="/dashboard"
-            className={`${effectiveCollapsed ? "" : "hidden"} cursor-pointer hover:opacity-80 transition-opacity`}
-            title="Go to dashboard"
-          >
-            <img
-              src="/assets/img/general/collapsed-app-logo.png"
-              alt="XVALIDATEAI"
-              className="w-10 mx-auto"
-            />
-          </Link>
+          {/* Collapsed Logo (desktop only) */}
+          {effectiveCollapsed && (
+            <Link
+              to="/dashboard"
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              title="Go to dashboard"
+            >
+              <img
+                src="/assets/img/general/collapsed-app-logo.png"
+                alt="XVALIDATEAI"
+                className="w-10 mx-auto"
+              />
+            </Link>
+          )}
 
-          {/* Mobile close button – visible only on mobile */}
+          {/* Mobile close button – absolute right so logo stays centered */}
           <button
             onClick={() => setMobileSidebarOpen(false)}
-            className="lg:hidden sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors"
+            className="lg:hidden absolute right-4 sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors"
             title="Close sidebar"
           >
-            <i className="fa-solid fa-xmark text-lg" data-fa-i2svg="false"></i>
+            <i className="fa-solid fa-xmark text-xl" data-fa-i2svg="false"></i>
           </button>
 
-          {/* Desktop collapse button – hidden on mobile */}
+          {/* Desktop collapse button */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="hidden lg:flex sidebar-collapse-btn rounded-lg items-center justify-center text-muted-foreground transition-colors"
@@ -371,7 +379,7 @@ export default function ModernDashboardLayout() {
         {/* Scrollable Content Area */}
         <div
           key={location.pathname}
-          className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20"
+          className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20 min-h-0"
         >
           {isAuthenticated ? <Outlet /> : <Navigate to="/auth?mode=login" />}
         </div>

@@ -16,7 +16,7 @@ export default function Header({ onToggleMobileSidebar }) {
       id="header"
       className="h-20 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0"
     >
-      <div className="flex items-center">
+      <div className="flex items-center min-w-0 flex-1">
         {/* Hamburger — mobile only */}
         <button
           className="lg:hidden mr-2 p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
@@ -31,7 +31,7 @@ export default function Header({ onToggleMobileSidebar }) {
           description={headerContent.description}
         />
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
         <HeaderCredits />
         {/* <HeaderSearch /> */}
         <HeaderNotifications hasUnread={true} />

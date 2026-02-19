@@ -90,6 +90,20 @@ aside {
 
 /* Made with Bob */
 
+/* ─────────────────────────────────────────────────
+   Generic page wrappers used across dashboard pages
+───────────────────────────────────────────────── */
+
+/* spicy-y / space-y  — full-height page wrapper with vertical rhythm */
+.spicy-y,
+.space-y {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;          /* 24px between sections */
+  min-height: 100%;     /* fill the scroll container */
+  width: 100%;
+}
+
 /* ─────────────────────────────────────────────
    Mobile sidebar – full-screen overlay
 ───────────────────────────────────────────── */
