@@ -21,6 +21,7 @@ export default function ModernDashboardLayout() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("User");
@@ -86,6 +87,7 @@ export default function ModernDashboardLayout() {
   }, []);
 
   useEffect(() => {
+    setMobileSidebarOpen(false);
     sidebarItems.forEach((item) => {
       if (item.children?.some((child) => isActiveRoute(child.href))) {
         setOpenMenuId(item.id);
@@ -129,6 +131,22 @@ export default function ModernDashboardLayout() {
   };
 
   const { userCredits, setIsLoggedIn } = useContextElement();
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileSidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileSidebarOpen]);
+
+  // On mobile the sidebar is always shown expanded (never icon-only)
+  const effectiveCollapsed = sidebarCollapsed && !mobileSidebarOpen;
+
   const isActiveRoute = (href) => {
     if (!href) return false;
 
@@ -145,18 +163,32 @@ export default function ModernDashboardLayout() {
 
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
+      {/* Mobile backdrop overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`${sidebarCollapsed ? "w-20" : "w-64"} bg-sidebar border-r border-sidebar-border h-full flex flex-col z-20 shadow-lg transition-all duration-300`}
+        className={
+          mobileSidebarOpen
+            ? "fixed inset-0 z-50 flex flex-col w-full bg-sidebar border-r border-sidebar-border shadow-lg overflow-y-auto"
+            : `hidden lg:flex lg:flex-col ${
+                sidebarCollapsed ? "lg:w-20" : "lg:w-64"
+              } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-all duration-300`
+        }
       >
         <div
-          className={`h-20 flex items-center border-b border-sidebar-border justify-between ${sidebarCollapsed ? "px-2" : "px-6"}`}
+          className={`h-20 flex items-center border-b border-sidebar-border justify-between ${effectiveCollapsed ? "px-2" : "px-6"}`}
         >
           {/* Expanded Logo */}
           <Link
             to="/dashboard"
-            className={`flex items-center cursor-pointer hover:opacity-80 transition-opacity ${sidebarCollapsed ? "hidden" : ""}`}
+            className={`flex items-center cursor-pointer hover:opacity-80 transition-opacity ${effectiveCollapsed ? "hidden" : ""}`}
             title="Go to dashboard"
           >
             <img
@@ -169,7 +201,7 @@ export default function ModernDashboardLayout() {
           {/* Collapsed Logo - Clickable */}
           <Link
             to="/dashboard"
-            className={`${sidebarCollapsed ? "" : "hidden"} cursor-pointer hover:opacity-80 transition-opacity`}
+            className={`${effectiveCollapsed ? "" : "hidden"} cursor-pointer hover:opacity-80 transition-opacity`}
             title="Go to dashboard"
           >
             <img
@@ -179,14 +211,23 @@ export default function ModernDashboardLayout() {
             />
           </Link>
 
-          {/* Collapse Button - Only Show When Expanded */}
+          {/* Mobile close button – visible only on mobile */}
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors"
+            title="Close sidebar"
+          >
+            <i className="fa-solid fa-xmark text-lg" data-fa-i2svg="false"></i>
+          </button>
+
+          {/* Desktop collapse button – hidden on mobile */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={` sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors`}
+            className="hidden lg:flex sidebar-collapse-btn rounded-lg items-center justify-center text-muted-foreground transition-colors"
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <i
-              className={`fa-solid ${sidebarCollapsed ? "fa-angle-right mr-2" : "fa-angles-left"}`}
+              className={`fa-solid ${effectiveCollapsed ? "fa-angle-right mr-2" : "fa-angles-left"}`}
               data-fa-i2svg="false"
             ></i>
           </button>
@@ -196,7 +237,7 @@ export default function ModernDashboardLayout() {
           {sidebarItems.map((item) => {
             /* SECTION HEADER */
             if (item.type === "section") {
-              if (sidebarCollapsed) {
+              if (effectiveCollapsed) {
                 return (
                   <div
                     key={item.id}
@@ -227,9 +268,9 @@ export default function ModernDashboardLayout() {
                       handleParentClick(item);
                     }
                   }}
-                  title={sidebarCollapsed ? item.text : ""}
+                  title={effectiveCollapsed ? item.text : ""}
                   className={`nav-item flex items-center justify-between w-full ${
-                    sidebarCollapsed ? "px-2" : "px-4"
+                    effectiveCollapsed ? "px-2" : "px-4"
                   } py-3 text-sm font-medium rounded-lg transition-colors group ${
                     active
                       ? "active"
@@ -239,19 +280,19 @@ export default function ModernDashboardLayout() {
                 >
                   {/* LEFT SIDE */}
                   <div
-                    className={`flex items-center ${sidebarCollapsed ? "" : "flex-1"}`}
+                    className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
                   >
                     <span
                       data-fa-i2svg="false"
                       className={`${item.icon} ${
-                        sidebarCollapsed ? "" : "mr-3"
+                        effectiveCollapsed ? "" : "mr-3"
                       } transition-colors group-hover:text-primary`}
                     />
-                    {!sidebarCollapsed && <span>{item.text}</span>}
+                    {!effectiveCollapsed && <span>{item.text}</span>}
                   </div>
 
                   {/* RIGHT SIDE (CHEVRON) */}
-                  {!sidebarCollapsed && item.children && (
+                  {!effectiveCollapsed && item.children && (
                     <span
                       className={`fa-solid fa-chevron-right text-xs text-muted-foreground/50 transition-transform ${
                         openMenuId === item.id ? "rotate-90" : ""
@@ -262,7 +303,7 @@ export default function ModernDashboardLayout() {
                 </Link>
 
                 {/* CHILDREN */}
-                {!sidebarCollapsed &&
+                {!effectiveCollapsed &&
                   item.children &&
                   openMenuId === item.id &&
                   item.children.map((child) => (
@@ -286,9 +327,9 @@ export default function ModernDashboardLayout() {
 
         <div className="p-4 border-t border-sidebar-border">
           <div
-            className={`flex items-center ${sidebarCollapsed ? "justify-center" : ""} p-2 bg-muted/50 rounded-lg border border-border`}
+            className={`flex items-center ${effectiveCollapsed ? "justify-center" : ""} p-2 bg-muted/50 rounded-lg border border-border`}
           >
-            {sidebarCollapsed ? (
+            {effectiveCollapsed ? (
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                 {userName
                   .split(" ")
@@ -325,12 +366,12 @@ export default function ModernDashboardLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
         {/* Header */}
-        <Header />
+        <Header onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)} />
 
         {/* Scrollable Content Area */}
         <div
           key={location.pathname}
-          className="flex-1 overflow-y-auto p-8 pb-20"
+          className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20"
         >
           {isAuthenticated ? <Outlet /> : <Navigate to="/auth?mode=login" />}
         </div>

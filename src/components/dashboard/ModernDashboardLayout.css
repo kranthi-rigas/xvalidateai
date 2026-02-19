@@ -89,3 +89,35 @@ aside {
 }
 
 /* Made with Bob */
+
+/* ─────────────────────────────────────────────
+   Mobile sidebar – full-screen overlay
+───────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Sidebar overlay animation */
+  aside[id="sidebar"] {
+    animation: slideInLeft 0.25s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Ensure nav items have comfortable touch targets on mobile */
+  .nav-item {
+    min-height: 48px;
+  }
+
+  /* Tighten sidebar internal spacing on mobile */
+  aside[id="sidebar"] nav {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
