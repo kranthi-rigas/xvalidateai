@@ -7,6 +7,7 @@ import ToolsHeatmap from "@/components/common/HeatMap";
 import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
+import { useContextElement } from "@/context/Context";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
@@ -155,6 +156,9 @@ export default function AIDashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
   const navigate = useNavigate();
+
+  const { userPlan } = useContextElement();
+  const isFreePlan = userPlan === "free";
 
   const NORMALIZATION_RULES = {
     Students: ["student", "k-12", "school", "learner"],
@@ -422,7 +426,8 @@ export default function AIDashboard() {
           ],
         },
         textinfo: "none",
-        hovertemplate: "<b>%{customdata}</b><br>Count: %{value}<extra></extra>",
+        hovertemplate:
+          "<b>%{customdata}</b><br>Tools count: %{value}<extra></extra>",
       },
     ];
 
@@ -461,7 +466,7 @@ export default function AIDashboard() {
         x: sortedCompliance.map(([, value]) => value),
         y: sortedCompliance.map(([name]) => name),
         orientation: "h",
-        hovertemplate: "<b>%{y}</b><br>Count: %{x}<extra></extra>",
+        hovertemplate: "<b>%{y}</b><br>Tools count: %{x}<extra></extra>",
         marker: {
           color: "#3b82f6",
         },
@@ -546,7 +551,7 @@ export default function AIDashboard() {
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
-          value={overview.total_projects + 1 - overview.rejected_count || 0}
+          value={overview.total_projects || 0}
           icon="fa-solid fa-database"
           iconBg="bg-blue-500/10"
           iconColor="text-blue-500"
@@ -710,6 +715,7 @@ export default function AIDashboard() {
               renderCell={renderHighRiskCell(navigate)}
               hideEmptyMessage
               enableExport={true}
+              isDisableExport={isFreePlan}
               exportFileName="high-risk-tools-info"
             />
           </div>
@@ -730,6 +736,7 @@ export default function AIDashboard() {
               tableClassName="custom-table"
               hideEmptyMessage
               enableExport={true}
+              isDisableExport={isFreePlan}
               exportFileName="complete-tool-info"
             />
           </div>
