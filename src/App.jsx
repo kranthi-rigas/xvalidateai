@@ -47,6 +47,8 @@ import AILiteracyPage from "./pages/dashboard/dashboard-ailiteracy";
 import FaqsPage from "./pages/dashboard/dashboard-faqs";
 import SubscriptionSuccess from "./components/dashboard/Billing/SubscriptionSuccess";
 import SubscriptionCancel from "./components/dashboard/Billing/SubscriptionCancel";
+import PrivacyPolicyPage from "./pages/others/privacy-policy";
+import TermsPage from "./pages/others/terms";
 
 function App() {
   useEffect(() => {
@@ -132,6 +134,8 @@ function App() {
                 element={<SubscriptionCancel />}
               />
 
+              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="terms" element={<TermsPage />} />
               <Route path="not-found" element={<DashboardNotFoundPage />} />
               <Route path="*" element={<DashboardNotFoundPage />} />
               <Route path="auth" element={<AuthPage />} />

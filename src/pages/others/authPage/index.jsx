@@ -77,7 +77,7 @@ export default function AuthPage() {
       const selectors = [
         ".auth-page",
         ".auth-main",
-        ".auth-section",
+        ".auth-form-section",
         ".auth-form-container",
         "main",
         "#root",
@@ -496,7 +496,7 @@ export default function AuthPage() {
                       <p>
                         By creating an account, you agree to our{" "}
                         <a
-                          href="https://myacademy51.com/terms-of-use"
+                          href="/terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`auth-switch-link ${loading ? "disabled-link" : ""}`}
@@ -505,7 +505,7 @@ export default function AuthPage() {
                         </a>
                         {"  "}and{" "}
                         <a
-                          href="https://myacademy51.com/privacy-policy/"
+                          href="/privacy-policy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`auth-switch-link ${loading ? "disabled-link" : ""}`}

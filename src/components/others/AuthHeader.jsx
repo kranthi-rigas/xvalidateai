@@ -7,14 +7,16 @@ export default function AuthHeader() {
       <div className="auth-header-content">
         {/* Logo */}
         <div className="auth-logo">
-          <img
-            src="/assets/img/logo/xvalidateai-logo.svg"
-            alt="XVALIDATEAI Logo"
-            style={{
-              height: "40px",
-              width: "auto",
-            }}
-          />
+          <Link to="/">
+            <img
+              src="/assets/img/logo/xvalidateai-logo.svg"
+              alt="XVALIDATEAI Logo"
+              style={{
+                height: "40px",
+                width: "auto",
+              }}
+            />
+          </Link>
         </div>
       </div>
     </header>
