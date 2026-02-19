@@ -366,7 +366,7 @@ export default function ModernDashboardLayout() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ marginBottom: "16px" }}>
+            <div style={{ marginBottom: "16px", textAlign: "center" }}>
               <div
                 style={{
                   width: "48px",
@@ -376,7 +376,7 @@ export default function ModernDashboardLayout() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: "16px",
+                  margin: "0 auto 16px auto",
                 }}
               >
                 <i
@@ -396,13 +396,12 @@ export default function ModernDashboardLayout() {
               </h3>
               <p
                 style={{
-                  fontSize: "14px",
+                  fontSize: "16px",
                   color: "#6b7280",
                   lineHeight: "1.5",
                 }}
               >
-                Are you sure you want to logout? You'll need to sign in again to
-                access your dashboard.
+                Are you sure you want to logout?
               </p>
             </div>
 
@@ -411,7 +410,7 @@ export default function ModernDashboardLayout() {
               style={{
                 display: "flex",
                 gap: "12px",
-                justifyContent: "flex-end",
+                justifyContent: "center",
                 marginTop: "24px",
               }}
             >
@@ -420,12 +419,14 @@ export default function ModernDashboardLayout() {
                 variant="secondary"
                 onClick={() => setShowLogoutModal(false)}
                 disabled={isLoggingOut}
+                size="lg"
               />
               <AwsButton
                 label={isLoggingOut ? "Logging out..." : "Logout"}
                 variant="primary"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
+                size="lg"
               />
             </div>
           </div>
