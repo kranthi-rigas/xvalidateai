@@ -288,12 +288,7 @@ div:focus-within .password-view {
 }
 
 .auth-gradient-text {
-  background: linear-gradient(135deg, var(--auth-primary, #0F3053) 0%, var(--auth-secondary, #58BFCE) 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: auth-gradient-shift 3s ease infinite;
+  color: var(--auth-primary, #0F3053);
 }
 
 /* Scanline Effect */
@@ -313,7 +308,7 @@ div:focus-within .password-view {
 /* Login Card Hover Effect */
 .auth-login-card {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   background: var(--auth-card, #ffffff);
   border: 1px solid var(--auth-border, #E2E8F0);
   border-radius: 1rem;
@@ -358,8 +353,6 @@ div:focus-within .password-view {
 }
 
 .auth-header-content {
-  max-width: 1440px;
-  margin: 0 auto;
   padding: 1.25rem 2rem;
   display: flex;
   align-items: center;
@@ -654,11 +647,14 @@ div:focus-within .password-view {
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
+  text-align: center;
+  
 }
 
 .auth-form-subtitle {
   color: var(--auth-muted-foreground, #64748B);
   font-size: 1.125rem;
+  text-align: center;
 }
 
 /* Form Elements */
@@ -669,6 +665,7 @@ div:focus-within .password-view {
   width: 100%;
   padding: 2rem;
   box-sizing: border-box;
+  margin: 0 !important; 
 }
 
 .auth-input-group {
@@ -775,14 +772,39 @@ div:focus-within .password-view {
 }
 
 .auth-forgot-password {
+  position: relative;
+  display: inline-block;
   font-size: 0.875rem;
-  color: var(--auth-secondary, #58BFCE);
+  font-weight: 600;
+  color: var(--color-primary-dark, #0F3357) !important;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: transform 0.25s ease;
+}
+
+/* ⭐ Text slide */
+.auth-forgot-password:hover {
+  transform: translateX(4px);
+}
+
+/* ⭐ Underline animation */
+.auth-forgot-password::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+
+.auth-forgot-password:hover::after {
+  width: 100%;
 }
 
 .auth-forgot-password:hover {
-  color: var(--auth-primary, #0F3053);
+  transform: translateX(3px) scale(1.03);
+  text-shadow: 0 0 6px rgba(15, 51, 87, 0.3) !important;
 }
 
 /* Submit Button */
@@ -1031,7 +1053,7 @@ div:focus-within .password-view {
 }
 
 .auth-switch-mode a {
-  color: var(--auth-primary, #0F3053);
+  color: var(--color-primary-dark, #0F3357);
   font-weight: 600;
   text-decoration: none;
   margin-left: 0.5rem;
@@ -1047,12 +1069,12 @@ div:focus-within .password-view {
   height: 2px;
   bottom: -2px;
   left: 0;
-  background-color: var(--auth-secondary, #58BFCE);
+  background-color: var(--color-primary-dark, #0F3357);
   transition: width 0.3s ease;
 }
 
 .auth-switch-mode a:hover {
-  color: var(--auth-secondary, #58BFCE);
+  color: var(--color-primary-dark, #0F3357);
 }
 
 .auth-switch-mode a:hover::after {
@@ -1061,7 +1083,7 @@ div:focus-within .password-view {
 
 /* Focus State for Accessibility */
 .auth-switch-mode a:focus {
-  outline: 2px solid var(--auth-secondary, #58BFCE);
+  outline: 2px solid var(--color-primary-dark, #0F3357);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -1075,7 +1097,7 @@ div:focus-within .password-view {
   position: relative;
   display: inline-block;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--color-primary-dark, #0F3357) !important;
   transition: transform 0.25s ease;
 }
 
@@ -1102,7 +1124,7 @@ div:focus-within .password-view {
 
 .auth-switch-link:hover {
   transform: translateX(3px) scale(1.03);
-  text-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+  text-shadow: 0 0 6px rgba(15, 51, 87, 0.3) !important;
 }
 
 /* ========================================
@@ -1135,11 +1157,12 @@ div:focus-within .password-view {
 
 /* 2-Column Main Layout */
 .auth-main-2col {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   padding-top: 4rem;
   position: relative;
   background: linear-gradient(to bottom right, #fafafa, rgba(88, 191, 206, 0.05), #f8fafc);
+  overflow: hidden;
 }
 
 /* Background Grid Pattern */
@@ -1189,19 +1212,22 @@ div:focus-within .password-view {
   padding: 2rem 3rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  position: relative;
+  justify-content: flex-start;
+  padding-top: 3rem;
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
   z-index: 10;
+  overflow: hidden;
 }
 
-/* Signup-specific: Move hero section up to be fully visible without scrolling */
+/* Signup-specific adjustments */
 .auth-page[data-mode="signup"] .auth-main-2col {
-  padding-top: 5rem;
+  padding-top: 4rem;
 }
 
 .auth-page[data-mode="signup"] .auth-hero {
   justify-content: flex-start;
-  padding-top: 3.5rem;
 }
 
 .auth-hero-content {
@@ -1344,11 +1370,35 @@ div:focus-within .password-view {
 .auth-form-section {
   width: 50%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem;
+  padding-top: 3rem;
+  padding-bottom: 5rem;
   position: relative;
   z-index: 10;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: calc(100vh - 4rem);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(88, 191, 206, 0.3) transparent;
+}
+
+.auth-form-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-form-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-form-section::-webkit-scrollbar-thumb {
+  background: rgba(88, 191, 206, 0.3);
+  border-radius: 3px;
+}
+
+.auth-form-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(88, 191, 206, 0.5);
 }
 
 .auth-form-section .auth-form-container {
@@ -1371,7 +1421,7 @@ div:focus-within .password-view {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--auth-primary, #0F3053);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0rem;
 }
 
 .auth-form-section .auth-form-subtitle {
@@ -1440,6 +1490,21 @@ div:focus-within .password-view {
 
 .auth-nav-link:hover {
   color: var(--auth-secondary, #58BFCE);
+}
+
+.auth-nav-link-primary {
+  background: var(--auth-secondary, #58BFCE);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.auth-nav-link-primary:hover {
+  background: var(--auth-primary, #0F3053);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 48, 83, 0.15);
 }
 
 /* Updated Footer for 2-Column Layout */
@@ -1538,6 +1603,8 @@ div:focus-within .password-view {
     flex-direction: column;
     padding-top: 5rem;
     padding-bottom: 5rem;
+    height: auto;
+    overflow: auto;
   }
 
   .auth-hero {
@@ -1545,6 +1612,10 @@ div:focus-within .password-view {
     padding: 2rem 1.5rem;
     text-align: center;
     align-items: center;
+    position: relative;
+    top: 0;
+    height: auto;
+    overflow: visible;
   }
 
   .auth-hero-content {
@@ -1580,6 +1651,8 @@ div:focus-within .password-view {
   .auth-form-section {
     width: 100%;
     padding: 1.5rem;
+    height: auto;
+    overflow: visible;
   }
 
   .auth-nav-links {

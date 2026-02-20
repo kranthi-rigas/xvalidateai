@@ -87,7 +87,7 @@ export default function Password({ activeTab }) {
       localStorage.clear();
       sessionStorage.clear();
 
-      window.location.replace("/login"); // ⬅️ IMPORTANT
+      window.location.replace("/"); // ⬅️ IMPORTANT
     } catch (err) {
       // ✅ Ignore token errors AFTER password change
       if (
@@ -96,7 +96,7 @@ export default function Password({ activeTab }) {
       ) {
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace("/login");
+        window.location.replace("/");
         return;
       }
 

@@ -20,8 +20,8 @@ export default function AuthHeroSection({ mode = "login" }) {
         <h1 className="auth-hero-title">
           {isSignup ? (
             <>
-              Transform Technology Uncertainty <br />
-              <span className="auth-gradient-text">into Organizational Confidence</span>
+              Transform Technology Uncertainty into <br />
+              <span className="auth-gradient-text">Organizational Confidence</span>
             </>
           ) : (
             <>

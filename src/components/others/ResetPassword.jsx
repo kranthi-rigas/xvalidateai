@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import HeaderAuth from "../layout/headers/HeaderAuth";
-import AwsButton from "../common/AwsButton";
+import AuthButton from "../common/AuthButton";
 import { resetPassword } from "../../apiIntegration/auth";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import AuthFooter from "../../components/others/AuthFooter";
@@ -159,7 +159,7 @@ export default function ResetPassword() {
                   justifyContent: "center",
                 }}
               >
-                <AwsButton
+                <AuthButton
                   label="Reset Password"
                   onClick={submit}
                   disabled={!password || !confirm || password !== confirm}
@@ -193,7 +193,7 @@ export default function ResetPassword() {
                   justifyContent: "center",
                 }}
               >
-                <AwsButton label="Go to Login" onClick={() => navigate("/")} />
+                <AuthButton label="Go to Login" onClick={() => navigate("/")} />
               </div>
             </>
           )}

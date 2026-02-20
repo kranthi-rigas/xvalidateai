@@ -195,6 +195,7 @@ export default function LoginForm() {
                 label={loading ? "Logging in..." : "Login"}
                 variant="primary"
                 disabled={loading}
+                size="lg"
               />
             </div>
           </form>

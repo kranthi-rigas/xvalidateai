@@ -52,8 +52,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const isFreePlan = userPlan === "free";
 
   const handleDownloadPDF = async () => {
-    if (isDownloading || !isFreePlan) return;
-
     try {
       setIsDownloading(true);
       setIsPdfRendering(true);
@@ -776,6 +774,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           <div className="action-buttons">
             <button
               className="action-btn export-button"
+              disabled={isDownloading || isFreePlan}
               onClick={handleDownloadPDF}
             >
               <i className="fa-solid fa-file-pdf"></i> Export PDF

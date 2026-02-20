@@ -7,11 +7,12 @@ export default function Button({
   disabled = false,
   icon,
   type = "button",
+  size = "default", // "default" or "lg"
 }) {
   return (
     <button
       type={type}
-      className={`btn btn-${variant}`}
+      className={`btn btn-${variant}${size === "lg" ? " btn-lg" : ""}`}
       onClick={onClick}
       disabled={disabled}
     >
