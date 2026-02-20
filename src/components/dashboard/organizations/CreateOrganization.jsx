@@ -37,7 +37,6 @@ export default function CreateOrganizationModal({
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({
     name: "",
-    slug: "app",
     description: "",
     email: "",
     address: "",
@@ -53,7 +52,6 @@ export default function CreateOrganizationModal({
   /* ---------- FIELD REFS (FOR SCROLL) ---------- */
   const fieldRefs = {
     name: useRef(null),
-    slug: useRef(null),
     description: useRef(null),
     email: useRef(null),
     address: useRef(null),
@@ -89,9 +87,6 @@ export default function CreateOrganizationModal({
     const errs = {};
 
     if (!form.name.trim()) errs.name = "Organization name is required.";
-    if (!form.slug.trim()) errs.slug = "Slug is required.";
-    else if (!/^[a-z0-9-]+$/.test(form.slug))
-      errs.slug = "Only lowercase letters, numbers & hyphens allowed.";
     if (!form.description.trim()) errs.description = "Description is required.";
     if (!form.email.trim()) errs.email = "Email is required.";
     else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/i.test(form.email))
@@ -115,7 +110,6 @@ export default function CreateOrganizationModal({
     // Mark all fields as touched
     setTouched({
       name: true,
-      slug: true,
       description: true,
       email: true,
       address: true,
@@ -219,21 +213,6 @@ export default function CreateOrganizationModal({
         required
         placeholder="Enter organization name"
         fieldRef={fieldRefs.name}
-      />
-
-      <FormField
-        label="Slug"
-        name="slug"
-        value={form.slug}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={errors.slug}
-        touched={touched.slug}
-        required
-        placeholder="app"
-        disabled
-        fieldRef={fieldRefs.slug}
-        helperText="Only lowercase letters, numbers & hyphens allowed"
       />
 
       <FormField
