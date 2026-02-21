@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
-import ToolsHeatmap from "@/components/common/HeatMap";
 import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
@@ -160,26 +159,44 @@ export default function AIDashboard() {
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
 
-  const normalizeText = (text = "") => {
+  const extractAndNormalizeAudienceItems = (text = "") => {
+    if (!text) return [];
+
+    const stopWords = ["seeking", "who", "for", "with", "aged"];
+
     return text
       .toLowerCase()
-      .replace(/\(.*?\)/g, "") // remove parentheses
-      .replace(/age\s*\d+/g, "") // remove "age 13"
-      .split(",")[0] // keep only first part before comma
-      .trim();
+      .replace(/\(.*?\)/g, "")
+      .replace(/age\s*\d+/g, "")
+      .replace(/ and /g, ",")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const words = item.split(" ");
+
+        // remove descriptive tail after stop words
+        const stopIndex = words.findIndex((w) => stopWords.includes(w));
+        const cleaned =
+          stopIndex > -1 ? words.slice(0, stopIndex).join(" ") : item;
+
+        // basic plural normalization (students → student)
+        return cleaned.endsWith("s") ? cleaned.slice(0, -1) : cleaned;
+      })
+      .filter(Boolean);
   };
 
-  const normalizedAudienceCounts = React.useMemo(() => {
+  const normalizedAudienceCounts = useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return {};
 
     const counts = {};
 
     dashboardAnalytics.tool_kpis.forEach((tool) => {
-      const normalized = normalizeText(tool.intended_users);
+      const items = extractAndNormalizeAudienceItems(tool.intended_users);
 
-      if (!normalized) return;
-
-      counts[normalized] = (counts[normalized] || 0) + 1;
+      items.forEach((item) => {
+        counts[item] = (counts[item] || 0) + 1;
+      });
     });
 
     return counts;
