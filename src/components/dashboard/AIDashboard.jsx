@@ -377,7 +377,7 @@ export default function AIDashboard() {
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
       responsive: true,
@@ -433,12 +433,12 @@ export default function AIDashboard() {
 
     const usersLayout = {
       title: {
-        text: "Intended Users Distribution",
+        text: window.innerWidth < 768 ? "Intended Users<br>Distribution" : "Intended Users Distribution",
         font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
     };
@@ -685,14 +685,14 @@ export default function AIDashboard() {
       </div>
 
       {/* Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-8 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommendation Distribution */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-recommendation" className="w-full h-full"></div>
         </div>
 
         {/* Intended Users */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-users" className="w-full h-full"></div>
         </div>
       </section>
