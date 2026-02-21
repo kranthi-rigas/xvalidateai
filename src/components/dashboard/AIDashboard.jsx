@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
-import ToolsHeatmap from "@/components/common/HeatMap";
 import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
@@ -160,108 +159,54 @@ export default function AIDashboard() {
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
 
-  const NORMALIZATION_RULES = {
-    Students: ["student", "k-12", "school", "learner"],
-    Educators: [
-      "teacher",
-      "educator",
-      "faculty",
-      "professor",
-      "instructor",
-      "educational institution",
-    ],
-    Parents: ["parent", "guardian"],
-    "General Public": [
-      "general public",
-      "public",
-      "content creator",
-      "advertiser",
-    ],
-    "Enterprise / Business": [
-      "enterprise",
-      "business",
-      "organization",
-      "company",
-    ],
-    "Developers / IT": [
-      "developer",
-      "data scientist",
-      "it",
-      "engineer",
-      "administrator",
-    ],
-    Government: ["government", "agency", "public sector"],
-    Researchers: ["researcher", "research"],
+  const extractAndNormalizeAudienceItems = (text = "") => {
+    if (!text) return [];
+
+    const stopWords = ["seeking", "who", "for", "with", "aged"];
+
+    return text
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/age\s*\d+/g, "")
+      .replace(/ and /g, ",")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const words = item.split(" ");
+
+        // remove descriptive tail after stop words
+        const stopIndex = words.findIndex((w) => stopWords.includes(w));
+        const cleaned =
+          stopIndex > -1 ? words.slice(0, stopIndex).join(" ") : item;
+
+        // basic plural normalization (students → student)
+        return cleaned.endsWith("s") ? cleaned.slice(0, -1) : cleaned;
+      })
+      .filter(Boolean);
   };
 
-  const normalizeAudience = (text = "") => {
-    const lower = text.toLowerCase();
-    const matched = new Set();
-
-    Object.entries(NORMALIZATION_RULES).forEach(([category, keywords]) => {
-      keywords.forEach((keyword) => {
-        if (lower.includes(keyword)) {
-          matched.add(category);
-        }
-      });
-    });
-
-    if (matched.size === 0) {
-      matched.add("Others");
-    }
-
-    return Array.from(matched);
-  };
-
-  const normalizedAudienceCounts = React.useMemo(() => {
+  const normalizedAudienceCounts = useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return {};
 
     const counts = {};
 
     dashboardAnalytics.tool_kpis.forEach((tool) => {
-      const categories = normalizeAudience(tool.intended_users);
+      const items = extractAndNormalizeAudienceItems(tool.intended_users);
 
-      categories.forEach((category) => {
-        counts[category] = (counts[category] || 0) + 1;
+      items.forEach((item) => {
+        counts[item] = (counts[item] || 0) + 1;
       });
     });
 
     return counts;
   }, [dashboardAnalytics]);
-  const COMPLIANCE_RULES = {
-    GDPR: ["gdpr"],
-    "CCPA / CPRA": ["ccpa", "cpra", "california consumer privacy act"],
-    COPPA: ["coppa", "children's online privacy protection act"],
-    "SOC 2": ["soc 2"],
-    "SOC 3": ["soc 3"],
-    "ISO 27001": ["iso 27001", "iso/iec 27001"],
-    "ISO 27017": ["iso/iec 27017"],
-    "ISO 27018": ["iso/iec 27018"],
-    "Digital Services Act": ["digital services act", "dsa"],
-    "Privacy Shield": ["privacy shield"],
-    "Standard Contractual Clauses": ["standard contractual clauses", "scc"],
-    "PCI DSS": ["pci dss"],
-    FERPA: ["ferpa"],
-    HIPAA: ["hipaa"],
-    FedRAMP: ["fedramp"],
-    "ePrivacy Directive": ["eprivacy directive"],
-    "WCAG 2.1": ["wcag 2.1"],
-    "Section 508": ["section 508"],
-    "Data Protection Act (UK)": ["data protection act"],
-    "EU-US Data Privacy Framework": ["data privacy framework"],
-    "NIST Cybersecurity Framework": ["nist"],
-  };
 
   const normalizeCompliance = (name = "") => {
-    const lower = name.toLowerCase();
-
-    for (const [standard, keywords] of Object.entries(COMPLIANCE_RULES)) {
-      if (keywords.some((keyword) => lower.includes(keyword))) {
-        return standard;
-      }
-    }
-
-    return "Other / Misc";
+    return name
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .trim();
   };
 
   const normalizedComplianceCounts = React.useMemo(() => {
@@ -285,7 +230,7 @@ export default function AIDashboard() {
           return;
         }
 
-        // ✅ Filter only scan_completed tools
+        // Filter only scan_completed tools
         const filteredToolKpis = (data.tool_kpis || []).filter(
           (tool) => tool.recommendation != "Not Assessed",
         );
@@ -294,6 +239,7 @@ export default function AIDashboard() {
           ...data,
           tool_kpis: filteredToolKpis,
         });
+        console.log("Fetched dashboard analytics:", dashboardAnalytics);
 
         setLoading(false);
       })
@@ -452,9 +398,6 @@ export default function AIDashboard() {
     setTimeout(() => {
       window.Plotly.Plots.resize("chart-users");
     }, 100);
-
-    // Chart: Compliance Distribution (Horizontal Bar)
-    const complianceRaw = dashboardAnalytics.distributions?.compliance || [];
 
     const sortedCompliance = Object.entries(normalizedComplianceCounts).sort(
       (a, b) => b[1] - a[1],
@@ -679,9 +622,9 @@ export default function AIDashboard() {
           <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
         </div>
 
-        <div className="dashboard-card p-6">
+        {/*<div className="dashboard-card p-6">
           <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
-        </div>
+        </div>*/}
       </div>
 
       {/* Recommendation & Intended Users Row */}

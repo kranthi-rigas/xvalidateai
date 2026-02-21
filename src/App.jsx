@@ -135,8 +135,6 @@ function App() {
                 element={<SubscriptionCancel />}
               />
 
-              <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route path="terms" element={<TermsPage />} />
               <Route path="not-found" element={<DashboardNotFoundPage />} />
               <Route path="*" element={<DashboardNotFoundPage />} />
               <Route path="auth" element={<AuthPage />} />
