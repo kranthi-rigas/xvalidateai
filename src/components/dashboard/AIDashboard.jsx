@@ -473,26 +473,33 @@ export default function AIDashboard() {
       },
     ];
 
+    const isMobile = window.innerWidth < 768;
+
     const complianceLayout = {
       title: {
-        text: "Compliance Standard Distribution",
+        text: isMobile
+          ? "Compliance Standard<br>Distribution"
+          : "Compliance Standard Distribution",
         font: {
-          size: 18,
+          size: isMobile ? 14 : 18,
           family: "Inter",
           color: "#0F3053",
         },
       },
       xaxis: {
-        title: "Number of Tools",
+        title: isMobile ? "" : "Number of Tools",
         gridcolor: "#f1f5f9",
+        tickfont: { size: isMobile ? 9 : 12 },
       },
       yaxis: {
         autorange: "reversed",
+        tickfont: { size: isMobile ? 9 : 12 },
       },
-      margin: { t: 50, b: 40, l: 250, r: 20 },
+      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 250, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
-      height: 450,
+      height: isMobile ? 380 : 450,
+      responsive: true,
     };
 
     window.Plotly.newPlot(
@@ -513,6 +520,17 @@ export default function AIDashboard() {
       setDropdownOpen(false);
     }
   }, [selectedRadarToolIds]);
+
+  useEffect(() => {
+    if (!dashboardAnalytics || !window.Plotly) return;
+
+    const handleResize = () => {
+      initializeCharts();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dashboardAnalytics, initializeCharts]);
   const visibleRadarTools = React.useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return [];
 
@@ -588,7 +606,7 @@ export default function AIDashboard() {
 
       <section>
         {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 h-[420px] flex flex-col">
+        <div className="dashboard-card p-4 mb-4 flex flex-col max-h-[400px] overflow-hidden md:max-h-none md:overflow-visible">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 mb-2">
             <h3 className="font-bold text-lg shrink-0">Quality Comparison</h3>
             <div className="flex items-center gap-2 w-full md:max-w-[600px]">
@@ -744,7 +762,7 @@ export default function AIDashboard() {
       </section>
 
       {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[500px]">
+      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
         <div id="chart-compliance" className="w-full h-full"></div>
       </section>
     </div>
