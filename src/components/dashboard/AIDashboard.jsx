@@ -7,6 +7,7 @@ import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
+import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
@@ -155,6 +156,8 @@ export default function AIDashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
   const navigate = useNavigate();
+  const [selectedCompliance, setSelectedCompliance] = useState(null);
+  const [isComplianceModalOpen, setIsComplianceModalOpen] = useState(false);
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
@@ -230,16 +233,35 @@ export default function AIDashboard() {
           return;
         }
 
-        // Filter only scan_completed tools
-        const filteredToolKpis = (data.tool_kpis || []).filter(
-          (tool) => tool.recommendation != "Not Assessed",
+        // Keep only scan completed tools
+        const scanCompletedTools = (data.tool_kpis || []).filter(
+          (tool) => tool.status === "scan_completed",
+        );
+
+        const highRiskTools = scanCompletedTools.filter(
+          (tool) => tool.high_risk,
+        );
+
+        const approvedTools = scanCompletedTools.filter((tool) =>
+          tool.recommendation?.toLowerCase().includes("approved"),
+        );
+
+        const rejectedTools = scanCompletedTools.filter((tool) =>
+          tool.recommendation?.toLowerCase().includes("rejected"),
         );
 
         setDashboardAnalytics({
           ...data,
-          tool_kpis: filteredToolKpis,
+          tool_kpis: scanCompletedTools,
+          high_risk_tools: highRiskTools,
+          overview: {
+            ...data.overview,
+            total_projects: scanCompletedTools.length,
+            high_risk_count: highRiskTools.length,
+            approved_count: approvedTools.length,
+            rejected_count: rejectedTools.length,
+          },
         });
-        console.log("Fetched dashboard analytics:", dashboardAnalytics);
 
         setLoading(false);
       })
@@ -250,7 +272,6 @@ export default function AIDashboard() {
   }, []);
 
   useEffect(() => {
-    // Load Plotly and initialize charts when data is available
     if (!loading && dashboardAnalytics) {
       if (!window.Plotly) {
         const script = document.createElement("script");
@@ -336,18 +357,25 @@ export default function AIDashboard() {
       { displayModeBar: false, responsive: true },
     );
 
-    // Force resize to ensure full space is used
     setTimeout(() => {
-      window.Plotly.Plots.resize("chart-recommendation");
-    }, 100);
+      const chart = document.getElementById("chart-compliance");
+
+      if (chart) {
+        chart.on("plotly_click", function (data) {
+          const clickedIndex = data.points[0].pointIndex;
+          const clickedCompliance = sortedCompliance[clickedIndex];
+
+          setSelectedCompliance(clickedCompliance);
+          setIsComplianceModalOpen(true);
+        });
+      }
+    }, 200);
 
     // Chart: Intended Users
     const usersDistribution = Object.entries(normalizedAudienceCounts).map(
       ([name, value]) => ({ name, value }),
     );
 
-    // Sanitize legend labels for display using regex but keep original names
-    // available in hover via `customdata`.
     const sanitizeLegendLabel = (name) => {
       if (!name) return "Unknown";
       // Remove parenthetical content and anything after a dash, trim whitespace
@@ -389,25 +417,29 @@ export default function AIDashboard() {
       paper_bgcolor: "rgba(0,0,0,0)",
     };
 
-    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
-      displayModeBar: false,
-      responsive: true,
-    });
-
     // Force resize to ensure full space is used
     setTimeout(() => {
       window.Plotly.Plots.resize("chart-users");
     }, 100);
 
-    const sortedCompliance = Object.entries(normalizedComplianceCounts).sort(
-      (a, b) => b[1] - a[1],
-    );
+    const complianceBreakdown = dashboardAnalytics.compliance_breakdown || [];
+
+    // Build full objects (important for modal)
+    const sortedCompliance = complianceBreakdown
+      .map((item) => ({
+        name: item.compliance_type,
+        tools: (item.tools || []).filter(
+          (tool) => tool.status === "scan_completed",
+        ),
+      }))
+      .filter((item) => item.tools.length > 0)
+      .sort((a, b) => b.tools.length - a.tools.length);
 
     const compliancePlotData = [
       {
         type: "bar",
-        x: sortedCompliance.map(([, value]) => value),
-        y: sortedCompliance.map(([name]) => name),
+        x: sortedCompliance.map((item) => item.tools.length),
+        y: sortedCompliance.map((item) => item.name),
         orientation: "h",
         hovertemplate: "<b>%{y}</b><br>Tools count: %{x}<extra></extra>",
         marker: {
@@ -425,12 +457,15 @@ export default function AIDashboard() {
           color: "#0F3053",
         },
       },
+      dragmode: false,
       xaxis: {
         title: "Number of Tools",
         gridcolor: "#f1f5f9",
+        fixedrange: true,
       },
       yaxis: {
         autorange: "reversed",
+        fixedrange: true,
       },
       margin: { t: 50, b: 40, l: 250, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
@@ -442,13 +477,31 @@ export default function AIDashboard() {
       "chart-compliance",
       compliancePlotData,
       complianceLayout,
-      { displayModeBar: false, responsive: true },
+      {
+        displayModeBar: false,
+        responsive: true,
+        scrollZoom: false,
+        doubleClick: false,
+        staticPlot: false,
+        editable: false,
+      },
     );
 
-    // Force resize to ensure full space is used
     setTimeout(() => {
-      window.Plotly.Plots.resize("chart-compliance");
-    }, 100);
+      const chart = document.getElementById("chart-compliance");
+
+      if (chart) {
+        chart.on("plotly_click", function (data) {
+          const clickedIndex = data.points[0].pointIndex;
+          const clickedCompliance = sortedCompliance[clickedIndex];
+
+          setSelectedCompliance(clickedCompliance);
+          setIsComplianceModalOpen(true);
+        });
+
+        chart.style.cursor = "pointer";
+      }
+    }, 300);
   }, [dashboardAnalytics]);
 
   useEffect(() => {
@@ -489,6 +542,12 @@ export default function AIDashboard() {
 
   return (
     <div className="space-y-8">
+      <ComplianceToolsModal
+        open={isComplianceModalOpen}
+        onClose={() => setIsComplianceModalOpen(false)}
+        complianceData={selectedCompliance}
+      />
+
       {/* Stats Cards Row */}
       <section id="stats-section" className="grid grid-cols-4 gap-6">
         {/* Total Scanned Tools */}
@@ -656,7 +715,6 @@ export default function AIDashboard() {
               data={highRiskTools}
               columns={HIGH_RISK_COLUMNS}
               renderCell={renderHighRiskCell(navigate)}
-              hideEmptyMessage
               enableExport={true}
               isDisableExport={isFreePlan}
               exportFileName="high-risk-tools-info"
@@ -677,7 +735,6 @@ export default function AIDashboard() {
               columns={TOOL_COLUMNS}
               renderCell={renderToolCell(navigate)}
               tableClassName="custom-table"
-              hideEmptyMessage
               enableExport={true}
               isDisableExport={isFreePlan}
               exportFileName="complete-tool-info"
