@@ -673,6 +673,7 @@ div:focus-within .password-view {
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 1rem;
 }
 
 .auth-input-label {
@@ -1406,6 +1407,19 @@ div:focus-within .password-view {
   max-width: 28rem;
   width: 100%;
   padding: 0;
+}
+
+@media (max-width: 639px) {
+
+  .auth-form-section {
+    width: 100%;
+    padding: 2.5rem 1rem 7rem;
+    align-items: center !important; /* changed from flex-start */
+    justify-content: center !important;
+    min-height: calc(100vh - 4rem); /* ensure section fills viewport height */
+  }
+
+  
 }
 
 .auth-form-section .auth-login-card {
