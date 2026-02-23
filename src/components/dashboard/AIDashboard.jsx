@@ -258,7 +258,7 @@ export default function AIDashboard() {
             ...data.overview,
             total_projects: scanCompletedTools.length,
             high_risk_count: highRiskTools.length,
-            approved_count: approvedTools.length,
+            approved_count: data.overview?.approved_count || 0,
             rejected_count: rejectedTools.length,
           },
         });
@@ -416,6 +416,11 @@ export default function AIDashboard() {
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
     };
+
+    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
+      displayModeBar: false,
+      responsive: true,
+    });
 
     // Force resize to ensure full space is used
     setTimeout(() => {
