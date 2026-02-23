@@ -361,24 +361,23 @@ export default function OrgUsers({ refreshProjects }) {
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search */}
-          <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+          {/* Search + mobile refresh */}
+          <div className="flex items-center gap-2 w-full md:w-96">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+              </div>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+                placeholder="Search users by name, email, role..."
+              />
             </div>
 
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
-              placeholder="Search users by name, email, role..."
-            />
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            {/* Refresh */}
+            {/* Refresh – mobile only */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -387,7 +386,36 @@ export default function OrgUsers({ refreshProjects }) {
                 setTimeout(() => setTableLoading(false), 300);
               }}
               title="Refresh"
-              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right"></i>
+            </button>
+
+            {/* Preferences – mobile only */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh – desktop only */}
+            <button
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await loadUsers();
+                setTimeout(() => setTableLoading(false), 300);
+              }}
+              title="Refresh"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
@@ -401,11 +429,11 @@ export default function OrgUsers({ refreshProjects }) {
               />
             </div>
 
-            {/* Preferences button */}
+            {/* Preferences button – desktop only */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
-              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
               <AwsSettingsIconButton
                 title="Preferences"
