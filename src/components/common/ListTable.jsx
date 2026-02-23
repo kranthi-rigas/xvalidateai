@@ -125,6 +125,7 @@ export default function ListTable({
   startResize,
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
+  const hasData = Array.isArray(data) && data.length > 0;
 
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
@@ -329,8 +330,12 @@ export default function ListTable({
       {enableExport && (
         <div className="flex justify-end px-6 py-3 border-b bg-white">
           <DisabledTooltipButton
-            disabled={isDisableExport}
-            tooltip="Upgrade plan to export"
+            disabled={isDisableExport || !hasData}
+            tooltip={
+              !hasData
+                ? "No data available to export"
+                : "Upgrade plan to export"
+            }
             onClick={handleExport}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition
     ${
