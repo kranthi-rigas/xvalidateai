@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import HeaderTitle from "./HeaderTitle";
 import HeaderSearch from "./HeaderSearch";
 import HeaderNotifications from "./HeaderNotifications";
@@ -37,13 +37,13 @@ export default function Header({ onToggleMobileSidebar }) {
       </div>
 
       {/* Center: App logo — mobile only */}
-      <div className="lg:hidden absolute left-1/2 -translate-x-1/2">
+      <Link to="/dashboard" className="lg:hidden absolute left-1/2 -translate-x-1/2">
         <img
           src="/assets/img/logo/xvalidateai-logo.svg"
           alt="App Logo"
           className="h-8 w-auto"
         />
-      </div>
+      </Link>
 
       {/* Right: Actions */}
       <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
