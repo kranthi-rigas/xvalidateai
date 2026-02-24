@@ -1404,25 +1404,13 @@ div:focus-within .password-view {
   overflow-x: hidden;
   overflow-y: auto;
   height: calc(100vh - 4rem);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(88, 191, 206, 0.3) transparent;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
 .auth-form-section::-webkit-scrollbar {
-  width: 6px;
-}
-
-.auth-form-section::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.auth-form-section::-webkit-scrollbar-thumb {
-  background: rgba(88, 191, 206, 0.3);
-  border-radius: 3px;
-}
-
-.auth-form-section::-webkit-scrollbar-thumb:hover {
-  background: rgba(88, 191, 206, 0.5);
+  display: none;
 }
 
 .auth-form-section .auth-form-container {
