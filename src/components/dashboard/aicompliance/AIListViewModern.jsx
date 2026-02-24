@@ -993,6 +993,12 @@ export default function AIListViewModern({
               for (let id of pendingDeleteIds) {
                 await deleteComplianceProject(id);
               }
+
+              // 🔥 Immediately remove from UI
+              setLiveProjects((prev) =>
+                prev.filter((p) => !pendingDeleteIds.includes(p.project_id)),
+              );
+
               setShowDeleteModal(false);
               setSelected([]);
               refreshProjects();

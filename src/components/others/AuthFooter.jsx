@@ -9,14 +9,25 @@ export default function AuthFooter() {
             © {new Date().getFullYear()} XVALIDATEAI INC. ALL RIGHTS RESERVED.
           </div>
           <div className="auth-page-footer-links">
-            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://xvalidateai.com/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Privacy Policy
             </a>
-            <a href="/terms" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://xvalidateai.com/terms-of-use/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Terms of Service
             </a>
             <a href="mailto:support@xvalidateai.com?subject=Support Request - XVALIDATEAI">
-            <i className="fa-solid fa-envelope" style={{ marginRight: "0.5rem" }}></i>
+              <i
+                className="fa-solid fa-envelope"
+                style={{ marginRight: "0.5rem" }}
+              ></i>
               Support
             </a>
           </div>

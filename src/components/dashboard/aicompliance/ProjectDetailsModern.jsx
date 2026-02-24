@@ -763,21 +763,35 @@ export default function ProjectDetailsModern({ project, onBack }) {
   return (
     <div className="space-y">
       {/* Top Actions */}
-      <div className="glass-card report-footer">
-        <div className="top-actions">
+      <div className="mt-1 bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Back Button */}
           <button
             onClick={() => onBack?.(false)}
-            className="back-button glass-card"
+            className="inline-flex items-center gap-2 px-4 py-2.5
+             text-sm font-medium text-[#001d6c]
+             bg-gray-50 border border-gray-300
+             rounded-xl transition
+             hover:bg-gray-100 hover:shadow-sm"
           >
-            <i className="fa-solid fa-arrow-left"></i> Back to AI Compliance
+            <i className="fa-solid fa-arrow-left"></i>
+            <span>Back to AI Compliance</span>
           </button>
-          <div className="action-buttons">
+
+          {/* Right Side Actions */}
+          <div className="flex items-center justify-end">
             <button
-              className="action-btn export-button"
               disabled={isDownloading || isFreePlan}
               onClick={handleDownloadPDF}
+              className="inline-flex items-center gap-2 px-5 py-2.5
+               text-sm font-semibold text-white
+               bg-[#0F3357] rounded-xl
+               transition
+               hover:bg-[#0c2a47] hover:shadow-md
+               disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <i className="fa-solid fa-file-pdf"></i> Export PDF
+              <i className="fa-solid fa-file-pdf"></i>
+              <span>{isDownloading ? "Exporting..." : "Export PDF"}</span>
             </button>
           </div>
         </div>

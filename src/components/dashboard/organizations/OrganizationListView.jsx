@@ -131,9 +131,11 @@ export default function OrganizationListView() {
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
-  const planType = userInfo?.plan?.plan_type?.toUpperCase() || "FREE";
+  const planType =
+    userInfo?.plan?.plan_type?.toUpperCase() || "FREE" || "PREMIUM";
   const isEnterprisePlan = planType === "ENTERPRISE";
   const isFreePlan = planType === "FREE";
+  const isPremiumPlan = planType === "PREMIUM";
 
   const DEFAULT_ORGS = ["academy51", "myacademy51", "xvalidateai"];
 
@@ -144,12 +146,13 @@ export default function OrganizationListView() {
   ).length;
 
   const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
-  const canCreateOrg = isAdmin && !hasReachedOrgLimit && !isFreePlan;
+  const canCreateOrg =
+    isAdmin && !hasReachedOrgLimit && !isFreePlan && !isPremiumPlan;
 
   const createOrgTooltip = !isAdmin
     ? "Only admin users can create an organization"
-    : isFreePlan
-      ? "As per your Free plan, creating organizations is not available. Please upgrade to the Business plan to avail this feature."
+    : isFreePlan || isPremiumPlan
+      ? "As per your plan, creating organizations is not available. Please upgrade to the Business plan to avail this feature."
       : hasReachedOrgLimit
         ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
         : "";

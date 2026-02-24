@@ -34,6 +34,11 @@ const headerContentMap = {
     title: "Pricing",
     description: "View and manage your subscription plan.",
   },
+  "/dashboard/audittrail": {
+    title: "Audit Trail",
+    description: "Monitor and review user and system activity across your organization.",
+  },
+
   "/dashboard/faqs": {
   title: "FAQs",
   description: "Access quick answers about AI compliance, governance policies, platform features, and implementation guidance.",
