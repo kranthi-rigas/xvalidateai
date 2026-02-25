@@ -267,7 +267,9 @@ export default function AIDashboard() {
 
         // Keep only scan completed tools
         const scanCompletedTools = (data.tool_kpis || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         );
 
         const highRiskTools = scanCompletedTools.filter(
@@ -466,7 +468,9 @@ export default function AIDashboard() {
       .map((item) => ({
         name: item.compliance_type,
         tools: (item.tools || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         ),
       }))
       .filter((item) => item.tools.length > 0)
