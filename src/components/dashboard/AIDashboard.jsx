@@ -316,7 +316,7 @@ export default function AIDashboard() {
       dashboardAnalytics.distributions?.recommendation || [];
     const recColors = {
       Approved: "#10b981",
-      "Approved with limitations": "#3b82f6",
+      "Approved with limitations": "#fce99a",
       Restricted: "#f59e0b",
       "Do not use": "#ef4444",
       "Not Recommended": "#ef4444",
@@ -471,8 +471,9 @@ export default function AIDashboard() {
       yaxis: {
         autorange: "reversed",
         fixedrange: true,
+        automargin: true,
       },
-      margin: { t: 50, b: 40, l: 250, r: 20 },
+      margin: { t: 50, b: 40, l: 350, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: 450,
