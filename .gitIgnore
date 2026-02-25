@@ -1,9 +1,64 @@
-.idea
-build
-package-lock.json
-node_modules
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.local
+
+# Vite
+.vite/
+.cache/
+
+# Environment variables
+.env
+.env.local
 .env.development
+.env.test
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# OS files
 .DS_Store
-.env 
-.env.development.example
-dist
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+.temp/
+.tmp/
+*.tmp
+
+# Lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Capacitor/Mobile build artifacts
+# Note: Don't ignore android/ and ios/ folders entirely
+# Their respective .gitignore files handle build artifacts
+# If you need to ignore them completely, uncomment below:
+android/
+# ios/

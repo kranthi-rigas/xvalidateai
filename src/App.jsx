@@ -3,7 +3,7 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 import "react-calendar/dist/Calendar.css";
 import "aos/dist/aos.css";
 
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import AOS from "aos";
 import AdminFeePlanList from "./pages/FeesStructure/AdminFeePlanList";
@@ -50,6 +50,11 @@ import SubscriptionCancel from "./components/dashboard/Billing/SubscriptionCance
 import PrivacyPolicyPage from "./pages/others/privacy-policy";
 import TermsPage from "./pages/others/terms";
 
+function AuthRedirect() {
+  const token = localStorage.getItem("access_token");
+  return token ? <Navigate to="/dashboard" replace /> : <AuthPage />;
+}
+
 function App() {
   useEffect(() => {
     AOS.init({
@@ -66,7 +71,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/">
-              <Route index element={<AuthPage />} />
+              <Route index element={<AuthRedirect />} />
 
               {/* Modern Dashboard with layout wrapper */}
               <Route path="dashboard" element={<ModernDashboardLayout />}>

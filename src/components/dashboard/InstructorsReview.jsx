@@ -14,7 +14,7 @@ export default function InstructorsReviewPage() {
 
   const fetchInstructors = async () => {
     try {
-      const res = await fetch("https://dev-api.academy51.com/instructors");
+      const res = await fetch("https://dev-api.xvalidateai.com/instructors");
       const json = await res.json();
       setInstructors(json.instructors || []);
     } catch {
@@ -25,7 +25,7 @@ export default function InstructorsReviewPage() {
   };
 
   const updateStatus = async (id, actionType) => {
-    await fetch(`https://dev-api.academy51.com/instructors/${id}/status`, {
+    await fetch(`https://dev-api.xvalidateai.com/instructors/${id}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

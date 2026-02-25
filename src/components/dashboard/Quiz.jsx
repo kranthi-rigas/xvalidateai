@@ -339,7 +339,7 @@ export default function Quiz() {
                       (img, idx) => (
                         <img
                           key={idx}
-                          src={`https://dev-api.academy51.com/${img}`}
+                          src={`https://dev-api.xvalidateai.com/${img}`}
                           alt="question"
                           style={{ width: "100%", marginTop: 15 }}
                         />

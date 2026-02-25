@@ -24,7 +24,7 @@ const rolePermissions = JSON.parse(
 /* ============================
    CONFIG (EDIT ONLY THIS)
 ============================ */
-const API_BASE = "https://dev-api.academy51.com";
+const API_BASE = "https://dev-api.xvalidateai.com";
 
 // 🔐 Admin login (use ENV later if needed)
 const ADMIN_EMAIL = "testadmin1@example.com";
