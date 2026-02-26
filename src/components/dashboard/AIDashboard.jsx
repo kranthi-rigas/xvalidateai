@@ -378,7 +378,7 @@ export default function AIDashboard() {
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
       responsive: true,
@@ -441,12 +441,12 @@ export default function AIDashboard() {
 
     const usersLayout = {
       title: {
-        text: "Intended Users Distribution",
+        text: window.innerWidth < 768 ? "Intended Users<br>Distribution" : "Intended Users Distribution",
         font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
     };
@@ -489,30 +489,37 @@ export default function AIDashboard() {
       },
     ];
 
+    const isMobile = window.innerWidth < 768;
+
     const complianceLayout = {
       title: {
-        text: "Compliance Standard Distribution",
+        text: isMobile
+          ? "Compliance Standard<br>Distribution"
+          : "Compliance Standard Distribution",
         font: {
-          size: 18,
+          size: isMobile ? 14 : 18,
           family: "Inter",
           color: "#0F3053",
         },
       },
       dragmode: false,
       xaxis: {
-        title: "Number of Tools",
+        title: isMobile ? "" : "Number of Tools",
         gridcolor: "#f1f5f9",
         fixedrange: true,
+        tickfont: { size: isMobile ? 9 : 12 },
       },
       yaxis: {
         autorange: "reversed",
         fixedrange: true,
         automargin: true,
+        tickfont: { size: isMobile ? 9 : 12 },
       },
-      margin: { t: 50, b: 40, l: 350, r: 20 },
+      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 350, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
-      height: 450,
+      height: isMobile ? 380 : 450,
+      responsive: true,
     };
 
     window.Plotly.newPlot(
@@ -551,6 +558,17 @@ export default function AIDashboard() {
       setDropdownOpen(false);
     }
   }, [selectedRadarToolIds]);
+
+  useEffect(() => {
+    if (!dashboardAnalytics || !window.Plotly) return;
+
+    const handleResize = () => {
+      initializeCharts();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dashboardAnalytics, initializeCharts]);
   const visibleRadarTools = React.useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return [];
 
@@ -591,7 +609,7 @@ export default function AIDashboard() {
       />
 
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-4 gap-6">
+      <section id="stats-section" className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
@@ -632,10 +650,10 @@ export default function AIDashboard() {
 
       <section>
         {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="font-bold text-lg">Quality Comparison</h3>
-            <div className="flex items-center gap-2 w-full max-w-[600px]">
+        <div className="dashboard-card p-4 mb-4 flex flex-col max-h-[400px] overflow-hidden md:max-h-none md:overflow-visible">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 mb-2">
+            <h3 className="font-bold text-lg shrink-0">Quality Comparison</h3>
+            <div className="flex items-center gap-2 w-full md:max-w-[600px]">
               <label className="text-sm font-medium whitespace-nowrap">
                 Select Tools (Max 5):
               </label>
@@ -729,14 +747,14 @@ export default function AIDashboard() {
       </div>
 
       {/* Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-8 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommendation Distribution */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-recommendation" className="w-full h-full"></div>
         </div>
 
         {/* Intended Users */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-users" className="w-full h-full"></div>
         </div>
       </section>
@@ -786,7 +804,7 @@ export default function AIDashboard() {
       </section>
 
       {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[500px]">
+      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
         <div id="chart-compliance" className="w-full h-full"></div>
       </section>
     </div>

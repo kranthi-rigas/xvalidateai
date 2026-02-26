@@ -494,7 +494,8 @@ export default function AuthPage() {
                   {mode === "signup" && (
                     <div className="auth-terms-agreement">
                       <p>
-                        By creating an account, you agree to our{" "}
+                        By creating an account, you agree to our
+                        <br />
                         <a
                           href="/terms"
                           target="_blank"

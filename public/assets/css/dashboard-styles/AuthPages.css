@@ -338,6 +338,7 @@ div:focus-within .password-view {
   min-height: 100vh;
   background: var(--auth-background, #FAFAFA);
   font-family: Inter, sans-serif;
+  overflow-x: hidden;
 }
 
 /* Auth Header */
@@ -353,16 +354,23 @@ div:focus-within .password-view {
 }
 
 .auth-header-content {
-  padding: 1.25rem 2rem;
+  padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 60px;
 }
 
 .auth-logo {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.auth-logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
 }
 
 .auth-logo-icon {
@@ -672,6 +680,21 @@ div:focus-within .password-view {
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 1rem;
+  /* padding-bottom : 1rem; */
+}
+
+@media screen and (max-width: 768px) {
+  .auth-input-group {
+    padding-bottom: 0.75rem;
+  }
+  .auth-terms-agreement a{
+    margin-top: 0.75rem;
+    font-size: 1rem;
+  }
+  .auth-terms-agreement p{
+    font-size: 1rem !important;
+  }
 }
 
 .auth-input-label {
@@ -909,6 +932,7 @@ div:focus-within .password-view {
 .auth-switch-mode {
   text-align: center;
   padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 .auth-switch-mode p {
@@ -1380,31 +1404,32 @@ div:focus-within .password-view {
   overflow-x: hidden;
   overflow-y: auto;
   height: calc(100vh - 4rem);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(88, 191, 206, 0.3) transparent;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
 .auth-form-section::-webkit-scrollbar {
-  width: 6px;
-}
-
-.auth-form-section::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.auth-form-section::-webkit-scrollbar-thumb {
-  background: rgba(88, 191, 206, 0.3);
-  border-radius: 3px;
-}
-
-.auth-form-section::-webkit-scrollbar-thumb:hover {
-  background: rgba(88, 191, 206, 0.5);
+  display: none;
 }
 
 .auth-form-section .auth-form-container {
   max-width: 28rem;
   width: 100%;
   padding: 0;
+}
+
+@media (max-width: 639px) {
+
+  .auth-form-section {
+    width: 100%;
+    padding: 2.5rem 1rem 7rem;
+    align-items: center !important; /* changed from flex-start */
+    justify-content: center !important;
+    min-height: calc(100vh - 4rem); /* ensure section fills viewport height */
+  }
+
+  
 }
 
 .auth-form-section .auth-login-card {
@@ -1545,13 +1570,13 @@ div:focus-within .password-view {
 .auth-terms-agreement {
   margin-top: 1rem;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--auth-muted-foreground, #64748B);
 }
 
 .auth-terms-agreement p {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* 2-Column Form Row for Side-by-Side Fields */
@@ -1666,35 +1691,149 @@ div:focus-within .password-view {
 }
 
 @media (max-width: 639px) {
-  .auth-hero-title {
-    font-size: 2rem;
+  /* Hide the entire hero (all text) on mobile */
+  .auth-hero {
+    display: none !important;
   }
 
-  .auth-hero-stats {
-    grid-template-columns: 1fr;
+  /* Form section fills the full viewport */
+  .auth-form-section {
+    width: 100%;
+    padding: 2.5rem 1rem 7rem;
+    align-items: flex-start;
+    justify-content: center;
   }
 
-  .auth-hero-value-props {
-    grid-template-columns: 1fr;
+  .auth-form-section .auth-form-container {
+    max-width: 100%;
   }
 
-  .auth-hero-certifications {
-    flex-direction: column;
-    gap: 0.75rem;
+  /* Remove top padding since there's no hero above */
+  .auth-main-2col {
+    padding-top: 4rem;
+    padding-bottom: 5rem;
   }
 
-  .auth-form-section .auth-login-card {
-    padding: 1.5rem;
-    border-radius: 1.5rem;
-  }
-
-  /* Stack form rows on mobile */
+  /* Keep side-by-side layout for name + password rows on signup */
   .auth-form-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 
-  /* Stack country/phone on mobile */
+  /* Compact inputs inside side-by-side rows to fit mobile width */
+  .auth-form-row .auth-input {
+    padding-left: 2rem;
+    padding-right: 0.5rem;
+    font-size: 16px;
+  }
+
+  .auth-form-row .auth-input-icon {
+    left: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .auth-form-row .auth-input-label {
+    font-size: 0.75rem;
+  }
+
+  /* Move password toggle closer to edge in compact rows */
+  .auth-form-row .password-view {
+    right: 6px;
+    font-size: 14px;
+    padding: 3px;
+  }
+
+  /* Still stack country/phone on mobile */
   .auth-country-phone-merged {
     grid-template-columns: 1fr;
+  }
+
+  /* Tighter header */
+  .auth-header.frosted-nav .auth-header-content {
+    padding: 0.75rem 1rem;
+    min-height: 56px;
+    justify-content: center;
+  }
+
+  /* Compact form card */
+  .auth-form-section .auth-login-card {
+    border-radius: 1.25rem;
+    padding: 1rem;
+  }
+
+  /* Prevent iOS Safari auto-zoom: inputs must be >= 16px */
+  .auth-input,
+  .auth-phone-input {
+    font-size: 16px;
+  }
+
+  /* Adequate tap targets */
+  .auth-input {
+    min-height: 44px;
+  }
+
+  /* Slightly smaller social buttons */
+  .auth-social-btn {
+    min-width: unset;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Footer links - tighter gap on small screens */
+  .auth-page-footer.frosted-nav .auth-page-footer-links {
+    gap: 1.25rem;
+  }
+}
+
+/* =========================================
+   Very small phones (≤ 480px)
+   ========================================= */
+@media (max-width: 480px) {
+  /* Tighter form gap */
+  .auth-form-section .auth-form {
+    gap: 0.5rem;
+  }
+
+  /* Compact form section padding */
+  .auth-form-section {
+    padding: 0.75rem 0.75rem 7rem;
+  }
+
+  /* Page needs extra bottom space for fixed footer */
+  .auth-main-2col {
+    padding-bottom: 7rem;
+  }
+
+  /* Fixed footer wraps gracefully on tiny screens */
+  .auth-page-footer.frosted-nav .auth-page-footer-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .auth-page-footer.frosted-nav .auth-page-footer-content {
+    padding: 0 0.75rem;
+  }
+
+  .auth-page-footer.frosted-nav .auth-page-footer-copyright,
+  .auth-page-footer.frosted-nav .auth-page-footer-links {
+    font-size: 0.55rem;
+  }
+
+  .auth-page-footer.frosted-nav .auth-page-footer-links {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Form title on very small screens */
+  .auth-form-section .auth-form-title {
+    font-size: 1.25rem;
+  }
+
+  /* Signup form-row gap */
+  .auth-form-row,
+  .auth-country-phone-merged {
+    gap: 0.5rem;
   }
 }
