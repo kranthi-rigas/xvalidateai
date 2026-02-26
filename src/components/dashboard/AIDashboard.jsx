@@ -8,6 +8,7 @@ import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
 import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
+import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
@@ -269,7 +270,8 @@ export default function AIDashboard() {
         const scanCompletedTools = (data.tool_kpis || []).filter(
           (tool) =>
             tool.status === "scan_completed" ||
-            tool.status === "approved_for_usage",
+            tool.status === "approved_for_usage" ||
+            tool.status === "rejected_for_usage",
         );
 
         const highRiskTools = scanCompletedTools.filter(
@@ -405,62 +407,6 @@ export default function AIDashboard() {
       }
     }, 200);
 
-    // Chart: Intended Users
-    const usersDistribution = Object.entries(normalizedAudienceCounts).map(
-      ([name, value]) => ({ name, value }),
-    );
-
-    const sanitizeLegendLabel = (name) => {
-      if (!name) return "Unknown";
-      // Remove parenthetical content and anything after a dash, trim whitespace
-      return name.trim();
-    };
-
-    const usersPlotData = [
-      {
-        values: usersDistribution.map((d) => d.value),
-        labels: usersDistribution.map((d) => sanitizeLegendLabel(d.name)),
-        customdata: usersDistribution.map((d) => d.name),
-        type: "pie",
-        hole: 0.6,
-        marker: {
-          colors: [
-            "#3b82f6",
-            "#58BFCE",
-            "#f59e0b",
-            "#8b5cf6",
-            "#10b981",
-            "#ef4444",
-          ],
-        },
-        textinfo: "none",
-        hovertemplate:
-          "<b>%{customdata}</b><br>Tools count: %{value}<extra></extra>",
-      },
-    ];
-
-    const usersLayout = {
-      title: {
-        text: window.innerWidth < 768 ? "Intended Users<br>Distribution" : "Intended Users Distribution",
-        font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
-      },
-      showlegend: true,
-      legend: { orientation: "h", y: -0.2 },
-      margin: { t: 80, b: 20, l: 20, r: 20 },
-      height: 300,
-      paper_bgcolor: "rgba(0,0,0,0)",
-    };
-
-    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
-      displayModeBar: false,
-      responsive: true,
-    });
-
-    // Force resize to ensure full space is used
-    setTimeout(() => {
-      window.Plotly.Plots.resize("chart-users");
-    }, 100);
-
     const complianceBreakdown = dashboardAnalytics.compliance_breakdown || [];
 
     // Build full objects (important for modal)
@@ -470,7 +416,8 @@ export default function AIDashboard() {
         tools: (item.tools || []).filter(
           (tool) =>
             tool.status === "scan_completed" ||
-            tool.status === "approved_for_usage",
+            tool.status === "approved_for_usage" ||
+            tool.status === "rejected_for_usage",
         ),
       }))
       .filter((item) => item.tools.length > 0)
@@ -609,7 +556,10 @@ export default function AIDashboard() {
       />
 
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <section
+        id="stats-section"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
+      >
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
@@ -749,13 +699,19 @@ export default function AIDashboard() {
       {/* Recommendation & Intended Users Row */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommendation Distribution */}
-        <div className="dashboard-card p-2 h-[450px]">
-          <div id="chart-recommendation" className="w-full h-full"></div>
+        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+          <div id="chart-recommendation" className="w-full flex-1"></div>
         </div>
 
-        {/* Intended Users */}
-        <div className="dashboard-card p-2 h-[450px]">
-          <div id="chart-users" className="w-full h-full"></div>
+        {/* Intended Users Heatmap */}
+        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+          <h3 className="font-bold text-center text-lg mb-4">
+            Intended Users Distribution
+          </h3>
+
+          <div className="flex-1">
+            <ToolUserHeatmap apiData={dashboardAnalytics} />
+          </div>
         </div>
       </section>
 
