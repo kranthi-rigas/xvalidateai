@@ -11,6 +11,7 @@ import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
+  { key: "url", label: "URL", resizable: true },
   { key: "vendor", label: "Vendor", resizable: true },
   { key: "overall", label: "Overall", resizable: true },
   { key: "privacy", label: "Privacy", resizable: true },
@@ -20,6 +21,7 @@ const HIGH_RISK_COLUMNS = [
 
 const TOOL_COLUMNS = [
   { key: "name", label: "Tool Name", resizable: true },
+  { key: "url", label: "URL", resizable: true },
   { key: "overall", label: "Overall", resizable: true },
   {
     key: "recommendation",
@@ -55,6 +57,21 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
 
     case "vendor":
       return tool.developer || "Unknown";
+
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
+      );
 
     case "overall":
       return (
@@ -116,6 +133,21 @@ const renderToolCell = (navigate) => (tool, key) => {
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
           {tool.overall_score || 0}
         </span>
+      );
+
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
       );
 
     case "recommendation":
@@ -235,7 +267,9 @@ export default function AIDashboard() {
 
         // Keep only scan completed tools
         const scanCompletedTools = (data.tool_kpis || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         );
 
         const highRiskTools = scanCompletedTools.filter(
@@ -316,7 +350,7 @@ export default function AIDashboard() {
       dashboardAnalytics.distributions?.recommendation || [];
     const recColors = {
       Approved: "#10b981",
-      "Approved with limitations": "#3b82f6",
+      "Approved with limitations": "#fce99a",
       Restricted: "#f59e0b",
       "Do not use": "#ef4444",
       "Not Recommended": "#ef4444",
@@ -434,7 +468,9 @@ export default function AIDashboard() {
       .map((item) => ({
         name: item.compliance_type,
         tools: (item.tools || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         ),
       }))
       .filter((item) => item.tools.length > 0)
@@ -476,9 +512,10 @@ export default function AIDashboard() {
       yaxis: {
         autorange: "reversed",
         fixedrange: true,
+        automargin: true,
         tickfont: { size: isMobile ? 9 : 12 },
       },
-      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 250, r: 20 },
+      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 350, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: isMobile ? 380 : 450,
