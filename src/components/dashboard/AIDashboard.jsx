@@ -11,6 +11,7 @@ import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
+  { key: "url", label: "URL", resizable: true },
   { key: "vendor", label: "Vendor", resizable: true },
   { key: "overall", label: "Overall", resizable: true },
   { key: "privacy", label: "Privacy", resizable: true },
@@ -20,6 +21,7 @@ const HIGH_RISK_COLUMNS = [
 
 const TOOL_COLUMNS = [
   { key: "name", label: "Tool Name", resizable: true },
+  { key: "url", label: "URL", resizable: true },
   { key: "overall", label: "Overall", resizable: true },
   {
     key: "recommendation",
@@ -55,6 +57,21 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
 
     case "vendor":
       return tool.developer || "Unknown";
+
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
+      );
 
     case "overall":
       return (
@@ -116,6 +133,21 @@ const renderToolCell = (navigate) => (tool, key) => {
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
           {tool.overall_score || 0}
         </span>
+      );
+
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
       );
 
     case "recommendation":
@@ -235,7 +267,9 @@ export default function AIDashboard() {
 
         // Keep only scan completed tools
         const scanCompletedTools = (data.tool_kpis || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         );
 
         const highRiskTools = scanCompletedTools.filter(
@@ -258,7 +292,7 @@ export default function AIDashboard() {
             ...data.overview,
             total_projects: scanCompletedTools.length,
             high_risk_count: highRiskTools.length,
-            approved_count: approvedTools.length,
+            approved_count: data.overview?.approved_count || 0,
             rejected_count: rejectedTools.length,
           },
         });
@@ -316,7 +350,7 @@ export default function AIDashboard() {
       dashboardAnalytics.distributions?.recommendation || [];
     const recColors = {
       Approved: "#10b981",
-      "Approved with limitations": "#3b82f6",
+      "Approved with limitations": "#fce99a",
       Restricted: "#f59e0b",
       "Do not use": "#ef4444",
       "Not Recommended": "#ef4444",
@@ -344,7 +378,7 @@ export default function AIDashboard() {
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
       responsive: true,
@@ -407,15 +441,20 @@ export default function AIDashboard() {
 
     const usersLayout = {
       title: {
-        text: "Intended Users Distribution",
+        text: window.innerWidth < 768 ? "Intended Users<br>Distribution" : "Intended Users Distribution",
         font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
       },
       showlegend: true,
       legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
+      margin: { t: 80, b: 20, l: 20, r: 20 },
       height: 300,
       paper_bgcolor: "rgba(0,0,0,0)",
     };
+
+    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
+      displayModeBar: false,
+      responsive: true,
+    });
 
     // Force resize to ensure full space is used
     setTimeout(() => {
@@ -429,7 +468,9 @@ export default function AIDashboard() {
       .map((item) => ({
         name: item.compliance_type,
         tools: (item.tools || []).filter(
-          (tool) => tool.status === "scan_completed",
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage",
         ),
       }))
       .filter((item) => item.tools.length > 0)
@@ -448,29 +489,37 @@ export default function AIDashboard() {
       },
     ];
 
+    const isMobile = window.innerWidth < 768;
+
     const complianceLayout = {
       title: {
-        text: "Compliance Standard Distribution",
+        text: isMobile
+          ? "Compliance Standard<br>Distribution"
+          : "Compliance Standard Distribution",
         font: {
-          size: 18,
+          size: isMobile ? 14 : 18,
           family: "Inter",
           color: "#0F3053",
         },
       },
       dragmode: false,
       xaxis: {
-        title: "Number of Tools",
+        title: isMobile ? "" : "Number of Tools",
         gridcolor: "#f1f5f9",
         fixedrange: true,
+        tickfont: { size: isMobile ? 9 : 12 },
       },
       yaxis: {
         autorange: "reversed",
         fixedrange: true,
+        automargin: true,
+        tickfont: { size: isMobile ? 9 : 12 },
       },
-      margin: { t: 50, b: 40, l: 250, r: 20 },
+      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 350, r: 20 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
-      height: 450,
+      height: isMobile ? 380 : 450,
+      responsive: true,
     };
 
     window.Plotly.newPlot(
@@ -509,6 +558,17 @@ export default function AIDashboard() {
       setDropdownOpen(false);
     }
   }, [selectedRadarToolIds]);
+
+  useEffect(() => {
+    if (!dashboardAnalytics || !window.Plotly) return;
+
+    const handleResize = () => {
+      initializeCharts();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dashboardAnalytics, initializeCharts]);
   const visibleRadarTools = React.useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return [];
 
@@ -549,7 +609,7 @@ export default function AIDashboard() {
       />
 
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-4 gap-6">
+      <section id="stats-section" className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
@@ -590,10 +650,10 @@ export default function AIDashboard() {
 
       <section>
         {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="font-bold text-lg">Quality Comparison</h3>
-            <div className="flex items-center gap-2 w-full max-w-[600px]">
+        <div className="dashboard-card p-4 mb-4 flex flex-col max-h-[400px] overflow-hidden md:max-h-none md:overflow-visible">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 mb-2">
+            <h3 className="font-bold text-lg shrink-0">Quality Comparison</h3>
+            <div className="flex items-center gap-2 w-full md:max-w-[600px]">
               <label className="text-sm font-medium whitespace-nowrap">
                 Select Tools (Max 5):
               </label>
@@ -687,14 +747,14 @@ export default function AIDashboard() {
       </div>
 
       {/* Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-8 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommendation Distribution */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-recommendation" className="w-full h-full"></div>
         </div>
 
         {/* Intended Users */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
+        <div className="dashboard-card p-2 h-[450px]">
           <div id="chart-users" className="w-full h-full"></div>
         </div>
       </section>
@@ -744,7 +804,7 @@ export default function AIDashboard() {
       </section>
 
       {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[500px]">
+      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
         <div id="chart-compliance" className="w-full h-full"></div>
       </section>
     </div>

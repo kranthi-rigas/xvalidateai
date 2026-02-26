@@ -103,6 +103,12 @@ export default function DashboardPricing() {
     return price;
   };
   useEffect(() => {
+    // Disable AOS on mobile/tablet: the scrollable area is a div (not window),
+    // so AOS intersection never fires and cards stay stuck at opacity:0.
+    AOS.init({
+      once: true,
+      disable: () => window.innerWidth < 1024,
+    });
     AOS.refresh();
   }, []);
 
