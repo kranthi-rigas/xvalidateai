@@ -282,8 +282,8 @@ export default function AIDashboard() {
           tool.recommendation?.toLowerCase().includes("approved"),
         );
 
-        const rejectedTools = scanCompletedTools.filter((tool) =>
-          tool.recommendation?.toLowerCase().includes("rejected"),
+        const rejectedTools = scanCompletedTools.filter(
+          (tool) => tool.status === "rejected_for_usage",
         );
 
         setDashboardAnalytics({
