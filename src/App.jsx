@@ -6,6 +6,8 @@ import "aos/dist/aos.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import AOS from "aos";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import AdminFeePlanList from "./pages/FeesStructure/AdminFeePlanList";
 import Context from "@/context/Context";
 import CourseFeeStructurePage from "./pages/FeesStructure/CourseFeeStructurePage";
@@ -63,6 +65,12 @@ function App() {
       easing: "ease-out",
       once: true,
     });
+
+    // Hide status bar completely on native platforms
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.hide();
+      StatusBar.setOverlaysWebView({ overlay: true });
+    }
   }, []);
 
   return (

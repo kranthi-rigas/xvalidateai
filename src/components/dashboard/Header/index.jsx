@@ -14,10 +14,10 @@ export default function Header({ onToggleMobileSidebar }) {
   return (
     <header
       id="header"
-      className="h-20 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0"
+      className="h-24 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0"
     >
       {/* Left: Hamburger (mobile) + Title (desktop) */}
-      <div className="flex items-center min-w-0 flex-1">
+      <div className="flex items-center min-w-0 flex-1 relative z-10">
         {/* Hamburger — mobile only */}
         <button
           className="lg:hidden mr-2 p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
@@ -41,12 +41,12 @@ export default function Header({ onToggleMobileSidebar }) {
         <img
           src="/assets/img/logo/xvalidateai-logo.svg"
           alt="App Logo"
-          className="h-8 w-auto"
+          className="h-10 w-auto"
         />
       </Link>
 
       {/* Right: Actions */}
-      <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
+      <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0 relative z-10">
         <HeaderCredits />
         {/* <HeaderSearch /> */}
         <HeaderNotifications hasUnread={true} />

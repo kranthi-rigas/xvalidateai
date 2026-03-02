@@ -1,5 +1,12 @@
 {
-  "appId": "com.aicomp.compliance",
-  "appName": "AI Compliance",
-  "webDir": "dist"
+  "appId": "com.xvalidateai.compliance",
+  "appName": "XvalidateAI",
+  "webDir": "dist",
+  
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": true,
+      "hidden": true
+    }
+  }
 }
