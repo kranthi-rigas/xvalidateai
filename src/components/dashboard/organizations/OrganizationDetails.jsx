@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { getOrganizations } from "../../../apiIntegration/organization";
+import React from "react";
 import { SlArrowRight } from "react-icons/sl";
 import { COLORS } from "../../../styles/colors";
 
@@ -46,19 +44,21 @@ export default function OrganizationDetails({ organization, onBack }) {
     const [bg, color] = map[status] || map.DEACTIVATED;
 
     return (
-      <span
-        style={{
-          padding: "6px 12px",
-          borderRadius: 999,
-          fontSize: 12.5,
-          fontWeight: 600,
-          background: bg,
-          color,
-          textTransform: "lowercase",
-        }}
-      >
-        {status}
-      </span>
+      <div>
+        <span
+          style={{
+            padding: "6px 12px",
+            borderRadius: 999,
+            fontSize: 12.5,
+            fontWeight: 600,
+            background: bg,
+            color,
+            textTransform: "capitalize",
+          }}
+        >
+          {status}
+        </span>
+      </div>
     );
   };
 
@@ -68,7 +68,7 @@ export default function OrganizationDetails({ organization, onBack }) {
     organization.comment.trim().length > 0;
 
   return (
-    <div className="space-y">
+    <div>
       {/* ---------- BREADCRUMB ---------- */}
       <div
         style={{
@@ -85,14 +85,16 @@ export default function OrganizationDetails({ organization, onBack }) {
         >
           Organizations
         </span>
+
         <SlArrowRight size={12} style={{ color: COLORS.textLight }} />
+
         <span style={{ color: COLORS.textPrimary, fontWeight: 500 }}>
           {organization.name}
         </span>
       </div>
 
       {/* ---------- PAGE TITLE ---------- */}
-      <h2 style={{ fontSize: 30, fontWeight: 700, marginBottom: 30 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 30 }}>
         Organization Details
       </h2>
 
@@ -157,7 +159,6 @@ export default function OrganizationDetails({ organization, onBack }) {
             gap: 20,
           }}
         >
-          <MetaCard label="Slug" value={organization.slug} />
           <MetaCard label="Email" value={organization.email} />
           <MetaCard label="Address" value={organization.address} />
           <MetaCard
@@ -171,6 +172,7 @@ export default function OrganizationDetails({ organization, onBack }) {
 }
 
 /* ---------- HELPERS ---------- */
+
 const metaLabel = {
   fontSize: 12,
   fontWeight: 600,
