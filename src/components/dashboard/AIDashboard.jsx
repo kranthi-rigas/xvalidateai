@@ -4,7 +4,6 @@ import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
 import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
-import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
 import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
@@ -189,8 +188,6 @@ export default function AIDashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
   const navigate = useNavigate();
-  const [selectedCompliance, setSelectedCompliance] = useState(null);
-  const [isComplianceModalOpen, setIsComplianceModalOpen] = useState(false);
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
@@ -365,25 +362,30 @@ export default function AIDashboard() {
         values: recDistribution.map((d) => d.value),
         labels: recDistribution.map((d) => d.name),
         type: "pie",
-        hole: 0.6,
+        hole: 0.55,
         marker: {
           colors: recDistribution.map((d) => recColors[d.name] || "#95a5a6"),
         },
         textinfo: "none",
+        domain: { x: [0.15, 0.85], y: [0.15, 0.85] }, // makes donut bigger
       },
     ];
 
     const recommendationLayout = {
       title: {
         text: "Recommendation Distribution",
-        font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
+        font: { size: 20, family: "Inter", color: "#0F3053" },
       },
       showlegend: true,
-      legend: { orientation: "h", y: -0.2 },
-      margin: { t: 80, b: 20, l: 20, r: 20 },
-      height: 300,
+      legend: {
+        orientation: "h",
+        x: 0.5, // center horizontally
+        xanchor: "center",
+        y: -0.15, // position below chart
+      },
+      margin: { t: 80, b: 80, l: 40, r: 40 },
+      height: 450,
       paper_bgcolor: "rgba(0,0,0,0)",
-      responsive: true,
     };
 
     window.Plotly.newPlot(
@@ -392,112 +394,6 @@ export default function AIDashboard() {
       recommendationLayout,
       { displayModeBar: false, responsive: true },
     );
-
-    setTimeout(() => {
-      const chart = document.getElementById("chart-compliance");
-
-      if (chart) {
-        chart.on("plotly_click", function (data) {
-          const clickedIndex = data.points[0].pointIndex;
-          const clickedCompliance = sortedCompliance[clickedIndex];
-
-          setSelectedCompliance(clickedCompliance);
-          setIsComplianceModalOpen(true);
-        });
-      }
-    }, 200);
-
-    const complianceBreakdown = dashboardAnalytics.compliance_breakdown || [];
-
-    // Build full objects (important for modal)
-    const sortedCompliance = complianceBreakdown
-      .map((item) => ({
-        name: item.compliance_type,
-        tools: (item.tools || []).filter(
-          (tool) =>
-            tool.status === "scan_completed" ||
-            tool.status === "approved_for_usage" ||
-            tool.status === "rejected_for_usage",
-        ),
-      }))
-      .filter((item) => item.tools.length > 0)
-      .sort((a, b) => b.tools.length - a.tools.length);
-
-    const compliancePlotData = [
-      {
-        type: "bar",
-        x: sortedCompliance.map((item) => item.tools.length),
-        y: sortedCompliance.map((item) => item.name),
-        orientation: "h",
-        hovertemplate: "<b>%{y}</b><br>Tools count: %{x}<extra></extra>",
-        marker: {
-          color: "#3b82f6",
-        },
-      },
-    ];
-
-    const isMobile = window.innerWidth < 768;
-
-    const complianceLayout = {
-      title: {
-        text: isMobile
-          ? "Compliance Standard<br>Distribution"
-          : "Compliance Standard Distribution",
-        font: {
-          size: isMobile ? 14 : 18,
-          family: "Inter",
-          color: "#0F3053",
-        },
-      },
-      dragmode: false,
-      xaxis: {
-        title: isMobile ? "" : "Number of Tools",
-        gridcolor: "#f1f5f9",
-        fixedrange: true,
-        tickfont: { size: isMobile ? 9 : 12 },
-      },
-      yaxis: {
-        autorange: "reversed",
-        fixedrange: true,
-        automargin: true,
-        tickfont: { size: isMobile ? 9 : 12 },
-      },
-      margin: { t: 60, b: isMobile ? 20 : 40, l: isMobile ? 130 : 350, r: 20 },
-      paper_bgcolor: "rgba(0,0,0,0)",
-      plot_bgcolor: "rgba(0,0,0,0)",
-      height: isMobile ? 380 : 450,
-      responsive: true,
-    };
-
-    window.Plotly.newPlot(
-      "chart-compliance",
-      compliancePlotData,
-      complianceLayout,
-      {
-        displayModeBar: false,
-        responsive: true,
-        scrollZoom: false,
-        doubleClick: false,
-        staticPlot: false,
-        editable: false,
-      },
-    );
-
-    setTimeout(() => {
-      const chart = document.getElementById("chart-compliance");
-
-      if (chart) {
-        chart.on("plotly_click", function (data) {
-          const clickedIndex = data.points[0].pointIndex;
-          const clickedCompliance = sortedCompliance[clickedIndex];
-
-          setSelectedCompliance(clickedCompliance);
-          setIsComplianceModalOpen(true);
-        });
-
-        chart.style.cursor = "pointer";
-      }
-    }, 300);
   }, [dashboardAnalytics]);
 
   useEffect(() => {
@@ -549,12 +445,6 @@ export default function AIDashboard() {
 
   return (
     <div className="space-y-8">
-      <ComplianceToolsModal
-        open={isComplianceModalOpen}
-        onClose={() => setIsComplianceModalOpen(false)}
-        complianceData={selectedCompliance}
-      />
-
       {/* Stats Cards Row */}
       <section
         id="stats-section"
@@ -666,99 +556,6 @@ export default function AIDashboard() {
               enableExport={true}
               isDisableExport={isFreePlan}
               exportFileName="complete-tool-info"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
-        <div id="chart-compliance" className="w-full h-full"></div>
-      </section>
-
-      <section>
-        {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 flex flex-col max-h-[400px] overflow-hidden md:max-h-none md:overflow-visible">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 mb-2">
-            <h3 className="font-bold text-lg shrink-0">Quality Comparison</h3>
-            <div className="flex items-center gap-2 w-full md:max-w-[600px]">
-              <label className="text-sm font-medium whitespace-nowrap">
-                Select Tools (Max 5):
-              </label>
-              <div className="relative flex-1" data-dropdown-container>
-                {/* Multi-Select Input with Pills */}
-                <div
-                  className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer bg-white flex items-center flex-wrap gap-2 min-h-[38px]"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                >
-                  {selectedRadarToolIds.length === 0 ? (
-                    <span className="text-gray-400 text-sm">
-                      Select tools...
-                    </span>
-                  ) : (
-                    selectedRadarToolIds.map((toolId) => {
-                      const tool = allTools.find(
-                        (t) => t.project_id === toolId,
-                      );
-
-                      return (
-                        <div
-                          key={toolId}
-                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
-                        >
-                          <span>{tool?.tool_name}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeRadarTool(toolId);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 font-bold"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Dropdown List with Checkboxes */}
-                {dropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 bg-white rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                    {allTools.map((tool) => {
-                      const isSelected = selectedRadarToolIds.includes(
-                        tool.project_id,
-                      );
-                      const isDisabled =
-                        selectedRadarToolIds.length >= 5 && !isSelected;
-
-                      return (
-                        <label
-                          key={tool.project_id}
-                          className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onChange={() => toggleRadarTool(tool.project_id)}
-                            className="mr-3"
-                          />
-                          <span className="text-sm">{tool.tool_name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <RadarQualityChart
-              key={selectedRadarToolIds.join(",")}
-              tools={visibleRadarTools}
             />
           </div>
         </div>
