@@ -180,7 +180,7 @@ export default function ToolsCombinedChart({ tools = [] }) {
       data: tools.map((t) => t.data_quality_score || 0),
     },
     {
-      name: "Privacy & Safety",
+      name: "Governance & Compliance Review",
       type: "column",
       data: tools.map((t) => t.privacy_safety_score || 0),
     },
@@ -210,10 +210,10 @@ export default function ToolsCombinedChart({ tools = [] }) {
       </div>
 
       <div className="flex justify-center gap-6 text-sm font-medium mb-4 flex-wrap">
-        <LegendDot color="#2563eb" label="Data Quality" />
-        <LegendDot color="#f59e0b" label="Privacy & Safety" />
-        <LegendDot color="#007d79" label="Instructional Impact" />
-        <LegendDot color="#8b5cf6" label="Usability" />
+        <LegendDot color="#2563eb" label="Data & Reporting Quality" />
+        <LegendDot color="#f59e0b" label="Governance & Compliance Review" />
+        <LegendDot color="#007d79" label="Instructional & Learning Impact" />
+        <LegendDot color="#8b5cf6" label="Usability & Integration" />
         <LegendDot color="#111827" label="Overall Score" line />
       </div>
 
