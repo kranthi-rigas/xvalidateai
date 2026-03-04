@@ -175,7 +175,7 @@ export default function ToolsCombinedChart({ tools = [] }) {
 
   const series = [
     {
-      name: "Data Quality",
+      name: "Data & Reporting Quality",
       type: "column",
       data: tools.map((t) => t.data_quality_score || 0),
     },
@@ -185,12 +185,12 @@ export default function ToolsCombinedChart({ tools = [] }) {
       data: tools.map((t) => t.privacy_safety_score || 0),
     },
     {
-      name: "Instructional Impact",
+      name: "Instructional & Learning Impact",
       type: "column",
       data: tools.map((t) => t.instructional_impact_score || 0),
     },
     {
-      name: "Usability",
+      name: "Usability & Integration",
       type: "column",
       data: tools.map((t) => t.usability_score || 0),
     },
