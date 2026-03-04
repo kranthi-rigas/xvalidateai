@@ -282,8 +282,8 @@ export default function AIDashboard() {
           tool.recommendation?.toLowerCase().includes("approved"),
         );
 
-        const rejectedTools = scanCompletedTools.filter((tool) =>
-          tool.recommendation?.toLowerCase().includes("rejected"),
+        const rejectedTools = scanCompletedTools.filter(
+          (tool) => tool.status === "rejected_for_usage",
         );
 
         setDashboardAnalytics({
@@ -598,6 +598,84 @@ export default function AIDashboard() {
         />
       </section>
 
+      <div className="grid grid-cols-1 gap-6">
+        <div className="dashboard-card p-6">
+          <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
+        </div>
+
+        {/*<div className="dashboard-card p-6">
+          <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
+        </div>*/}
+      </div>
+
+      {/* Recommendation & Intended Users Row */}
+      <section className="grid grid-cols-1 gap-6">
+        {/* Recommendation Distribution */}
+        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+          <div id="chart-recommendation" className="w-full flex-1"></div>
+        </div>
+
+        {/* Intended Users Heatmap */}
+        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+          <h3 className="font-bold text-center text-lg mb-4">
+            Intended Users Distribution
+          </h3>
+
+          <div className="flex-1">
+            <ToolUserHeatmap apiData={dashboardAnalytics} />
+          </div>
+        </div>
+      </section>
+
+      {/* High Risk Alert Box */}
+      <section className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
+            <div className="flex items-center text-amber-800">
+              <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+              <h3 className="font-bold text-lg">
+                High-Risk Tools Requiring Immediate Attention
+              </h3>
+            </div>
+          </div>
+          <div className="p-0 overflow-x-auto flex-1">
+            <ListTable
+              data={highRiskTools}
+              columns={HIGH_RISK_COLUMNS}
+              renderCell={renderHighRiskCell(navigate)}
+              enableExport={true}
+              isDisableExport={isFreePlan}
+              exportFileName="high-risk-tools-info"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Complete Tool Information Table */}
+      <section className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
+          <div className="px-6 py-5 border-b flex justify-center items-center bg-white">
+            <h3 className="font-bold text-lg">Complete Tool Information</h3>
+          </div>
+          <div className="flex-1 overflow-x-auto relative">
+            <ListTable
+              data={allTools}
+              columns={TOOL_COLUMNS}
+              renderCell={renderToolCell(navigate)}
+              tableClassName="custom-table"
+              enableExport={true}
+              isDisableExport={isFreePlan}
+              exportFileName="complete-tool-info"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Compliance Bar Chart Section */}
+      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
+        <div id="chart-compliance" className="w-full h-full"></div>
+      </section>
+
       <section>
         {/* Radar Chart */}
         <div className="dashboard-card p-4 mb-4 flex flex-col max-h-[400px] overflow-hidden md:max-h-none md:overflow-visible">
@@ -684,84 +762,6 @@ export default function AIDashboard() {
             />
           </div>
         </div>
-      </section>
-
-      <div className="grid grid-cols-1 gap-6">
-        <div className="dashboard-card p-6">
-          <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
-        </div>
-
-        {/*<div className="dashboard-card p-6">
-          <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
-        </div>*/}
-      </div>
-
-      {/* Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recommendation Distribution */}
-        <div className="dashboard-card p-6 h-[500px] flex flex-col">
-          <div id="chart-recommendation" className="w-full flex-1"></div>
-        </div>
-
-        {/* Intended Users Heatmap */}
-        <div className="dashboard-card p-6 h-[500px] flex flex-col">
-          <h3 className="font-bold text-center text-lg mb-4">
-            Intended Users Distribution
-          </h3>
-
-          <div className="flex-1">
-            <ToolUserHeatmap apiData={dashboardAnalytics} />
-          </div>
-        </div>
-      </section>
-
-      {/* High Risk Alert Box */}
-      <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
-            <div className="flex items-center text-amber-800">
-              <i className="fa-solid fa-triangle-exclamation mr-2"></i>
-              <h3 className="font-bold text-lg">
-                High-Risk Tools Requiring Immediate Attention
-              </h3>
-            </div>
-          </div>
-          <div className="p-0 overflow-x-auto flex-1">
-            <ListTable
-              data={highRiskTools}
-              columns={HIGH_RISK_COLUMNS}
-              renderCell={renderHighRiskCell(navigate)}
-              enableExport={true}
-              isDisableExport={isFreePlan}
-              exportFileName="high-risk-tools-info"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Complete Tool Information Table */}
-      <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="px-6 py-5 border-b flex justify-center items-center bg-white">
-            <h3 className="font-bold text-lg">Complete Tool Information</h3>
-          </div>
-          <div className="flex-1 overflow-x-auto relative">
-            <ListTable
-              data={allTools}
-              columns={TOOL_COLUMNS}
-              renderCell={renderToolCell(navigate)}
-              tableClassName="custom-table"
-              enableExport={true}
-              isDisableExport={isFreePlan}
-              exportFileName="complete-tool-info"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[440px] md:h-[500px]">
-        <div id="chart-compliance" className="w-full h-full"></div>
       </section>
     </div>
   );
