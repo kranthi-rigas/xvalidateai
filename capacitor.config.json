@@ -2,11 +2,20 @@
   "appId": "com.xvalidateai.compliance",
   "appName": "XvalidateAI",
   "webDir": "dist",
-  
+  "server": {
+    "allowNavigation": [
+      "dev-api.xvalidateai.com",
+      "*.xvalidateai.com",
+      "accounts.google.com",
+      "*.googleapis.com"
+    ],
+    "cleartext": true
+  },
   "plugins": {
     "StatusBar": {
-      "overlaysWebView": true,
-      "hidden": true
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#FFFFFF"
     }
   }
 }

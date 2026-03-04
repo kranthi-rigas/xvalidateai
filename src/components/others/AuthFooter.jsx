@@ -2,7 +2,7 @@ import React from "react";
 
 export default function AuthFooter() {
   return (
-    <footer className="auth-page-footer frosted-nav">
+    <footer className="auth-page-footer frosted-nav" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="auth-page-footer-content">
         <div className="auth-page-footer-inner">
           <div className="auth-page-footer-copyright">

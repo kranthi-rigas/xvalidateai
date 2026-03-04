@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 export default function HeaderAuth() {
   const [activeMobileMenu, setActiveMobileMenu] = useState(false);
   return (
-    <header className="header -base js-header">
+    <header className="header -base js-header" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div
         className="header__container py-10"
         style={{

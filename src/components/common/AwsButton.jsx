@@ -43,8 +43,8 @@ export default function AwsButton({
       type={type}
       disabled={isDisabled}
       onClick={!isDisabled ? onClick : undefined}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") setHover(true); }}
+      onPointerLeave={(e) => { if (e.pointerType === "mouse") setHover(false); }}
       className="lh-1 tool-assessment-btn"
       style={{
         ...currentSize,
@@ -57,6 +57,9 @@ export default function AwsButton({
         cursor: isDisabled ? "not-allowed" : "pointer",
         transition: "all 0.2s ease",
         whiteSpace: "nowrap",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "manipulation",
+        userSelect: "none",
 
         background: isDisabled
           ? COLORS.bgSecondary

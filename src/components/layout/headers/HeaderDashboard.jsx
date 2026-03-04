@@ -262,12 +262,13 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
   return (
     <>
       <header className="header -dashboard js-header" style={{
-        height: "80px",
+        minHeight: "80px",
         backgroundColor: "white",
         borderBottom: "1px solid #E2E8F0",
         position: "sticky",
         top: 0,
-        zIndex: 10
+        zIndex: 10,
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}>
         <div className="header-inner" style={{ height: "100%" }}>
           <div className="pt-10 px-20" style={{ height: "100%" }}>

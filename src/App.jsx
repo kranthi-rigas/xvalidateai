@@ -66,10 +66,11 @@ function App() {
       once: true,
     });
 
-    // Hide status bar completely on native platforms
+    // Show status bar properly on native platforms (respects Dynamic Island / notch)
     if (Capacitor.isNativePlatform()) {
-      StatusBar.hide();
-      StatusBar.setOverlaysWebView({ overlay: true });
+      StatusBar.setStyle({ style: Style.Dark });
+      StatusBar.setOverlaysWebView({ overlay: false });
+      StatusBar.show();
     }
   }, []);
 

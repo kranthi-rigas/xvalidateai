@@ -103,7 +103,7 @@ export default function ModernDashboardLayout() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      // setShowLogoutModal(false);
+      setShowLogoutModal(false);
 
       const token =
         localStorage.getItem("refresh_token") ||
@@ -181,6 +181,10 @@ export default function ModernDashboardLayout() {
                 sidebarCollapsed ? "lg:w-20" : "lg:w-64"
               } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-all duration-300`
         }
+        style={mobileSidebarOpen ? {
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        } : {}}
       >
         {/* Sidebar top bar:
              Mobile  → logo centered, ✕ button pinned right
@@ -362,6 +366,11 @@ export default function ModernDashboardLayout() {
                   onClick={handleLogoutClick}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Logout"
+                  style={{
+                    WebkitTapHighlightColor: "transparent",
+                    touchAction: "manipulation",
+                    userSelect: "none",
+                  }}
                 >
                   <i className="fa-solid fa-arrow-right-from-bracket"></i>
                 </button>
@@ -399,6 +408,9 @@ export default function ModernDashboardLayout() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
+            padding: "1rem",
+            paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
           }}
           onClick={() => setShowLogoutModal(false)}
         >

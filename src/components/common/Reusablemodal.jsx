@@ -86,7 +86,12 @@ export default function ReusableModal({
     justifyContent: "center",
     zIndex: 999,
     padding: "1rem",
+    paddingTop: "max(1rem, env(safe-area-inset-top, 0px))",
+    paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+    paddingLeft: "max(1rem, env(safe-area-inset-left, 0px))",
+    paddingRight: "max(1rem, env(safe-area-inset-right, 0px))",
     overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
   };
 
   const modalStyle = {
@@ -96,8 +101,9 @@ export default function ReusableModal({
     padding: "20px",
     borderRadius: "18px",
     boxShadow: "0 20px 60px rgba(0, 0, 0, 0.35)",
-    maxHeight: "calc(100vh - 2rem)", // Fit within viewport with padding
-    overflowY: "auto", // Allow scrolling within modal
+    maxHeight: "calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem)",
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
     position: "relative",
     margin: "auto",
 

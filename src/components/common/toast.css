@@ -1,12 +1,14 @@
 .toast-root {
   position: fixed;
-  top: 5%;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
+  transform: translateX(-50%);
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-width: calc(100vw - 2rem);
+  width: auto;
 }
 .toast {
   min-width: 200px;

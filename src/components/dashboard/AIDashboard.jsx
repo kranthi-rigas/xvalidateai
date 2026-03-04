@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
@@ -8,6 +9,7 @@ import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
 import RadarQualityChart from "@/components/Charts/RadarQualityChart";
 import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
+import Plotly from "plotly.js-dist-min";
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool", resizable: true },
@@ -153,7 +155,10 @@ const renderToolCell = (navigate) => (tool, key) => {
 export default function AIDashboard() {
   const [dashboardAnalytics, setDashboardAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 200 });
+  const dropdownTriggerRef = useRef(null);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
   const navigate = useNavigate();
 
@@ -281,6 +286,7 @@ export default function AIDashboard() {
     fetchDashboardAnalytics()
       .then((data) => {
         if (!data) {
+          setError("No data received from server.");
           setLoading(false);
           return;
         }
@@ -295,33 +301,27 @@ export default function AIDashboard() {
           tool_kpis: filteredToolKpis,
         });
 
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Dashboard error:", err);
+        setError(err.message || "Failed to load dashboard data.");
         setLoading(false);
       });
   }, []);
 
   useEffect(() => {
-    // Load Plotly and initialize charts when data is available
+    // Initialize charts when data is available (Plotly is now bundled)
     if (!loading && dashboardAnalytics) {
-      if (!window.Plotly) {
-        const script = document.createElement("script");
-        script.src = "https://cdn.plot.ly/plotly-2.27.0.min.js";
-        script.async = true;
-        script.onload = () => initializeCharts();
-        document.body.appendChild(script);
-      } else {
-        initializeCharts();
-      }
+      initializeCharts();
     }
   }, [loading, dashboardAnalytics]);
 
   useEffect(() => {
     // Close dropdown when clicking outside
     const handleClickOutside = (e) => {
-      if (dropdownOpen && !e.target.closest("[data-dropdown-container]")) {
+      if (dropdownOpen && !e.target.closest("[data-dropdown-container]") && !e.target.closest("[data-dropdown-portal]")) {
         setDropdownOpen(false);
       }
     };
@@ -383,7 +383,7 @@ export default function AIDashboard() {
       responsive: true,
     };
 
-    window.Plotly.newPlot(
+    Plotly.newPlot(
       "chart-recommendation",
       recommendationPlotData,
       recommendationLayout,
@@ -392,7 +392,7 @@ export default function AIDashboard() {
 
     // Force resize to ensure full space is used
     setTimeout(() => {
-      window.Plotly.Plots.resize("chart-recommendation");
+      Plotly.Plots.resize("chart-recommendation");
     }, 100);
 
     // Chart: Intended Users
@@ -443,14 +443,14 @@ export default function AIDashboard() {
       paper_bgcolor: "rgba(0,0,0,0)",
     };
 
-    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
+    Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
       displayModeBar: false,
       responsive: true,
     });
 
     // Force resize to ensure full space is used
     setTimeout(() => {
-      window.Plotly.Plots.resize("chart-users");
+      Plotly.Plots.resize("chart-users");
     }, 100);
 
     // Chart: Compliance Distribution (Horizontal Bar)
@@ -502,7 +502,7 @@ export default function AIDashboard() {
       responsive: true,
     };
 
-    window.Plotly.newPlot(
+    Plotly.newPlot(
       "chart-compliance",
       compliancePlotData,
       complianceLayout,
@@ -511,7 +511,7 @@ export default function AIDashboard() {
 
     // Force resize to ensure full space is used
     setTimeout(() => {
-      window.Plotly.Plots.resize("chart-compliance");
+      Plotly.Plots.resize("chart-compliance");
     }, 100);
   }, [dashboardAnalytics]);
 
@@ -522,7 +522,7 @@ export default function AIDashboard() {
   }, [selectedRadarToolIds]);
 
   useEffect(() => {
-    if (!dashboardAnalytics || !window.Plotly) return;
+    if (!dashboardAnalytics || !Plotly) return;
 
     const handleResize = () => {
       initializeCharts();
@@ -539,8 +539,31 @@ export default function AIDashboard() {
     );
   }, [dashboardAnalytics, selectedRadarToolIds]);
 
-  if (loading || !dashboardAnalytics) {
+  if (loading) {
     return <PageLoader loading={true} />;
+  }
+
+  if (error || !dashboardAnalytics) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
+        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+          <i className="fa-solid fa-triangle-exclamation text-2xl text-red-500"></i>
+        </div>
+        <h2 className="text-lg font-semibold text-foreground">
+          Unable to load dashboard
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          {error || "Something went wrong while fetching your dashboard data."}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          <i className="fa-solid fa-rotate-right mr-2"></i>
+          Retry
+        </button>
+      </div>
+    );
   }
 
   const overview = dashboardAnalytics.overview || {};
@@ -616,8 +639,15 @@ export default function AIDashboard() {
               <div className="relative flex-1" data-dropdown-container>
                 {/* Multi-Select Input with Pills */}
                 <div
+                  ref={dropdownTriggerRef}
                   className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer bg-white flex items-center flex-wrap gap-2 min-h-[38px]"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  onClick={() => {
+                    if (!dropdownOpen && dropdownTriggerRef.current) {
+                      const rect = dropdownTriggerRef.current.getBoundingClientRect();
+                      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                    }
+                    setDropdownOpen(!dropdownOpen);
+                  }}
                 >
                   {selectedRadarToolIds.length === 0 ? (
                     <span className="text-gray-400 text-sm">
@@ -650,9 +680,19 @@ export default function AIDashboard() {
                   )}
                 </div>
 
-                {/* Dropdown List with Checkboxes */}
-                {dropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 bg-white rounded shadow-lg z-10 max-h-64 overflow-y-auto">
+                {/* Dropdown List with Checkboxes — rendered via portal to escape overflow:hidden on mobile */}
+                {dropdownOpen && createPortal(
+                  <div
+                    data-dropdown-portal
+                    style={{
+                      position: "fixed",
+                      top: dropdownPos.top,
+                      left: dropdownPos.left,
+                      width: dropdownPos.width,
+                      zIndex: 9999,
+                    }}
+                    className="border border-gray-300 bg-white rounded shadow-lg max-h-64 overflow-y-auto"
+                  >
                     {allTools.map((tool) => {
                       const isSelected = selectedRadarToolIds.includes(
                         tool.project_id,
@@ -678,7 +718,8 @@ export default function AIDashboard() {
                         </label>
                       );
                     })}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>

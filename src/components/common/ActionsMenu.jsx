@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import COLORS from "../../styles/colors";
 
 export default function ActionsMenu({
@@ -9,24 +10,59 @@ export default function ActionsMenu({
   const [open, setOpen] = useState(false);
   const [buttonHovered, setButtonHovered] = useState(false);
   const [hoverKey, setHoverKey] = useState(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, right: "auto" });
   const ref = useRef(null);
+  const buttonRef = useRef(null);
+  const portalRef = useRef(null);
 
-  /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
+  /* ---------- CALCULATE PORTAL POSITION ---------- */
+  const calcPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const dropdownWidth = 180;
+    // Prefer aligning to the right edge of the button; flip left if it would overflow
+    const rightEdge = rect.right;
+    const left = rightEdge - dropdownWidth < 0
+      ? rect.left
+      : rightEdge - dropdownWidth;
+
+    setDropdownPos({
+      top: rect.bottom + 8,
+      left: Math.max(8, Math.min(left, viewportWidth - dropdownWidth - 8)),
+    });
+  }, []);
+
+  /* ---------- CLOSE ON OUTSIDE CLICK / SCROLL ---------- */
   useEffect(() => {
     function handleOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !(portalRef.current && portalRef.current.contains(e.target))
+      ) {
         setOpen(false);
       }
     }
+    function handleScroll() {
+      setOpen(false);
+    }
 
     if (open) {
+      calcPosition();
       document.addEventListener("mousedown", handleOutside);
+      document.addEventListener("touchstart", handleOutside);
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScroll);
     };
-  }, [open]);
+  }, [open, calcPosition]);
 
   /* ---------- BUTTON STYLES ---------- */
   const buttonStyle = {
@@ -64,10 +100,10 @@ export default function ActionsMenu({
 
   /* ---------- DROPDOWN STYLES ---------- */
   const dropdownStyle = {
-    position: "absolute",
-    right: 0,
-    marginTop: "8px",
-    zIndex: 50,
+    position: "fixed",
+    top: dropdownPos.top,
+    left: dropdownPos.left,
+    zIndex: 9999,
     background: COLORS.bgPrimary,
     border: `1px solid ${COLORS.borderLight}`,
     borderRadius: "12px",
@@ -120,9 +156,10 @@ export default function ActionsMenu({
   };
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       {/* ---------- ACTION BUTTON ---------- */}
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={(e) => {
@@ -144,9 +181,10 @@ export default function ActionsMenu({
         />
       </button>
 
-      {/* ---------- DROPDOWN ---------- */}
-      {open && (
+      {/* ---------- DROPDOWN (Portal — renders into document.body to avoid overflow clipping) ---------- */}
+      {open && createPortal(
         <div
+          ref={portalRef}
           style={dropdownStyle}
           role="menu"
           onMouseDown={(e) => e.stopPropagation()}
@@ -183,7 +221,8 @@ export default function ActionsMenu({
               </div>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

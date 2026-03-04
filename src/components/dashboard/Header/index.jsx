@@ -14,7 +14,11 @@ export default function Header({ onToggleMobileSidebar }) {
   return (
     <header
       id="header"
-      className="h-24 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0"
+      className="bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0"
+      style={{
+        minHeight: "4rem",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}
     >
       {/* Left: Hamburger (mobile) + Title (desktop) */}
       <div className="flex items-center min-w-0 flex-1 relative z-10">

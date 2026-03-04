@@ -21,63 +21,7 @@
       rel="stylesheet"
     />
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              "border": "#E2E8F0",
-              "input": "#FFFFFF",
-              "ring": "#58BFCE",
-              "background": "#FAFAFA",
-              "foreground": "#0f172a",
-              "primary": {
-                "DEFAULT": "#0F3053",
-                "foreground": "#ffffff",
-              },
-              "secondary": {
-                "DEFAULT": "#58BFCE",
-                "foreground": "#0F172A",
-              },
-              "destructive": {
-                "DEFAULT": "#ef4444",
-                "foreground": "#ffffff",
-              },
-              "muted": {
-                "DEFAULT": "#F1F5F9",
-                "foreground": "#64748B",
-              },
-              "accent": {
-                "DEFAULT": "#F8FAFC",
-                "foreground": "#0F3053",
-              },
-              "card": {
-                "DEFAULT": "#ffffff",
-                "foreground": "#0f172a",
-              },
-              "sidebar": {
-                "DEFAULT": "#ffffff",
-                "foreground": "#0F3053",
-                "border": "#E2E8F0",
-              },
-            },
-            borderRadius: {
-              "lg": "10px",
-              "md": "8px",
-              "sm": "6px",
-            },
-            fontFamily: {
-              "sans": ["Inter", "sans-serif"],
-            },
-            boxShadow: {
-              "DEFAULT": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-            },
-          },
-        }
-      }
-    </script>
+    <!-- Tailwind CSS is now bundled at build time via PostCSS -->
 
     <title>XValidateAI – Intelligent Validation Platform</title>
   </head>
