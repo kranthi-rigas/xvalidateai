@@ -1,5 +1,5 @@
 import MetaComponent from "@/components/common/MetaComponent";
-import AiLiteracyPage from "@/pages/ailiteracy/AiLiteracyPage";
+import AiLiteracyPage from "@/pages/ailiteracy/AiLiteracyPage.jsx";
 
 const metadata = {
   title: "AI Literacy || XValidate",
