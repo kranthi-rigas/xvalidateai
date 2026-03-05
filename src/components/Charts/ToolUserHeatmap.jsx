@@ -10,28 +10,72 @@ const ToolUserHeatmap = ({ apiData }) => {
     const lower = text.toLowerCase();
     const categories = [];
 
-    if (lower.includes("teacher") || lower.includes("educator"))
+    // Teachers / Educators
+    if (
+      lower.includes("teacher") ||
+      lower.includes("educator") ||
+      lower.includes("k-12 teacher")
+    ) {
       categories.push("Teachers");
-    if (lower.includes("student")) categories.push("K-12 Students");
-    if (lower.includes("parent")) categories.push("Parents");
+    }
+
+    // Students
+    if (
+      lower.includes("student") ||
+      lower.includes("students") ||
+      lower.includes("learner")
+    ) {
+      categories.push("K-12 Students");
+    }
+
+    // Parents
+    if (lower.includes("parent") || lower.includes("guardian")) {
+      categories.push("Parents");
+    }
+
+    // General Public
     if (
       lower.includes("general public") ||
-      lower.includes("business") ||
-      lower.includes("advertiser")
-    )
+      lower.includes("public") ||
+      lower.includes("everyone") ||
+      lower.includes("consumer")
+    ) {
       categories.push("General Public");
+    }
+
+    // Enterprise / Enterprises
     if (
       lower.includes("enterprise") ||
+      lower.includes("enterprises") ||
       lower.includes("organization") ||
-      lower.includes("government")
-    )
+      lower.includes("company") ||
+      lower.includes("business")
+    ) {
       categories.push("Enterprise");
-    if (lower.includes("developer")) categories.push("Developers");
-    if (lower.includes("researcher")) categories.push("Researchers");
+    }
+
+    // Developers
+    if (
+      lower.includes("developer") ||
+      lower.includes("developers") ||
+      lower.includes("programmer") ||
+      lower.includes("engineer")
+    ) {
+      categories.push("Developers");
+    }
+
+    // Researchers
+    if (
+      lower.includes("researcher") ||
+      lower.includes("researchers") ||
+      lower.includes("scientist")
+    ) {
+      categories.push("Researchers");
+    }
 
     if (categories.length === 0) categories.push("Other");
 
-    return categories;
+    return [...new Set(categories)];
   };
 
   const { tools, userCategories, toolUserMap } = useMemo(() => {
@@ -40,40 +84,58 @@ const ToolUserHeatmap = ({ apiData }) => {
 
     const tools = apiData.tool_kpis.map((t) => t.tool_name);
 
-    const allCategoriesSet = new Set();
+    const categorySet = new Set();
     const toolUserMap = {};
 
     apiData.tool_kpis.forEach((tool) => {
       const categories = normalizeUsers(tool.intended_users);
+
       toolUserMap[tool.tool_name] = categories;
-      categories.forEach((cat) => allCategoriesSet.add(cat));
+
+      categories.forEach((c) => categorySet.add(c));
     });
+
+    // keep clean logical order but only show used categories
+    const categoryOrder = [
+      "Teachers",
+      "K-12 Students",
+      "Parents",
+      "General Public",
+      "Enterprise",
+      "Developers",
+      "Researchers",
+      "Other",
+      "Not Specified",
+    ];
+
+    const userCategories = categoryOrder.filter((c) => categorySet.has(c));
 
     return {
       tools,
-      userCategories: Array.from(allCategoriesSet),
+      userCategories,
       toolUserMap,
     };
   }, [apiData]);
-
   useEffect(() => {
     if (!tools.length) return;
 
     let chart = echarts.getInstanceByDom(chartRef.current);
     if (chart) chart.dispose();
+
     chart = echarts.init(chartRef.current);
 
     const categoryColors = {
-      "Not Specified": "#000000", // True Black
-      Other: "#111827", // Near Black
-      Parents: "#1f2937", // Dark Gray
-      "General Public": "#1e3a8a", // Dark Navy
-      Developers: "#1e40af", // Indigo
-      Researchers: "#1d4ed8", // Strong Blue
-      Teachers: "#2563eb", // Bright Blue
-      Enterprise: "#3b82f6", // Light Blue
-      "K-12 Students": "#facc15", // Strong Yellow (Top Highlight)
+      "Not Specified": "#000000",
+      Other: "#111827",
+      Parents: "#1f2937",
+      "General Public": "#6d28d9",
+      Developers: "#0f766e",
+      Researchers: "#0ea5e9",
+      Teachers: "#1d4ed8",
+      Enterprise: "#374151",
+      "K-12 Students": "#facc15",
     };
+
     const data = [];
 
     tools.forEach((tool, yIndex) => {
@@ -83,9 +145,6 @@ const ToolUserHeatmap = ({ apiData }) => {
             value: [xIndex, yIndex, 1],
             itemStyle: {
               color: categoryColors[category] || "#93c5fd",
-              borderRadius: 8,
-              borderColor: "#ffffff",
-              borderWidth: 2,
             },
           });
         }
@@ -95,7 +154,6 @@ const ToolUserHeatmap = ({ apiData }) => {
     const option = {
       tooltip: {
         backgroundColor: "#111827",
-        borderColor: "transparent",
         textStyle: { color: "#fff" },
         formatter: (params) => {
           const tool = tools[params.value[1]];
@@ -106,39 +164,55 @@ const ToolUserHeatmap = ({ apiData }) => {
 
       grid: {
         top: 20,
-        bottom: 40,
+        bottom: 70,
         left: 120,
-        right: 20,
+        right: 30,
       },
 
       xAxis: {
         type: "category",
         data: userCategories,
+
         axisLabel: {
           rotate: 30,
-          color: "#6b7280", // softer gray
+          color: "#6b7280",
           fontSize: 12,
-          fontWeight: 400,
         },
+
         axisLine: {
           lineStyle: { color: "#e5e7eb" },
         },
-        splitArea: { show: true },
+
+        splitArea: {
+          show: true,
+          areaStyle: {
+            color: ["#f8fafc", "#f1f5f9"],
+          },
+        },
+
         axisTick: { show: false },
       },
 
       yAxis: {
         type: "category",
         data: tools,
-        splitArea: { show: true },
+
         axisLabel: {
-          color: "#6b7280", // softer gray
+          color: "#6b7280",
           fontSize: 12,
-          fontWeight: 400,
         },
+
         axisLine: {
           lineStyle: { color: "#e5e7eb" },
         },
+
+        splitArea: {
+          show: true,
+          areaStyle: {
+            color: ["#f8fafc", "#f1f5f9"],
+          },
+        },
+
         axisTick: { show: false },
       },
 
@@ -152,10 +226,19 @@ const ToolUserHeatmap = ({ apiData }) => {
         {
           type: "heatmap",
           data,
+
+          cellSize: [38, 32], // ⭐ controls square box size
+
+          itemStyle: {
+            borderRadius: 10,
+            borderColor: "#ffffff",
+            borderWidth: 4,
+          },
+
           emphasis: {
             itemStyle: {
               shadowBlur: 12,
-              shadowColor: "rgba(0,0,0,0.12)",
+              shadowColor: "rgba(0,0,0,0.15)",
             },
           },
         },
@@ -173,9 +256,10 @@ const ToolUserHeatmap = ({ apiData }) => {
     };
   }, [tools, userCategories, toolUserMap]);
 
+  const chartHeight = Math.min(420, Math.max(220, tools.length * 40));
   return (
-    <div className="w-full h-full">
-      <div ref={chartRef} className="w-full h-full" />
+    <div className="w-full">
+      <div ref={chartRef} style={{ height: chartHeight }} className="w-full" />
     </div>
   );
 };
