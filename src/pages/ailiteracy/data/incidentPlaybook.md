@@ -101,3 +101,114 @@ After resolving the incident:
 ---
 
 > **Note:** This playbook should be reviewed and updated at least annually, or following any significant AI incident.
+
+---
+
+# Session 9 (Part 2): Incident Response
+
+## Incident Response Playbook Template
+
+**Phase 1 | XvalidateAI Solutions Governance Workshop**
+*(For Heads of Schools and Leadership Teams)*
+
+---
+
+## Purpose of This Worksheet
+
+To help your school design a clear, step-by-step process for responding to AI-related incidents such as misuse, bias, data exposure, or safety concerns.
+
+By completing this worksheet, your team will:
+
+* Define what counts as an AI incident.
+* Clarify who does what when it happens.
+* Outline communication, escalation, and recovery steps.
+
+This becomes **Section 7: Incident Response & Accountability of your Responsible AI Use Policy.**
+
+---
+
+## Common AI Incidents in Schools
+
+| Category | Examples | Potential Risks |
+| --- | --- | --- |
+| **Data Privacy Breach** | Teacher uploads student data into an AI tool; chatbot stores it. | FERPA violation, loss of trust |
+| **Algorithmic Bias** | AI grading tool mis-scores ESL students. | Fairness & equity concerns |
+| **Academic Integrity** | Students use AI to complete assignments undisclosed. | Misconduct, policy breach |
+| **Content Safety** | AI generates harmful/inappropriate content. | Student safety risk |
+| **Tool Misuse** | Staff use AI without approval. | Reputational risk, compliance breach |
+
+**Note:** Your school may add categories relevant to your context.
+
+---
+
+## Incident Response Process
+
+**Instructions:** Outline your standard response flow for any AI-related incident.
+
+| Stage | What Happens | Who Is Responsible | Time Frame | Notes / Tools Used |
+| --- | --- | --- | --- | --- |
+| **1. Detection & Reporting** | Incident identified or reported (by teacher, student, parent). | | | |
+| **2. Assessment & Classification** | Determine severity (low, moderate, critical). | | | |
+| **3. Containment & Action** | Stop further use / data exposure. | | | |
+| **4. Notification & Escalation** | Inform administration and relevant stakeholders. | | | |
+| **5. Investigation & Resolution** | Conduct review to identify root cause & fix. | | | |
+| **6. Follow-up & Documentation** | Record incident & update policy if needed. | | | |
+
+---
+
+## Roles in Incident Response
+
+**Instructions:** Use this table to clarify each actor's role during an AI incident.
+
+| Role | Responsibility During Incident |
+| --- | --- |
+| **Head of School** | |
+| **Principal** | |
+| **IT Administrator** | |
+| **Teachers** | |
+| **Students** | |
+| **Parents / Guardians** | |
+| **Governance Committee** | |
+
+Use your previous **"Roles & Accountability Matrix"** as a reference to ensure alignment.
+
+---
+
+## Communication Plan
+
+**Who needs to know, and when?**
+
+| Stakeholder Group | When to Notify | Communication Channel / Method | Who Sends It |
+| --- | --- | --- | --- |
+| **Internal staff** | | | |
+| **Students** | | | |
+| **Parents / Guardians** | | | |
+| **External partners / vendors** | | | |
+| **Authorities (if required)** | | | |
+
+---
+
+## Reflection & Next Steps
+
+**What types of AI incidents are most likely to occur at your school?**
+☐ ____________________________________________________
+
+**What early warning signs should staff be trained to notice?**
+☐ ____________________________________________________
+
+**Who will lead the creation of your school's AI Incident Response Plan?**
+☐ ____________________________________________________
+
+---
+
+## Workshop Outcome
+
+By completing this worksheet, your team will have:
+
+* Defined AI-specific incident types and responses
+* Mapped accountabilities and communication flows
+* Prepared the foundation for **Section 7: Incident Response & Accountability of your Responsible AI Use Policy**
+
+---
+
+© XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1

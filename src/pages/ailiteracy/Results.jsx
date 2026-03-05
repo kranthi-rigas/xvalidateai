@@ -101,24 +101,45 @@ export default function Results({ score, onRetake, onViewPlaybook }) {
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 12 }}>
-      <button
-        onClick={onViewPlaybook}
-        style={{
-          padding: "10px 28px",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "#fff",
-          background: COLORS.primary,
-          border: `1px solid ${COLORS.primary}`,
-          borderRadius: 8,
-          cursor: "pointer",
-          transition: "all 0.2s ease",
-        }}
-        onMouseOver={(e) => (e.target.style.background = COLORS.primaryDark)}
-        onMouseOut={(e) => (e.target.style.background = COLORS.primary)}
-      >
-        View Incident Playbook
-      </button>
+        <button
+          onClick={onRetake}
+          style={{
+            padding: "10px 28px",
+            fontSize: 14,
+            fontWeight: 600,
+            color: COLORS.primary,
+            background: "transparent",
+            border: `1px solid ${COLORS.primary}`,
+            borderRadius: 8,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.background = COLORS.primaryLighter; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          <i className="fa-solid fa-arrow-left" /> Back
+        </button>
+        <button
+          onClick={onViewPlaybook}
+          style={{
+            padding: "10px 28px",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#fff",
+            background: COLORS.primary,
+            border: `1px solid ${COLORS.primary}`,
+            borderRadius: 8,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+          onMouseOver={(e) => (e.target.style.background = COLORS.primaryDark)}
+          onMouseOut={(e) => (e.target.style.background = COLORS.primary)}
+        >
+          View Incident Playbook
+        </button>
       </div>
     </div>
   );

@@ -38,6 +38,7 @@
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.553.0",
     "mammoth": "^1.11.0",
+    "mermaid": "^11.12.3",
     "pdfjs-dist": "^5.4.449",
     "plotly.js-dist-min": "^3.3.1",
     "react": "^18.2.0",

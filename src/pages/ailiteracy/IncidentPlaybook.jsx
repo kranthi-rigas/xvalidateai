@@ -2,6 +2,32 @@ import React, { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import COLORS from "@/styles/colors";
 import playbookContent from "./data/incidentPlaybook.md?raw";
+import MermaidDiagram from "./MermaidDiagram";
+
+const incidentFlowchart = `flowchart TD
+A[AI Incident Detected<br>Teacher / Student / Parent Reports] --> B[Detection & Reporting]
+B --> C[Assessment & Classification]
+C -->|Low| D1[Local Resolution by Staff]
+C -->|Moderate| D2[Escalate to School Leadership]
+C -->|Critical| D3[Immediate Escalation to Administration & IT]
+D1 --> E[Containment & Action]
+D2 --> E
+D3 --> E
+E[Containment & Action<br>Stop AI use / Prevent data exposure] --> F[Notification & Escalation]
+F --> G[Inform Stakeholders]
+G --> H1[Internal Staff]
+G --> H2[Students]
+G --> H3[Parents / Guardians]
+G --> H4[External Vendors]
+G --> H5[Authorities if Required]
+H1 --> I[Investigation & Resolution]
+H2 --> I
+H3 --> I
+H4 --> I
+H5 --> I
+I[Investigation & Resolution<br>Identify root cause and fix] --> J[Follow-up & Documentation]
+J --> K[Update Policy if Needed]
+K --> L[Training & Preventive Measures]`;
 
 export default function IncidentPlaybook() {
   const containerRef = useRef(null);
@@ -41,6 +67,33 @@ export default function IncidentPlaybook() {
     >
       <div className="ai-playbook-markdown">
         <ReactMarkdown>{playbookContent}</ReactMarkdown>
+      </div>
+
+      <div style={{ marginTop: 32, marginBottom: 8 }}>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: 17,
+            color: COLORS.textPrimary,
+            marginBottom: 4,
+          }}
+        >
+          Incident Response Flowchart
+        </div>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginBottom: 16 }}>
+          A visual overview of the end-to-end AI incident response process.
+        </p>
+        <div
+          style={{
+            border: `1px solid ${COLORS.borderLight}`,
+            borderRadius: 10,
+            padding: "24px 16px",
+            background: COLORS.bgSecondary,
+            overflowX: "auto",
+          }}
+        >
+          <MermaidDiagram chart={incidentFlowchart} />
+        </div>
       </div>
 
       <style>{`
