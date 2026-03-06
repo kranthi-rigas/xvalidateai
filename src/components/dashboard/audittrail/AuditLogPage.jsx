@@ -10,7 +10,7 @@ export default function AuditLogPage() {
   const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const pageSize = 50;
 
   /* ---------------- COLUMN WIDTHS ---------------- */
 
@@ -197,7 +197,7 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y">
-      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
+      <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-160px)] min-h-[600px] overflow-hidden">
         {/* ===== TOOLBAR ===== */}
 
         <div className="p-6 border-b border-border flex items-center justify-between gap-4">
