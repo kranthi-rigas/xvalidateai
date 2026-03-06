@@ -80,7 +80,7 @@ export default function DashboardPricing() {
   const navigate = useNavigate();
 
   // Use userPlan from Context for reactive updates after checkout
-  const { userPlan } = useContextElement();
+  const { userPlan, refreshUserPlan } = useContextElement();
   const currentPlan = userPlan || "free";
 
   // Debug logging to help identify issues
@@ -98,6 +98,10 @@ export default function DashboardPricing() {
   const isCurrentPlan = (planId) => {
     return planId === currentPlan;
   };
+
+  useEffect(() => {
+    refreshUserPlan();
+  }, []);
 
   const getPrice = (price) => {
     return price;
