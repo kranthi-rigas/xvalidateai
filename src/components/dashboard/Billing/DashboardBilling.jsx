@@ -56,10 +56,6 @@ export default function DashboardBilling() {
     }
   };
 
-  useEffect(() => {
-    refreshUserPlan();
-  }, []);
-
   // Reset form state when navigating to this page (when location changes)
   useEffect(() => {
     setFormData({
@@ -167,6 +163,14 @@ export default function DashboardBilling() {
     // Otherwise use the original plan price
     return plan.price;
   };
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      await refreshUserPlan();
+    };
+
+    fetchPlan();
+  }, [refreshUserPlan]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

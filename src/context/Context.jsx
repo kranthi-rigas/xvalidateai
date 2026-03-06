@@ -67,26 +67,24 @@ export default function Context({ children }) {
       if (!token) return;
 
       const userData = await fetchUserProfile(token);
-
       if (userData) {
+        // Update localStorage with fresh user data
         localStorage.setItem("user_info", JSON.stringify(userData));
 
-        const userPlanType = userData?.plan?.plan_type?.toLowerCase() || "free";
-        const credits = userData?.plan?.credits_remaining ?? 0;
+        // Update Context state
+        const userPlanType = userData?.plan?.plan_type || "free";
+        const credits = userData?.plan?.credits_remaining || 0;
 
-        // Force React update even if values same
-        setUserPlan((prev) =>
-          prev !== userPlanType ? userPlanType : userPlanType,
-        );
-        setUserCredits((prev) => (prev !== credits ? credits : credits));
-
+        setUserPlan(userPlanType.toLowerCase());
+        setUserCredits(credits);
         setIsLoggedIn(true);
 
         console.log(
           "🔄 refreshUserPlan: Updated plan to",
           userPlanType,
-          "credits:",
+          "with",
           credits,
+          "credits",
         );
       }
     } catch (error) {
