@@ -28,7 +28,11 @@ function formatUser(user) {
 const formatToLocalDateTime = (utcString) => {
   if (!utcString) return "-";
 
-  const date = new Date(utcString);
+  const cleaned = utcString.replace("+00:00Z", "Z").replace(/\.\d{6}/, ""); // remove microseconds if present
+
+  const date = new Date(cleaned);
+
+  if (isNaN(date)) return "-";
 
   return date.toLocaleString(undefined, {
     year: "numeric",
@@ -39,7 +43,6 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
-
 export default function ProjectDetailsModern({ project, onBack }) {
   const summaryRef = useRef(null);
   const usageTableRef = useRef(null);

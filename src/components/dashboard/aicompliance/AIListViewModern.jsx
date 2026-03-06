@@ -473,7 +473,14 @@ export default function AIListViewModern({
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "--";
-    const date = new Date(dateString);
+
+    // Fix invalid ISO format like +00:00Z
+    const cleaned = dateString.replace("+00:00Z", "Z");
+
+    const date = new Date(cleaned);
+
+    if (isNaN(date)) return "--";
+
     return date.toLocaleString("en-GB", {
       day: "2-digit",
       month: "2-digit",
