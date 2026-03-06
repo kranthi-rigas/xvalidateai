@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef } from "react";
 
 const ToolUserHeatmap = ({ apiData }) => {
   const [tooltip, setTooltip] = useState(null);
@@ -42,25 +42,18 @@ const ToolUserHeatmap = ({ apiData }) => {
   };
 
   const { tools, categories, toolUserMap } = useMemo(() => {
-    if (!apiData?.tool_kpis?.length) {
+    if (!apiData?.tool_kpis?.length)
       return { tools: [], categories: [], toolUserMap: {} };
-    }
 
     const tools = apiData.tool_kpis.map((t) => t.tool_name);
-
     const toolUserMap = {};
     const categorySet = new Set();
 
     apiData.tool_kpis.forEach((tool) => {
       const cats = normalizeUsers(tool.intended_users || "");
+      toolUserMap[tool.tool_name] = cats;
 
-      const uniqueCats = [...new Set(cats)];
-
-      toolUserMap[tool.tool_name] = uniqueCats;
-
-      uniqueCats.forEach((c) => {
-        categorySet.add(c);
-      });
+      cats.forEach((c) => categorySet.add(c));
     });
 
     const categoryOrder = [
@@ -193,7 +186,7 @@ const ToolUserHeatmap = ({ apiData }) => {
             }),
           )}
 
-          {/* Tool labels */}
+          {/* Tool Labels */}
           {tools.map((tool) => (
             <div
               key={tool}
