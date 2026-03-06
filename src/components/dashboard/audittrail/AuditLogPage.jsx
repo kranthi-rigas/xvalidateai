@@ -1,105 +1,192 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ListTable from "@/components/common/ListTable";
-import { COLORS } from "@/styles/colors";
 import PageLoader from "@/components/common/PageLoader";
+import { getAuditTrail } from "@/apiIntegration/audittrail";
 import AwsButton from "@/components/common/AwsButton";
-import { getAuditTrail } from "../../../apiIntegration/audittrail";
 
 export default function AuditLogPage() {
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
 
-  const [filters, setFilters] = useState({
-    start_time: "",
-    end_time: "",
-    limit: 100,
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
+
+  /* ---------------- COLUMN WIDTHS ---------------- */
+
+  const [columnWidths, setColumnWidths] = useState({
+    audit_id: 260,
+    user_id: 260,
+    event_type: 180,
+    result: 140,
+    resource_type: 200,
+    timestamp: 220,
+    user_agent: 420,
+    details: 320,
   });
 
-  /* ---------------- INITIAL LOAD ---------------- */
+  const resizingCol = useRef(null);
+
+  const startResize = (key, e) => {
+    e.preventDefault();
+
+    resizingCol.current = {
+      key,
+      startX: e.clientX,
+      startWidth: columnWidths[key],
+    };
+  };
+
   useEffect(() => {
-    fetchAudit({ days: 30, limit: 100 });
+    const onMove = (e) => {
+      if (!resizingCol.current) return;
+
+      const { key, startX, startWidth } = resizingCol.current;
+
+      setColumnWidths((prev) => ({
+        ...prev,
+        [key]: Math.max(120, startWidth + (e.clientX - startX)),
+      }));
+    };
+
+    const onUp = () => (resizingCol.current = null);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
 
-  const fetchAudit = async (customFilters = {}) => {
+  /* ---------------- AUTO FIT COLUMN (DOUBLE CLICK) ---------------- */
+
+  const autoFitColumn = (key) => {
+    const maxLength = Math.max(
+      ...logs.map((row) => String(row[key] || "").length),
+    );
+
+    const newWidth = Math.min(Math.max(maxLength * 8 + 80, 160), 600);
+
+    setColumnWidths((prev) => ({
+      ...prev,
+      [key]: newWidth,
+    }));
+  };
+
+  /* ---------------- FETCH DATA ---------------- */
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, []);
+
+  const fetchAuditLogs = async () => {
     try {
       setLoading(true);
-      const data = await getAuditTrail(customFilters);
-      setAuditLogs(data?.audit_trail || []);
-      setPage(1);
+
+      const data = await getAuditTrail({
+        limit: 100,
+        days: 30,
+      });
+
+      setLogs(data?.audit_trail || []);
     } catch (err) {
-      console.error("Audit fetch failed:", err);
-      setAuditLogs([]);
+      console.error("Audit fetch error:", err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- APPLY FILTERS ---------------- */
-  const handleApplyFilters = () => {
-    fetchAudit(filters);
-  };
+  /* ---------------- SEARCH ---------------- */
 
-  /* ---------------- SEARCH (CLIENT SIDE) ---------------- */
-  const filtered = (auditLogs || []).filter((log) => {
-    if (!search.trim()) return true;
+  const filtered = logs.filter((log) => {
+    if (!search) return true;
+
+    const s = search.toLowerCase();
 
     return (
-      log?.user_email?.toLowerCase().includes(search.toLowerCase()) ||
-      log?.resource_type?.toLowerCase().includes(search.toLowerCase()) ||
-      log?.action?.toLowerCase().includes(search.toLowerCase())
+      log?.user_id?.toLowerCase().includes(s) ||
+      log?.event_type?.toLowerCase().includes(s) ||
+      log?.resource_type?.toLowerCase().includes(s) ||
+      log?.result?.toLowerCase().includes(s)
     );
   });
 
   /* ---------------- PAGINATION ---------------- */
-  const pageSize = 20;
+
   const startIndex = (page - 1) * pageSize;
   const paginatedData = filtered.slice(startIndex, startIndex + pageSize);
 
-  /* ---------------- ACTION BADGE ---------------- */
-  const getActionBadge = (action) => {
-    switch (action) {
-      case "CREATE":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "UPDATE":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "DELETE":
-        return "bg-red-50 text-red-700 border-red-200";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
-    }
+  /* ---------------- EXPORT CSV ---------------- */
+
+  const exportExcel = () => {
+    if (!filtered.length) return;
+
+    const rows = filtered.map((row) => ({
+      audit_id: row.audit_id,
+      user_id: row.user_id,
+      event_type: row.event_type,
+      result: row.result,
+      resource_type: row.resource_type,
+      timestamp: row.timestamp,
+      user_agent: row.user_agent,
+      details: JSON.stringify(row.details),
+    }));
+
+    const csv = [
+      Object.keys(rows[0]).join(","),
+      ...rows.map((r) => Object.values(r).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit_logs.csv";
+    a.click();
   };
 
   /* ---------------- TABLE COLUMNS ---------------- */
+
   const columns = [
-    { key: "user_email", label: "User", sortable: true },
-    { key: "resource_type", label: "Resource", sortable: true },
-    { key: "resource_id", label: "Resource ID" },
-    { key: "action", label: "Action", sortable: true },
-    { key: "description", label: "Description", truncate: false },
-    { key: "ip_address", label: "IP Address" },
-    { key: "created_at", label: "Timestamp", sortable: true },
+    { key: "audit_id", label: "Audit ID", resizable: true },
+    { key: "user_id", label: "User ID", resizable: true },
+    { key: "event_type", label: "Event Type", resizable: true },
+    { key: "result", label: "Result", resizable: true },
+    { key: "resource_type", label: "Resource Type", resizable: true },
+    { key: "timestamp", label: "Timestamp", resizable: true },
+    { key: "user_agent", label: "User Agent", resizable: true },
+    { key: "details", label: "Details", resizable: true },
   ];
 
-  /* ---------------- RENDER CELL ---------------- */
+  /* ---------------- CELL RENDER ---------------- */
+
   const renderCell = (row, key) => {
     switch (key) {
-      case "action":
+      case "timestamp":
+        return row.timestamp ? new Date(row.timestamp).toLocaleString() : "-";
+
+      case "details":
         return (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium border ${getActionBadge(
-              row.action,
-            )}`}
-          >
-            {row.action}
+          <span className="text-xs text-muted-foreground">
+            {row.details ? JSON.stringify(row.details) : "-"}
           </span>
         );
 
-      case "created_at":
+      case "result":
         return (
-          <span className="font-mono text-xs text-muted-foreground">
-            {row.created_at ? new Date(row.created_at).toLocaleString() : "-"}
+          <span
+            className={`px-2 py-1 rounded text-xs ${
+              row.result === "SUCCESS"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {row.result}
           </span>
         );
 
@@ -111,101 +198,40 @@ export default function AuditLogPage() {
   return (
     <div className="space-y">
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
-        {/* ===== STICKY TOOLBAR ===== */}
-        <div className="p-6 border-b border-border shrink-0 bg-white">
-          <div className="flex items-center justify-between gap-6">
-            {/* LEFT SIDE – Filters (NO WRAP) */}
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Search */}
-              <input
-                placeholder="Search user, resource, action..."
-                className="h-10 border border-border rounded-lg px-4 text-sm w-64 flex-shrink-0"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        {/* ===== TOOLBAR ===== */}
 
-              {/* Resource Type */}
-              <select
-                className="h-10 border border-border rounded-lg px-3 text-sm w-40 bg-white flex-shrink-0"
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    resource_type: e.target.value,
-                  })
-                }
-              >
-                <option value="">All Resources</option>
-                <option value="USER">User</option>
-                <option value="ORGANIZATION">Organization</option>
-                <option value="COMPLIANCE_PROJECT">Compliance Project</option>
-              </select>
+        <div className="p-6 border-b border-border flex items-center justify-between gap-4">
+          {/* SEARCH */}
 
-              {/* From Date */}
-              <input
-                type="date"
-                className="h-10 border border-border rounded-lg px-3 text-sm flex-shrink-0"
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    start_time: e.target.value
-                      ? new Date(e.target.value).toISOString()
-                      : "",
-                  })
-                }
-              />
+          <div className="relative w-80">
+            <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-muted-foreground text-sm"></i>
 
-              {/* To Date */}
-              <input
-                type="date"
-                className="h-10 border border-border rounded-lg px-3 text-sm flex-shrink-0"
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    end_time: e.target.value
-                      ? new Date(e.target.value).toISOString()
-                      : "",
-                  })
-                }
-              />
-
-              {/* Limit */}
-              <input
-                type="number"
-                placeholder="Limit"
-                className="h-10 border border-border rounded-lg px-3 text-sm w-24 flex-shrink-0"
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    limit: Number(e.target.value),
-                  })
-                }
-              />
-            </div>
-
-            {/* RIGHT SIDE – Buttons */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Apply */}
-              <AwsButton
-                onClick={handleApplyFilters}
-                className="h-10 px-6 text-sm font-medium text-white rounded-lg"
-                style={{ backgroundColor: COLORS.primary }}
-              >
-                Apply
-              </AwsButton>
-
-              {/* Export Icon Only */}
-              <button
-                onClick={() => {}}
-                title="Export to Excel"
-                className="h-10 w-10 flex items-center justify-center rounded-lg text-white"
-                style={{ backgroundColor: COLORS.primary }}
-              >
-                <i className="fa-solid fa-file-excel" />
-              </button>
-            </div>
+            <input
+              placeholder="Search audit logs..."
+              className="pl-9 pr-3 py-2.5 border border-border rounded-lg text-sm w-full"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
           </div>
+
+          {/* EXPORT */}
+
+          <AwsButton
+            onClick={exportExcel}
+            className="flex items-center px-4 py-2 text-sm rounded-lg
+             bg-[#1D4ED8] text-white
+             hover:bg-[#1e40af] transition-colors"
+          >
+            <i className="fa-solid fa-file-excel text-green-300 mr-2"></i>
+            Export
+          </AwsButton>
         </div>
-        {/* ===== TABLE AREA (SCROLLABLE) ===== */}
+
+        {/* ===== TABLE ===== */}
+
         <div className="relative flex-1 overflow-hidden">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -217,6 +243,9 @@ export default function AuditLogPage() {
               data={paginatedData}
               rowKey="audit_id"
               renderCell={renderCell}
+              columnWidths={columnWidths}
+              startResize={startResize}
+              autoFitColumn={autoFitColumn}
               pagination={{
                 page,
                 pageSize,
