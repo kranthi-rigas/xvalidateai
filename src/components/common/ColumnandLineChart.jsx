@@ -118,12 +118,6 @@ export default function ToolsCombinedChart({ tools = [] }) {
           fontWeight: 500,
         },
       },
-      title: {
-        text: "AI Tools",
-        style: {
-          fontWeight: 600,
-        },
-      },
     },
 
     yaxis: {
@@ -204,9 +198,7 @@ export default function ToolsCombinedChart({ tools = [] }) {
   return (
     <div className="w-full">
       <div className="text-center mb-2">
-        <h3 className="text-lg font-bold">
-          AI Tool Quality Pillars vs Overall Score
-        </h3>
+        <h3 className="text-lg font-bold">Governance & Risk Overview</h3>
       </div>
 
       <div className="flex justify-center gap-6 text-sm font-medium mb-4 flex-wrap">
