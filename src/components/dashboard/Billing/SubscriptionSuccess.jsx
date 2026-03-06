@@ -10,15 +10,14 @@ const SubscriptionSuccess = () => {
   const { refreshUserPlan } = useContextElement();
 
   useEffect(() => {
-    const activatePlan = async () => {
-      await refreshUserPlan();
-
+    const timer = setTimeout(async () => {
+      await refreshUserPlan(); // Refresh latest plan
       navigate("/dashboard/pricing", {
         state: { status: "success" },
       });
-    };
+    }, 15000); // 15 seconds wait
 
-    activatePlan();
+    return () => clearTimeout(timer);
   }, [navigate, refreshUserPlan]);
 
   return (
