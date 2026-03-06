@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useMemo } from "react";
-import * as echarts from "echarts";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 
 const ToolUserHeatmap = ({ apiData }) => {
-  const chartRef = useRef(null);
+  const [tooltip, setTooltip] = useState(null);
+  const [centerGrid, setCenterGrid] = useState(false);
+  const containerRef = useRef(null);
 
   const normalizeUsers = (text) => {
     if (!text || text === "Not Specified") return ["Not Specified"];
@@ -10,77 +11,38 @@ const ToolUserHeatmap = ({ apiData }) => {
     const lower = text.toLowerCase();
     const categories = [];
 
-    // Teachers / Educators
-    if (
-      lower.includes("teacher") ||
-      lower.includes("educator") ||
-      lower.includes("k-12 teacher")
-    ) {
+    if (lower.includes("teacher") || lower.includes("educator"))
       categories.push("Teachers");
-    }
 
-    // Students
-    if (
-      lower.includes("student") ||
-      lower.includes("students") ||
-      lower.includes("learner")
-    ) {
+    if (lower.includes("student") || lower.includes("learner"))
       categories.push("K-12 Students");
-    }
 
-    // Parents
-    if (lower.includes("parent") || lower.includes("guardian")) {
-      categories.push("Parents");
-    }
+    if (lower.includes("parent")) categories.push("Parents");
 
-    // General Public
-    if (
-      lower.includes("general public") ||
-      lower.includes("public") ||
-      lower.includes("everyone") ||
-      lower.includes("consumer")
-    ) {
+    if (lower.includes("general public") || lower.includes("public"))
       categories.push("General Public");
-    }
 
-    // Enterprise / Enterprises
     if (
       lower.includes("enterprise") ||
-      lower.includes("enterprises") ||
       lower.includes("organization") ||
-      lower.includes("company") ||
-      lower.includes("business")
-    ) {
+      lower.includes("company")
+    )
       categories.push("Enterprise");
-    }
 
-    // Developers
-    if (
-      lower.includes("developer") ||
-      lower.includes("developers") ||
-      lower.includes("programmer") ||
-      lower.includes("engineer")
-    ) {
+    if (lower.includes("developer") || lower.includes("engineer"))
       categories.push("Developers");
-    }
 
-    // Researchers
-    if (
-      lower.includes("researcher") ||
-      lower.includes("researchers") ||
-      lower.includes("scientist")
-    ) {
+    if (lower.includes("researcher") || lower.includes("scientist"))
       categories.push("Researchers");
-    }
 
     if (categories.length === 0) categories.push("Other");
 
     return [...new Set(categories)];
   };
 
-  const { tools, userCategories, toolUserMap } = useMemo(() => {
+  const { tools, categories, toolUserMap } = useMemo(() => {
     if (!apiData?.tool_kpis?.length)
-      return { tools: [], userCategories: [], toolUserMap: {} };
+      return { tools: [], categories: [], toolUserMap: {} };
 
     const tools = apiData.tool_kpis.map((t) => t.tool_name);
 
@@ -88,14 +50,11 @@ const ToolUserHeatmap = ({ apiData }) => {
     const toolUserMap = {};
 
     apiData.tool_kpis.forEach((tool) => {
-      const categories = normalizeUsers(tool.intended_users);
-
-      toolUserMap[tool.tool_name] = categories;
-
-      categories.forEach((c) => categorySet.add(c));
+      const cats = normalizeUsers(tool.intended_users);
+      toolUserMap[tool.tool_name] = cats;
+      cats.forEach((c) => categorySet.add(c));
     });
 
-    // keep clean logical order but only show used categories
     const categoryOrder = [
       "Teachers",
       "K-12 Students",
@@ -105,161 +64,153 @@ const ToolUserHeatmap = ({ apiData }) => {
       "Developers",
       "Researchers",
       "Other",
-      "Not Specified",
     ];
 
-    const userCategories = categoryOrder.filter((c) => categorySet.has(c));
+    const categories = categoryOrder.filter((c) => categorySet.has(c));
 
-    return {
-      tools,
-      userCategories,
-      toolUserMap,
-    };
+    return { tools, categories, toolUserMap };
   }, [apiData]);
+
+  const columnWidth = 80;
+
   useEffect(() => {
-    if (!tools.length) return;
+    const containerWidth = containerRef.current?.offsetWidth || 0;
+    const heatmapWidth = tools.length * columnWidth;
 
-    let chart = echarts.getInstanceByDom(chartRef.current);
-    if (chart) chart.dispose();
+    setCenterGrid(heatmapWidth < containerWidth);
+  }, [tools]);
 
-    chart = echarts.init(chartRef.current);
+  const colors = {
+    Teachers: "#1d4ed8",
+    "K-12 Students": "#facc15",
+    Parents: "#f97316",
+    "General Public": "#6d28d9",
+    Enterprise: "#374151",
+    Developers: "#0f766e",
+    Researchers: "#0ea5e9",
+    Other: "#64748b",
+  };
 
-    const categoryColors = {
-      "Not Specified": "#000000",
-      Other: "#111827",
-      Parents: "#1f2937",
-      "General Public": "#6d28d9",
-      Developers: "#0f766e",
-      Researchers: "#0ea5e9",
-      Teachers: "#1d4ed8",
-      Enterprise: "#374151",
-      "K-12 Students": "#facc15",
-    };
-
-    const data = [];
-
-    tools.forEach((tool, yIndex) => {
-      userCategories.forEach((category, xIndex) => {
-        if (toolUserMap[tool]?.includes(category)) {
-          data.push({
-            value: [xIndex, yIndex, 1],
-            itemStyle: {
-              color: categoryColors[category] || "#93c5fd",
-            },
-          });
-        }
-      });
-    });
-
-    const option = {
-      tooltip: {
-        backgroundColor: "#111827",
-        textStyle: { color: "#fff" },
-        formatter: (params) => {
-          const tool = tools[params.value[1]];
-          const category = userCategories[params.value[0]];
-          return `<strong>${tool}</strong><br/>${category}`;
-        },
-      },
-
-      grid: {
-        top: 20,
-        bottom: 70,
-        left: 120,
-        right: 30,
-      },
-
-      xAxis: {
-        type: "category",
-        data: userCategories,
-
-        axisLabel: {
-          rotate: 30,
-          color: "#6b7280",
-          fontSize: 12,
-        },
-
-        axisLine: {
-          lineStyle: { color: "#e5e7eb" },
-        },
-
-        splitArea: {
-          show: true,
-          areaStyle: {
-            color: ["#f8fafc", "#f1f5f9"],
-          },
-        },
-
-        axisTick: { show: false },
-      },
-
-      yAxis: {
-        type: "category",
-        data: tools,
-
-        axisLabel: {
-          color: "#6b7280",
-          fontSize: 12,
-        },
-
-        axisLine: {
-          lineStyle: { color: "#e5e7eb" },
-        },
-
-        splitArea: {
-          show: true,
-          areaStyle: {
-            color: ["#f8fafc", "#f1f5f9"],
-          },
-        },
-
-        axisTick: { show: false },
-      },
-
-      visualMap: {
-        min: 0,
-        max: 1,
-        show: false,
-      },
-
-      series: [
-        {
-          type: "heatmap",
-          data,
-
-          cellSize: [38, 32], // ⭐ controls square box size
-
-          itemStyle: {
-            borderRadius: 10,
-            borderColor: "#ffffff",
-            borderWidth: 4,
-          },
-
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 12,
-              shadowColor: "rgba(0,0,0,0.15)",
-            },
-          },
-        },
-      ],
-    };
-
-    chart.setOption(option);
-
-    const resize = () => chart.resize();
-    window.addEventListener("resize", resize);
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      chart.dispose();
-    };
-  }, [tools, userCategories, toolUserMap]);
-
-  const chartHeight = Math.min(420, Math.max(220, tools.length * 40));
   return (
-    <div className="w-full">
-      <div ref={chartRef} style={{ height: chartHeight }} className="w-full" />
+    <div style={{ width: "100%", display: "flex", position: "relative" }}>
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          style={{
+            position: "fixed",
+            top: tooltip.y + 12,
+            left: tooltip.x + 12,
+            background: "#111827",
+            color: "#fff",
+            padding: "6px 10px",
+            borderRadius: 6,
+            fontSize: 12,
+            pointerEvents: "none",
+            zIndex: 999,
+          }}
+        >
+          <strong>{tooltip.tool}</strong>
+          <br />
+          {tooltip.category}
+        </div>
+      )}
+
+      {/* Category Column */}
+      <div
+        style={{
+          minWidth: 200,
+          background: "#fff",
+          borderRight: "1px solid #eee",
+        }}
+      >
+        {categories.map((cat) => (
+          <div
+            key={cat}
+            style={{
+              height: 60,
+              display: "flex",
+              alignItems: "center",
+              paddingLeft: 14,
+              fontSize: 13,
+              color: "#6b7280",
+            }}
+          >
+            {cat}
+          </div>
+        ))}
+      </div>
+
+      {/* Heatmap */}
+      <div
+        ref={containerRef}
+        style={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          width: "100%",
+          display: "flex",
+          justifyContent: "flex-start",
+          paddingLeft: tools.length <= 3 ? "40px" : "0px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${tools.length}, ${columnWidth}px)`,
+            gridAutoRows: "60px",
+            columnGap: "10px",
+          }}
+        >
+          {categories.map((cat) =>
+            tools.map((tool) => {
+              const active = toolUserMap[tool]?.includes(cat);
+
+              return (
+                <div
+                  key={`${cat}-${tool}`}
+                  onMouseMove={(e) => {
+                    if (!active) return;
+                    setTooltip({
+                      x: e.clientX,
+                      y: e.clientY,
+                      tool,
+                      category: cat,
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    margin: "auto",
+                    borderRadius: 10,
+                    background: active ? colors[cat] : "#f1f5f9",
+                    cursor: active ? "pointer" : "default",
+                  }}
+                />
+              );
+            }),
+          )}
+
+          {/* Tool labels */}
+          {tools.map((tool) => (
+            <div
+              key={tool}
+              style={{
+                fontSize: 12,
+                color: "#6b7280",
+                transform: "rotate(-45deg)",
+                transformOrigin: "top right",
+                height: 90,
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {tool}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
