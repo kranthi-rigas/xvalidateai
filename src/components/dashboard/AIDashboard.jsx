@@ -501,12 +501,12 @@ export default function AIDashboard() {
       {/* Recommendation & Intended Users Row */}
       <section className="grid grid-cols-1 gap-6">
         {/* Recommendation Distribution */}
-        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+        <div className="dashboard-card p-6 min-h-[220px] flex flex-col">
           <div id="chart-recommendation" className="w-full flex-1"></div>
         </div>
 
         {/* Intended Users Heatmap */}
-        <div className="dashboard-card p-6 h-[500px] flex flex-col">
+        <div className="dashboard-card p-6 min-h-[220px] flex flex-col">
           <h3 className="font-bold text-center text-lg mb-4">
             Intended Users Distribution
           </h3>
