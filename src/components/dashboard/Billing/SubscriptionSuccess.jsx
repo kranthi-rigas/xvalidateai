@@ -10,26 +10,15 @@ const SubscriptionSuccess = () => {
   const { refreshUserPlan } = useContextElement();
 
   useEffect(() => {
-    const checkPlanUpdate = async () => {
-      for (let i = 0; i < 5; i++) {
-        await refreshUserPlan();
+    const activatePlan = async () => {
+      await refreshUserPlan();
 
-        const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
-
-        if (userInfo?.plan?.plan_type !== "free") {
-          navigate("/dashboard/pricing", {
-            state: { status: "success" },
-          });
-          return;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
-
-      navigate("/dashboard/pricing");
+      navigate("/dashboard/pricing", {
+        state: { status: "success" },
+      });
     };
 
-    checkPlanUpdate();
+    activatePlan();
   }, [navigate, refreshUserPlan]);
 
   return (
