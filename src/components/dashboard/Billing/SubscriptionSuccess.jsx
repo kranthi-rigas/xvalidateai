@@ -13,7 +13,7 @@ const SubscriptionSuccess = () => {
     const activatePlan = async () => {
       await refreshUserPlan();
 
-      navigate("/dashboard/pricing", {
+      navigate("/dashboard/", {
         state: { status: "success" },
       });
     };
