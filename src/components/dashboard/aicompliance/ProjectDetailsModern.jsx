@@ -1222,9 +1222,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </div>
 
                     <div className="section-score-badge">
-                      <span className="score-label">AVERAGE SCORE</span>
+                      <span className="score-label">PILLAR SCORE</span>
                       <span className={`score-value ${sectionScoreClass}`}>
-                        {section.average_score}/5.0
+                        {(section.average_score / 20).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -1283,7 +1283,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
                               <td className="score-cell">
                                 <span className={`score-badge ${scoreClass}`}>
-                                  {item.score}/5.0
+                                  {item.score}/5
                                 </span>
                               </td>
 

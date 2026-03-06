@@ -2,7 +2,6 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 
 const ToolUserHeatmap = ({ apiData }) => {
   const [tooltip, setTooltip] = useState(null);
-  const [centerGrid, setCenterGrid] = useState(false);
   const containerRef = useRef(null);
 
   const normalizeUsers = (text) => {
@@ -25,7 +24,9 @@ const ToolUserHeatmap = ({ apiData }) => {
     if (
       lower.includes("enterprise") ||
       lower.includes("organization") ||
-      lower.includes("company")
+      lower.includes("company") ||
+      lower.includes("administrator") ||
+      lower.includes("institution")
     )
       categories.push("Enterprise");
 
@@ -51,8 +52,12 @@ const ToolUserHeatmap = ({ apiData }) => {
 
     apiData.tool_kpis.forEach((tool) => {
       const cats = normalizeUsers(tool.intended_users);
-      toolUserMap[tool.tool_name] = cats;
-      cats.forEach((c) => categorySet.add(c));
+
+      const uniqueCats = [...new Set(cats)];
+
+      toolUserMap[tool.tool_name] = uniqueCats;
+
+      uniqueCats.forEach((c) => categorySet.add(c));
     });
 
     const categoryOrder = [
@@ -64,6 +69,7 @@ const ToolUserHeatmap = ({ apiData }) => {
       "Developers",
       "Researchers",
       "Other",
+      "Not Specified",
     ];
 
     const categories = categoryOrder.filter((c) => categorySet.has(c));
@@ -72,13 +78,6 @@ const ToolUserHeatmap = ({ apiData }) => {
   }, [apiData]);
 
   const columnWidth = 80;
-
-  useEffect(() => {
-    const containerWidth = containerRef.current?.offsetWidth || 0;
-    const heatmapWidth = tools.length * columnWidth;
-
-    setCenterGrid(heatmapWidth < containerWidth);
-  }, [tools]);
 
   const colors = {
     Teachers: "#1d4ed8",
@@ -89,6 +88,7 @@ const ToolUserHeatmap = ({ apiData }) => {
     Developers: "#0f766e",
     Researchers: "#0ea5e9",
     Other: "#64748b",
+    "Not Specified": "#94a3b8",
   };
 
   return (
