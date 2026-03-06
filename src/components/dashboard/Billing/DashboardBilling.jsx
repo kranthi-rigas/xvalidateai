@@ -56,6 +56,10 @@ export default function DashboardBilling() {
     }
   };
 
+  useEffect(() => {
+    refreshUserPlan();
+  }, []);
+
   // Reset form state when navigating to this page (when location changes)
   useEffect(() => {
     setFormData({

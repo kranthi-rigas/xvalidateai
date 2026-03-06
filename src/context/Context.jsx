@@ -15,7 +15,7 @@ export default function Context({ children }) {
 
   const [cartCourses, setCartCourses] = useState([]);
   const [cartEvents, setCartEvents] = useState([]);
-  
+
   // User plan state: "free", "premium", or "enterprise"
   const [userPlan, setUserPlan] = useState("free");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,22 +26,29 @@ export default function Context({ children }) {
     const token = localStorage.getItem("access_token");
     if (token) {
       setIsLoggedIn(true);
-      
+
       // Get plan from localStorage using utility function
       const currentPlan = getUserPlan();
-      console.log("🔄 Context init: Loading plan from localStorage:", currentPlan);
+      console.log(
+        "🔄 Context init: Loading plan from localStorage:",
+        currentPlan,
+      );
       setUserPlan(currentPlan);
-      
+
       // Get credits from localStorage
       try {
         const userInfo = localStorage.getItem("user_info");
         if (userInfo) {
           const parsed = JSON.parse(userInfo);
-          const credits = parsed?.plan?.credits_remaining || 
-                         parsed?.subscription?.credits_remaining || 
-                         0;
+          const credits =
+            parsed?.plan?.credits_remaining ||
+            parsed?.subscription?.credits_remaining ||
+            0;
           setUserCredits(credits);
-          console.log("🔄 Context init: Loading credits from localStorage:", credits);
+          console.log(
+            "🔄 Context init: Loading credits from localStorage:",
+            credits,
+          );
         }
       } catch (error) {
         console.error("Error loading user credits:", error);
@@ -60,19 +67,27 @@ export default function Context({ children }) {
       if (!token) return;
 
       const userData = await fetchUserProfile(token);
+
       if (userData) {
-        // Update localStorage with fresh user data
         localStorage.setItem("user_info", JSON.stringify(userData));
 
-        // Update Context state
-        const userPlanType = userData?.plan?.plan_type || "free";
-        const credits = userData?.plan?.credits_remaining || 0;
-        
-        setUserPlan(userPlanType.toLowerCase());
-        setUserCredits(credits);
+        const userPlanType = userData?.plan?.plan_type?.toLowerCase() || "free";
+        const credits = userData?.plan?.credits_remaining ?? 0;
+
+        // Force React update even if values same
+        setUserPlan((prev) =>
+          prev !== userPlanType ? userPlanType : userPlanType,
+        );
+        setUserCredits((prev) => (prev !== credits ? credits : credits));
+
         setIsLoggedIn(true);
 
-        console.log("🔄 refreshUserPlan: Updated plan to", userPlanType, "with", credits, "credits");
+        console.log(
+          "🔄 refreshUserPlan: Updated plan to",
+          userPlanType,
+          "credits:",
+          credits,
+        );
       }
     } catch (error) {
       console.error("Error refreshing user plan:", error);
@@ -98,14 +113,15 @@ export default function Context({ children }) {
       const currentPlan = getUserPlan();
       console.log("🔄 loadUserPlanFromStorage: Loading plan:", currentPlan);
       setUserPlan(currentPlan);
-      
+
       try {
         const userInfo = localStorage.getItem("user_info");
         if (userInfo) {
           const parsed = JSON.parse(userInfo);
-          const credits = parsed?.plan?.credits_remaining || 
-                         parsed?.subscription?.credits_remaining || 
-                         0;
+          const credits =
+            parsed?.plan?.credits_remaining ||
+            parsed?.subscription?.credits_remaining ||
+            0;
           setUserCredits(credits);
           console.log("🔄 loadUserPlanFromStorage: Loading credits:", credits);
         }
