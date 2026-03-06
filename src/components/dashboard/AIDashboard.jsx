@@ -10,19 +10,16 @@ import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
 
 const HIGH_RISK_COLUMNS = [
-  { key: "tool", label: "Tool", resizable: true },
+  { key: "tool", label: "Tool Name", resizable: true },
   { key: "url", label: "URL", resizable: true },
-  { key: "vendor", label: "Vendor", resizable: true },
-  { key: "overall", label: "Overall", resizable: true },
-  { key: "privacy", label: "Privacy", resizable: true },
+  { key: "score", label: "Score", resizable: true },
   { key: "reason", label: "Risk Reasons", resizable: true },
-  { key: "action", label: "Action", truncate: false, resizable: true },
 ];
 
 const TOOL_COLUMNS = [
   { key: "name", label: "Tool Name", resizable: true },
   { key: "url", label: "URL", resizable: true },
-  { key: "overall", label: "Overall", resizable: true },
+  { key: "overall", label: "Score", resizable: true },
   {
     key: "recommendation",
     label: "Recommendation",
@@ -39,19 +36,13 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
     case "tool":
       return (
         <div
-          className="flex items-center cursor-pointer"
+          className="cursor-pointer"
           onClick={() => navigate(`/dashboard/aicompliance/${tool.project_id}`)}
         >
-          <div className="w-8 h-8 rounded bg-blue-600 text-white flex items-center justify-center mr-3 font-bold text-xs">
-            {tool.project_name?.substring(0, 2).toUpperCase() || "??"}
+          <div className="font-semibold text-primary hover:underline">
+            {tool.tool_name}
           </div>
-
-          <div>
-            <div className="font-semibold text-destructive hover:underline">
-              {tool.project_name}
-            </div>
-            <div className="text-xs text-muted-foreground">AI Tool</div>
-          </div>
+          <div className="text-xs text-muted-foreground">{tool.developer}</div>
         </div>
       );
 
@@ -73,17 +64,10 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
         "N/A"
       );
 
-    case "overall":
+    case "score":
       return (
         <span className="font-bold text-destructive">
           {tool.overall_score?.toFixed(0) || 0}
-        </span>
-      );
-
-    case "privacy":
-      return (
-        <span className="font-bold text-amber-600">
-          {tool.privacy_safety || 0}
         </span>
       );
 
@@ -91,13 +75,6 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
       return (
         <span className="text-xs text-muted-foreground">
           {tool.high_risk_reason || "High risk detected"}
-        </span>
-      );
-
-    case "action":
-      return (
-        <span className="status-badge status-danger">
-          {tool.recommendation || "Block"}
         </span>
       );
 
