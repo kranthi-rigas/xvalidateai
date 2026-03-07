@@ -40,21 +40,27 @@ export default function AIListViewModern({
   const [page, setPage] = useState(1);
   const scoreCacheRef = useRef({});
 
-  // ✅ Track which project IDs were previously in-progress so we can detect completion
-  const prevInProgressRef = useRef(new Set());
-
   useEffect(() => {
     function handleOutside(e) {
       if (actionsRef.current && !actionsRef.current.contains(e.target)) {
         setShowActions(false);
       }
     }
-    if (showActions) document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
+
+    if (showActions) {
+      document.addEventListener("mousedown", handleOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
   }, [showActions]);
 
   /* ---------------- SORTING ---------------- */
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
 
   const requestSort = (key) => {
     setSortConfig((prev) => ({
@@ -98,7 +104,9 @@ export default function AIListViewModern({
         [key]: Math.max(120, startWidth + (e.clientX - startX)),
       }));
     };
+
     const onUp = () => (resizingCol.current = null);
+
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => {
@@ -111,6 +119,8 @@ export default function AIListViewModern({
   const [pageSize, setPageSize] = useState(50);
   const [wrapLines, setWrapLines] = useState(false);
   const [stripedRows, setStripedRows] = useState(false);
+
+  /* Visible columns */
   const [visibleColumns, setVisibleColumns] = useState(
     Object.keys(columnWidths),
   );
@@ -124,13 +134,16 @@ export default function AIListViewModern({
   /* ---------------- MODALS ---------------- */
   const [showEditModal, setShowEditModal] = useState(false);
   const [editProjectData, setEditProjectData] = useState(null);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState([]);
   const [deleteError, setDeleteError] = useState("");
+
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalAction, setApprovalAction] = useState(null);
   const [activeProject, setActiveProject] = useState(null);
   const [approvalError, setApprovalError] = useState(false);
+
   const [showPreferences, setShowPreferences] = useState(false);
 
   /* ---------------- ROLE ---------------- */
@@ -140,7 +153,9 @@ export default function AIListViewModern({
   const hasAdminRole = roles.includes("ADMIN");
   const hasAuditorRole = roles.includes("MANAGER");
   const hasAnalystRole = roles.includes("USER");
+
   const isAuditor = hasAuditorRole;
+  // ✅ Analyst-only = NO higher privilege
   const isAnalystOnly = hasAnalystRole && !hasAdminRole && !hasAuditorRole;
 
   /* ---------------- DATA ---------------- */
@@ -153,6 +168,7 @@ export default function AIListViewModern({
       return projects.map((p) => {
         const old = map.get(p.project_id);
 
+        // 🔄 SCAN RESTARTED → CLEAR CACHED SCORE
         if (
           old &&
           old.assessment_status === "completed" &&
@@ -162,6 +178,7 @@ export default function AIListViewModern({
           delete scoreCacheRef.current[p.project_id];
         }
 
+        // 🔒 preserve completed scan rows only if still completed
         if (
           old &&
           old.assessment_status === "completed" &&
@@ -175,8 +192,9 @@ export default function AIListViewModern({
     });
   }, [projects]);
 
-  /* ---------------- POLLING — with stat refresh on completion ---------------- */
+  /* ---------------- POLLING ---------------- */
   useEffect(() => {
+    // only poll running scans
     const pollable = liveProjects.filter(
       (p) =>
         p &&
@@ -188,9 +206,6 @@ export default function AIListViewModern({
 
     if (!pollable.length) return;
 
-    // ✅ Record which IDs are currently in-progress before polling starts
-    prevInProgressRef.current = new Set(pollable.map((p) => p.project_id));
-
     const interval = setInterval(async () => {
       const updates = await Promise.all(
         pollable.map((p) =>
@@ -198,66 +213,56 @@ export default function AIListViewModern({
         ),
       );
 
-      // ✅ Detect any scan that just completed this poll cycle
-      let anyJustCompleted = false;
-
       setLiveProjects((prev) =>
         prev.map((p) => {
           const updated = updates.find(
             (u) => u && u.project_id === p.project_id,
           );
 
-          if (p.assessment_status === "completed" && !updated) return p;
-
-          if (updated) {
-            // ✅ Was in-progress, now completed → trigger parent refresh
-            const wasInProgress = prevInProgressRef.current.has(p.project_id);
-            const nowCompleted = updated.assessment_status === "completed";
-
-            if (wasInProgress && nowCompleted) {
-              anyJustCompleted = true;
-              // Remove from in-progress tracking
-              prevInProgressRef.current.delete(p.project_id);
-            }
-
-            return {
-              ...p,
-              status: updated.status,
-              assessment_status: updated.assessment_status,
-              last_scanned_time: updated.last_scanned_time,
-              score: updated.score,
-              recommendation: updated.recommendation,
-              scan_approved_by: p.__scan_approved_by,
-            };
+          // 🔒 NEVER touch completed rows again
+          if (p.assessment_status === "completed" && !updated) {
+            return p;
           }
 
-          return p;
+          return updated
+            ? {
+                ...p,
+                // 🔄 only dynamic fields
+                status: updated.status,
+                assessment_status: updated.assessment_status,
+                last_scanned_time: updated.last_scanned_time,
+                score: updated.score,
+                recommendation: updated.recommendation,
+
+                // 🔒 keep immutable values
+
+                scan_approved_by: p.__scan_approved_by,
+              }
+            : p;
         }),
       );
-
-      // ✅ If any scan just completed, refresh parent projects so StatisticsCards update
-      if (anyJustCompleted) {
-        await refreshProjects();
-      }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [liveProjects, refreshProjects]);
+  }, [liveProjects]);
 
   useEffect(() => {
     setShowActions(false);
   }, [selected]);
 
-  /* ---------------- SCORE DISPLAY ---------------- */
+  // ✅ DEFINE THIS FIRST
   const getScoreDisplay = (project) => {
     const { project_id, score, assessment_status } = project;
 
     if (scoreCacheRef.current[project_id] != null) {
       const s = scoreCacheRef.current[project_id];
+
       if (s >= 60)
         return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
+
       if (s >= 40)
         return { icon: "warning", color: "text-amber-700", value: s };
+
       return { icon: "fa-circle-xmark", color: "text-red-600", value: s };
     }
 
@@ -282,6 +287,7 @@ export default function AIListViewModern({
     };
   };
 
+  // Format status for display
   const formatStatus = (status) => {
     if (!status) return "Unknown";
     return status
@@ -303,8 +309,11 @@ export default function AIListViewModern({
       return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
     });
 
+  /* ---------------- PAGINATION DATA ---------------- */
   const startIndex = (page - 1) * pageSize;
-  const paginatedData = filtered.slice(startIndex, startIndex + pageSize);
+  const endIndex = startIndex + pageSize;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
 
   /* ---------------- SELECTION ---------------- */
   const toggleSelect = (id) =>
@@ -315,7 +324,7 @@ export default function AIListViewModern({
   const toggleSelectAll = (checked) =>
     setSelected(checked ? filtered.map((x) => x.project_id) : []);
 
-  /* ---------------- BADGES ---------------- */
+  // Get status badge styling
   const getStatusBadge = (status) => {
     const statusMap = {
       scan_completed: {
@@ -325,6 +334,7 @@ export default function AIListViewModern({
         label: "Scan Completed",
         icon: "fa-clipboard-check",
       },
+
       approved_for_usage: {
         bg: "bg-green-50",
         text: "text-green-700",
@@ -332,6 +342,7 @@ export default function AIListViewModern({
         label: "Approved For Usage",
         icon: "fa-circle-check",
       },
+
       rejected_for_usage: {
         bg: "bg-red-50",
         text: "text-red-700",
@@ -339,6 +350,7 @@ export default function AIListViewModern({
         label: "Rejected For Usage",
         icon: "fa-circle-xmark",
       },
+
       scan_in_progress: {
         bg: "bg-blue-50",
         text: "text-blue-700",
@@ -347,6 +359,7 @@ export default function AIListViewModern({
         icon: "fa-spinner",
         spinning: true,
       },
+
       requested: {
         bg: "bg-gray-50",
         text: "text-gray-700",
@@ -354,6 +367,7 @@ export default function AIListViewModern({
         label: "Requested for Scan",
         icon: "fa-clock",
       },
+
       approved_for_scan: {
         bg: "bg-emerald-50",
         text: "text-emerald-700",
@@ -361,6 +375,7 @@ export default function AIListViewModern({
         label: "Approved For Scan",
         icon: "fa-shield-check",
       },
+
       rejected_for_scan: {
         bg: "bg-orange-50",
         text: "text-orange-700",
@@ -369,6 +384,7 @@ export default function AIListViewModern({
         icon: "fa-ban",
       },
     };
+
     return (
       statusMap[status] || {
         bg: "bg-gray-50",
@@ -380,6 +396,7 @@ export default function AIListViewModern({
     );
   };
 
+  // Get recommendation badge styling
   const getRecommendationBadge = (recommendation) => {
     const recMap = {
       approved: {
@@ -415,11 +432,13 @@ export default function AIListViewModern({
         label: "Error",
       },
     };
+
     const rec = (recommendation || "").toLowerCase().trim();
+
     return (
       recMap[rec] || {
         bg: "bg-gray-50",
-        icon: "fa-clock",
+        icon: "fa-clock", // ✅ default icon added
         class: "badge-default",
         text: "text-gray-600",
         border: "border-gray-200",
@@ -428,8 +447,10 @@ export default function AIListViewModern({
     );
   };
 
+  //search helper
   function buildSearchText(project) {
     const scoreDisplay = getScoreDisplay(project);
+
     return [
       project.project_id,
       project.name,
@@ -449,11 +470,17 @@ export default function AIListViewModern({
       .toLowerCase();
   }
 
+  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "--";
+
+    // Fix invalid ISO format like +00:00Z
     const cleaned = dateString.replace("+00:00Z", "Z");
+
     const date = new Date(cleaned);
+
     if (isNaN(date)) return "--";
+
     return date.toLocaleString("en-GB", {
       day: "2-digit",
       month: "2-digit",
@@ -464,7 +491,6 @@ export default function AIListViewModern({
     });
   };
 
-  /* ---------------- COLUMNS ---------------- */
   const columns = [
     {
       key: "checkbox",
@@ -482,22 +508,41 @@ export default function AIListViewModern({
         />
       ),
     },
-    { key: "name", label: "Tool Name", sortable: true, resizable: true },
-    { key: "status", label: "Tool Status", sortable: true, resizable: true },
+    {
+      key: "name",
+      label: "Tool Name",
+      sortable: true,
+      resizable: true,
+    },
+    {
+      key: "status",
+      label: "Tool Status",
+      sortable: true,
+      resizable: true,
+    },
     {
       key: "assessment_status",
       label: "Scan Status",
       sortable: true,
       resizable: true,
     },
-    { key: "score", label: "Score", sortable: true, resizable: true },
+    {
+      key: "score",
+      label: "Score",
+      sortable: true,
+      resizable: true,
+    },
     {
       key: "recommendation",
       label: "Recommendation",
       sortable: true,
       resizable: true,
     },
-    { key: "description", label: "Description", resizable: true },
+    {
+      key: "description",
+      label: "Description",
+      resizable: true,
+    },
     {
       key: "last_scanned_time",
       label: "Last Scan",
@@ -511,14 +556,23 @@ export default function AIListViewModern({
       sortKey: "created_time",
       resizable: true,
     },
-    { key: "requested_by", label: "Requested By", resizable: true },
-    { key: "approved_by", label: "Scan Approved By", resizable: true },
+    {
+      key: "requested_by",
+      label: "Requested By",
+      resizable: true,
+    },
+    {
+      key: "approved_by",
+      label: "Scan Approved By",
+      resizable: true,
+    },
   ];
 
   const renderCell = (project, key) => {
     switch (key) {
       case "checkbox":
         return columns[0].render(project);
+
       case "name":
         return (
           <span
@@ -528,14 +582,18 @@ export default function AIListViewModern({
             {project.name || "Unnamed Tool"}
           </span>
         );
+
       case "status": {
         const badge = getStatusBadge(project.status);
+
         return (
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
             <i
-              className={`fa-solid ${badge.icon} text-[11px] ${badge.spinning ? "fa-spin" : ""}`}
+              className={`fa-solid ${badge.icon} text-[11px] ${
+                badge.spinning ? "fa-spin" : ""
+              }`}
             ></i>
             {badge.label}
           </span>
@@ -547,8 +605,10 @@ export default function AIListViewModern({
             {formatStatus(project.assessment_status) || "Pending"}
           </span>
         );
+
       case "score": {
         const s = getScoreDisplay(project);
+
         return (
           <div
             className={`flex items-center justify-center w-full gap-2 font-semibold ${s.color}`}
@@ -573,8 +633,10 @@ export default function AIListViewModern({
           </div>
         );
       }
+
       case "recommendation": {
         const badge = getRecommendationBadge(project.recommendation);
+
         return (
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
@@ -584,6 +646,7 @@ export default function AIListViewModern({
           </span>
         );
       }
+
       case "description":
         return (
           <span
@@ -593,18 +656,21 @@ export default function AIListViewModern({
             {project.description || "--"}
           </span>
         );
+
       case "last_scanned_time":
         return (
           <span className="font-mono text-xs text-muted-foreground">
             {formatDate(project.last_scanned_time)}
           </span>
         );
+
       case "createdtime":
         return (
           <span className="font-mono text-xs text-muted-foreground">
             {project.created_time ? formatDate(project.created_time) : "-"}
           </span>
         );
+
       case "requested_by": {
         const r = project.requested_by;
         if (!r) return <span className="text-muted-foreground">-</span>;
@@ -619,6 +685,7 @@ export default function AIListViewModern({
           </div>
         );
       }
+
       case "approved_by": {
         const a = project.scan_approved_by;
         if (!a)
@@ -636,6 +703,7 @@ export default function AIListViewModern({
           </div>
         );
       }
+
       default:
         return project[key] ?? "";
     }
@@ -647,16 +715,24 @@ export default function AIListViewModern({
 
   const actionItems = (() => {
     if (selected.length === 0) return [];
+
     const project = liveProjects.find((p) => p.project_id === selected[0]);
     if (!project) return [];
-    if (isAnalystOnly) return [];
 
+    // 🚫 ANALYST-ONLY — view only
+    if (isAnalystOnly) {
+      return [];
+    }
+
+    // ================= MULTI SELECT =================
     if (selected.length > 1) {
       if (!isAdmin) return [];
+
       const anyScanInProgress = selected.some((id) => {
         const p = liveProjects.find((x) => x.project_id === id);
         return p?.assessment_status === "scan_in_progress";
       });
+
       return [
         {
           key: "delete",
@@ -669,8 +745,11 @@ export default function AIListViewModern({
 
     const deleteDisabled = project.assessment_status === "scan_in_progress";
 
+    // ================= ADMIN =================
     if (isAdmin) {
       const actions = [];
+
+      // 🟦 Scan request stage
       if (
         project.status === "requested" ||
         project.status === "requested_for_scan"
@@ -680,6 +759,8 @@ export default function AIListViewModern({
           { key: "scan_reject", label: "Reject for Scan" },
         );
       }
+
+      // 🟩 Scan completed → usage approval stage ONLY
       if (
         project.status === "scan_completed" &&
         project.assessment_status === "completed"
@@ -689,6 +770,8 @@ export default function AIListViewModern({
           { key: "reject", label: "Reject for Usage" },
         );
       }
+
+      // ⚙️ Always available
       actions.push(
         { key: "edit", label: "Edit" },
         {
@@ -698,15 +781,23 @@ export default function AIListViewModern({
           disabled: deleteDisabled,
         },
       );
+
       return actions;
     }
 
+    // ================= AUDITOR =================
     if (isAuditor) {
       const actions = [];
+
       if (project.status === "pending_assessment") {
-        actions.push({ key: "request_scan", label: "Request Scan" });
+        actions.push({
+          key: "request_scan",
+          label: "Request Scan",
+        });
       }
+
       actions.push({ key: "edit", label: "Edit" });
+
       return actions;
     }
 
@@ -720,11 +811,13 @@ export default function AIListViewModern({
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Search + mobile refresh */}
           <div className="flex items-center gap-2 w-full md:w-96">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                 <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
               </div>
+
               <input
                 type="text"
                 value={search}
@@ -733,6 +826,8 @@ export default function AIListViewModern({
                 placeholder="Find tool by name, ID or requester..."
               />
             </div>
+
+            {/* Refresh – mobile only */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -745,6 +840,8 @@ export default function AIListViewModern({
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
+
+            {/* Preferences – mobile only */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
@@ -757,7 +854,9 @@ export default function AIListViewModern({
             </button>
           </div>
 
+          {/* Right actions */}
           <div className="flex items-center gap-3">
+            {/* Refresh – desktop only */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -770,6 +869,8 @@ export default function AIListViewModern({
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
+
+            {/* Actions dropdown */}
             <div ref={actionsRef} className="relative">
               <ActionsMenu
                 disabled={selected.length === 0}
@@ -779,42 +880,51 @@ export default function AIListViewModern({
                     (p) => p.project_id === selected[0],
                   );
                   if (!project) return;
+
                   setActiveProject(project);
+
                   if (
-                    [
-                      "scan_approve",
-                      "scan_reject",
-                      "approve",
-                      "reject",
-                    ].includes(key)
+                    key === "scan_approve" ||
+                    key === "scan_reject" ||
+                    key === "approve" ||
+                    key === "reject"
                   ) {
                     setApprovalAction(key);
                     setShowApprovalModal(true);
                     return;
                   }
+
                   if (key === "request_scan") {
                     setApprovalAction("request_scan");
                     setShowApprovalModal(true);
                     return;
                   }
+
                   if (key === "cancel_request") {
                     setApprovalAction("cancel_request");
                     setShowApprovalModal(true);
                     return;
                   }
+
                   if (key === "edit") {
                     setEditProjectData(project);
                     setShowEditModal(true);
                   }
+
                   if (key === "delete") {
-                    if (project.assessment_status === "scan_in_progress")
+                    // 🔒 FINAL GUARD
+                    if (project.assessment_status === "scan_in_progress") {
                       return;
+                    }
+
                     setPendingDeleteIds(selected);
                     setShowDeleteModal(true);
                   }
                 }}
               />
             </div>
+
+            {/* Preferences button – desktop only */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
@@ -825,6 +935,8 @@ export default function AIListViewModern({
                 onClick={() => setShowPreferences(true)}
               />
             </button>
+
+            {/* Tool Assessment */}
             <OrgRequiredWrapper
               disabled={isAnalystOnly}
               message="You have view-only access"
@@ -885,11 +997,15 @@ export default function AIListViewModern({
           error={deleteError}
           onConfirm={async () => {
             try {
-              for (let id of pendingDeleteIds)
+              for (let id of pendingDeleteIds) {
                 await deleteComplianceProject(id);
+              }
+
+              // 🔥 Immediately remove from UI
               setLiveProjects((prev) =>
                 prev.filter((p) => !pendingDeleteIds.includes(p.project_id)),
               );
+
               setShowDeleteModal(false);
               setSelected([]);
               refreshProjects();
@@ -930,6 +1046,7 @@ export default function AIListViewModern({
                       ? "Request Scan"
                       : "Cancel Request"
           }
+          /* 🔐 AUDITOR UX FIXES */
           showCreditsNote={isAdmin && approvalAction === "scan_approve"}
           hideComment={approvalAction === "cancel_request"}
           onClose={() => {
@@ -938,42 +1055,63 @@ export default function AIListViewModern({
           }}
           onConfirm={async (comment) => {
             let payload = {};
+
             switch (approvalAction) {
+              // ===== AUDITOR =====
               case "request_scan":
-                payload = { action: "request_scan", status: "requested" };
+                payload = {
+                  action: "request_scan",
+                  status: "requested",
+                };
                 break;
+
               case "cancel_request":
                 payload = {
                   action: "cancel_request",
                   status: "pending_assessment",
                 };
                 break;
+
+              // ===== ADMIN =====
               case "scan_approve":
                 payload = {
                   action: "scan_approve",
                   status: "approved_for_scan",
                 };
                 break;
+
               case "scan_reject":
                 payload = {
                   action: "scan_reject",
                   status: "rejected_for_scan",
                 };
                 break;
+
               case "approve":
-                payload = { action: "approve", status: "approved_for_usage" };
+                payload = {
+                  action: "approve",
+                  status: "approved_for_usage",
+                };
                 break;
+
               case "reject":
-                payload = { action: "reject", status: "rejected_for_usage" };
+                payload = {
+                  action: "reject",
+                  status: "rejected_for_usage",
+                };
                 break;
+
               default:
                 return;
             }
+
             try {
               await updateComplianceProject(activeProject.project_id, {
                 ...payload,
                 comment,
               });
+
+              // ✅ Optimistic UI update
               setLiveProjects((prev) =>
                 prev.map((p) =>
                   p.project_id === activeProject.project_id
@@ -984,6 +1122,7 @@ export default function AIListViewModern({
                           approvalAction === "scan_approve"
                             ? userInfo
                             : p.scan_approved_by,
+
                         __scan_approved_by:
                           approvalAction === "scan_approve"
                             ? userInfo
@@ -992,23 +1131,36 @@ export default function AIListViewModern({
                     : p,
                 ),
               );
+
               setApprovalError(false);
               setShowApprovalModal(false);
               setSelected([]);
             } catch (err) {
               const rawMessage =
                 err?.response?.data?.message || err?.message || "";
+
               const isInsufficientCredits =
                 rawMessage.toLowerCase().includes("insufficient") ||
                 rawMessage.toLowerCase().includes("credit");
+
               let message = "Something went wrong. Please try again.";
-              if (approvalAction === "scan_approve" && isInsufficientCredits)
+
+              // ✅ ONLY override message for Approve-for-Scan
+              if (approvalAction === "scan_approve" && isInsufficientCredits) {
                 message = "Insufficient credits to run this scan.";
-              else if (rawMessage) message = rawMessage;
+              } else if (rawMessage) {
+                message = rawMessage;
+              }
+
               toast(message, { type: "error", duration: 10000 });
+
+              // ❗ show red modal state ONLY for credit error on scan approval
               const showCreditError =
                 approvalAction === "scan_approve" && isInsufficientCredits;
+
               setApprovalError(showCreditError);
+
+              // ⏳ auto-close only for credit error
               if (showCreditError) {
                 setTimeout(() => {
                   setApprovalError(false);
@@ -1019,6 +1171,7 @@ export default function AIListViewModern({
           }}
         />
       )}
+
       {showPreferences && (
         <TablePreferencesModal
           open={showPreferences}
