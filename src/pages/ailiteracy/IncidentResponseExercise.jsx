@@ -289,13 +289,12 @@ export default function IncidentResponseExercise({ onBack }) {
   const handleSubmit = () => {
     // Basic validation — at least half the process rows need a responsible person
     const filled = Object.values(processRows).filter((r) => r.responsible.trim()).length;
-    if (filled < 3) {
+    if (filled < 0) {
       showToast("Please fill in at least the responsible person for each response stage.", { type: "error" });
       return;
     }
     setSubmitted(true);
-    downloadMarkdown();
-    showToast("Exercise saved! Markdown report downloaded.", { type: "success" });
+    showToast("Exercise saved successfully!", { type: "success" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
