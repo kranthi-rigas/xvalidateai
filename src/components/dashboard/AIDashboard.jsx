@@ -10,6 +10,7 @@ import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { createPortal } from "react-dom";
 
 function DisabledTooltipButton({
   disabled,
