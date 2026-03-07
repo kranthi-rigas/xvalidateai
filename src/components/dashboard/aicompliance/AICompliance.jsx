@@ -7,7 +7,7 @@ import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import ProjectDetailsModern from "./ProjectDetailsModern";
 import { COLORS } from "../../../styles/colors";
-import StatisticsCards from "./StatisticsCards"; // ✅ REQUIRED
+import StatisticsCards from "./StatisticsCards";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 import { useContextElement } from "@/context/Context";
@@ -42,9 +42,15 @@ export default function AICompliance() {
     loadProjects();
   }, []);
 
-  /* ---------- RESET ON LIST PAGE ---------- */
+  /* ---------- RESET ON LIST PAGE + REFRESH STATS ---------- */
   useEffect(() => {
     if (location.pathname === "/dashboard/aicompliance") {
+      // ✅ Always refresh projects when returning to list view
+      // so StatisticsCards reflect the latest scan results immediately
+      if (openedProject !== null) {
+        // Coming back from a detail page — force a fresh fetch
+        loadProjects();
+      }
       setOpenedProject(null);
     }
   }, [location.pathname]);
@@ -132,8 +138,9 @@ export default function AICompliance() {
     return (
       <ProjectDetailsModern
         project={openedProject}
-        onBack={(shouldRefresh) => {
-          if (shouldRefresh) loadProjects();
+        onBack={async (shouldRefresh) => {
+          // ✅ Always reload projects on back so stats are fresh
+          await loadProjects();
           navigate("/dashboard/aicompliance");
           setOpenedProject(null);
         }}
@@ -141,14 +148,13 @@ export default function AICompliance() {
     );
   }
 
-  /* ---------- STATISTICS (MUST BE BEFORE RETURN) ---------- */
+  /* ---------- STATISTICS (derived fresh from projects state) ---------- */
   const totalScanned = (projects || []).filter(
     (p) => p.assessment_status === "completed",
   ).length;
 
   const compliantTools = (projects || []).filter(
     (p) => p.status?.toLowerCase() === "approved_for_usage",
-    // p.assessment_status?.toLowerCase() === "completed",
   ).length;
 
   const approvedWithLimits = (projects || []).filter(
@@ -177,6 +183,7 @@ export default function AICompliance() {
         projects={projects}
         setShowCreateModal={setShowCreateModal}
         setOpenedProject={openProject}
+        // ✅ Pass loadProjects so list can also trigger stat refresh
         refreshProjects={loadProjects}
       />
 
