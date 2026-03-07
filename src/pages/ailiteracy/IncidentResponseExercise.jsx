@@ -203,6 +203,89 @@ export default function IncidentResponseExercise({ onBack }) {
   const updateComm = (stakeholder, field, value) =>
     setCommRows((prev) => ({ ...prev, [stakeholder]: { ...prev[stakeholder], [field]: value } }));
 
+  const generateMarkdown = () => {
+    const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const lines = [];
+
+    lines.push(`# AI Incident Response Playbook Exercise`);
+    lines.push(`**Date:** ${date}`);
+    lines.push(`**© XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1**`);
+    lines.push(``);
+
+    // Section 1: Incident Categories
+    lines.push(`## 1. Incident Categories`);
+    lines.push(``);
+    lines.push(`| Category | Relevant? | Notes | Examples | Risks |`);
+    lines.push(`|---|---|---|---|---|`);
+    INCIDENT_CATEGORIES.forEach((c) => {
+      const checked = categoryChecked[c.category] ? "✅ Yes" : "No";
+      const note = categoryNotes[c.category] || "—";
+      lines.push(`| ${c.category} | ${checked} | ${note} | ${c.examples} | ${c.risks} |`);
+    });
+    lines.push(``);
+
+    // Section 2: Response Process
+    lines.push(`## 2. Incident Response Process`);
+    lines.push(``);
+    lines.push(`| Stage | What Happens | Responsible Person / Team | Timeframe | Notes |`);
+    lines.push(`|---|---|---|---|---|`);
+    RESPONSE_STAGES.forEach((s) => {
+      const row = processRows[s.id];
+      lines.push(`| ${s.stage} | ${s.what} | ${row.responsible || "—"} | ${row.timeframe || "—"} | ${row.notes || "—"} |`);
+    });
+    lines.push(``);
+
+    // Section 3: Roles & Responsibilities
+    lines.push(`## 3. Roles & Responsibilities`);
+    lines.push(``);
+    lines.push(`| Role | Responsibilities |`);
+    lines.push(`|---|---|`);
+    ROLES.forEach((r) => {
+      lines.push(`| ${r} | ${roleRows[r] || "—"} |`);
+    });
+    lines.push(``);
+
+    // Section 4: Communication Plan
+    lines.push(`## 4. Communication Plan`);
+    lines.push(``);
+    lines.push(`| Stakeholder | When to Notify | Channel | Sender |`);
+    lines.push(`|---|---|---|---|`);
+    STAKEHOLDERS.forEach((s) => {
+      const row = commRows[s];
+      lines.push(`| ${s} | ${row.when || "—"} | ${row.channel || "—"} | ${row.sender || "—"} |`);
+    });
+    lines.push(``);
+
+    // Section 5: Reflection
+    lines.push(`## 5. Reflection`);
+    lines.push(``);
+    lines.push(`**Most likely incident type at your school:**`);
+    lines.push(``);
+    lines.push(reflection.likely || "_No response provided._");
+    lines.push(``);
+    lines.push(`**Early warning signs to watch for:**`);
+    lines.push(``);
+    lines.push(reflection.earlyWarning || "_No response provided._");
+    lines.push(``);
+    lines.push(`**Recommended leader to own the response process:**`);
+    lines.push(``);
+    lines.push(reflection.leader || "_No response provided._");
+    lines.push(``);
+
+    return lines.join("\n");
+  };
+
+  const downloadMarkdown = () => {
+    const content = generateMarkdown();
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `incident-response-playbook-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSubmit = () => {
     // Basic validation — at least half the process rows need a responsible person
     const filled = Object.values(processRows).filter((r) => r.responsible.trim()).length;
@@ -211,7 +294,8 @@ export default function IncidentResponseExercise({ onBack }) {
       return;
     }
     setSubmitted(true);
-    showToast("Exercise saved successfully!", { type: "success" });
+    downloadMarkdown();
+    showToast("Exercise saved! Markdown report downloaded.", { type: "success" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -282,7 +366,7 @@ export default function IncidentResponseExercise({ onBack }) {
             Exercise Completed!
           </h3>
           <p style={{ color: COLORS.textSecondary, fontSize: 15, maxWidth: 480, margin: "0 auto 28px" }}>
-            Your Incident Response Playbook has been saved. You have successfully mapped out your school's AI incident response process.
+            Your Incident Response Playbook has been saved and a Markdown report has been downloaded. You have successfully mapped out your school's AI incident response process.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <button
@@ -290,6 +374,13 @@ export default function IncidentResponseExercise({ onBack }) {
               style={{ padding: "10px 28px", fontSize: 14, fontWeight: 600, color: COLORS.primary, background: "#fff", border: `1px solid ${COLORS.primary}`, borderRadius: 8, cursor: "pointer" }}
             >
               Start Over
+            </button>
+            <button
+              onClick={downloadMarkdown}
+              style={{ padding: "10px 28px", fontSize: 14, fontWeight: 600, color: COLORS.primary, background: "#fff", border: `1px solid ${COLORS.primary}`, borderRadius: 8, cursor: "pointer" }}
+            >
+              <i className="fa-solid fa-download" style={{ marginRight: 7 }} />
+              Download Report
             </button>
             <button
               onClick={onBack}
