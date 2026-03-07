@@ -10,39 +10,14 @@ const SubscriptionSuccess = () => {
   const { refreshUserPlan } = useContextElement();
 
   useEffect(() => {
-    let interval;
+    const timer = setTimeout(async () => {
+      await refreshUserPlan(); // Refresh latest plan
+      navigate("/dashboard/pricing", {
+        state: { status: "success" },
+      });
+    }, 15000); // 15 seconds wait
 
-    const pollProfile = async () => {
-      await refreshUserPlan();
-
-      const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
-      const planType = userInfo?.plan?.plan_type;
-
-      console.log("Polling profile plan:", planType);
-
-      // If plan upgraded stop polling
-      if (planType && planType !== "free") {
-        clearInterval(interval);
-
-        navigate("/dashboard/pricing", {
-          state: { status: "success" },
-        });
-      }
-    };
-
-    // call immediately
-    pollProfile();
-
-    // then poll every 2 seconds
-    interval = setInterval(pollProfile, 2000);
-
-    // stop after 20 seconds
-    setTimeout(() => {
-      clearInterval(interval);
-      navigate("/dashboard/pricing");
-    }, 20000);
-
-    return () => clearInterval(interval);
+    return () => clearTimeout(timer);
   }, [navigate, refreshUserPlan]);
 
   return (
