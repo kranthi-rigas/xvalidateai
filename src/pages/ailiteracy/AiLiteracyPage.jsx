@@ -7,8 +7,10 @@ import Results from "./Results";
 import IncidentPlaybook, { incidentFlowchart } from "./IncidentPlaybook";
 import IncidentResponseExercise from "./IncidentResponseExercise";
 import MermaidDiagram from "./MermaidDiagram";
+import { useLocation } from "react-router-dom"; 
 
 export default function AiLiteracyPage() {
+  const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -47,6 +49,13 @@ export default function AiLiteracyPage() {
   useEffect(() => {
     scrollToTop();
   }, [view]);
+
+  useEffect(() => {
+  setView("landing");
+  setAnswers({});
+  setResult(null);
+  setShowPlaybook(false);
+}, [location.key]);
 
   const handleRetake = () => {
     setAnswers({});
