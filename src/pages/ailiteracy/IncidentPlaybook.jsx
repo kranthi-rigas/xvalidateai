@@ -2,9 +2,8 @@ import React, { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import COLORS from "@/styles/colors";
 import playbookContent from "./data/incidentPlaybook.md?raw";
-import MermaidDiagram from "./MermaidDiagram";
 
-const incidentFlowchart = `flowchart TD
+export const incidentFlowchart = `flowchart TD
 A[AI Incident Detected<br>Teacher / Student / Parent Reports] --> B[Detection & Reporting]
 B --> C[Assessment & Classification]
 C -->|Low| D1[Local Resolution by Staff]
@@ -69,101 +68,74 @@ export default function IncidentPlaybook() {
         <ReactMarkdown>{playbookContent}</ReactMarkdown>
       </div>
 
-      <div style={{ marginTop: 32, marginBottom: 8 }}>
-        <div
-          style={{
-            fontWeight: 700,
-            fontSize: 17,
-            color: COLORS.textPrimary,
-            marginBottom: 4,
-          }}
-        >
-          Incident Response Flowchart
-        </div>
-        <p style={{ fontSize: 14, color: COLORS.textMuted, marginBottom: 16 }}>
-          A visual overview of the end-to-end AI incident response process.
-        </p>
-        <div
-          style={{
-            border: `1px solid ${COLORS.borderLight}`,
-            borderRadius: 10,
-            padding: "24px 16px",
-            background: COLORS.bgSecondary,
-            overflowX: "auto",
-          }}
-        >
-          <MermaidDiagram chart={incidentFlowchart} />
-        </div>
-      </div>
-
-      <style>{`
-        .ai-playbook-markdown h1 {
-          font-size: 24px;
-          font-weight: 700;
-          color: ${COLORS.textPrimary};
-          margin-bottom: 16px;
-          border-bottom: 2px solid ${COLORS.borderLight};
-          padding-bottom: 10px;
-        }
-        .ai-playbook-markdown h2 {
-          font-size: 19px;
-          font-weight: 700;
-          color: ${COLORS.primary};
-          margin-top: 28px;
-          margin-bottom: 12px;
-        }
-        .ai-playbook-markdown h3 {
-          font-size: 16px;
-          font-weight: 600;
-          color: ${COLORS.textPrimary};
-          margin-top: 18px;
-          margin-bottom: 8px;
-        }
-        .ai-playbook-markdown p {
-          margin-bottom: 12px;
-        }
-        .ai-playbook-markdown ul,
-        .ai-playbook-markdown ol {
-          padding-left: 24px;
-          margin-bottom: 12px;
-        }
-        .ai-playbook-markdown li {
-          margin-bottom: 6px;
-        }
-        .ai-playbook-markdown table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 16px 0;
-          font-size: 14px;
-        }
-        .ai-playbook-markdown th,
-        .ai-playbook-markdown td {
-          border: 1px solid ${COLORS.borderLight};
-          padding: 10px 14px;
-          text-align: left;
-        }
-        .ai-playbook-markdown th {
-          background: ${COLORS.primaryLighter};
-          font-weight: 600;
-          color: ${COLORS.textPrimary};
-        }
-        .ai-playbook-markdown hr {
-          border: none;
-          border-top: 1px solid ${COLORS.borderLight};
-          margin: 24px 0;
-        }
-        .ai-playbook-markdown blockquote {
-          border-left: 4px solid ${COLORS.primary};
-          padding: 12px 16px;
-          margin: 16px 0;
-          background: ${COLORS.bgTertiary};
-          border-radius: 0 8px 8px 0;
-          color: ${COLORS.textSecondary};
-        }
-        .ai-playbook-markdown strong {
-          color: ${COLORS.textPrimary};
-        }
-      `}</style>
+        <style>{`
+          .ai-playbook-markdown h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: ${COLORS.textPrimary};
+            margin-bottom: 16px;
+            border-bottom: 2px solid ${COLORS.borderLight};
+            padding-bottom: 10px;
+          }
+          .ai-playbook-markdown h2 {
+            font-size: 19px;
+            font-weight: 700;
+            color: ${COLORS.primary};
+            margin-top: 28px;
+            margin-bottom: 12px;
+          }
+          .ai-playbook-markdown h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: ${COLORS.textPrimary};
+            margin-top: 18px;
+            margin-bottom: 8px;
+          }
+          .ai-playbook-markdown p {
+            margin-bottom: 12px;
+          }
+          .ai-playbook-markdown ul,
+          .ai-playbook-markdown ol {
+            padding-left: 24px;
+            margin-bottom: 12px;
+          }
+          .ai-playbook-markdown li {
+            margin-bottom: 6px;
+          }
+          .ai-playbook-markdown table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+          }
+          .ai-playbook-markdown th,
+          .ai-playbook-markdown td {
+            border: 1px solid ${COLORS.borderLight};
+            padding: 10px 14px;
+            text-align: left;
+          }
+          .ai-playbook-markdown th {
+            background: ${COLORS.primaryLighter};
+            font-weight: 600;
+            color: ${COLORS.textPrimary};
+          }
+          .ai-playbook-markdown hr {
+            border: none;
+            border-top: 1px solid ${COLORS.borderLight};
+            margin: 24px 0;
+          }
+          .ai-playbook-markdown blockquote {
+            border-left: 4px solid ${COLORS.primary};
+            padding: 12px 16px;
+            margin: 16px 0;
+            background: ${COLORS.bgTertiary};
+            border-radius: 0 8px 8px 0;
+            color: ${COLORS.textSecondary};
+          }
+          .ai-playbook-markdown strong {
+            color: ${COLORS.textPrimary};
+          }
+        `}</style>
     </div>
   );
 }

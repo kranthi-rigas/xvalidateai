@@ -93,8 +93,39 @@ export default function Questionnaire({ questions, answers, onAnswer, onSubmit }
                       value={value}
                       checked={answers[index] === value}
                       onChange={() => onAnswer(index, value)}
-                      style={{ accentColor: COLORS.primary }}
+                      style={{
+                        position: "absolute",
+                        opacity: 0,
+                        width: 0,
+                        height: 0,
+                        pointerEvents: "none",
+                      }}
                     />
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 16,
+                        height: 16,
+                        borderRadius: "50%",
+                        border: `1px solid ${answers[index] === value ? COLORS.primary : COLORS.borderLight}`,
+                        background: answers[index] === value ? COLORS.primary : "transparent",
+                        flexShrink: 0,
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {answers[index] === value && (
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "#fff",
+                          }}
+                        />
+                      )}
+                    </span>
                     <span style={{ fontSize: 14, color: COLORS.textSecondary }}>
                       {value} – {RATING_LABELS[value]}
                     </span>
