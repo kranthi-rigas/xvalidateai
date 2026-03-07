@@ -78,6 +78,7 @@ const pricingPlans = [
 
 export default function DashboardPricing() {
   const navigate = useNavigate();
+  const { refreshUserPlan } = useContextElement();
 
   // Use userPlan from Context for reactive updates after checkout
   const { userPlan } = useContextElement();
@@ -111,6 +112,10 @@ export default function DashboardPricing() {
     });
     AOS.refresh();
   }, []);
+
+  useEffect(() => {
+    refreshUserPlan();
+  }, [refreshUserPlan]);
 
   const handlePlanClick = (plan) => {
     // Navigate to billing page with plan data, or dashboard for free plan

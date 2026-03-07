@@ -28,7 +28,11 @@ function formatUser(user) {
 const formatToLocalDateTime = (utcString) => {
   if (!utcString) return "-";
 
-  const date = new Date(utcString);
+  const cleaned = utcString.replace("+00:00Z", "Z").replace(/\.\d{6}/, ""); // remove microseconds if present
+
+  const date = new Date(cleaned);
+
+  if (isNaN(date)) return "-";
 
   return date.toLocaleString(undefined, {
     year: "numeric",
@@ -39,7 +43,6 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
-
 export default function ProjectDetailsModern({ project, onBack }) {
   const summaryRef = useRef(null);
   const usageTableRef = useRef(null);
@@ -1222,9 +1225,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </div>
 
                     <div className="section-score-badge">
-                      <span className="score-label">AVERAGE SCORE</span>
+                      <span className="score-label">PILLAR SCORE</span>
                       <span className={`score-value ${sectionScoreClass}`}>
-                        {section.average_score}/5.0
+                        {Number(section.average_score).toFixed(1)}
                       </span>
                     </div>
                   </div>
@@ -1283,7 +1286,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
                               <td className="score-cell">
                                 <span className={`score-badge ${scoreClass}`}>
-                                  {item.score}/5.0
+                                  {item.score}/5
                                 </span>
                               </td>
 

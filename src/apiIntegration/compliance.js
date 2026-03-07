@@ -47,14 +47,11 @@ export async function createComplianceProject(payload) {
    Endpoint: PUT /compliance-projects/{id}/assessment
 ===================================================== */
 export async function updateComplianceTool(projectId, payload) {
-  const cleanedUrl = payload.url
-    ?.trim()
-    .replace(/\/+$/, "");   // 🔥 removes ALL trailing slashes
 
   const body = {
     name: payload.projectName,
     description: payload.description,
-    url: cleanedUrl,
+    url: payload.url,
   };
 
   if (payload.justification) {

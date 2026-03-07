@@ -164,6 +164,14 @@ export default function DashboardBilling() {
     return plan.price;
   };
 
+  useEffect(() => {
+    const fetchPlan = async () => {
+      await refreshUserPlan();
+    };
+
+    fetchPlan();
+  }, [refreshUserPlan]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submission started", { voucherApplied, plan, formData });

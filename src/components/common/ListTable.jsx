@@ -327,29 +327,6 @@ export default function ListTable({
         </div>
       )}
 
-      {enableExport && (
-        <div className="flex justify-end px-6 py-3 border-b bg-white">
-          <DisabledTooltipButton
-            disabled={isDisableExport || !hasData}
-            tooltip={
-              !hasData
-                ? "No data available to export"
-                : "Upgrade plan to export"
-            }
-            onClick={handleExport}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition
-    ${
-      isDisableExport
-        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-        : "bg-primary text-white hover:opacity-90"
-    }`}
-          >
-            <i className="fa-solid fa-file-excel mr-2" />
-            Export to Excel
-          </DisabledTooltipButton>
-        </div>
-      )}
-
       {/* ✅ SCROLLABLE AREA */}
       <div
         className="
