@@ -192,9 +192,8 @@ export default function AIListViewModern({
     });
   }, [projects]);
 
-  /* ---------------- POLLING ---------------- */
+  /* ---------------- POLLING — with stat refresh on completion ---------------- */
   useEffect(() => {
-    // only poll running scans
     const pollable = liveProjects.filter(
       (p) =>
         p &&
@@ -206,6 +205,9 @@ export default function AIListViewModern({
 
     if (!pollable.length) return;
 
+    // ✅ Record which IDs are currently in-progress before polling starts
+    prevInProgressRef.current = new Set(pollable.map((p) => p.project_id));
+
     const interval = setInterval(async () => {
       const updates = await Promise.all(
         pollable.map((p) =>
@@ -213,38 +215,51 @@ export default function AIListViewModern({
         ),
       );
 
+      // ✅ Detect any scan that just completed this poll cycle
+      let anyJustCompleted = false;
+
       setLiveProjects((prev) =>
         prev.map((p) => {
           const updated = updates.find(
             (u) => u && u.project_id === p.project_id,
           );
 
-          // 🔒 NEVER touch completed rows again
-          if (p.assessment_status === "completed" && !updated) {
-            return p;
+          if (p.assessment_status === "completed" && !updated) return p;
+
+          if (updated) {
+            // ✅ Was in-progress, now completed → trigger parent refresh
+            const wasInProgress = prevInProgressRef.current.has(p.project_id);
+            const nowCompleted = updated.assessment_status === "completed";
+
+            if (wasInProgress && nowCompleted) {
+              anyJustCompleted = true;
+              // Remove from in-progress tracking
+              prevInProgressRef.current.delete(p.project_id);
+            }
+
+            return {
+              ...p,
+              status: updated.status,
+              assessment_status: updated.assessment_status,
+              last_scanned_time: updated.last_scanned_time,
+              score: updated.score,
+              recommendation: updated.recommendation,
+              scan_approved_by: p.__scan_approved_by,
+            };
           }
 
-          return updated
-            ? {
-                ...p,
-                // 🔄 only dynamic fields
-                status: updated.status,
-                assessment_status: updated.assessment_status,
-                last_scanned_time: updated.last_scanned_time,
-                score: updated.score,
-                recommendation: updated.recommendation,
-
-                // 🔒 keep immutable values
-
-                scan_approved_by: p.__scan_approved_by,
-              }
-            : p;
+          return p;
         }),
       );
+
+      // ✅ If any scan just completed, refresh parent projects so StatisticsCards update
+      if (anyJustCompleted) {
+        await refreshProjects();
+      }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [liveProjects]);
+  }, [liveProjects, refreshProjects]);
 
   useEffect(() => {
     setShowActions(false);
