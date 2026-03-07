@@ -8,6 +8,66 @@ import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
 import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+function DisabledTooltipButton({
+  disabled,
+  tooltip,
+  onClick,
+  children,
+  className,
+}) {
+  const ref = React.useRef(null);
+  const [position, setPosition] = React.useState(null);
+
+  const handleMouseEnter = () => {
+    if (!disabled || !ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + window.scrollX + rect.width / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition(null);
+  };
+
+  return (
+    <>
+      <div
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-block"
+      >
+        <button disabled={disabled} onClick={onClick} className={className}>
+          {children}
+        </button>
+      </div>
+
+      {disabled &&
+        position &&
+        createPortal(
+          <div
+            style={{
+              position: "absolute",
+              top: position.top,
+              left: position.left,
+              transform: "translate(-50%, -100%)",
+            }}
+            className="bg-gray-900 text-white text-xs px-3 py-2 rounded-md shadow-2xl z-[99999] whitespace-nowrap"
+          >
+            {tooltip}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
 
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool Name", resizable: true },
@@ -168,7 +228,60 @@ export default function AIDashboard() {
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
+  const exportHighRiskTools = () => {
+    if (!highRiskTools?.length) return;
 
+    const exportData = highRiskTools.map((tool) => ({
+      "Tool Name": tool.tool_name,
+      URL: tool.url,
+      Score: tool.overall_score,
+      "Risk Reason": tool.high_risk_reason,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "High Risk Tools");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `high-risk-tools-${Date.now()}.xlsx`);
+  };
+
+  const exportAllTools = () => {
+    if (!allTools?.length) return;
+
+    const exportData = allTools.map((tool) => ({
+      "Tool Name": tool.tool_name,
+      URL: tool.url,
+      Score: tool.overall_score,
+      Recommendation: tool.recommendation,
+      "Allowed Usage": tool.allowed_usage,
+      "Restricted Usage": tool.restricted_usage,
+      "Intended Users": tool.intended_users,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tool Overview");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `tool-overview-${Date.now()}.xlsx`);
+  };
   const extractAndNormalizeAudienceItems = (text = "") => {
     if (!text) return [];
 
@@ -497,12 +610,33 @@ export default function AIDashboard() {
       {/* High Risk Alert Box */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-center">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 relative flex items-center justify-center">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
-              <h3 className="font-bold text-lg">
+              <h3 className="font-bold text-lg text-center">
                 High-Risk Tools Requiring Immediate Attention
               </h3>
+            </div>
+
+            <div className="absolute right-6">
+              <DisabledTooltipButton
+                disabled={isFreePlan || highRiskTools.length === 0}
+                tooltip={
+                  highRiskTools.length === 0
+                    ? "No data available to export"
+                    : "Upgrade plan to export"
+                }
+                onClick={() => exportHighRiskTools()}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition
+        ${
+          isFreePlan
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-primary text-white hover:opacity-90"
+        }`}
+              >
+                <i className="fa-solid fa-file-excel mr-2" />
+                Export to Excel
+              </DisabledTooltipButton>
             </div>
           </div>
           <div className="p-0 overflow-x-auto flex-1">
@@ -521,8 +655,32 @@ export default function AIDashboard() {
       {/* Complete Tool Information Table */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="px-6 py-5 border-b flex justify-center items-center bg-white">
-            <h3 className="font-bold text-lg">Complete Tool Information</h3>
+          <div className="bg-blue-50 border-b border-blue-100 px-6 py-4 relative flex items-center justify-center">
+            <div className="flex items-center text-blue-800">
+              <i className="fa-solid fa-layer-group mr-2"></i>
+              <h3 className="font-bold text-lg text-center">Tool Overview</h3>
+            </div>
+
+            <div className="absolute right-6">
+              <DisabledTooltipButton
+                disabled={isFreePlan || allTools.length === 0}
+                tooltip={
+                  allTools.length === 0
+                    ? "No data available to export"
+                    : "Upgrade plan to export"
+                }
+                onClick={() => exportAllTools()}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition
+        ${
+          isFreePlan
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-primary text-white hover:opacity-90"
+        }`}
+              >
+                <i className="fa-solid fa-file-excel mr-2" />
+                Export to Excel
+              </DisabledTooltipButton>
+            </div>
           </div>
           <div className="flex-1 overflow-x-auto relative">
             <ListTable

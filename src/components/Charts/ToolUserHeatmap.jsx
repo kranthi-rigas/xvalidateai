@@ -3,6 +3,8 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 const ToolUserHeatmap = ({ apiData }) => {
   const [tooltip, setTooltip] = useState(null);
   const containerRef = useRef(null);
+  const labelRefs = useRef({});
+  const [truncatedTools, setTruncatedTools] = useState({});
 
   const normalizeUsers = (text) => {
     if (!text || text === "Not Specified") return ["Not Specified"];
@@ -58,9 +60,7 @@ const ToolUserHeatmap = ({ apiData }) => {
 
       toolUserMap[tool.tool_name] = uniqueCats;
 
-      uniqueCats.forEach((c) => {
-        categorySet.add(c);
-      });
+      uniqueCats.forEach((c) => categorySet.add(c));
     });
 
     const categoryOrder = [
@@ -80,19 +80,19 @@ const ToolUserHeatmap = ({ apiData }) => {
     return { tools, categories, toolUserMap };
   }, [apiData]);
 
-  const columnWidth = 80;
+  useEffect(() => {
+    const newMap = {};
 
-  const colors = {
-    Teachers: "#1d4ed8",
-    "K-12 Students": "#facc15",
-    Parents: "#f97316",
-    "General Public": "#6d28d9",
-    Enterprise: "#374151",
-    Developers: "#0f766e",
-    Researchers: "#0ea5e9",
-    Other: "#64748b",
-    "Not Specified": "#94a3b8",
-  };
+    Object.keys(labelRefs.current).forEach((tool) => {
+      const el = labelRefs.current[tool];
+      if (el) {
+        newMap[tool] = el.scrollWidth > el.clientWidth;
+      }
+    });
+
+    setTruncatedTools(newMap);
+  }, [tools]);
+  const columnWidth = 80;
 
   return (
     <div style={{ width: "100%", display: "flex", position: "relative" }}>
@@ -185,10 +185,19 @@ const ToolUserHeatmap = ({ apiData }) => {
                     height: 42,
                     margin: "auto",
                     borderRadius: 10,
-                    background: active ? colors[cat] : "#f1f5f9",
+                    background: active ? "#16a34a" : "#ef4444",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     cursor: active ? "pointer" : "default",
                   }}
-                />
+                >
+                  <i
+                    className={`fa-solid ${
+                      active ? "fa-check" : "fa-xmark"
+                    } text-white text-sm`}
+                  />
+                </div>
               );
             }),
           )}
@@ -198,18 +207,29 @@ const ToolUserHeatmap = ({ apiData }) => {
             <div
               key={tool}
               style={{
-                fontSize: 12,
-                color: "#6b7280",
-                transform: "rotate(-45deg)",
-                transformOrigin: "top right",
                 height: 90,
                 display: "flex",
                 alignItems: "flex-start",
                 justifyContent: "center",
-                whiteSpace: "nowrap",
               }}
             >
-              {tool}
+              <div
+                ref={(el) => (labelRefs.current[tool] = el)}
+                title={truncatedTools[tool] ? tool : ""}
+                style={{
+                  maxWidth: 70,
+                  fontSize: 12,
+                  color: "#6b7280",
+                  transform: "rotate(-45deg)",
+                  transformOrigin: "top right",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  cursor: truncatedTools[tool] ? "pointer" : "default",
+                }}
+              >
+                {tool}
+              </div>
             </div>
           ))}
         </div>
