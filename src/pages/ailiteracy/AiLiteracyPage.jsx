@@ -7,7 +7,8 @@ import Results from "./Results";
 import IncidentPlaybook, { incidentFlowchart } from "./IncidentPlaybook";
 import IncidentResponseExercise from "./IncidentResponseExercise";
 import MermaidDiagram from "./MermaidDiagram";
-import { useLocation } from "react-router-dom"; 
+import { useLocation } from "react-router-dom";
+import PageTransition from "@/components/common/PageTransition";
 
 export default function AiLiteracyPage() {
   const location = useLocation();
@@ -126,6 +127,7 @@ export default function AiLiteracyPage() {
 
         {/* LANDING */}
         {view === "landing" && (
+          <PageTransition>
           <div
             style={{
               display: "grid",
@@ -460,11 +462,12 @@ export default function AiLiteracyPage() {
               </button>
             </div>
           </div>
+          </PageTransition>
         )}
 
         {/* QUESTIONNAIRE */}
         {view === "questionnaire" && (
-          <>
+          <PageTransition>
             <div style={{ marginBottom: 20 }}>
               <button
                 onClick={() => setView("landing")}
@@ -490,17 +493,19 @@ export default function AiLiteracyPage() {
               onAnswer={handleAnswer}
               onSubmit={handleSubmit}
             />
-          </>
+          </PageTransition>
         )}
 
         {/* EXERCISE */}
         {view === "exercise" && (
-          <IncidentResponseExercise onBack={() => setView("landing")} />
+          <PageTransition>
+            <IncidentResponseExercise onBack={() => setView("landing")} />
+          </PageTransition>
         )}
 
         {/* FLOWCHART */}
         {view === "flowchart" && (
-          <>
+          <PageTransition>
             <div style={{ marginBottom: 20 }}>
               <button
                 onClick={() => setView("landing")}
@@ -540,11 +545,12 @@ export default function AiLiteracyPage() {
                 <MermaidDiagram chart={incidentFlowchart} />
               </div>
             </div>
-          </>
+          </PageTransition>
         )}
 
         {/* RESULTS */}
         {view === "results" && (
+          <PageTransition>
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {result !== null && (
               <Results
@@ -589,6 +595,7 @@ export default function AiLiteracyPage() {
               </div>
             )}
           </div>
+          </PageTransition>
         )}
       </div>
     </div>
