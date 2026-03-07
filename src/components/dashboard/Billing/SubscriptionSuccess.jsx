@@ -5,8 +5,8 @@ import AuthFooter from "@/components/others/AuthFooter";
 import { useContextElement } from "@/context/Context";
 import "./SubscriptionSuccess.css";
 
-const MAX_POLLS = 10; // try up to 10 times
-const POLL_INTERVAL = 3000; // every 3 seconds
+const MAX_POLLS = 10;
+const POLL_INTERVAL = 3000;
 
 const SubscriptionSuccess = () => {
   const navigate = useNavigate();
@@ -15,15 +15,27 @@ const SubscriptionSuccess = () => {
   const [statusMsg, setStatusMsg] = useState("Activating your plan...");
 
   useEffect(() => {
-    // Read the plan that existed BEFORE payment so we can detect a change
+    // Snapshot BOTH plan AND credits before payment — so we can detect real change
     let planBeforePayment = "free";
+    let creditsBeforePayment = 0;
     try {
       const userInfo = localStorage.getItem("user_info");
       if (userInfo) {
         const parsed = JSON.parse(userInfo);
-        planBeforePayment = parsed?.plan?.plan_type?.toLowerCase() || "free";
+        planBeforePayment = parsed?.plan?.plan_type?.toLowerCase() ?? "free";
+        creditsBeforePayment =
+          parsed?.plan?.credits_remaining ??
+          parsed?.subscription?.credits_remaining ??
+          0;
       }
     } catch (_) {}
+
+    console.log(
+      "⏳ Polling start — plan before:",
+      planBeforePayment,
+      "credits before:",
+      creditsBeforePayment,
+    );
 
     const poll = async () => {
       pollCount.current += 1;
@@ -34,14 +46,14 @@ const SubscriptionSuccess = () => {
       try {
         await refreshUserPlan();
 
-        // Re-read localStorage AFTER refresh to see if plan changed
+        // Re-read localStorage AFTER refresh
         let newPlan = "free";
         let newCredits = 0;
         try {
           const userInfo = localStorage.getItem("user_info");
           if (userInfo) {
             const parsed = JSON.parse(userInfo);
-            newPlan = parsed?.plan?.plan_type?.toLowerCase() || "free";
+            newPlan = parsed?.plan?.plan_type?.toLowerCase() ?? "free";
             newCredits =
               parsed?.plan?.credits_remaining ??
               parsed?.subscription?.credits_remaining ??
@@ -49,16 +61,27 @@ const SubscriptionSuccess = () => {
           }
         } catch (_) {}
 
-        const planUpgraded = newPlan !== planBeforePayment;
-        const creditsGranted = newCredits > 0;
+        console.log(
+          "🔄 Poll",
+          pollCount.current,
+          "— newPlan:",
+          newPlan,
+          "newCredits:",
+          newCredits,
+        );
 
-        if (planUpgraded || creditsGranted) {
-          // Plan confirmed — go to pricing
+        // ✅ Only redirect if plan ACTUALLY changed from what it was before payment
+        // This prevents early redirect when free user already had credits > 0
+        const planUpgraded = newPlan !== planBeforePayment;
+        const creditsIncreased = newCredits > creditsBeforePayment;
+
+        if (planUpgraded || creditsIncreased) {
+          console.log("✅ Plan activation confirmed! Redirecting...");
           setStatusMsg("Plan activated! Redirecting...");
           setTimeout(() => {
             navigate("/dashboard/pricing", { state: { status: "success" } });
           }, 1500);
-          return; // stop polling
+          return;
         }
       } catch (err) {
         console.error("Poll error:", err);
@@ -67,7 +90,7 @@ const SubscriptionSuccess = () => {
       if (pollCount.current < MAX_POLLS) {
         setTimeout(poll, POLL_INTERVAL);
       } else {
-        // Give up after MAX_POLLS — navigate anyway
+        console.warn("⚠️ Max polls reached — redirecting anyway");
         setStatusMsg("Taking longer than expected. Redirecting...");
         setTimeout(() => {
           navigate("/dashboard/pricing", { state: { status: "success" } });
@@ -75,7 +98,6 @@ const SubscriptionSuccess = () => {
       }
     };
 
-    // Start first poll after a short delay (give PayPal webhook time to fire)
     const initialDelay = setTimeout(poll, 3000);
     return () => clearTimeout(initialDelay);
   }, [navigate, refreshUserPlan]);
@@ -83,22 +105,14 @@ const SubscriptionSuccess = () => {
   return (
     <div className="subscription-page">
       <AuthHeader />
-
       <div className="subscription-container">
-        {/* Success Icon */}
         <div className="success-icon">
           <i className="fa-solid fa-circle-check"></i>
         </div>
-
         <h2>Payment Successful</h2>
         <p className="subtitle">Your subscription is being activated.</p>
-
-        {/* Spinner */}
         <div className="spinner"></div>
-
         <p className="redirect-text">{statusMsg}</p>
-
-        {/* Payment Gateway Icons */}
         <div className="payment-icons">
           <img
             src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
@@ -109,7 +123,6 @@ const SubscriptionSuccess = () => {
           <i className="fa-brands fa-cc-amex"></i>
         </div>
       </div>
-
       <AuthFooter />
     </div>
   );
