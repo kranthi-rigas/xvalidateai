@@ -4,7 +4,9 @@ import useToast from "@/hooks/useToast";
 import { questions } from "./data/questions";
 import Questionnaire from "./Questionnaire";
 import Results from "./Results";
-import IncidentPlaybook from "./IncidentPlaybook";
+import IncidentPlaybook, { incidentFlowchart } from "./IncidentPlaybook";
+import IncidentResponseExercise from "./IncidentResponseExercise";
+import MermaidDiagram from "./MermaidDiagram";
 
 export default function AiLiteracyPage() {
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
@@ -59,16 +61,43 @@ export default function AiLiteracyPage() {
     }, 50);
   };
 
+  const headings = {
+    landing: {
+      title: "AI Literacy",
+      subtitle: "Understand your organisation's AI readiness across knowledge, use, impact, and agency.",
+    },
+    questionnaire: {
+      title: "AI Literacy Assessment",
+      subtitle: "Rate 16 statements across four pillars to measure your organisation's AI literacy level.",
+    },
+    results: {
+      title: result !== null ? "Your Assessment Results" : "AI Incident Response Playbook",
+      subtitle: result !== null
+        ? "Here's how your organisation scored across the AI literacy pillars."
+        : "A step-by-step guide for detecting, containing, and resolving AI-related incidents.",
+    },
+    exercise: {
+      title: "Incident Response Exercise",
+      subtitle: "Complete the interactive playbook template to design your school's AI incident response process.",
+    },
+    flowchart: {
+      title: "Incident Response Flowchart",
+      subtitle: "A visual overview of the end-to-end AI incident response process.",
+    },
+  };
+
+  const currentHeading = headings[view] ?? headings.landing;
+
   return (
     <div ref={topRef} className="spicy-y">
       <div className="dashboard-body">
         {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>
           <h2 style={{ fontWeight: 700, color: COLORS.textPrimary }}>
-            AI Literacy
+            {currentHeading.title}
           </h2>
           <p style={{ color: COLORS.textMuted, marginTop: 6 }}>
-            Understand your organisation's AI readiness across knowledge, use, impact, and agency.
+            {currentHeading.subtitle}
           </p>
         </div>
 
@@ -79,7 +108,7 @@ export default function AiLiteracyPage() {
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: 24,
-              maxWidth: 720,
+              maxWidth: 1000,
               margin: "0 auto",
             }}
           >
@@ -208,6 +237,139 @@ export default function AiLiteracyPage() {
                 View Playbook
               </button>
             </div>
+
+            {/* Incident Response Flowchart Card */}
+            <div
+              style={{
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: 14,
+                padding: 32,
+                background: COLORS.bgPrimary,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "#fff7ed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <i
+                  className="fa-solid fa-diagram-project"
+                  style={{ fontSize: 22, color: "#ea580c" }}
+                />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  Incident Response Flowchart
+                </div>
+                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
+                  Visualise the full end-to-end AI incident response process from detection through to resolution.
+                </p>
+              </div>
+              <button
+                onClick={() => setView("flowchart")}
+                style={{
+                  marginTop: 4,
+                  padding: "11px 32px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#ea580c",
+                  background: "#fff7ed",
+                  border: "1px solid #ea580c",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  width: "100%",
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = "#ea580c";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = "#fff7ed";
+                  e.target.style.color = "#ea580c";
+                }}
+              >
+                View Flowchart
+              </button>
+            </div>
+
+            {/* Incident Response Exercise Card */}
+            <div
+              style={{
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: 14,
+                borderRadius: 14,
+                padding: 32,
+                background: COLORS.bgPrimary,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "#ede9fe",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <i
+                  className="fa-solid fa-pen-to-square"
+                  style={{ fontSize: 22, color: "#7c3aed" }}
+                />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  Incident Response Exercise
+                </div>
+                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
+                  Complete the interactive playbook template to design your school's AI incident response process.
+                </p>
+              </div>
+              <button
+                onClick={() => setView("exercise")}
+                style={{
+                  marginTop: 4,
+                  padding: "11px 32px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#7c3aed",
+                  background: "#ede9fe",
+                  border: "1px solid #7c3aed",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  width: "100%",
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = "#7c3aed";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = "#ede9fe";
+                  e.target.style.color = "#7c3aed";
+                }}
+              >
+                Start Exercise
+              </button>
+            </div>
           </div>
         )}
 
@@ -239,6 +401,56 @@ export default function AiLiteracyPage() {
               onAnswer={handleAnswer}
               onSubmit={handleSubmit}
             />
+          </>
+        )}
+
+        {/* EXERCISE */}
+        {view === "exercise" && (
+          <IncidentResponseExercise onBack={() => setView("landing")} />
+        )}
+
+        {/* FLOWCHART */}
+        {view === "flowchart" && (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <button
+                onClick={() => setView("landing")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: COLORS.primary,
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <i className="fa-solid fa-arrow-left" /> Back
+              </button>
+            </div>
+            <div
+              style={{
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: 12,
+                padding: "28px 32px",
+                background: COLORS.bgPrimary,
+              }}
+            >
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 10,
+                  padding: "24px 16px",
+                  background: COLORS.bgSecondary,
+                  overflowX: "auto",
+                }}
+              >
+                <MermaidDiagram chart={incidentFlowchart} />
+              </div>
+            </div>
           </>
         )}
 
@@ -282,33 +494,6 @@ export default function AiLiteracyPage() {
                   </p>
                 </div>
                 <IncidentPlaybook />
-
-                <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-                  <button
-                    onClick={handleRetake}
-                    style={{
-                      padding: "11px 36px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: COLORS.primary,
-                      background: COLORS.primaryLighter,
-                      border: `1px solid ${COLORS.primary}`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.background = COLORS.primary;
-                      e.target.style.color = "#fff";
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.background = COLORS.primaryLighter;
-                      e.target.style.color = COLORS.primary;
-                    }}
-                  >
-                    Retake Assessment
-                  </button>
-                </div>
               </div>
             )}
           </div>
