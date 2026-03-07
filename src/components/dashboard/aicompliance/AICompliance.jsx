@@ -138,11 +138,10 @@ export default function AICompliance() {
     return (
       <ProjectDetailsModern
         project={openedProject}
-        onBack={async (shouldRefresh) => {
-          // ✅ Always reload projects on back so stats are fresh
-          await loadProjects();
-          navigate("/dashboard/aicompliance");
+        onBack={() => {
+          navigate("/dashboard/aicompliance"); // ← instant
           setOpenedProject(null);
+          loadProjects(); // fires in background, no await
         }}
       />
     );
