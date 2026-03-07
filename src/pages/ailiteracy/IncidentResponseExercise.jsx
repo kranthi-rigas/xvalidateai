@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import COLORS from "@/styles/colors";
 import useToast from "@/hooks/useToast";
 
@@ -203,87 +205,214 @@ export default function IncidentResponseExercise({ onBack }) {
   const updateComm = (stakeholder, field, value) =>
     setCommRows((prev) => ({ ...prev, [stakeholder]: { ...prev[stakeholder], [field]: value } }));
 
-  const generateMarkdown = () => {
+  const downloadPDF = async () => {
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginX = 15;
+    const HEADER_HEIGHT = 26;
+    const FOOTER_HEIGHT = 16;
+    const CONTENT_TOP = HEADER_HEIGHT + 6;
+    const CONTENT_BOTTOM = pageHeight - FOOTER_HEIGHT - 4;
+
     const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    const lines = [];
+    const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+    const organizationName = userInfo?.organization?.name || "XVALIDATEAI";
 
-    lines.push(`# AI Incident Response Playbook Exercise`);
-    lines.push(`**Date:** ${date}`);
-    lines.push(`**© XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1**`);
-    lines.push(``);
+    /* ---------- Watermark ---------- */
+    const drawWatermark = () => {
+      const watermarkText = organizationName.toUpperCase();
+      pdf.saveGraphicsState();
+      pdf.setGState(new pdf.GState({ opacity: 0.08 }));
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(180, 180, 180);
+      const maxWidth = pageWidth * 0.65;
+      let fontSize = 140;
+      pdf.setFontSize(fontSize);
+      while (pdf.getTextWidth(watermarkText) > maxWidth && fontSize > 20) {
+        fontSize -= 2;
+        pdf.setFontSize(fontSize);
+      }
+      pdf.text(watermarkText, pageWidth / 2, pageHeight / 2, {
+        align: "center",
+        baseline: "middle",
+        angle: 45,
+      });
+      pdf.restoreGraphicsState();
+    };
 
-    // Section 1: Incident Categories
-    lines.push(`## 1. Incident Categories`);
-    lines.push(``);
-    lines.push(`| Category | Relevant? | Notes | Examples | Risks |`);
-    lines.push(`|---|---|---|---|---|`);
-    INCIDENT_CATEGORIES.forEach((c) => {
-      const checked = categoryChecked[c.category] ? "✅ Yes" : "No";
-      const note = categoryNotes[c.category] || "—";
-      lines.push(`| ${c.category} | ${checked} | ${note} | ${c.examples} | ${c.risks} |`);
+    /* ---------- Logo ---------- */
+    const logoImg = new Image();
+    logoImg.src = "/assets/img/general/app_logo.png";
+    await new Promise((resolve) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = resolve;
     });
-    lines.push(``);
 
-    // Section 2: Response Process
-    lines.push(`## 2. Incident Response Process`);
-    lines.push(``);
-    lines.push(`| Stage | What Happens | Responsible Person / Team | Timeframe | Notes |`);
-    lines.push(`|---|---|---|---|---|`);
-    RESPONSE_STAGES.forEach((s) => {
-      const row = processRows[s.id];
-      lines.push(`| ${s.stage} | ${s.what} | ${row.responsible || "—"} | ${row.timeframe || "—"} | ${row.notes || "—"} |`);
-    });
-    lines.push(``);
+    /* ---------- Header ---------- */
+    const drawHeader = () => {
+      try {
+        const logoHeight = 10;
+        const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+        pdf.addImage(logoImg, "PNG", marginX, (HEADER_HEIGHT - logoHeight) / 2, logoWidth, logoHeight);
+      } catch (_) {}
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(13);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text("AI Incident Response Playbook", pageWidth / 2, 16, { align: "center" });
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(marginX, HEADER_HEIGHT, pageWidth - marginX, HEADER_HEIGHT);
+    };
 
-    // Section 3: Roles & Responsibilities
-    lines.push(`## 3. Roles & Responsibilities`);
-    lines.push(``);
-    lines.push(`| Role | Responsibilities |`);
-    lines.push(`|---|---|`);
-    ROLES.forEach((r) => {
-      lines.push(`| ${r} | ${roleRows[r] || "—"} |`);
-    });
-    lines.push(``);
+    /* ---------- Footer ---------- */
+    const drawFooter = (pageNum, totalPages) => {
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(marginX, pageHeight - FOOTER_HEIGHT, pageWidth - marginX, pageHeight - FOOTER_HEIGHT);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(
+        "© XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1",
+        pageWidth / 2,
+        pageHeight - 8,
+        { align: "center" }
+      );
+      if (pageNum && totalPages) {
+        pdf.text(`Page ${pageNum} of ${totalPages}`, pageWidth - marginX, pageHeight - 8, { align: "right" });
+      }
+    };
 
-    // Section 4: Communication Plan
-    lines.push(`## 4. Communication Plan`);
-    lines.push(``);
-    lines.push(`| Stakeholder | When to Notify | Channel | Sender |`);
-    lines.push(`|---|---|---|---|`);
-    STAKEHOLDERS.forEach((s) => {
-      const row = commRows[s];
-      lines.push(`| ${s} | ${row.when || "—"} | ${row.channel || "—"} | ${row.sender || "—"} |`);
-    });
-    lines.push(``);
+    /* ---------- Draw page decorations ---------- */
+    const decoratePage = () => {
+      drawWatermark();
+      drawHeader();
+      drawFooter();
+    };
 
-    // Section 5: Reflection
-    lines.push(`## 5. Reflection`);
-    lines.push(``);
-    lines.push(`**Most likely incident type at your school:**`);
-    lines.push(``);
-    lines.push(reflection.likely || "_No response provided._");
-    lines.push(``);
-    lines.push(`**Early warning signs to watch for:**`);
-    lines.push(``);
-    lines.push(reflection.earlyWarning || "_No response provided._");
-    lines.push(``);
-    lines.push(`**Recommended leader to own the response process:**`);
-    lines.push(``);
-    lines.push(reflection.leader || "_No response provided._");
-    lines.push(``);
+    /* ---------- Table section helper ---------- */
+    const addSection = (title, head, body) => {
+      const lastY = pdf.lastAutoTable ? pdf.lastAutoTable.finalY : CONTENT_TOP;
+      const titleY = lastY + 10;
 
-    return lines.join("\n");
-  };
+      // If title + at least one row (~18mm) won't fit before footer, add a new page
+      if (titleY + 18 > CONTENT_BOTTOM) {
+        pdf.addPage();
+        decoratePage();
+        pdf.lastAutoTable = { finalY: CONTENT_TOP };
+      }
 
-  const downloadMarkdown = () => {
-    const content = generateMarkdown();
-    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `incident-response-playbook-${Date.now()}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const drawTitleAt = pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 10 : CONTENT_TOP;
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(title, marginX, drawTitleAt);
+
+      autoTable(pdf, {
+        startY: drawTitleAt + 5,
+        head: [head],
+        body,
+        margin: { top: CONTENT_TOP, bottom: FOOTER_HEIGHT + 6, left: marginX, right: marginX },
+        headStyles: {
+          fillColor: [248, 250, 252],
+          textColor: [15, 23, 42],
+          fontStyle: "bold",
+          fontSize: 9,
+          lineColor: [226, 232, 240],
+          lineWidth: 0.3,
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [71, 85, 105],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.3,
+        },
+        alternateRowStyles: { fillColor: [250, 252, 255] },
+        columnStyles: { 0: { cellWidth: "auto" } },
+        didDrawPage: () => {
+          drawWatermark();
+          drawHeader();
+          drawFooter();
+        },
+      });
+    };
+
+    /* ---------- Page 1 ---------- */
+    decoratePage();
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text(`Date: ${date}`, marginX, CONTENT_TOP + 3);
+    pdf.text(`Organisation: ${organizationName}`, marginX, CONTENT_TOP + 9);
+
+    pdf.lastAutoTable = { finalY: CONTENT_TOP + 14 };
+
+    /* Section 1 */
+    addSection(
+      "1. Incident Categories",
+      ["Category", "Relevant?", "Notes", "Examples", "Risks"],
+      INCIDENT_CATEGORIES.map((c) => [
+        c.category,
+        categoryChecked[c.category] ? "Yes" : "No",
+        categoryNotes[c.category] || "—",
+        c.examples,
+        c.risks,
+      ])
+    );
+
+    /* Section 2 */
+    addSection(
+      "2. Incident Response Process",
+      ["Stage", "What Happens", "Responsible", "Timeframe", "Notes"],
+      RESPONSE_STAGES.map((s) => {
+        const row = processRows[s.id];
+        return [s.stage, s.what, row.responsible || "—", row.timeframe || "—", row.notes || "—"];
+      })
+    );
+
+    /* Section 3 */
+    addSection(
+      "3. Roles & Responsibilities",
+      ["Role", "Responsibilities"],
+      ROLES.map((r) => [r, roleRows[r] || "—"])
+    );
+
+    /* Section 4 */
+    addSection(
+      "4. Communication Plan",
+      ["Stakeholder", "When to Notify", "Channel", "Sender"],
+      STAKEHOLDERS.map((s) => {
+        const row = commRows[s];
+        return [s, row.when || "—", row.channel || "—", row.sender || "—"];
+      })
+    );
+
+    /* Section 5 */
+    addSection(
+      "5. Reflection",
+      ["Question", "Response"],
+      [
+        ["Most likely incident type at your school:", reflection.likely || "No response provided."],
+        ["Early warning signs to watch for:", reflection.earlyWarning || "No response provided."],
+        ["Recommended leader to own the response process:", reflection.leader || "No response provided."],
+      ]
+    );
+
+    /* ---------- Update footers with correct total page count ---------- */
+    const totalPages = pdf.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i);
+      // Blank out old page-number area
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(pageWidth - marginX - 28, pageHeight - 12, 30, 8, "F");
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`Page ${i} of ${totalPages}`, pageWidth - marginX, pageHeight - 8, { align: "right" });
+    }
+
+    pdf.save(`incident-response-playbook-${Date.now()}.pdf`);
   };
 
   const handleSubmit = () => {
@@ -365,7 +494,7 @@ export default function IncidentResponseExercise({ onBack }) {
             Exercise Completed!
           </h3>
           <p style={{ color: COLORS.textSecondary, fontSize: 15, maxWidth: 480, margin: "0 auto 28px" }}>
-            Your Incident Response Playbook has been saved and a Markdown report has been downloaded. You have successfully mapped out your school's AI incident response process.
+            Your Incident Response Playbook has been saved. Use the button below to download a PDF report of your completed exercise.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <button
@@ -375,11 +504,11 @@ export default function IncidentResponseExercise({ onBack }) {
               Start Over
             </button>
             <button
-              onClick={downloadMarkdown}
+              onClick={downloadPDF}
               style={{ padding: "10px 28px", fontSize: 14, fontWeight: 600, color: COLORS.primary, background: "#fff", border: `1px solid ${COLORS.primary}`, borderRadius: 8, cursor: "pointer" }}
             >
-              <i className="fa-solid fa-download" style={{ marginRight: 7 }} />
-              Download Report
+              <i className="fa-solid fa-file-pdf" style={{ marginRight: 7 }} />
+              Download PDF
             </button>
             <button
               onClick={onBack}
