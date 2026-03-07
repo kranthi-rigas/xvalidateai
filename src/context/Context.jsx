@@ -72,8 +72,8 @@ export default function Context({ children }) {
         localStorage.setItem("user_info", JSON.stringify(userData));
 
         // Update Context state
-        const userPlanType = userData?.plan?.plan_type || "free";
-        const credits = userData?.plan?.credits_remaining || 0;
+        const userPlanType = userData?.plan?.plan_type ?? "free";
+        const credits = userData?.plan?.credits_remaining ?? 0;
 
         setUserPlan(userPlanType.toLowerCase());
         setUserCredits(credits);
