@@ -32,11 +32,14 @@ export default function AiLiteracyPage() {
       const unanswered = questions.length - Object.keys(answers).length;
       showToast(
         `Please answer all questions before submitting. ${unanswered} question${unanswered > 1 ? "s" : ""} remaining.`,
-        { type: "error" }
+        { type: "error" },
       );
       return;
     }
-    const totalScore = Object.values(answers).reduce((sum, val) => sum + val, 0);
+    const totalScore = Object.values(answers).reduce(
+      (sum, val) => sum + val,
+      0,
+    );
     setResult(totalScore);
     setView("results");
   };
@@ -56,7 +59,10 @@ export default function AiLiteracyPage() {
     setShowPlaybook(true);
     setTimeout(() => {
       if (playbookRef.current) {
-        playbookRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        playbookRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }
     }, 50);
   };
@@ -64,25 +70,33 @@ export default function AiLiteracyPage() {
   const headings = {
     landing: {
       title: "AI Literacy",
-      subtitle: "Understand your organisation's AI readiness across knowledge, use, impact, and agency.",
+      subtitle:
+        "Understand your organisation's AI readiness across knowledge, use, impact, and agency.",
     },
     questionnaire: {
       title: "AI Literacy Assessment",
-      subtitle: "Rate 16 statements across four pillars to measure your organisation's AI literacy level.",
+      subtitle:
+        "Rate 16 statements across four pillars to measure your organisation's AI literacy level.",
     },
     results: {
-      title: result !== null ? "Your Assessment Results" : "AI Incident Response Playbook",
-      subtitle: result !== null
-        ? "Here's how your organisation scored across the AI literacy pillars."
-        : "A step-by-step guide for detecting, containing, and resolving AI-related incidents.",
+      title:
+        result !== null
+          ? "Your Assessment Results"
+          : "AI Incident Response Playbook",
+      subtitle:
+        result !== null
+          ? "Here's how your organisation scored across the AI literacy pillars."
+          : "A step-by-step guide for detecting, containing, and resolving AI-related incidents.",
     },
     exercise: {
       title: "Incident Response Exercise",
-      subtitle: "Complete the interactive playbook template to design your school's AI incident response process.",
+      subtitle:
+        "Complete the interactive playbook template to design your school's AI incident response process.",
     },
     flowchart: {
       title: "Incident Response Flowchart",
-      subtitle: "A visual overview of the end-to-end AI incident response process.",
+      subtitle:
+        "A visual overview of the end-to-end AI incident response process.",
     },
   };
 
@@ -143,11 +157,26 @@ export default function AiLiteracyPage() {
                 />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 17,
+                    color: COLORS.textPrimary,
+                    marginBottom: 8,
+                  }}
+                >
                   AI Literacy Assessment
                 </div>
-                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                  Rate 16 statements across four pillars to receive a score and your organisation's AI literacy level.
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: COLORS.textMuted,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  Rate 16 statements across four pillars to receive a score and
+                  your organisation's AI literacy level.
                 </p>
               </div>
               <button
@@ -165,7 +194,9 @@ export default function AiLiteracyPage() {
                   transition: "background 0.2s ease",
                   width: "100%",
                 }}
-                onMouseOver={(e) => (e.target.style.background = COLORS.primaryDark)}
+                onMouseOver={(e) =>
+                  (e.target.style.background = COLORS.primaryDark)
+                }
                 onMouseOut={(e) => (e.target.style.background = COLORS.primary)}
               >
                 Take Assessment
@@ -203,15 +234,34 @@ export default function AiLiteracyPage() {
                 />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 17,
+                    color: COLORS.textPrimary,
+                    marginBottom: 8,
+                  }}
+                >
                   Incident Response Playbook
                 </div>
-                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                  A step-by-step guide for detecting, containing, and resolving AI-related incidents in your organisation.
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: COLORS.textMuted,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  A step-by-step guide for detecting, containing, and resolving
+                  AI-related incidents in your organisation.
                 </p>
               </div>
               <button
-                onClick={() => { setShowPlaybook(true); setView("results"); setResult(null); }}
+                onClick={() => {
+                  setShowPlaybook(true);
+                  setView("results");
+                  setResult(null);
+                }}
                 style={{
                   marginTop: 4,
                   padding: "11px 32px",
@@ -269,11 +319,26 @@ export default function AiLiteracyPage() {
                 />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 17,
+                    color: COLORS.textPrimary,
+                    marginBottom: 8,
+                  }}
+                >
                   Incident Response Flowchart
                 </div>
-                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                  Visualise the full end-to-end AI incident response process from detection through to resolution.
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: COLORS.textMuted,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  Visualise the full end-to-end AI incident response process
+                  from detection through to resolution.
                 </p>
               </div>
               <button
@@ -336,11 +401,26 @@ export default function AiLiteracyPage() {
                 />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 17,
+                    color: COLORS.textPrimary,
+                    marginBottom: 8,
+                  }}
+                >
                   Incident Response Exercise
                 </div>
-                <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                  Complete the interactive playbook template to design your school's AI incident response process.
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: COLORS.textMuted,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  Complete the interactive playbook template to design your
+                  school's AI incident response process.
                 </p>
               </div>
               <button
@@ -458,13 +538,20 @@ export default function AiLiteracyPage() {
         {view === "results" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {result !== null && (
-              <Results score={result} onRetake={handleRetake} onViewPlaybook={handleViewPlaybook} />
+              <Results
+                score={result}
+                onRetake={handleRetake}
+                onViewPlaybook={handleViewPlaybook}
+              />
             )}
 
             {result === null && (
               <div style={{ marginBottom: 8 }}>
                 <button
-                  onClick={() => { setShowPlaybook(false); setView("landing"); }}
+                  onClick={() => {
+                    setShowPlaybook(false);
+                    setView("landing");
+                  }}
                   style={{
                     background: "none",
                     border: "none",
@@ -484,15 +571,11 @@ export default function AiLiteracyPage() {
             )}
 
             {showPlaybook && (
-              <div ref={playbookRef} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ textAlign: "center" }}>
-                  <h3 style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: 8, fontSize: 19 }}>
-                    AI Incident Response Playbook
-                  </h3>
-                  <p style={{ color: COLORS.textMuted, fontSize: 14 }}>
-                    Reference guide for managing AI-related incidents in your organisation.
-                  </p>
-                </div>
+              <div
+                ref={playbookRef}
+                style={{ display: "flex", flexDirection: "column", gap: 16 }}
+              >
+                <div style={{ textAlign: "center" }}></div>
                 <IncidentPlaybook />
               </div>
             )}
