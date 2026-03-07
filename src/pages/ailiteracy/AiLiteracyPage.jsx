@@ -494,33 +494,6 @@ export default function AiLiteracyPage() {
                   </p>
                 </div>
                 <IncidentPlaybook />
-
-                <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-                  <button
-                    onClick={handleRetake}
-                    style={{
-                      padding: "11px 36px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: COLORS.primary,
-                      background: COLORS.primaryLighter,
-                      border: `1px solid ${COLORS.primary}`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.background = COLORS.primary;
-                      e.target.style.color = "#fff";
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.background = COLORS.primaryLighter;
-                      e.target.style.color = COLORS.primary;
-                    }}
-                  >
-                    Retake Assessment
-                  </button>
-                </div>
               </div>
             )}
           </div>
