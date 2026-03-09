@@ -171,11 +171,11 @@ const renderHighRiskCell = (navigate) => (tool, key) => {
 
     case "score":
       return (
-        <span className="font-bold text-destructive">
-          {tool.overall_score?.toFixed(0) || 0}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+          <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
+          {tool.overall_score || 0}
         </span>
       );
-
     case "reason":
       return (
         <span className="text-xs text-muted-foreground">

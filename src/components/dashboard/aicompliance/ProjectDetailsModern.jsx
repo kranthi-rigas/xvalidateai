@@ -817,10 +817,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
               <h1 className="text-2xl lg:text-3xl font-bold text-primary tracking-wide whitespace-nowrap">
                 AI Governance Readiness Index (AGRI) Report
               </h1>
-
-              <p className="mt-2 text-sm text-textSecondary">
-                Comprehensive compliance and quality evaluation
-              </p>
             </div>
 
             {/* Right Section */}
