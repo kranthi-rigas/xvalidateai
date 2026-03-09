@@ -75,7 +75,23 @@ const HIGH_RISK_COLUMNS = [
   { key: "url", label: "URL", resizable: true },
   {
     key: "score",
-    label: "AI Governance Readiness Index (AGRI) Score",
+    label: (
+      <span className="flex items-center gap-1">
+        AGRI Score
+        <span className="relative group cursor-help text-gray-500">
+          <i className="fa-solid fa-circle-info text-xs"></i>
+
+          <span
+            className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+                       hidden group-hover:block
+                       bg-black text-white text-xs
+                       px-2 py-1 rounded whitespace-nowrap z-50"
+          >
+            AI Governance Readiness Index Score
+          </span>
+        </span>
+      </span>
+    ),
     resizable: true,
   },
   { key: "reason", label: "Risk Reasons", resizable: true },
@@ -86,7 +102,27 @@ const TOOL_COLUMNS = [
   { key: "url", label: "URL", resizable: true },
   {
     key: "overall",
-    label: "AI Governance Readiness Index (AGRI) Score",
+    label: (
+      <span className="flex items-center gap-1">
+        AGRI Score
+        <span className="relative group cursor-help text-gray-500">
+          <i className="fa-solid fa-circle-info text-xs"></i>
+
+          <span
+            className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+                         hidden group-hover:block
+                         bg-black text-white text-xs
+                         px-2 py-1 rounded whitespace-nowrap z-50"
+          >
+            AI Governance Readiness Index Score
+            <span
+              className="absolute -top-1 left-1/2 -translate-x-1/2
+                           border-4 border-transparent border-b-black"
+            ></span>
+          </span>
+        </span>
+      </span>
+    ),
     resizable: true,
   },
   {
@@ -243,7 +279,7 @@ export default function AIDashboard() {
     const exportData = highRiskTools.map((tool) => ({
       "Tool Name": tool.tool_name,
       URL: tool.url,
-      Score: tool.overall_score,
+      "AI Governance Readiness Index (AGRI) Score": tool.overall_score,
       "Risk Reason": tool.high_risk_reason,
     }));
 
@@ -269,7 +305,7 @@ export default function AIDashboard() {
     const exportData = allTools.map((tool) => ({
       "Tool Name": tool.tool_name,
       URL: tool.url,
-      Score: tool.overall_score,
+      "AI Governance Readiness Index (AGRI) Score": tool.overall_score,
       Recommendation: tool.recommendation,
       "Allowed Usage": tool.allowed_usage,
       "Restricted Usage": tool.restricted_usage,

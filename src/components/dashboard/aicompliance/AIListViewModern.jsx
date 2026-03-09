@@ -528,7 +528,27 @@ export default function AIListViewModern({
     },
     {
       key: "score",
-      label: "AI Governance Readiness Index (AGRI) Score",
+      label: (
+        <span className="flex items-center gap-1">
+          AGRI Score
+          <span className="relative group cursor-help text-gray-500">
+            <i className="fa-solid fa-circle-info text-xs"></i>
+
+            <span
+              className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+                     hidden group-hover:block
+                     bg-black text-white text-xs
+                     px-2 py-1 rounded whitespace-nowrap z-50"
+            >
+              AI Governance Readiness Index Score
+              <span
+                className="absolute -top-1 left-1/2 -translate-x-1/2
+                       border-4 border-transparent border-b-black"
+              ></span>
+            </span>
+          </span>
+        </span>
+      ),
       sortable: true,
       resizable: true,
     },
