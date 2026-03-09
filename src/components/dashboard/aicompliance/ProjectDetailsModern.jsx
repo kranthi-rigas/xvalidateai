@@ -141,10 +141,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
         // Center Title
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(16);
+        pdf.setFontSize(15);
         pdf.setTextColor(15, 23, 42);
 
-        pdf.text("Assessment Report", pageWidth / 2, 15, { align: "center" });
+        pdf.text(
+          "AI Governance Readiness Index Report (AGRI)",
+          pageWidth / 2,
+          19,
+          { align: "center" },
+        );
 
         // Divider
         pdf.setDrawColor(226, 232, 240);
@@ -803,28 +808,35 @@ export default function ProjectDetailsModern({ project, onBack }) {
       {/* Report Header Card */}
       <div ref={summaryRef}>
         <div className="glass-card report-header animate-fade-in">
-          <div className="grid grid-cols-3 items-center">
+          <div className="grid grid-cols-[1fr_3fr_1fr] items-center">
             {/* Left Spacer */}
             <div></div>
 
-            {/* True Center Title */}
+            {/* Center Title */}
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-primary tracking-wide">
-                Assessment Report
+              <h1 className="text-2xl lg:text-3xl font-bold text-primary tracking-wide whitespace-nowrap">
+                AI Governance Readiness Index Report (AGRI)
               </h1>
 
               <p className="mt-2 text-sm text-textSecondary">
                 Comprehensive compliance and quality evaluation
               </p>
             </div>
+
             {/* Right Section */}
+
             <div className="pt-9 text-right space-y-2">
               {badge && (
-                <div className={`badge ${badge.class}`}>
-                  <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
-                </div>
+                <>
+                  <div className={`badge ${badge.class}`}>
+                    <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
+                  </div>
+
+                  <p className="date-text whitespace-nowrap">
+                    Generated: {dateString}
+                  </p>
+                </>
               )}
-              <p className="date-text">Generated: {dateString}</p>
             </div>
           </div>
           <div className="section-divider"></div>
@@ -912,7 +924,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
             {/* Right: Overall Score */}
             {hasValidScore && (
               <div className="score-container glass-card">
-                <p className="score-label">Overall Compliance Score</p>
+                <p className="score-label">
+                  AI Governance Readiness Index Score(AGRI)
+                </p>
                 <div className="flex justify-center">
                   <Plot
                     data={[
