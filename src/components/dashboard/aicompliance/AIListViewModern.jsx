@@ -75,7 +75,7 @@ export default function AIListViewModern({
     name: 220,
     status: 180,
     assessment_status: 160,
-    score: 120,
+    score: 220,
     recommendation: 210,
     description: 260,
     last_scanned_time: 180,
@@ -528,7 +528,7 @@ export default function AIListViewModern({
     },
     {
       key: "score",
-      label: "Score",
+      label: "AI Governance Readiness Index (AGRI) Score",
       sortable: true,
       resizable: true,
     },

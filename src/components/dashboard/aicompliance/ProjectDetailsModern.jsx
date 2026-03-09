@@ -145,7 +145,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
         pdf.setTextColor(15, 23, 42);
 
         pdf.text(
-          "AI Governance Readiness Index Report (AGRI)",
+          "AI Governance Readiness Index (AGRI) Report",
           pageWidth / 2,
           19,
           { align: "center" },
@@ -815,7 +815,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
             {/* Center Title */}
             <div className="text-center">
               <h1 className="text-2xl lg:text-3xl font-bold text-primary tracking-wide whitespace-nowrap">
-                AI Governance Readiness Index Report (AGRI)
+                AI Governance Readiness Index (AGRI) Report
               </h1>
 
               <p className="mt-2 text-sm text-textSecondary">
@@ -925,7 +925,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
             {hasValidScore && (
               <div className="score-container glass-card">
                 <p className="score-label">
-                  AI Governance Readiness Index Score(AGRI)
+                  AI Governance Readiness Index (AGRI) Score
                 </p>
                 <div className="flex justify-center">
                   <Plot

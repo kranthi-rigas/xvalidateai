@@ -197,16 +197,20 @@ export default function ToolsCombinedChart({ tools = [] }) {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-2">
+      <div className="text-center mb-3">
         <h3 className="text-lg font-bold">Governance & Risk Overview</h3>
       </div>
 
-      <div className="flex justify-center gap-6 text-sm font-medium mb-4 flex-wrap">
+      <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-sm font-medium mb-4">
         <LegendDot color="#2563eb" label="Data & Reporting Quality" />
         <LegendDot color="#f59e0b" label="Governance & Compliance Review" />
         <LegendDot color="#007d79" label="Instructional & Learning Impact" />
         <LegendDot color="#8b5cf6" label="Usability & Integration" />
-        <LegendDot color="#111827" label="Overall Score" line />
+        <LegendDot
+          color="#111827"
+          label="AI Governance Readiness Index (AGRI) Score"
+          line
+        />
       </div>
 
       <div className="relative">

@@ -73,14 +73,22 @@ function DisabledTooltipButton({
 const HIGH_RISK_COLUMNS = [
   { key: "tool", label: "Tool Name", resizable: true },
   { key: "url", label: "URL", resizable: true },
-  { key: "score", label: "Score", resizable: true },
+  {
+    key: "score",
+    label: "AI Governance Readiness Index (AGRI) Score",
+    resizable: true,
+  },
   { key: "reason", label: "Risk Reasons", resizable: true },
 ];
 
 const TOOL_COLUMNS = [
   { key: "name", label: "Tool Name", resizable: true },
   { key: "url", label: "URL", resizable: true },
-  { key: "overall", label: "Score", resizable: true },
+  {
+    key: "overall",
+    label: "AI Governance Readiness Index (AGRI) Score",
+    resizable: true,
+  },
   {
     key: "recommendation",
     label: "Recommendation",
