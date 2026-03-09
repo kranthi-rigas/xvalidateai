@@ -189,7 +189,7 @@ export default function ToolsCombinedChart({ tools = [] }) {
       data: tools.map((t) => t.usability_score || 0),
     },
     {
-      name: "Overall Score",
+      name: "AI Governance Readiness Index (AGRI) Score",
       type: "line",
       data: tools.map((t) => t.overall_score || 0),
     },
