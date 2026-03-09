@@ -1,5 +1,3 @@
-# AI Incident Response Playbook
-
 ## 1. Detection
 
 AI incidents should be reported by staff, students, or parents through the organisation's standard reporting channels. An AI incident includes any event where an AI system produces harmful, biased, inaccurate, or unexpected outputs that affect individuals or operations.
