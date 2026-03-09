@@ -78,20 +78,21 @@ export default function IncidentPlaybook() {
             padding-bottom: 10px;
           }
           .ai-playbook-markdown h2 {
-            font-size: 19px;
+            font-size: 16px;
             font-weight: 700;
             color: ${COLORS.primary};
             margin-top: 28px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
           }
           .ai-playbook-markdown h3 {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: ${COLORS.textPrimary};
             margin-top: 18px;
             margin-bottom: 8px;
           }
           .ai-playbook-markdown p {
+            font-size: 13px;
             margin-bottom: 12px;
           }
           .ai-playbook-markdown ul,

@@ -117,7 +117,7 @@ export default function AiLiteracyPage() {
       <div className="dashboard-body">
         {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>
-          <h2 style={{ fontWeight: 700, color: COLORS.textPrimary }}>
+          <h2 style={{ fontSize:18 ,fontWeight: 700, color: COLORS.textPrimary }}>
             {currentHeading.title}
           </h2>
           <p style={{ color: COLORS.textMuted, marginTop: 6 }}>
