@@ -103,9 +103,11 @@ export default function StatisticsCards({
   const styles = `
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .stat-card {
@@ -121,6 +123,8 @@ export default function StatisticsCards({
       position: relative;
       overflow: hidden;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+      min-width: 0;
     }
 
     .stat-card::before {
@@ -153,6 +157,7 @@ export default function StatisticsCards({
 
     .stat-content {
       flex: 1;
+      min-width: 0;
     }
 
     .stat-label {
@@ -161,6 +166,9 @@ export default function StatisticsCards({
       margin-bottom: 6px;
       font-weight: 500;
       letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-value {
@@ -241,7 +249,7 @@ export default function StatisticsCards({
     /* Standard Desktop (1024px - 1279px) */
     @media (min-width: 1024px) and (max-width: 1279px) {
       .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 12px;
         margin-bottom: 16px;
       }
@@ -251,7 +259,7 @@ export default function StatisticsCards({
       }
 
       .stat-value {
-        font-size: 22px;
+        font-size: 20px;
       }
 
       .stat-label {
@@ -260,8 +268,8 @@ export default function StatisticsCards({
       }
 
       .stat-icon-wrapper {
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         margin-left: 10px;
       }
     }
