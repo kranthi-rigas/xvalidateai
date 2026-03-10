@@ -59,7 +59,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
       setIsDownloading(true);
       setIsPdfRendering(true);
 
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 100)); // wait for React state + Plotly to settle
 
       const pdf = new jsPDF("p", "mm", "a4");
 
@@ -76,60 +76,43 @@ export default function ProjectDetailsModern({ project, onBack }) {
       const CONTENT_BOTTOM = pageHeight - FOOTER_HEIGHT - 6;
       const CONTENT_HEIGHT = CONTENT_BOTTOM - CONTENT_TOP;
 
-      // Get organization from localStorage
       const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
       const organizationName = userInfo?.organization?.name || "XVALIDATEAI";
 
-      /* ---------------- WATERMARK FUNCTION ---------------- */
+      /* ── WATERMARK ─────────────────────────────────────────────────────── */
       const drawWatermark = () => {
-        const watermarkText =
-          (organizationName && organizationName.toUpperCase()) || "XVALIDATEAI";
-
+        const watermarkText = organizationName.toUpperCase();
         pdf.saveGraphicsState();
         pdf.setGState(new pdf.GState({ opacity: 0.15 }));
-
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(180, 180, 180);
-
-        // Scale text to 65% of page width
         const maxWidth = pageWidth * 0.65;
         let fontSize = 140;
         pdf.setFontSize(fontSize);
-
         while (pdf.getTextWidth(watermarkText) > maxWidth && fontSize > 20) {
           fontSize -= 2;
           pdf.setFontSize(fontSize);
         }
-
-        // 🔥 FIX: compensate for rotated height
-        const textWidth = pdf.getTextWidth(watermarkText);
-        const textHeight = fontSize;
-
-        const centerX = pageWidth / 2;
-        const centerY = pageHeight / 2;
-
-        pdf.text(watermarkText, centerX, centerY, {
+        pdf.text(watermarkText, pageWidth / 2, pageHeight / 2, {
           align: "center",
           baseline: "middle",
           angle: 45,
         });
-
         pdf.restoreGraphicsState();
       };
-      /* ---------------- HEADER ---------------- */
-      const logoImg = new Image();
-      logoImg.src = "/assets/img/general/app_logo.png"; // use PNG for reliability
 
+      /* ── LOGO LOAD ─────────────────────────────────────────────────────── */
+      const logoImg = new Image();
+      logoImg.src = "/assets/img/general/app_logo.png";
       await new Promise((resolve, reject) => {
         logoImg.onload = resolve;
         logoImg.onerror = reject;
       });
 
+      /* ── HEADER ────────────────────────────────────────────────────────── */
       const drawHeader = () => {
-        // Logo
         const logoHeight = 10;
         const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-
         pdf.addImage(
           logoImg,
           "PNG",
@@ -138,29 +121,25 @@ export default function ProjectDetailsModern({ project, onBack }) {
           logoWidth,
           logoHeight,
         );
-
-        // Center Title
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(15);
         pdf.setTextColor(15, 23, 42);
-
         pdf.text(
           "AI Governance Readiness Index (AGRI) Report",
           pageWidth / 2,
           19,
           { align: "center" },
         );
-
-        // Divider
         pdf.setDrawColor(226, 232, 240);
         pdf.line(15, HEADER_HEIGHT, pageWidth - 15, HEADER_HEIGHT);
       };
 
-      /* ---------------- FOOTER ---------------- */
-      const drawFooter = () => {
-        const pageNumber = pdf.internal.getCurrentPageInfo().pageNumber;
-        const totalPages = pdf.getNumberOfPages();
-
+      /* ── FOOTER ────────────────────────────────────────────────────────── */
+      // ✅ FIX: footer is NOT drawn during page building.
+      // We draw all footers in a second pass AFTER pdf.getNumberOfPages()
+      // returns the final count, so "Page X of Y" is always correct.
+      const drawFooterOnPage = (pageNumber, totalPages) => {
+        pdf.setPage(pageNumber);
         pdf.setDrawColor(226, 232, 240);
         pdf.line(
           15,
@@ -168,20 +147,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pageWidth - 15,
           pageHeight - FOOTER_HEIGHT,
         );
-
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
-
-        // Center footer text
         pdf.text(
           "XVALIDATEAI © 2026. All rights reserved.",
           pageWidth / 2,
           pageHeight - 8,
           { align: "center" },
         );
-
-        // Page number on right
         pdf.text(
           `Page ${pageNumber} of ${totalPages}`,
           pageWidth - 15,
@@ -190,38 +164,51 @@ export default function ProjectDetailsModern({ project, onBack }) {
         );
       };
 
-      /* ---------------- HTML CAPTURE ---------------- */
+      /* ── HTML CAPTURE ──────────────────────────────────────────────────── */
       const capture = async (el) => {
         if (!el || !el.offsetWidth || !el.offsetHeight) {
           console.warn("Skipping capture: element invalid or zero size");
           return null;
         }
 
-        /* ---------------- HIDE PLOTLY IN REAL DOM ---------------- */
-        const plotlyElements = el.querySelectorAll(".js-plotly-plot");
-        plotlyElements.forEach((node) => {
-          node.style.visibility = "hidden";
-        });
+        // ✅ Step 1: Pre-capture all Plotly chart images from real DOM
+        // WITHOUT touching real DOM visibility at all — zero flicker
+        const originalChartEls = Array.from(
+          el.querySelectorAll(".js-plotly-plot"),
+        );
+        const plotlyImageMap = new Map();
+        for (const chart of originalChartEls) {
+          try {
+            const imgData = await window.Plotly.toImage(chart, {
+              format: "jpeg",
+              quality: 0.82,
+              width: chart.offsetWidth,
+              height: chart.offsetHeight,
+            });
+            plotlyImageMap.set(chart, {
+              imgData,
+              w: chart.offsetWidth,
+              h: chart.offsetHeight,
+            });
+          } catch (e) {
+            console.warn("Pre-convert Plotly failed", e);
+          }
+        }
 
+        // ✅ Step 2: Clone AFTER image capture — real DOM is NEVER hidden or modified
         const clone = el.cloneNode(true);
-
         clone.style.position = "fixed";
         clone.style.top = "-10000px";
         clone.style.left = "0";
         clone.style.width = el.offsetWidth + "px";
         clone.style.background = "#ffffff";
         clone.style.boxShadow = "none";
-
         document.body.appendChild(clone);
 
-        /* ---------------- REMOVE UI-ONLY SECTIONS ---------------- */
-        clone.querySelectorAll(".section-summary-box").forEach((node) => {
-          node.remove();
-        });
-
-        /* ==========================================================
-     PROFESSIONAL PDF STYLING (Corporate Layout Mode)
-     ========================================================== */
+        clone
+          .querySelectorAll(".section-summary-box")
+          .forEach((n) => n.remove());
+        clone.querySelectorAll(".admin-actions").forEach((n) => n.remove());
 
         clone.querySelectorAll("*").forEach((node) => {
           node.style.setProperty("color", "#111111", "important");
@@ -230,14 +217,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
           node.style.setProperty("box-shadow", "none", "important");
           node.style.setProperty("filter", "none", "important");
         });
-
-        /* Remove colorful badges */
-        /* Remove ALL colored boxes completely */
-        /* Remove ALL colored icons and backgrounds */
         clone.querySelectorAll("i").forEach((icon) => {
           icon.style.setProperty("color", "#111111", "important");
         });
-
         clone
           .querySelectorAll(
             ".badge, .recommendation-badge, .recommendation-box, .summary-card, .status-pill, .score-badge, .status-badge",
@@ -247,80 +229,61 @@ export default function ProjectDetailsModern({ project, onBack }) {
             node.style.setProperty("border", "1px solid #111111", "important");
             node.style.setProperty("color", "#111111", "important");
           });
-
-        /* REMOVE colored score classes completely */
         clone
           .querySelectorAll(".score-excellent, .score-warning, .score-poor")
           .forEach((node) => {
-            node.classList.remove("score-excellent");
-            node.classList.remove("score-warning");
-            node.classList.remove("score-poor");
+            node.classList.remove(
+              "score-excellent",
+              "score-warning",
+              "score-poor",
+            );
           });
-
-        /* Professional Average Score Box for PDF */
+        // Rebuild the score badge completely so label + value are stacked and centered
         clone.querySelectorAll(".section-score-badge").forEach((node) => {
-          node.style.setProperty("display", "inline-flex", "important");
-          node.style.setProperty("align-items", "center", "important");
-          node.style.setProperty("gap", "8px", "important");
-          node.style.setProperty("padding", "6px 14px", "important");
-          node.style.setProperty("border", "2px solid #111111", "important");
-          node.style.setProperty("border-radius", "6px", "important");
-          node.style.setProperty("background", "#f8fafc", "important");
-          node.style.setProperty("font-weight", "600", "important");
-        });
+          const label = node.querySelector(".score-label");
+          const value = node.querySelector(".score-value");
 
-        /* Align label and value properly */
-        clone.querySelectorAll(".score-label").forEach((node) => {
-          node.style.setProperty("font-size", "11px", "important");
-          node.style.setProperty("letter-spacing", "0.5px", "important");
-          node.style.setProperty("text-transform", "uppercase", "important");
-        });
+          const labelText = label ? label.textContent.trim() : "PILLAR SCORE";
+          const valueText = value ? value.textContent.trim() : "";
 
-        clone.querySelectorAll(".score-value").forEach((node) => {
-          node.style.setProperty("font-size", "14px", "important");
-          node.style.setProperty("font-weight", "700", "important");
-        });
+          // Replace inner HTML with a clean two-line layout
+          node.innerHTML = `
+            <div style="
+              display:flex; flex-direction:column; align-items:center;
+              justify-content:center; gap:3px;
+            ">
+              <span style="
+                font-size:9px; font-weight:600; letter-spacing:0.8px;
+                text-transform:uppercase; color:#444444;
+                white-space:nowrap; line-height:1;
+              ">${labelText}</span>
+              <span style="
+                font-size:20px; font-weight:700; color:#000000;
+                line-height:1; white-space:nowrap;
+              ">${valueText}</span>
+            </div>
+          `;
 
-        /* Professional Average Score Box for PDF */
-        clone.querySelectorAll(".section-score-badge").forEach((node) => {
           node.style.setProperty("display", "inline-flex", "important");
           node.style.setProperty("align-items", "center", "important");
           node.style.setProperty("justify-content", "center", "important");
-          node.style.setProperty("gap", "10px", "important");
-          node.style.setProperty("padding", "6px 18px", "important");
+          node.style.setProperty("padding", "8px 16px", "important");
           node.style.setProperty("border", "2px solid #111111", "important");
           node.style.setProperty("border-radius", "8px", "important");
           node.style.setProperty("background", "#ffffff", "important");
-          node.style.setProperty("font-weight", "600", "important");
+          node.style.setProperty("min-width", "110px", "important");
+          node.style.setProperty("height", "auto", "important");
+          node.style.setProperty("overflow", "visible", "important");
         });
-        clone.querySelectorAll(".score-value").forEach((node) => {
-          node.style.setProperty("color", "#000000", "important");
-          node.style.setProperty("font-weight", "700", "important");
-        });
-
-        // Remove admin approve/reject links in PDF
-        clone.querySelectorAll(".admin-actions").forEach((node) => {
-          node.remove();
-        });
-
-        // Remove org icon background color in PDF
-        clone.querySelectorAll(".tool-icon").forEach((node) => {
+        clone.querySelectorAll(".tool-icon, .section-icon").forEach((node) => {
           node.style.setProperty("background", "#ffffff", "important");
           node.style.setProperty("border", "1px solid #111111", "important");
         });
-
-        clone.querySelectorAll(".section-icon").forEach((node) => {
-          node.style.setProperty("background", "#ffffff", "important");
-          node.style.setProperty("border", "1px solid #111111", "important");
-        });
-
-        /* Professional table styling */
         clone.querySelectorAll("table").forEach((table) => {
           table.style.borderCollapse = "collapse";
           table.style.width = "100%";
           table.style.fontSize = "10px";
         });
-
         clone.querySelectorAll("th").forEach((th) => {
           th.style.background = "#f3f4f6";
           th.style.color = "#111111";
@@ -329,14 +292,11 @@ export default function ProjectDetailsModern({ project, onBack }) {
           th.style.padding = "8px";
           th.style.textAlign = "left";
         });
-
         clone.querySelectorAll("td").forEach((td) => {
           td.style.border = "1px solid #e5e7eb";
           td.style.padding = "8px";
           td.style.verticalAlign = "top";
         });
-
-        /* Remove gradient / colored text */
         clone.querySelectorAll(".gradient-text").forEach((node) => {
           node.style.background = "none";
           node.style.color = "#111111";
@@ -344,49 +304,35 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
         await new Promise((r) => requestAnimationFrame(r));
 
-        /* ---------------- CONVERT PLOTLY TO IMAGE ---------------- */
-        const originalCharts = el.querySelectorAll(".js-plotly-plot");
-        const cloneCharts = clone.querySelectorAll(".js-plotly-plot");
-
-        for (let i = 0; i < originalCharts.length; i++) {
-          try {
-            const originalChart = originalCharts[i];
-            const cloneChart = cloneCharts[i];
-
-            const imageData = await window.Plotly.toImage(originalChart, {
-              format: "png",
-              width: originalChart.offsetWidth,
-              height: originalChart.offsetHeight,
-            });
-
-            const img = document.createElement("img");
-            img.src = imageData;
-            img.style.width = originalChart.offsetWidth + "px";
-            img.style.height = originalChart.offsetHeight + "px";
-
-            cloneChart.parentNode.replaceChild(img, cloneChart);
-          } catch (e) {
-            console.warn("Plotly export failed", e);
-          }
+        // Use pre-converted images (already captured above) — no re-render needed
+        const cloneCharts = Array.from(
+          clone.querySelectorAll(".js-plotly-plot"),
+        );
+        for (let i = 0; i < originalChartEls.length; i++) {
+          const cached = plotlyImageMap.get(originalChartEls[i]);
+          if (!cached) continue;
+          const img = document.createElement("img");
+          img.src = cached.imgData;
+          img.style.width = cached.w + "px";
+          img.style.height = cached.h + "px";
+          if (cloneCharts[i])
+            cloneCharts[i].parentNode.replaceChild(img, cloneCharts[i]);
         }
 
         const canvas = await html2canvas(clone, {
-          scale: 2,
-          backgroundColor: null,
+          scale: 1.5,
+          backgroundColor: "#ffffff",
           useCORS: true,
+          imageTimeout: 0,
         });
 
         document.body.removeChild(clone);
-
-        /* ---------------- RESTORE REAL DOM ---------------- */
-        plotlyElements.forEach((node) => {
-          node.style.visibility = "visible";
-        });
+        // ✅ No restore needed — real DOM was never touched
 
         return canvas;
       };
 
-      /* ---------------- ADD IMAGE WITH PAGING ---------------- */
+      /* ── ADD CANVAS WITH PAGING ────────────────────────────────────────── */
       let isVeryFirstPage = true;
 
       const addCanvasPaged = (canvas) => {
@@ -394,7 +340,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
         const imgWidthPx = canvas.width;
         const imgHeightPx = canvas.height;
-
         const ratio = usableWidth / imgWidthPx;
         const pageHeightPx = CONTENT_HEIGHT / ratio;
 
@@ -402,76 +347,71 @@ export default function ProjectDetailsModern({ project, onBack }) {
         let pageIndex = 0;
 
         while (position < imgHeightPx) {
-          // Only add new page if not the very first page of the document
           if (!isVeryFirstPage && pageIndex === 0) {
             pdf.addPage();
           } else if (pageIndex > 0) {
             pdf.addPage();
           }
-
           isVeryFirstPage = false;
 
-          // Draw white background for the entire page first
           pdf.setFillColor(255, 255, 255);
           pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
           drawHeader();
+          drawWatermark();
+          // ← footer is intentionally NOT drawn here
 
-          const pageCanvas = document.createElement("canvas");
-          pageCanvas.width = imgWidthPx;
-          pageCanvas.height = Math.min(pageHeightPx, imgHeightPx - position);
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = imgWidthPx;
+          sliceCanvas.height = Math.min(pageHeightPx, imgHeightPx - position);
 
-          const ctx = pageCanvas.getContext("2d");
-
+          const ctx = sliceCanvas.getContext("2d");
           ctx.drawImage(
             canvas,
             0,
             position,
             imgWidthPx,
-            pageCanvas.height,
+            sliceCanvas.height,
             0,
             0,
             imgWidthPx,
-            pageCanvas.height,
+            sliceCanvas.height,
           );
 
           pdf.addImage(
-            pageCanvas.toDataURL("image/png"),
-            "PNG",
+            sliceCanvas.toDataURL("image/jpeg", 0.82),
+            "JPEG",
             marginX,
             CONTENT_TOP,
             usableWidth,
-            pageCanvas.height * ratio,
+            sliceCanvas.height * ratio,
           );
-
-          // Draw watermark on top of white background
-          drawWatermark();
-
-          drawFooter();
 
           position += pageHeightPx;
           pageIndex++;
         }
       };
-      /* ---------------- PAGE 1 ---------------- */
-      const summaryCanvas = await capture(summaryRef.current, {
-        hideUiHeader: true,
-      });
+
+      /* ── CAPTURE & BUILD ALL PAGES ─────────────────────────────────────── */
+      const summaryCanvas = await capture(summaryRef.current);
       addCanvasPaged(summaryCanvas);
 
-      /* ---------------- PAGE 2 ---------------- */
       if (usageTableRef.current) {
         const usageCanvas = await capture(usageTableRef.current);
         addCanvasPaged(usageCanvas);
       }
 
-      /* ---------------- EVALUATION SECTIONS ---------------- */
       for (let i = 0; i < tableRefs.current.length; i++) {
         const el = tableRefs.current[i];
         if (!el) continue;
-
         const sectionCanvas = await capture(el);
         addCanvasPaged(sectionCanvas);
+      }
+
+      /* ── SECOND PASS: draw footers with final totalPages ───────────────── */
+      const totalPages = pdf.getNumberOfPages(); // ← now accurate
+      for (let p = 1; p <= totalPages; p++) {
+        drawFooterOnPage(p, totalPages);
       }
 
       pdf.save(`${project.name}-Assessment-Report.pdf`);
