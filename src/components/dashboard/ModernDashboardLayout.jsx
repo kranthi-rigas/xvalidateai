@@ -179,7 +179,7 @@ export default function ModernDashboardLayout() {
             ? "fixed inset-0 z-50 flex flex-col w-full bg-sidebar border-r border-sidebar-border shadow-lg overflow-y-auto"
             : `hidden lg:flex lg:flex-col ${
                 sidebarCollapsed ? "lg:w-20" : "lg:w-64"
-              } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-all duration-300`
+              } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-[width] duration-300`
         }
       >
         {/* Sidebar top bar:
