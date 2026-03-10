@@ -16,7 +16,8 @@ export default function AuditLogPage() {
 
   const [columnWidths, setColumnWidths] = useState({
     audit_id: 260,
-    user_id: 260,
+    // user_id: 260,
+    user: 240,
     event_type: 180,
     result: 140,
     resource_type: 200,
@@ -110,7 +111,10 @@ export default function AuditLogPage() {
       log?.user_id?.toLowerCase().includes(s) ||
       log?.event_type?.toLowerCase().includes(s) ||
       log?.resource_type?.toLowerCase().includes(s) ||
-      log?.result?.toLowerCase().includes(s)
+      log?.result?.toLowerCase().includes(s) ||
+      log?.performed_by?.first_name?.toLowerCase().includes(s) ||
+      log?.performed_by?.last_name?.toLowerCase().includes(s) ||
+      log?.performed_by?.email?.toLowerCase().includes(s)
     );
   });
 
@@ -126,7 +130,10 @@ export default function AuditLogPage() {
 
     const rows = filtered.map((row) => ({
       audit_id: row.audit_id,
-      user_id: row.user_id,
+      // user_id: row.user_id,
+      user: row.performed_by
+        ? `${row.performed_by.first_name} ${row.performed_by.last_name} <${row.performed_by.email}>`
+        : "",
       event_type: row.event_type,
       result: row.result,
       resource_type: row.resource_type,
@@ -154,7 +161,8 @@ export default function AuditLogPage() {
 
   const columns = [
     { key: "audit_id", label: "Audit ID", resizable: true },
-    { key: "user_id", label: "User ID", resizable: true },
+    // { key: "user_id", label: "User ID", resizable: true },
+    { key: "user", label: "User", resizable: true },
     { key: "event_type", label: "Event Type", resizable: true },
     { key: "result", label: "Result", resizable: true },
     { key: "resource_type", label: "Resource Type", resizable: true },
@@ -170,12 +178,47 @@ export default function AuditLogPage() {
       case "timestamp":
         return row.timestamp ? new Date(row.timestamp).toLocaleString() : "-";
 
-      case "details":
+      case "user": {
+        const p = row.performed_by;
+        if (!p) return "-";
         return (
-          <span className="text-xs text-muted-foreground">
-            {row.details ? JSON.stringify(row.details) : "-"}
-          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="font-medium text-sm">
+              {p.first_name} {p.last_name}
+            </span>
+            <span className="text-xs text-muted-foreground">{p.email}</span>
+          </div>
         );
+      }
+
+      case "details": {
+        if (!row.details || !Object.keys(row.details).length) return "-";
+        return (
+          <div className="flex flex-col gap-1">
+            {Object.entries(row.details).map(([k, v]) => {
+              const val = String(v);
+              const isUrl = val.startsWith("http://") || val.startsWith("https://");
+              return (
+                <div key={k} className="flex gap-1 text-xs leading-snug">
+                  <span className="text-muted-foreground font-medium shrink-0">{k}:</span>
+                  {isUrl ? (
+                    <a
+                      href={val}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline truncate"
+                    >
+                      {val}
+                    </a>
+                  ) : (
+                    <span className="truncate">{val}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
 
       case "result":
         return (
