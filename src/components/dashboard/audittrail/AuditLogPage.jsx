@@ -23,7 +23,7 @@ export default function AuditLogPage() {
     resource_type: 200,
     timestamp: 220,
     user_agent: 420,
-    details: 320,
+    details: 400,
   });
 
   const resizingCol = useRef(null);
@@ -168,8 +168,32 @@ export default function AuditLogPage() {
     { key: "resource_type", label: "Resource Type", resizable: true },
     { key: "timestamp", label: "Timestamp", resizable: true },
     { key: "user_agent", label: "User Agent", resizable: true },
-    { key: "details", label: "Details", resizable: true },
+    { key: "details", label: "Details", resizable: true, align: "center" },
   ];
+
+  /* ---------------- HELPERS ---------------- */
+
+  /**
+   * Flatten a (possibly nested) details object into a flat list of
+   * { label, value } pairs so every entry can be rendered inline.
+   *
+   * Nested keys are joined with a dot: e.g. "changes.name"
+   */
+  const flattenDetails = (obj, prefix = "") => {
+    const pairs = [];
+
+    for (const [k, v] of Object.entries(obj)) {
+      const label = prefix ? `${prefix}.${k}` : k;
+
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        pairs.push(...flattenDetails(v, label));
+      } else {
+        pairs.push({ label, value: String(v ?? "") });
+      }
+    }
+
+    return pairs;
+  };
 
   /* ---------------- CELL RENDER ---------------- */
 
@@ -193,29 +217,100 @@ export default function AuditLogPage() {
 
       case "details": {
         if (!row.details || !Object.keys(row.details).length) return "-";
+
+        const pairs = flattenDetails(row.details);
+
+        // Strip "changes." prefix for cleaner display labels
+        const cleanLabel = (lbl) => lbl.replace(/^changes\./, "");
+
         return (
-          <div className="flex flex-col gap-1 items-center text-center">
-            {Object.entries(row.details).map(([k, v]) => {
-              const val = String(v);
-              const isUrl = val.startsWith("http://") || val.startsWith("https://");
-              return (
-                <div key={k} className="flex gap-1 text-xs leading-snug">
-                  <span className="text-muted-foreground font-medium shrink-0">{k}:</span>
-                  {isUrl ? (
-                    <a
-                      href={val}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 hover:underline truncate"
+          <div className="flex items-center justify-center w-full h-full py-1">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {pairs.map(({ label, value }, idx) => {
+                const isUrl =
+                  value.startsWith("http://") || value.startsWith("https://");
+                const shortLabel = cleanLabel(label);
+
+                return (
+                  <span key={idx} className="flex items-center gap-1">
+                    {/* Pill: key + value together */}
+                    <span
+                      className="inline-flex items-center rounded-full text-xs overflow-hidden"
+                      style={{
+                        border: "1px solid #e0e7ff",
+                        background: "#f5f3ff",
+                      }}
                     >
-                      {val}
-                    </a>
-                  ) : (
-                    <span className="truncate">{val}</span>
-                  )}
-                </div>
-              );
-            })}
+                      {/* Key segment */}
+                      <span
+                        className="px-2 py-0.5 font-semibold capitalize"
+                        style={{
+                          color: "#4338ca",
+                          background: "#ede9fe",
+                          borderRight: "1px solid #ddd6fe",
+                          fontSize: "0.68rem",
+                          letterSpacing: "0.03em",
+                        }}
+                      >
+                        {shortLabel}
+                      </span>
+
+                      {/* Value segment */}
+                      {isUrl ? (
+                        <a
+                          href={value}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={value}
+                          className="px-2 py-0.5 hover:underline"
+                          style={{
+                            color: "#2563eb",
+                            fontSize: "0.72rem",
+                            maxWidth: "160px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            display: "inline-block",
+                          }}
+                        >
+                          {value}
+                        </a>
+                      ) : (
+                        <span
+                          className="px-2 py-0.5"
+                          title={value}
+                          style={{
+                            color: "#374151",
+                            fontSize: "0.72rem",
+                            maxWidth: "140px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            display: "inline-block",
+                          }}
+                        >
+                          {value || "—"}
+                        </span>
+                      )}
+                    </span>
+
+                    {/* Divider between pills */}
+                    {idx < pairs.length - 1 && (
+                      <span
+                        style={{
+                          width: "1px",
+                          height: "14px",
+                          background: "#c7d2fe",
+                          display: "inline-block",
+                          borderRadius: "1px",
+                          verticalAlign: "middle",
+                        }}
+                      />
+                    )}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         );
       }
@@ -223,7 +318,7 @@ export default function AuditLogPage() {
       case "result":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs ${
+            className={`px-2 py-1 rounded text-xs font-medium ${
               row.result === "SUCCESS"
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
