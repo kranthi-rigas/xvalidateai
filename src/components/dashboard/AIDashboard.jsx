@@ -702,7 +702,6 @@ export default function AIDashboard() {
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
           <div className="bg-blue-50 border-b border-blue-100 px-6 py-4 relative flex items-center justify-center">
             <div className="flex items-center text-blue-800">
-              <i className="fa-solid fa-layer-group mr-2"></i>
               <h3 className="font-bold text-lg text-center">Tool Overview</h3>
             </div>
 
