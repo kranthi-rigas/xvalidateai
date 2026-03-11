@@ -358,7 +358,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
           drawHeader();
-          drawWatermark();
+
           // ← footer is intentionally NOT drawn here
 
           const sliceCanvas = document.createElement("canvas");
@@ -386,6 +386,8 @@ export default function ProjectDetailsModern({ project, onBack }) {
             usableWidth,
             sliceCanvas.height * ratio,
           );
+
+          drawWatermark();
 
           position += pageHeightPx;
           pageIndex++;
@@ -761,7 +763,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
             {/* Right Section */}
 
-            <div className="pt-9 text-right space-y-2">
+            <div className="pt-14 text-right space-y-2">
               {badge && (
                 <>
                   <div className={`badge ${badge.class}`}>
