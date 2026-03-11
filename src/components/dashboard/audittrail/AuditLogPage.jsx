@@ -194,7 +194,7 @@ export default function AuditLogPage() {
       case "details": {
         if (!row.details || !Object.keys(row.details).length) return "-";
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-center text-center">
             {Object.entries(row.details).map(([k, v]) => {
               const val = String(v);
               const isUrl = val.startsWith("http://") || val.startsWith("https://");
