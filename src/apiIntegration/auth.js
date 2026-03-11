@@ -270,12 +270,15 @@ export async function updatePassword({ password, new_password }) {
     data = text;
   }
 
-  // 🔥 treat 400 invalid token AFTER success as success
+  // treat 400 invalid token AFTER success as success
   if (!res.ok && !text.toLowerCase().includes("invalid token")) {
     throw new Error(
       typeof data === "string"
         ? data
-        : data?.message || "Password update failed"
+        : data?.error || data?.message || "Password update failed"
+      //   ^^^^^^^^^^^
+      // API returns { "error": "Current password is incorrect" }
+      // so check data.error BEFORE data.message
     );
   }
 

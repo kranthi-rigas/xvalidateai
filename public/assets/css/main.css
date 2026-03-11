@@ -3,7 +3,7 @@
 /* Fonts are loaded in index.html for better performance */
 /* @import '/assets/css/leaflet.css'; */
 
-@import '/assets/css/style-guide/_tokens.scss';
+@import '/assets/css/style-guide/_tokens.css';
 @import '/assets/css/dashboard-styles/Assignment.css';
 @import '/assets/css/dashboard-styles/SideBar.css';
 @import '/assets/css/dashboard-styles/Dashboard.css';

@@ -2,33 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import PageLoader from "@/components/common/PageLoader";
 import COLORS from "@/styles/colors";
-
-const FAQS = [
-  {
-    q: "What is a Tool Assessment?",
-    a: "A Tool Assessment evaluates AI tools for compliance, governance, and risk before approval for organizational usage.",
-  },
-  {
-    q: "Who is allowed to create a Tool Assessment?",
-    a: "Admins and Auditors can create assessments. Analysts have view-only access to reports and results.",
-  },
-  {
-    q: "What happens after a tool is submitted for assessment?",
-    a: "The tool enters a scanning queue. Once the scan completes, it can be approved or rejected based on compliance results.",
-  },
-  {
-    q: "Why does a scan sometimes take longer than expected?",
-    a: "Scan duration depends on tool complexity, data sources, and system load. Large tools may require extended analysis time.",
-  },
-  {
-    q: "Can a Tool Assessment be edited or deleted?",
-    a: "Admins can edit or delete assessments unless a scan is currently in progress.",
-  },
-  {
-    q: "Which plan supports multiple organizations?",
-    a: "The Enterprise plan supports managing multiple organizations and advanced governance controls.",
-  },
-];
+import faqsData from "./Faqs.json";
 
 export default function FaqPage() {
   const [openIndex, setOpenIndex] = useState(null);
@@ -77,7 +51,7 @@ export default function FaqPage() {
             overflow: "hidden",
           }}
         >
-          {FAQS.map((item, index) => {
+          {faqsData.map((item, index) => {
             const isOpen = openIndex === index;
 
             return (
@@ -120,11 +94,11 @@ export default function FaqPage() {
                       transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                       transition: "transform 0.2s ease",
                       color: COLORS.textMuted,
+                      flexShrink: 0,
                     }}
                   />
                 </button>
 
-                {/* Answer */}
                 {/* Answer */}
                 <div
                   style={{
@@ -133,11 +107,7 @@ export default function FaqPage() {
                     transition: "grid-template-rows 300ms ease",
                   }}
                 >
-                  <div
-                    style={{
-                      overflow: "hidden",
-                    }}
-                  >
+                  <div style={{ overflow: "hidden" }}>
                     <div
                       style={{
                         padding: "0 24px 22px",
@@ -169,26 +139,17 @@ export default function FaqPage() {
             color: COLORS.textMuted,
           }}
         >
-          <div
+          Still have questions? Reach us at{" "}
+          <a
+            href="mailto:support@xvalidateai.com"
             style={{
-              marginTop: 32,
-              textAlign: "center",
-              fontSize: 14,
-              color: COLORS.textMuted,
+              textDecoration: "none",
+              color: COLORS.primary,
+              fontWeight: 600,
             }}
           >
-            Still have questions? Reach us at{" "}
-            <a
-              href="mailto:support@xvalidateai.com"
-              style={{
-                textDecoration: "none",
-                color: COLORS.primary,
-                fontWeight: 600,
-              }}
-            >
-              support@xvalidate.com
-            </a>
-          </div>
+            support@xvalidateai.com
+          </a>
         </div>
       </div>
     </div>
