@@ -272,7 +272,7 @@ export default function IncidentResponseExercise({ onBack }) {
       pdf.setFontSize(8);
       pdf.setTextColor(100, 116, 139);
       pdf.text(
-        "© XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1",
+        `XVALIDATEAI  © ${new Date().getFullYear()}  | AI Literacy & Governance Workshop – Phase 1`,
         pageWidth / 2,
         pageHeight - 8,
         { align: "center" }
@@ -868,7 +868,7 @@ export default function IncidentResponseExercise({ onBack }) {
           marginBottom: 32,
         }}
       >
-        © XvalidateAI Solutions | AI Literacy & Governance Workshop – Phase 1
+      XVALIDATEAI  © {new Date().getFullYear()}  | AI Literacy & Governance Workshop – Phase 1
       </div>
     </div>
   );

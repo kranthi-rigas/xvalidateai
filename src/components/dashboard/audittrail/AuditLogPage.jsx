@@ -315,6 +315,15 @@ export default function AuditLogPage() {
         );
       }
 
+      case "event_type":
+      case "resource_type": {
+        const val = row[key];
+        if (!val) return "-";
+        return val
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+
       case "result":
         return (
           <span
