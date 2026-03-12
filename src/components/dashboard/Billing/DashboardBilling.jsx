@@ -90,9 +90,6 @@ export default function DashboardBilling() {
     if (!formData.billingAddress.trim()) {
       newErrors.billingAddress = "Billing address is required";
     }
-    //  else if (formData.billingAddress.trim().length < 10) {
-    //   newErrors.billingAddress = "Please enter a complete billing address";
-    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -122,6 +119,24 @@ export default function DashboardBilling() {
 
       // Handle successful voucher verification
       if (response && response.valid) {
+        // Check if voucher plan type matches the selected plan
+        const selectedPlanType = plan?.name?.toUpperCase();
+        const voucherPlanType = response.plan_type?.toUpperCase();
+
+        if (
+          selectedPlanType &&
+          voucherPlanType &&
+          voucherPlanType !== selectedPlanType
+        ) {
+          setErrors((prev) => ({
+            ...prev,
+            voucherCode: `This voucher can not be applied for this plan.`,
+          }));
+          setVoucherApplied(false);
+          setVoucherData(null);
+          return;
+        }
+
         setVoucherApplied(true);
         setVoucherData(response);
         console.log("Voucher applied successfully");
@@ -213,12 +228,6 @@ export default function DashboardBilling() {
         show("Please apply a valid voucher to complete purchase.", {
           type: "error",
         });
-        console.log(
-          "No voucher applied - this should not happen as button should be disabled",
-        );
-        show("Please apply a valid voucher to complete purchase.", {
-          type: "error",
-        });
       }
     } catch (error) {
       console.error("Purchase error details:", error);
@@ -232,6 +241,8 @@ export default function DashboardBilling() {
         ...prev,
         submit: errorMessage,
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -313,14 +324,17 @@ export default function DashboardBilling() {
                         }}
                       />
                       {errors.voucherCode && (
-                        <div className="text-red-1 text-14 mt-10">
+                        <div
+                          className="text-14 mt-10 d-flex items-center gap-2"
+                          style={{ color: "#dc3545" }}
+                        >
+                          <i className="fa-solid fa-circle-exclamation"></i>
                           {errors.voucherCode}
                         </div>
                       )}
                       {voucherApplied && voucherData && (
-                        // <div className="text-yellow-1 text-14 mt-10" style={{ color: "#FFD700" }}>
                         <div
-                          className=" text-14 mt-10"
+                          className="text-14 mt-10"
                           style={{ color: COLORS.success }}
                         >
                           ✓ Voucher verified! {voucherData.plan_name} plan (
@@ -340,7 +354,6 @@ export default function DashboardBilling() {
                           marginLeft: "1rem",
                           height: "4rem",
                           flexShrink: 0,
-                          color: "#0f3053",
                           color: "#0f3053",
                         }}
                       >
@@ -372,7 +385,6 @@ export default function DashboardBilling() {
                   </div>
                 )}
 
-                {/* PayPal Button */}
                 {/* Checkout Section */}
                 <div className="mt-10 space-y-6">
                   {/* Buttons Row */}
@@ -522,7 +534,6 @@ export default function DashboardBilling() {
                           <div
                             className="text-11 "
                             style={{ color: COLORS.success }}
-                            mt-5
                           >
                             <i className="fa-solid fa-coins mr-1"></i>{" "}
                             {voucherData.credits} credits will be activated on
