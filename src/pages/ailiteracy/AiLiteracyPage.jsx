@@ -13,7 +13,8 @@ import PageTransition from "@/components/common/PageTransition";
 export default function AiLiteracyPage() {
   const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
-  const [answers, setAnswers] = useState({});
+  const defaultAnswers = Object.fromEntries(questions.map((_, i) => [i, 1]));
+  const [answers, setAnswers] = useState(defaultAnswers);
   const [result, setResult] = useState(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
   const showToast = useToast();
@@ -53,13 +54,13 @@ export default function AiLiteracyPage() {
 
   useEffect(() => {
     setView("landing");
-    setAnswers({});
+    setAnswers(Object.fromEntries(questions.map((_, i) => [i, 1])));
     setResult(null);
     setShowPlaybook(false);
   }, [location.key]);
 
   const handleRetake = () => {
-    setAnswers({});
+    setAnswers(Object.fromEntries(questions.map((_, i) => [i, 1])));
     setResult(null);
     setShowPlaybook(false);
     setView("landing");
