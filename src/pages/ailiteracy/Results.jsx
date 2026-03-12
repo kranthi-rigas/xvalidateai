@@ -56,36 +56,37 @@ export default function Results({ score, onRetake, onViewPlaybook }) {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 120,
-          height: 120,
+          width: 140,
+          height: 140,
           borderRadius: "50%",
-          border: `4px solid ${color}`,
-          marginBottom: 20,
+          border: `5px solid ${color}`,
+          marginBottom: 16,
+          background: color + "12",
         }}
       >
         <div>
-          <div style={{ fontSize: 28, fontWeight: 700, color }}>
-            {score}
+          <div style={{ fontSize: 38, fontWeight: 800, color, lineHeight: 1 }}>
+            {percentage}%
           </div>
-          <div style={{ fontSize: 13, color: COLORS.textMuted }}>
-            / {maxScore}
+          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+            overall score
           </div>
         </div>
       </div>
 
       <div
         style={{
-          fontSize: 18,
-          fontWeight: 600,
-          marginBottom: 6,
+          fontSize: 20,
+          fontWeight: 700,
+          marginBottom: 4,
           color,
         }}
       >
-        Literacy Level: {level}
+        {level}
       </div>
 
-      <div style={{ fontSize: 14, color: COLORS.textMuted, marginBottom: 8 }}>
-        {percentage}% overall score
+      <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>
+        {score} / {maxScore} points
       </div>
 
       <div
