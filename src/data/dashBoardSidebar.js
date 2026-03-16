@@ -55,14 +55,14 @@ export const sidebarItems = [
         text: "Pricing",
         permission: null,
         requiredPlan: null,
-    },
+    }, 
     {
         id: 7,
         href: "/dashboard/audittrail",
         icon: "fa-solid fa-user-shield text-lg",
         text: "Audit Trail",
         permission: null,
-        requiredPlan: null,
+        requiredPlan: "business",  
     },
 
     {

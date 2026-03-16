@@ -25,10 +25,10 @@ export default function ModernDashboardLayout() {
   const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("User");
+  const [userPlan, setUserPlan] = useState("free");
+
   const handleParentClick = (item) => {
     if (!item.children) return;
-
-    // If sidebar is collapsed, expand it first and open the menu
     if (sidebarCollapsed) {
       setSidebarCollapsed(false);
       setOpenMenuId(item.id);
@@ -42,34 +42,25 @@ export default function ModernDashboardLayout() {
     const loadUserData = () => {
       try {
         const userInfo = localStorage.getItem("user_info");
-
         if (userInfo) {
           const userData = JSON.parse(userInfo);
-
           const fullName =
             `${userData?.first_name || "User"} ${userData?.last_name || ""}`.trim();
-
           const roleRaw = userData?.roles?.[0] || userData?.role || "User";
-
           const formattedRole =
             roleRaw.charAt(0).toUpperCase() + roleRaw.slice(1).toLowerCase();
 
-          // ⭐ Badge Class Mapping
           let badgeClass = "role-badge";
-
           switch (roleRaw.toUpperCase()) {
             case "ADMIN":
               badgeClass += " role-admin";
               break;
-
             case "MANAGER":
               badgeClass += " role-auditor";
               break;
-
             case "USER":
               badgeClass += " role-analyst";
               break;
-
             default:
               badgeClass += " role-default";
           }
@@ -82,7 +73,26 @@ export default function ModernDashboardLayout() {
         console.error("Error loading user data:", error);
       }
     };
+    loadUserData();
+  }, []);
 
+  useEffect(() => {
+    const loadUserData = () => {
+      try {
+        const userInfo = localStorage.getItem("user_info");
+        if (userInfo) {
+          const userData = JSON.parse(userInfo);
+          console.log("🔍 User data loaded for plan access:", userData);
+          // ✅ Normalize to lowercase for consistent comparison
+          const userPlanLocal =
+            userData?.plan?.plan_type?.toLowerCase() || "free";
+          setUserPlan(userPlanLocal);
+          console.log("🔍 userPlan set to:", userPlanLocal);
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
     loadUserData();
   }, []);
 
@@ -95,7 +105,6 @@ export default function ModernDashboardLayout() {
     });
   }, [location.pathname]);
 
-  // Logout functionality
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
   };
@@ -103,24 +112,17 @@ export default function ModernDashboardLayout() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      // setShowLogoutModal(false);
-
       const token =
         localStorage.getItem("refresh_token") ||
         sessionStorage.getItem("refresh_token");
-
       if (token) {
         await logoutUser(token);
       }
-
-      // Clear tokens & redirect
       localStorage.clear();
       sessionStorage.clear();
-
       if (setIsLoggedIn) {
         setIsLoggedIn(false);
       }
-
       navigate("/auth?mode=login");
     } catch (err) {
       console.error("Logout failed:", err);
@@ -132,7 +134,6 @@ export default function ModernDashboardLayout() {
 
   const { userCredits, setIsLoggedIn } = useContextElement();
 
-  // Lock body scroll when mobile sidebar is open
   useEffect(() => {
     if (mobileSidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -144,22 +145,26 @@ export default function ModernDashboardLayout() {
     };
   }, [mobileSidebarOpen]);
 
-  // On mobile the sidebar is always shown expanded (never icon-only)
   const effectiveCollapsed = sidebarCollapsed && !mobileSidebarOpen;
 
   const isActiveRoute = (href) => {
     if (!href) return false;
-
-    // Exact match for dashboard only
     if (href === "/dashboard") {
       return (
         location.pathname === "/dashboard" ||
         location.pathname === "/dashboard/"
       );
     }
-
     return location.pathname.startsWith(href);
   };
+
+  // ✅ Check if Audit Trail is locked for current user
+  const isAuditTrailLocked = (item) => {
+    return item.href === "/dashboard/audittrail" && userPlan !== "business";
+  };
+
+  // ✅ Show all items — no filtering out Audit Trail
+  const filteredSidebarItems = sidebarItems;
 
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
@@ -182,14 +187,11 @@ export default function ModernDashboardLayout() {
               } bg-sidebar border-r border-sidebar-border lg:h-full z-20 shadow-lg transition-[width] duration-300`
         }
       >
-        {/* Sidebar top bar:
-             Mobile  → logo centered, ✕ button pinned right
-             Desktop → logo left, collapse button right (justify-between) */}
+        {/* Sidebar top bar */}
         <div
           className={`h-20 relative flex items-center border-b border-sidebar-border
             ${mobileSidebarOpen ? "justify-center" : `justify-between ${effectiveCollapsed ? "px-2" : "px-6"}`}`}
         >
-          {/* Expanded Logo */}
           {!effectiveCollapsed && (
             <Link
               to="/dashboard"
@@ -204,7 +206,6 @@ export default function ModernDashboardLayout() {
             </Link>
           )}
 
-          {/* Collapsed Logo (desktop only) */}
           {effectiveCollapsed && (
             <Link
               to="/dashboard"
@@ -219,7 +220,6 @@ export default function ModernDashboardLayout() {
             </Link>
           )}
 
-          {/* Mobile close button – absolute right so logo stays centered */}
           <button
             onClick={() => setMobileSidebarOpen(false)}
             className="lg:hidden absolute right-4 sidebar-collapse-btn rounded-lg flex items-center justify-center text-muted-foreground transition-colors"
@@ -228,7 +228,6 @@ export default function ModernDashboardLayout() {
             <i className="fa-solid fa-xmark text-xl" data-fa-i2svg="false"></i>
           </button>
 
-          {/* Desktop collapse button */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="hidden lg:flex sidebar-collapse-btn rounded-lg items-center justify-center text-muted-foreground transition-colors"
@@ -237,12 +236,12 @@ export default function ModernDashboardLayout() {
             <i
               className={`fa-solid ${effectiveCollapsed ? "fa-angle-right mr-2" : "fa-angles-left"}`}
               data-fa-i2svg="false"
-            ></i>
+            />
           </button>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => {
+          {filteredSidebarItems.map((item) => {
             /* SECTION HEADER */
             if (item.type === "section") {
               if (effectiveCollapsed) {
@@ -253,7 +252,6 @@ export default function ModernDashboardLayout() {
                   />
                 );
               }
-
               return (
                 <div key={item.id} className="pt-2 pb-1">
                   <div className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -264,70 +262,126 @@ export default function ModernDashboardLayout() {
             }
 
             const active = isActiveRoute(item.href);
+            const locked = isAuditTrailLocked(item);
 
             return (
               <div key={item.id}>
-                {/* PARENT ITEM */}
-                <Link
-                  to={item.children ? "#" : item.href}
-                  onClick={(e) => {
-                    if (item.children) {
-                      e.preventDefault();
-                      handleParentClick(item);
-                    }
-                  }}
-                  title={effectiveCollapsed ? item.text : ""}
-                  className={`nav-item flex items-center justify-between w-full ${
-                    effectiveCollapsed ? "px-2" : "px-4"
-                  } py-3 text-sm font-medium rounded-lg transition-colors group ${
-                    active
-                      ? "active"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                  style={{ display: "inline-flex" }}
-                >
-                  {/* LEFT SIDE */}
-                  <div
-                    className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
-                  >
-                    <span
-                      data-fa-i2svg="false"
-                      className={`${item.icon} ${
-                        effectiveCollapsed ? "" : "mr-3"
-                      } transition-colors group-hover:text-primary`}
-                    />
-                    {!effectiveCollapsed && <span>{item.text}</span>}
+                {locked ? (
+                  // ✅ LOCKED STATE — greyed out, click redirects to pricing
+                  <div className="relative group">
+                    <button
+                      onClick={() => navigate("/dashboard/pricing")}
+                      title={
+                        effectiveCollapsed
+                          ? "Upgrade to Business to Avail this feature"
+                          : ""
+                      }
+                      className={`nav-item flex items-center justify-between w-full ${
+                        effectiveCollapsed ? "px-2" : "px-4"
+                      } py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer`}
+                      style={{ opacity: 0.5 }}
+                    >
+                      {/* LEFT SIDE */}
+                      <div
+                        className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
+                      >
+                        <span
+                          data-fa-i2svg="false"
+                          className={`${item.icon} ${effectiveCollapsed ? "" : "mr-3"} text-muted-foreground`}
+                        />
+                        {!effectiveCollapsed && (
+                          <span className="text-muted-foreground">
+                            {item.text}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* ✅ Lock icon + upgrade badge — hidden when collapsed */}
+                      {!effectiveCollapsed && (
+                        <div className="flex items-center gap-1"></div>
+                      )}
+                    </button>
+
+                    {/* ✅ Tooltip shown on hover when expanded */}
+                    {!effectiveCollapsed && (
+                      <div
+                        className="absolute left-0 right-0 bottom-full mb-1 mx-2 hidden group-hover:flex items-center justify-center"
+                        style={{ zIndex: 50 }}
+                      >
+                        <div
+                          className="text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap"
+                          style={{ backgroundColor: "#0F3053" }}
+                        >
+                          🔒 Upgrade to Business to Avail this feature
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* RIGHT SIDE (CHEVRON) */}
-                  {!effectiveCollapsed && item.children && (
-                    <span
-                      className={`fa-solid fa-chevron-right text-xs text-muted-foreground/50 transition-transform ${
-                        openMenuId === item.id ? "rotate-90" : ""
-                      }`}
-                      data-fa-i2svg="false"
-                    />
-                  )}
-                </Link>
-
-                {/* CHILDREN */}
-                {!effectiveCollapsed &&
-                  item.children &&
-                  openMenuId === item.id &&
-                  item.children.map((child) => (
+                ) : (
+                  // ✅ NORMAL STATE — existing rendering logic unchanged
+                  <div>
                     <Link
-                      key={child.id}
-                      to={child.href}
-                      className={`nav-item ml-10 px-4 py-2 text-sm rounded-lg transition-colors ${
-                        isActiveRoute(child.href)
+                      to={item.children ? "#" : item.href}
+                      onClick={(e) => {
+                        if (item.children) {
+                          e.preventDefault();
+                          handleParentClick(item);
+                        }
+                      }}
+                      title={effectiveCollapsed ? item.text : ""}
+                      className={`nav-item flex items-center justify-between w-full ${
+                        effectiveCollapsed ? "px-2" : "px-4"
+                      } py-3 text-sm font-medium rounded-lg transition-colors group ${
+                        active
                           ? "active"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
+                      style={{ display: "inline-flex" }}
                     >
-                      <span className={`${child.icon} mr-3 text-xs`} />
-                      <span>{child.text}</span>
+                      {/* LEFT SIDE */}
+                      <div
+                        className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
+                      >
+                        <span
+                          data-fa-i2svg="false"
+                          className={`${item.icon} ${
+                            effectiveCollapsed ? "" : "mr-3"
+                          } transition-colors group-hover:text-primary`}
+                        />
+                        {!effectiveCollapsed && <span>{item.text}</span>}
+                      </div>
+
+                      {/* RIGHT SIDE (CHEVRON) */}
+                      {!effectiveCollapsed && item.children && (
+                        <span
+                          className={`fa-solid fa-chevron-right text-xs text-muted-foreground/50 transition-transform ${
+                            openMenuId === item.id ? "rotate-90" : ""
+                          }`}
+                          data-fa-i2svg="false"
+                        />
+                      )}
                     </Link>
-                  ))}
+
+                    {/* CHILDREN */}
+                    {!effectiveCollapsed &&
+                      item.children &&
+                      openMenuId === item.id &&
+                      item.children.map((child) => (
+                        <Link
+                          key={child.id}
+                          to={child.href}
+                          className={`nav-item ml-10 px-4 py-2 text-sm rounded-lg transition-colors ${
+                            isActiveRoute(child.href)
+                              ? "active"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <span className={`${child.icon} mr-3 text-xs`} />
+                          <span>{child.text}</span>
+                        </Link>
+                      ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -373,10 +427,9 @@ export default function ModernDashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
-        {/* Header */}
-        <Header onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)} />
-
-        {/* Scrollable Content Area */}
+        <Header
+          onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)}
+        />
         <div
           key={location.pathname}
           className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20 min-h-0"
@@ -414,7 +467,6 @@ export default function ModernDashboardLayout() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div style={{ marginBottom: "16px", textAlign: "center" }}>
               <div
                 style={{
@@ -453,8 +505,6 @@ export default function ModernDashboardLayout() {
                 Are you sure you want to logout?
               </p>
             </div>
-
-            {/* Modal Actions */}
             <div
               style={{
                 display: "flex",

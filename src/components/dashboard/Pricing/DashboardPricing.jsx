@@ -19,6 +19,7 @@ const pricingPlans = [
     popular: false,
     features: [
       { text: "2 Scans included(20 Credits)", included: true },
+      { text: "Single User", included: true },
       { text: "Basic Report", included: true },
       { text: "Downloadable Report", included: false },
       { text: "Priority support", included: false },
@@ -42,6 +43,7 @@ const pricingPlans = [
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
       { text: "10 Scans included(100 Credits)", included: true },
+      { text: "Single User", included: true },
       { text: "Downloadable Report", included: true },
       { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
@@ -65,6 +67,7 @@ const pricingPlans = [
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
       { text: "30 Scans included(300 Credits)", included: true },
+      { text: "Multiple Users", included: true },
       { text: "Downloadable Report", included: true },
       { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
