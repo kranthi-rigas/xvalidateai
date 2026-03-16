@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import Plot from "react-plotly.js";
 import { COLORS } from "@/styles/colors";
-import AwsButton from "../../common/AwsButton";
 import { updateComplianceProject } from "../../../apiIntegration/compliance";
 import ApproveRejectModal from "./ApproveRejectModal";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import Plotly from "plotly.js-dist-min";
 import { useContextElement } from "@/context/Context";
 
 function formatStatus(value) {
@@ -30,7 +28,11 @@ function formatUser(user) {
 const formatToLocalDateTime = (utcString) => {
   if (!utcString) return "-";
 
-  const date = new Date(utcString);
+  const cleaned = utcString.replace("+00:00Z", "Z").replace(/\.\d{6}/, ""); // remove microseconds if present
+
+  const date = new Date(cleaned);
+
+  if (isNaN(date)) return "-";
 
   return date.toLocaleString(undefined, {
     year: "numeric",
@@ -41,7 +43,6 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
-
 export default function ProjectDetailsModern({ project, onBack }) {
   const summaryRef = useRef(null);
   const usageTableRef = useRef(null);
@@ -50,14 +51,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPdfRendering, setIsPdfRendering] = useState(false);
 
-  const handleDownloadPDF = async () => {
-    if (isDownloading || isFreePlan) return;
+  const { userPlan } = useContextElement();
+  const isFreePlan = userPlan === "free";
 
+  const handleDownloadPDF = async () => {
     try {
       setIsDownloading(true);
       setIsPdfRendering(true);
 
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 100)); // wait for React state + Plotly to settle
 
       const pdf = new jsPDF("p", "mm", "a4");
 
@@ -68,29 +70,49 @@ export default function ProjectDetailsModern({ project, onBack }) {
       const usableWidth = pageWidth - marginX * 2;
 
       const HEADER_HEIGHT = 24;
-      const FOOTER_HEIGHT = 22;
+      const FOOTER_HEIGHT = 20;
 
       const CONTENT_TOP = HEADER_HEIGHT + 6;
       const CONTENT_BOTTOM = pageHeight - FOOTER_HEIGHT - 6;
       const CONTENT_HEIGHT = CONTENT_BOTTOM - CONTENT_TOP;
 
-      /* ---------------- HEADER ---------------- */
-      const logoImg = new Image();
-      logoImg.src = "/assets/img/general/app_logo.png"; // use PNG for reliability
+      const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+      const organizationName = userInfo?.organization?.name || "XVALIDATEAI";
 
+      /* ── WATERMARK ─────────────────────────────────────────────────────── */
+      const drawWatermark = () => {
+        const watermarkText = organizationName.toUpperCase();
+        pdf.saveGraphicsState();
+        pdf.setGState(new pdf.GState({ opacity: 0.15 }));
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(180, 180, 180);
+        const maxWidth = pageWidth * 0.65;
+        let fontSize = 140;
+        pdf.setFontSize(fontSize);
+        while (pdf.getTextWidth(watermarkText) > maxWidth && fontSize > 20) {
+          fontSize -= 2;
+          pdf.setFontSize(fontSize);
+        }
+        pdf.text(watermarkText, pageWidth / 2, pageHeight / 2, {
+          align: "center",
+          baseline: "middle",
+          angle: 45,
+        });
+        pdf.restoreGraphicsState();
+      };
+
+      /* ── LOGO LOAD ─────────────────────────────────────────────────────── */
+      const logoImg = new Image();
+      logoImg.src = "/assets/img/general/app_logo.png";
       await new Promise((resolve, reject) => {
         logoImg.onload = resolve;
         logoImg.onerror = reject;
       });
 
+      /* ── HEADER ────────────────────────────────────────────────────────── */
       const drawHeader = () => {
-        pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, 0, pageWidth, HEADER_HEIGHT, "F");
-
-        // Logo
         const logoHeight = 10;
         const logoWidth = (logoImg.width / logoImg.height) * logoHeight;
-
         pdf.addImage(
           logoImg,
           "PNG",
@@ -99,24 +121,25 @@ export default function ProjectDetailsModern({ project, onBack }) {
           logoWidth,
           logoHeight,
         );
-
-        // Center Title
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(16);
+        pdf.setFontSize(15);
         pdf.setTextColor(15, 23, 42);
-
-        pdf.text("Assessment Report", pageWidth / 2, 15, { align: "center" });
-
-        // Divider
+        pdf.text(
+          "AI Governance Readiness Index (AGRI) Report",
+          pageWidth / 2,
+          19,
+          { align: "center" },
+        );
         pdf.setDrawColor(226, 232, 240);
         pdf.line(15, HEADER_HEIGHT, pageWidth - 15, HEADER_HEIGHT);
       };
 
-      /* ---------------- FOOTER ---------------- */
-      const drawFooter = () => {
-        pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, pageHeight - FOOTER_HEIGHT, pageWidth, FOOTER_HEIGHT, "F");
-
+      /* ── FOOTER ────────────────────────────────────────────────────────── */
+      // ✅ FIX: footer is NOT drawn during page building.
+      // We draw all footers in a second pass AFTER pdf.getNumberOfPages()
+      // returns the final count, so "Page X of Y" is always correct.
+      const drawFooterOnPage = (pageNumber, totalPages) => {
+        pdf.setPage(pageNumber);
         pdf.setDrawColor(226, 232, 240);
         pdf.line(
           15,
@@ -124,233 +147,287 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pageWidth - 15,
           pageHeight - FOOTER_HEIGHT,
         );
-
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
 
-        pdf.text(
-          "This report was generated by XVALIDATEAI Compliance Assessment System",
-          pageWidth / 2,
-          pageHeight - 18,
-          { align: "center" },
-        );
+        // Only show disclaimer on the last page
+        if (pageNumber === totalPages) {
+          pdf.setFontSize(8);
+          pdf.setFont("helvetica", "normal");
+          pdf.text(
+            "Disclaimer: Based on Tool's T&C, Privacy Policy, and website content. Scores are as reported by the respective tool websites.",
+            pageWidth / 2,
+            pageHeight - 14,
+            { align: "center", maxWidth: pageWidth - 30 },
+          );
+        }
 
-        pdf.text(
-          "For questions or concerns, contact compliance@xvalidateai.com",
-          pageWidth / 2,
-          pageHeight - 13,
-          { align: "center" },
-        );
-
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "normal");
         pdf.text(
           "XVALIDATEAI © 2026. All rights reserved.",
           pageWidth / 2,
           pageHeight - 8,
           { align: "center" },
         );
+        pdf.text(
+          `Page ${pageNumber} of ${totalPages}`,
+          pageWidth - 15,
+          pageHeight - 8,
+          { align: "right" },
+        );
       };
-
-      /* ---------------- HTML CAPTURE ---------------- */
+      /* ── HTML CAPTURE ──────────────────────────────────────────────────── */
       const capture = async (el) => {
         if (!el || !el.offsetWidth || !el.offsetHeight) {
           console.warn("Skipping capture: element invalid or zero size");
           return null;
         }
 
-        // TEMPORARILY HIDE PLOTLY FROM REAL DOM
-        const plotlyElements = el.querySelectorAll(".js-plotly-plot");
-        plotlyElements.forEach((node) => {
-          node.style.visibility = "hidden";
-        });
+        // ✅ Step 1: Pre-capture all Plotly chart images from real DOM
+        // WITHOUT touching real DOM visibility at all — zero flicker
+        const originalChartEls = Array.from(
+          el.querySelectorAll(".js-plotly-plot"),
+        );
+        const plotlyImageMap = new Map();
+        for (const chart of originalChartEls) {
+          try {
+            const imgData = await window.Plotly.toImage(chart, {
+              format: "jpeg",
+              quality: 0.82,
+              width: chart.offsetWidth,
+              height: chart.offsetHeight,
+            });
+            plotlyImageMap.set(chart, {
+              imgData,
+              w: chart.offsetWidth,
+              h: chart.offsetHeight,
+            });
+          } catch (e) {
+            console.warn("Pre-convert Plotly failed", e);
+          }
+        }
 
+        // ✅ Step 2: Clone AFTER image capture — real DOM is NEVER hidden or modified
         const clone = el.cloneNode(true);
-
         clone.style.position = "fixed";
         clone.style.top = "-10000px";
         clone.style.left = "0";
         clone.style.width = el.offsetWidth + "px";
         clone.style.background = "#ffffff";
         clone.style.boxShadow = "none";
-
         document.body.appendChild(clone);
 
-        // REMOVE unwanted sections for PDF
-        clone.querySelectorAll(".section-summary-box").forEach((el) => {
-          el.remove();
-        });
+        clone
+          .querySelectorAll(".section-summary-box")
+          .forEach((n) => n.remove());
+        clone.querySelectorAll(".admin-actions").forEach((n) => n.remove());
 
-        /* ================= FORCE DARK TEXT FOR PDF ================= */
         clone.querySelectorAll("*").forEach((node) => {
-          const style = window.getComputedStyle(node);
-
-          // Force text to pure black
-          node.style.setProperty("color", "#000000", "important");
-
-          // Remove opacity & blur effects
+          node.style.setProperty("color", "#111111", "important");
           node.style.setProperty("opacity", "1", "important");
           node.style.setProperty("text-shadow", "none", "important");
           node.style.setProperty("box-shadow", "none", "important");
           node.style.setProperty("filter", "none", "important");
         });
-
-        /* Fix summary cards background */
-        clone.querySelectorAll(".summary-card").forEach((node) => {
-          node.style.setProperty("background", "#ffffff", "important");
+        clone.querySelectorAll("i").forEach((icon) => {
+          icon.style.setProperty("color", "#111111", "important");
         });
-        /* ============================================================ */
+        clone
+          .querySelectorAll(
+            ".badge, .recommendation-badge, .recommendation-box, .summary-card, .status-pill, .score-badge, .status-badge",
+          )
+          .forEach((node) => {
+            node.style.setProperty("background", "#ffffff", "important");
+            node.style.setProperty("border", "1px solid #111111", "important");
+            node.style.setProperty("color", "#111111", "important");
+          });
+        clone
+          .querySelectorAll(".score-excellent, .score-warning, .score-poor")
+          .forEach((node) => {
+            node.classList.remove(
+              "score-excellent",
+              "score-warning",
+              "score-poor",
+            );
+          });
+        // Rebuild the score badge completely so label + value are stacked and centered
+        clone.querySelectorAll(".section-score-badge").forEach((node) => {
+          const label = node.querySelector(".score-label");
+          const value = node.querySelector(".score-value");
+
+          const labelText = label ? label.textContent.trim() : "PILLAR SCORE";
+          const valueText = value ? value.textContent.trim() : "";
+
+          // Replace inner HTML with a clean two-line layout
+          node.innerHTML = `
+            <div style="
+              display:flex; flex-direction:column; align-items:center;
+              justify-content:center; gap:3px;
+            ">
+              <span style="
+                font-size:9px; font-weight:600; letter-spacing:0.8px;
+                text-transform:uppercase; color:#444444;
+                white-space:nowrap; line-height:1;
+              ">${labelText}</span>
+              <span style="
+                font-size:20px; font-weight:700; color:#000000;
+                line-height:1; white-space:nowrap;
+              ">${valueText}</span>
+            </div>
+          `;
+
+          node.style.setProperty("display", "inline-flex", "important");
+          node.style.setProperty("align-items", "center", "important");
+          node.style.setProperty("justify-content", "center", "important");
+          node.style.setProperty("padding", "8px 16px", "important");
+          node.style.setProperty("border", "2px solid #111111", "important");
+          node.style.setProperty("border-radius", "8px", "important");
+          node.style.setProperty("background", "#ffffff", "important");
+          node.style.setProperty("min-width", "110px", "important");
+          node.style.setProperty("height", "auto", "important");
+          node.style.setProperty("overflow", "visible", "important");
+        });
+        clone.querySelectorAll(".tool-icon, .section-icon").forEach((node) => {
+          node.style.setProperty("background", "#ffffff", "important");
+          node.style.setProperty("border", "1px solid #111111", "important");
+        });
+        clone.querySelectorAll("table").forEach((table) => {
+          table.style.borderCollapse = "collapse";
+          table.style.width = "100%";
+          table.style.fontSize = "10px";
+        });
+        clone.querySelectorAll("th").forEach((th) => {
+          th.style.background = "#f3f4f6";
+          th.style.color = "#111111";
+          th.style.fontWeight = "600";
+          th.style.border = "1px solid #d1d5db";
+          th.style.padding = "8px";
+          th.style.textAlign = "left";
+        });
+        clone.querySelectorAll("td").forEach((td) => {
+          td.style.border = "1px solid #e5e7eb";
+          td.style.padding = "8px";
+          td.style.verticalAlign = "top";
+        });
+        clone.querySelectorAll(".gradient-text").forEach((node) => {
+          node.style.background = "none";
+          node.style.color = "#111111";
+        });
 
         await new Promise((r) => requestAnimationFrame(r));
 
-        // Convert ORIGINAL plotly charts to images
-        const originalCharts = el.querySelectorAll(".js-plotly-plot");
-        const cloneCharts = clone.querySelectorAll(".js-plotly-plot");
-
-        for (let i = 0; i < originalCharts.length; i++) {
-          try {
-            const originalChart = originalCharts[i];
-            const cloneChart = cloneCharts[i];
-
-            const imageData = await window.Plotly.toImage(originalChart, {
-              format: "png",
-              width: originalChart.offsetWidth,
-              height: originalChart.offsetHeight,
-            });
-
-            const img = document.createElement("img");
-            img.src = imageData;
-            img.style.width = originalChart.offsetWidth + "px";
-            img.style.height = originalChart.offsetHeight + "px";
-
-            cloneChart.parentNode.replaceChild(img, cloneChart);
-          } catch (e) {
-            console.warn("Plotly export failed", e);
-          }
+        // Use pre-converted images (already captured above) — no re-render needed
+        const cloneCharts = Array.from(
+          clone.querySelectorAll(".js-plotly-plot"),
+        );
+        for (let i = 0; i < originalChartEls.length; i++) {
+          const cached = plotlyImageMap.get(originalChartEls[i]);
+          if (!cached) continue;
+          const img = document.createElement("img");
+          img.src = cached.imgData;
+          img.style.width = cached.w + "px";
+          img.style.height = cached.h + "px";
+          if (cloneCharts[i])
+            cloneCharts[i].parentNode.replaceChild(img, cloneCharts[i]);
         }
 
         const canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: 1.5,
           backgroundColor: "#ffffff",
           useCORS: true,
+          imageTimeout: 0,
         });
 
         document.body.removeChild(clone);
-
-        // RESTORE plotly visibility
-        plotlyElements.forEach((node) => {
-          node.style.visibility = "visible";
-        });
+        // ✅ No restore needed — real DOM was never touched
 
         return canvas;
       };
-      /* ---------------- WATERMARK ---------------- */
-      const drawWatermark = () => {
-        const watermarkText = "XVALIDATEAI";
 
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(55);
-        pdf.setTextColor(230, 230, 230); // very light grey
+      /* ── ADD CANVAS WITH PAGING ────────────────────────────────────────── */
+      let isVeryFirstPage = true;
 
-        pdf.text(watermarkText, pageWidth / 2, pageHeight / 2, {
-          align: "center",
-          angle: 45,
-        });
-      };
-      /* ---------------- ADD IMAGE WITH PAGING ---------------- */
       const addCanvasPaged = (canvas) => {
-        const imgWidthPx = canvas.width;
-        const imgHeightPx = canvas.height;
         if (!canvas || !canvas.width || !canvas.height) return;
 
+        const imgWidthPx = canvas.width;
+        const imgHeightPx = canvas.height;
         const ratio = usableWidth / imgWidthPx;
         const pageHeightPx = CONTENT_HEIGHT / ratio;
 
         let position = 0;
+        let pageIndex = 0;
 
         while (position < imgHeightPx) {
-          const pageCanvas = document.createElement("canvas");
-          pageCanvas.width = imgWidthPx;
-          pageCanvas.height = Math.min(pageHeightPx, imgHeightPx - position);
+          if (!isVeryFirstPage && pageIndex === 0) {
+            pdf.addPage();
+          } else if (pageIndex > 0) {
+            pdf.addPage();
+          }
+          isVeryFirstPage = false;
 
-          const ctx = pageCanvas.getContext("2d");
+          pdf.setFillColor(255, 255, 255);
+          pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
+          drawHeader();
+
+          // ← footer is intentionally NOT drawn here
+
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = imgWidthPx;
+          sliceCanvas.height = Math.min(pageHeightPx, imgHeightPx - position);
+
+          const ctx = sliceCanvas.getContext("2d");
           ctx.drawImage(
             canvas,
             0,
             position,
             imgWidthPx,
-            pageCanvas.height,
+            sliceCanvas.height,
             0,
             0,
             imgWidthPx,
-            pageCanvas.height,
+            sliceCanvas.height,
           );
 
-          drawHeader();
-
-          // ✅ ADD IMAGE FIRST
           pdf.addImage(
-            pageCanvas.toDataURL("image/png"),
-            "PNG",
+            sliceCanvas.toDataURL("image/jpeg", 0.82),
+            "JPEG",
             marginX,
             CONTENT_TOP,
             usableWidth,
-            pageCanvas.height * ratio,
+            sliceCanvas.height * ratio,
           );
-          // ✅ WATERMARK AFTER IMAGE (VERY LIGHT)
+
           drawWatermark();
 
-          drawFooter();
-
           position += pageHeightPx;
-
-          if (position < imgHeightPx) {
-            pdf.addPage();
-          }
+          pageIndex++;
         }
       };
 
-      /* ---------------- PAGE 1 ---------------- */
-      const summaryCanvas = await capture(summaryRef.current, {
-        hideUiHeader: true,
-      });
+      /* ── CAPTURE & BUILD ALL PAGES ─────────────────────────────────────── */
+      const summaryCanvas = await capture(summaryRef.current);
       addCanvasPaged(summaryCanvas);
 
-      /* ---------------- PAGE 2 ---------------- */
       if (usageTableRef.current) {
         const usageCanvas = await capture(usageTableRef.current);
-        pdf.addPage(); // Add page ONCE before drawing
         addCanvasPaged(usageCanvas);
       }
 
-      /* ---------------- EVALUATION SECTIONS ---------------- */
       for (let i = 0; i < tableRefs.current.length; i++) {
         const el = tableRefs.current[i];
         if (!el) continue;
-
         const sectionCanvas = await capture(el);
-
-        pdf.addPage(); // Add ONE page per section only
         addCanvasPaged(sectionCanvas);
       }
-      /* ---------------- PAGE 3 ---------------- */
 
-      /* ---------------- REMAINING TABLES ---------------- */
-
-      /* ---------------- PAGE NUMBERS ---------------- */
-      const totalPages = pdf.getNumberOfPages();
-
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(10);
-        pdf.setTextColor(100, 116, 139);
-
-        pdf.text(
-          `Page ${i} of ${totalPages}`,
-          pageWidth / 2,
-          pageHeight - FOOTER_HEIGHT - 4,
-          { align: "center" },
-        );
+      /* ── SECOND PASS: draw footers with final totalPages ───────────────── */
+      const totalPages = pdf.getNumberOfPages(); // ← now accurate
+      for (let p = 1; p <= totalPages; p++) {
+        drawFooterOnPage(p, totalPages);
       }
 
       pdf.save(`${project.name}-Assessment-Report.pdf`);
@@ -383,10 +460,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const roles = userInfo?.roles || [];
   const isAdmin = roles.includes("ADMIN");
-
-  // Detect user plan (handles several possible shapes in user_info)
-  const { userPlan } = useContextElement();
-  const isFreePlan = userPlan === "free";
 
   const dateString = formatToLocalDateTime(
     project.created_at || project.last_scanned_time,
@@ -539,26 +612,150 @@ export default function ProjectDetailsModern({ project, onBack }) {
           : 0,
     };
   };
+  useEffect(() => {
+    window.dispatchEvent(new Event("resize"));
+  }, []);
 
   const categoryScores = getCategoryScores();
+
+  const getSectionIcon = (title) => {
+    const t = title?.toLowerCase() || "";
+    const baseStyle = {
+      width: 22,
+      height: 22,
+    };
+
+    // 📊 Data & Reporting Quality (Bar Chart)
+    if (t.includes("data")) {
+      return (
+        <svg style={baseStyle} viewBox="0 0 24 24" fill="none">
+          <rect
+            x="4"
+            y="10"
+            width="3"
+            height="8"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <rect
+            x="10"
+            y="6"
+            width="3"
+            height="12"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <rect
+            x="16"
+            y="3"
+            width="3"
+            height="15"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    }
+
+    // 🧩 Usability & Integration (Connected Nodes)
+    if (t.includes("usability")) {
+      return (
+        <svg style={baseStyle} viewBox="0 0 24 24" fill="none">
+          <circle cx="6" cy="12" r="2" stroke="currentColor" strokeWidth="2" />
+          <circle cx="18" cy="6" r="2" stroke="currentColor" strokeWidth="2" />
+          <circle cx="18" cy="18" r="2" stroke="currentColor" strokeWidth="2" />
+          <line
+            x1="8"
+            y1="12"
+            x2="16"
+            y2="6"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <line
+            x1="8"
+            y1="12"
+            x2="16"
+            y2="18"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    }
+
+    // 📘 Instructional & Learning Impact (Open Book)
+    if (t.includes("instructional")) {
+      return (
+        <svg style={baseStyle} viewBox="0 0 24 24" fill="none">
+          <path
+            d="M3 6C3 4.9 3.9 4 5 4h6v16H5c-1.1 0-2-.9-2-2V6z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M21 6c0-1.1-.9-2-2-2h-6v16h6c1.1 0 2-.9 2-2V6z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    }
+
+    // ⚖ Governance & Compliance Review (Shield + Check)
+    if (t.includes("governance") || t.includes("compliance")) {
+      return (
+        <svg style={baseStyle} viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M9 12l2 2 4-4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y">
       {/* Top Actions */}
-      <div className="glass-card report-footer">
-        <div className="top-actions">
+      <div className="mt-1 bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Back Button */}
           <button
             onClick={() => onBack?.(false)}
-            className="back-button glass-card"
+            className="inline-flex items-center gap-2 px-4 py-2.5
+             text-sm font-medium text-[#001d6c]
+             bg-gray-50 border border-gray-300
+             rounded-xl transition
+             hover:bg-gray-100 hover:shadow-sm"
           >
-            <i className="fa-solid fa-arrow-left"></i> Back to AI Compliance
+            <i className="fa-solid fa-arrow-left"></i>
+            <span>Back to AI Compliance</span>
           </button>
-          <div className="action-buttons">
+
+          {/* Right Side Actions */}
+          <div className="flex items-center justify-end">
             <button
-              className="action-btn export-button"
+              disabled={isDownloading || isFreePlan}
               onClick={handleDownloadPDF}
+              className="inline-flex items-center gap-2 px-5 py-2.5
+               text-sm font-semibold text-white
+               bg-[#0F3357] rounded-xl
+               transition
+               hover:bg-[#0c2a47] hover:shadow-md
+               disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <i className="fa-solid fa-file-pdf"></i> Export PDF
+              <i className="fa-solid fa-file-pdf"></i>
+              <span>{isDownloading ? "Exporting..." : "Export PDF"}</span>
             </button>
           </div>
         </div>
@@ -567,23 +764,33 @@ export default function ProjectDetailsModern({ project, onBack }) {
       {/* Report Header Card */}
       <div ref={summaryRef}>
         <div className="glass-card report-header animate-fade-in">
-          <div className="header-top">
-            <div>
-              <h1 className="gradient-text">AI Tool Assessment Report</h1>
-              <p className="subtitle">
-                Comprehensive compliance and quality evaluation
-              </p>
+          <div className="grid grid-cols-[1fr_3fr_1fr] items-center">
+            {/* Left Spacer */}
+            <div></div>
+
+            {/* Center Title */}
+            <div className="text-center">
+              <h1 className="text-2xl lg:text-3xl font-bold text-primary tracking-wide whitespace-nowrap">
+                AI Governance Readiness Index (AGRI) Report
+              </h1>
             </div>
-            <div className="header-badges">
+
+            {/* Right Section */}
+
+            <div className="pt-14 text-right space-y-2">
               {badge && (
-                <div className={`badge ${badge.class}`}>
-                  <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
-                </div>
+                <>
+                  <div className={`badge ${badge.class}`}>
+                    <i className={`fa-solid ${badge.icon}`}></i> {badge.text}
+                  </div>
+
+                  <p className="date-text whitespace-nowrap">
+                    Generated: {dateString}
+                  </p>
+                </>
               )}
-              <p className="date-text">Generated: {dateString}</p>
             </div>
           </div>
-
           <div className="section-divider"></div>
 
           <div className="header-content">
@@ -637,8 +844,8 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 <div className="detail-row">
                   <span className="detail-label">Approved By:</span>
                   <span className="detail-value secondary">
-                    {project.approved_by
-                      ? formatUser(project.approved_by)
+                    {project.scan_approved_by
+                      ? formatUser(project.scan_approved_by)
                       : "-"}
                   </span>
                 </div>
@@ -669,43 +876,54 @@ export default function ProjectDetailsModern({ project, onBack }) {
             {/* Right: Overall Score */}
             {hasValidScore && (
               <div className="score-container glass-card">
-                <p className="score-label">Overall Compliance Score</p>
-                <Plot
-                  data={[
-                    {
-                      type: "indicator",
-                      mode: "gauge+number",
-                      value: score,
-                      number: {
-                        suffix: "%",
-                        font: { size: 25, color: COLORS.primary, weight: 500 },
-                      },
-                      gauge: {
-                        axis: {
-                          range: [null, 100],
-                          tickwidth: 0,
-                          showticklabels: false,
+                <p className="score-label">
+                  AI Governance Readiness Index (AGRI) Score
+                </p>
+                <div className="flex justify-center">
+                  <Plot
+                    data={[
+                      {
+                        type: "indicator",
+                        mode: "gauge+number",
+                        value: score,
+                        number: {
+                          suffix: "%",
+                          font: {
+                            size: 42,
+                            color: COLORS.primary,
+                          },
                         },
-                        bar: { color: COLORS.primary, thickness: 0.12 },
-                        bgcolor: "white",
-                        borderwidth: 0,
-                        steps: [
-                          { range: [0, 40], color: "#FCA5A5" },
-                          { range: [40, 70], color: "#FCD34D" },
-                          { range: [70, 100], color: "#86EFAC" },
-                        ],
+                        gauge: {
+                          shape: "angular",
+                          axis: {
+                            range: [0, 100],
+                            tickwidth: 0,
+                            showticklabels: false,
+                          },
+                          bar: {
+                            color: COLORS.primary,
+                            thickness: 0.18,
+                          },
+                          bgcolor: "white",
+                          borderwidth: 0,
+                          steps: [
+                            { range: [0, 40], color: "#FCA5A5" },
+                            { range: [40, 70], color: "#FCD34D" },
+                            { range: [70, 100], color: "#86EFAC" },
+                          ],
+                        },
                       },
-                    },
-                  ]}
-                  layout={{
-                    width: 300,
-                    height: 200,
-                    margin: { t: 20, b: 20, l: 20, r: 20 },
-                    paper_bgcolor: "#ffffff",
-                    plot_bgcolor: "#ffffff",
-                  }}
-                  config={{ responsive: true, displayModeBar: false }}
-                />
+                    ]}
+                    layout={{
+                      width: 300,
+                      height: 200,
+                      margin: { t: 20, b: 20, l: 20, r: 20 },
+                      paper_bgcolor: "#ffffff",
+                      plot_bgcolor: "#ffffff",
+                    }}
+                    config={{ responsive: true, displayModeBar: false }}
+                  />
+                </div>
                 <div className={`recommendation-badge ${badge.class}`}>
                   <i className={`fa-solid ${badge.icon}`}></i>
                   <span>{badge.text}</span>
@@ -723,6 +941,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 <h4 className="certifications-title">
                   Compliance Certifications
                 </h4>
+
                 <div className="certification-badges">
                   {project.compliance_followed.map((cert, idx) => (
                     <span key={idx} className="badge badge-success">
@@ -730,6 +949,91 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </span>
                   ))}
                 </div>
+
+                {/* 🔹 Admin Link Actions */}
+                {isAdmin && showAdminActions && (
+                  <div className="admin-actions mt-4 w-full flex justify-center items-center gap-4 text-sm font-medium">
+                    {showScanActions && (
+                      <>
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("scan_approve");
+                            setShowModal(true);
+                          }}
+                        >
+                          Approve for Scan
+                        </span>
+
+                        <span style={{ color: "#8d8d8d" }}>|</span>
+
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("scan_reject");
+                            setShowModal(true);
+                          }}
+                        >
+                          Reject for Scan
+                        </span>
+                      </>
+                    )}
+
+                    {showUsageActions && (
+                      <>
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("approve");
+                            setShowModal(true);
+                          }}
+                        >
+                          Approve for Usage
+                        </span>
+
+                        <span style={{ color: "#8d8d8d" }}>|</span>
+
+                        <span
+                          className="cursor-pointer transition"
+                          style={{ color: "#0043ce" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#001d6c")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#0043ce")
+                          }
+                          onClick={() => {
+                            setActionType("reject");
+                            setShowModal(true);
+                          }}
+                        >
+                          Reject for Usage
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
         </div>
@@ -799,220 +1103,221 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </div>
 
             <div className="recommendation-content">
-              <div className="recommendation-box success">
-                <i className="fa-solid fa-circle-check"></i>
-                <div>
-                  <h4>Final Recommendation</h4>
-                  <p>{project.recommendation}</p>
-                </div>
-              </div>
+              {!isFreePlan ? (
+                <>
+                  <div className="recommendation-box success">
+                    <i className="fa-solid fa-circle-check"></i>
+                    <div>
+                      <h4>Final Recommendation</h4>
+                      <p>{project.recommendation}</p>
+                    </div>
+                  </div>
 
-              {project.assessment?.summary?.implementation_guidelines && (
-                <div className="recommendation-box warning">
-                  <i className="fa-solid fa-triangle-exclamation"></i>
-                  <div>
-                    <h4>Implementation Guidelines</h4>
-                    <p>
-                      {project.assessment.summary.implementation_guidelines}
-                    </p>
+                  {project.assessment?.summary?.implementation_guidelines && (
+                    <div className="recommendation-box warning">
+                      <i className="fa-solid fa-triangle-exclamation"></i>
+                      <div>
+                        <h4>Implementation Guidelines</h4>
+                        <p>
+                          {project.assessment.summary.implementation_guidelines}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="recommendation-box info">
+                    <i className="fa-solid fa-clock"></i>
+                    <div>
+                      <h4>Ongoing Monitoring Required</h4>
+                      <p>
+                        Schedule quarterly reviews of tool performance, privacy
+                        practices, and student outcomes. Reassess annually or
+                        upon major platform updates.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="recommendation-locked">
+                  <div className="recommendation-box locked">
+                    <i className="fa-solid fa-lock"></i>
+                    <div>
+                      <h4>Recommendations Locked</h4>
+                      <p>
+                        Upgrade your plan to view detailed recommendations and
+                        next steps.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
-
-              <div className="recommendation-box info">
-                <i className="fa-solid fa-clock"></i>
-                <div>
-                  <h4>Ongoing Monitoring Required</h4>
-                  <p>
-                    Schedule quarterly reviews of tool performance, privacy
-                    practices, and student outcomes. Reassess annually or upon
-                    major platform updates.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Detailed Evaluation Tables */}
-      <div>
-        {project.assessment?.evaluation &&
-          project.assessment.evaluation.map((section, idx) => {
-            const sectionScore = parseFloat(section.average_score) || 0;
-            const sectionScoreClass =
-              sectionScore >= 4.0
-                ? "score-excellent"
-                : sectionScore >= 3.5
-                  ? "score-warning"
-                  : "score-poor";
+      <div className="relative">
+        {/* ===== Blurred Content Layer ===== */}
+        <div
+          className={
+            isFreePlan ? "blurred-section pointer-events-none select-none" : ""
+          }
+        >
+          {project.assessment?.evaluation &&
+            project.assessment.evaluation.map((section, idx) => {
+              const sectionScore = parseFloat(section.average_score) || 0;
 
-            return (
-              <div
-                key={idx}
-                ref={(el) => (tableRefs.current[idx] = el)}
-                className="glass-card detailed-section animate-fade-in"
-                style={{ animationDelay: `${0.6 + idx * 0.1}s` }}
+              const sectionScoreClass =
+                sectionScore >= 4.0
+                  ? "score-excellent"
+                  : sectionScore >= 3.5
+                    ? "score-warning"
+                    : "score-poor";
+
+              return (
+                <div
+                  key={idx}
+                  ref={(el) => (tableRefs.current[idx] = el)}
+                  className="glass-card detailed-section animate-fade-in"
+                  style={{ animationDelay: `${0.6 + idx * 0.1}s` }}
+                >
+                  <div className="detailed-header">
+                    <div className="header-left flex items-center gap-3">
+                      <div className="header-icon">
+                        {getSectionIcon(section.title)}
+                      </div>
+                      <h3 className="detailed-title">{section.title}</h3>
+                    </div>
+
+                    <div className="section-score-badge">
+                      <span className="score-label">PILLAR SCORE</span>
+                      <span className={`score-value ${sectionScoreClass}`}>
+                        {Number(section.average_score).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {section.description && (
+                    <div className="section-summary-box">
+                      <i className="fa-solid fa-info-circle"></i>
+                      <p>{section.description}</p>
+                    </div>
+                  )}
+
+                  <div className="detailed-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th style={{ width: "5%" }}>#</th>
+                          <th style={{ width: "25%" }}>Criteria</th>
+                          <th style={{ width: "10%" }}>Score</th>
+                          <th style={{ width: "12%" }}>Status</th>
+                          <th style={{ width: "48%" }}>Detailed Observation</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {section.evaluation?.map((item, cidx) => {
+                          const criterionScore = parseFloat(item.score) || 0;
+
+                          const scoreClass =
+                            criterionScore >= 4.0
+                              ? "score-excellent"
+                              : criterionScore >= 3.5
+                                ? "score-warning"
+                                : "score-poor";
+
+                          const statusIcon =
+                            criterionScore >= 4.0
+                              ? "fa-circle-check"
+                              : criterionScore >= 3.5
+                                ? "fa-circle-exclamation"
+                                : "fa-circle-xmark";
+
+                          const statusText =
+                            criterionScore >= 4.0
+                              ? "Excellent"
+                              : criterionScore >= 3.5
+                                ? "Good"
+                                : "Needs Improvement";
+
+                          return (
+                            <tr key={cidx}>
+                              <td className="index-cell">{cidx + 1}</td>
+
+                              <td className="criterion-name-cell">
+                                <strong>{item.criteria}</strong>
+                              </td>
+
+                              <td className="score-cell">
+                                <span className={`score-badge ${scoreClass}`}>
+                                  {item.score}/5
+                                </span>
+                              </td>
+
+                              <td className="status-cell">
+                                <span className={`status-badge ${scoreClass}`}>
+                                  <i className={`fa-solid ${statusIcon}`}></i>
+                                  {statusText}
+                                </span>
+                              </td>
+
+                              <td className="observation-cell">
+                                {item.observation}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* ===== Lock Overlay (Only Free Plan) ===== */}
+        {isFreePlan && (
+          <div className="locked-overlay">
+            <div className="locked-content">
+              <i className="fa-solid fa-lock lock-icon"></i>
+
+              <h3>Detailed Evaluation Locked</h3>
+
+              <p>
+                Upgrade your plan to view detailed evaluation scores,
+                observations, and full assessment insights.
+              </p>
+
+              <button
+                className="upgrade-btn"
+                onClick={() => {
+                  // route to upgrade page or open modal
+                  window.location.href = "/dashboard/pricing";
+                }}
               >
-                <div className="detailed-header">
-                  <h3 className="detailed-title">
-                    <i className="fa-solid fa-gavel"></i>
-                    {section.title}
-                  </h3>
-                  <div className="section-score-badge">
-                    <span className="score-label">Average Score</span>
-                    <span className={`score-value ${sectionScoreClass}`}>
-                      {section.average_score}/5.0
-                    </span>
-                  </div>
-                </div>
-
-                {section.description && (
-                  <div className="section-summary-box">
-                    <i className="fa-solid fa-info-circle"></i>
-                    <p>{section.description}</p>
-                  </div>
-                )}
-
-                <div className="detailed-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th style={{ width: "5%" }}>
-                          <i className="fa-solid fa-hashtag"></i>
-                        </th>
-                        <th style={{ width: "25%" }}>
-                          <i className="fa-solid fa-list-check"></i> Criteria
-                        </th>
-                        <th className="score-col" style={{ width: "10%" }}>
-                          <i className="fa-solid fa-star"></i> Score
-                        </th>
-                        <th style={{ width: "12%" }}>
-                          <i className="fa-solid fa-circle-check"></i> Status
-                        </th>
-                        <th style={{ width: "48%" }}>
-                          <i className="fa-solid fa-file-lines"></i> Detailed
-                          Observation
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.evaluation?.map((item, cidx) => {
-                        const criterionScore = parseFloat(item.score) || 0;
-                        const scoreClass =
-                          criterionScore >= 4.0
-                            ? "score-excellent"
-                            : criterionScore >= 3.5
-                              ? "score-warning"
-                              : "score-poor";
-                        const statusIcon =
-                          criterionScore >= 4.0
-                            ? "fa-circle-check"
-                            : criterionScore >= 3.5
-                              ? "fa-circle-exclamation"
-                              : "fa-circle-xmark";
-                        const statusText =
-                          criterionScore >= 4.0
-                            ? "Excellent"
-                            : criterionScore >= 3.5
-                              ? "Good"
-                              : "Needs Improvement";
-
-                        return (
-                          <tr key={cidx}>
-                            <td className="index-cell">{cidx + 1}</td>
-                            <td className="criterion-name-cell">
-                              <strong>{item.criteria}</strong>
-                            </td>
-                            <td className="score-cell">
-                              <span className={`score-badge ${scoreClass}`}>
-                                {item.score}/5.0
-                              </span>
-                            </td>
-                            <td className="status-cell">
-                              <span className={`status-badge ${scoreClass}`}>
-                                <i className={`fa-solid ${statusIcon}`}></i>
-                                {statusText}
-                              </span>
-                            </td>
-                            <td className="observation-cell">
-                              {item.observation}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            );
-          })}
+                Upgrade Plan
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ================= ADMIN ACTIONS ================= */}
-      {isAdmin && showAdminActions && (
-        <div className="glass-card mt-6 p-6">
-          <div className="flex justify-center">
-            {showScanActions && (
-              <div className="flex flex-wrap justify-center gap-3">
-                {/* Approve for Scan */}
-                <AwsButton
-                  variant="primary"
-                  onClick={() => {
-                    setActionType("scan_approve");
-                    setShowModal(true);
-                  }}
-                >
-                  Approve for Scan
-                </AwsButton>
-
-                {/* Reject for Scan */}
-                <AwsButton
-                  variant="outlineDanger"
-                  onClick={() => {
-                    setActionType("scan_reject");
-                    setShowModal(true);
-                  }}
-                >
-                  Reject for Scan
-                </AwsButton>
-              </div>
-            )}
-
-            {showUsageActions && (
-              <div className="flex flex-wrap justify-center gap-3">
-                {/* Approve for Usage */}
-                <AwsButton
-                  variant="success"
-                  onClick={() => {
-                    setActionType("approve");
-                    setShowModal(true);
-                  }}
-                >
-                  Approve for Usage
-                </AwsButton>
-
-                {/* Reject for Usage */}
-                <AwsButton
-                  variant="danger"
-                  onClick={() => {
-                    setActionType("reject");
-                    setShowModal(true);
-                  }}
-                >
-                  Reject for Usage
-                </AwsButton>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       {/* Report Footer */}
       <div className="glass-card report-footer">
-        <p className="footer-text">
-          This report was generated by XVALIDATEAI Compliance Assessment System
+        <p
+          className="footer-subtext"
+          style={{ marginTop: "8px", fontStyle: "italic" }}
+        >
+          <strong>Disclaimer:</strong> Based on Tool's T&C, Privacy Policy, and
+          website content. Scores are as reported by the respective tool
+          websites.
         </p>
-        <p className="footer-subtext">
+        <p
+          className="footer-subtext"
+          style={{ marginTop: "8px", fontStyle: "italic" }}
+        >
           For questions or concerns, contact compliance@xvalidateai.com
         </p>
       </div>

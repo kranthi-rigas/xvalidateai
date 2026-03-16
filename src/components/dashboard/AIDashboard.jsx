@@ -3,71 +3,183 @@ import { fetchDashboardAnalytics } from "@/apiIntegration/dashboards";
 import PageLoader from "@/components/common/PageLoader";
 import { SingleScore } from "../commonComponents";
 import ListTable from "@/components/common/ListTable";
-import RadarQualityChart from "@/components/Charts/RadarQualityChart";
+import ToolsCombinedChart from "@/components/common/ColumnandLineChart";
+import { useNavigate } from "react-router-dom";
+import { useContextElement } from "@/context/Context";
+import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
+import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { createPortal } from "react-dom";
+
+function DisabledTooltipButton({
+  disabled,
+  tooltip,
+  onClick,
+  children,
+  className,
+}) {
+  const ref = React.useRef(null);
+  const [position, setPosition] = React.useState(null);
+
+  const handleMouseEnter = () => {
+    if (!disabled || !ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + window.scrollX + rect.width / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition(null);
+  };
+
+  return (
+    <>
+      <div
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-block"
+      >
+        <button disabled={disabled} onClick={onClick} className={className}>
+          {children}
+        </button>
+      </div>
+
+      {disabled &&
+        position &&
+        createPortal(
+          <div
+            style={{
+              position: "absolute",
+              top: position.top,
+              left: position.left,
+              transform: "translate(-50%, -100%)",
+            }}
+            className="bg-gray-900 text-white text-xs px-3 py-2 rounded-md shadow-2xl z-[99999] whitespace-nowrap"
+          >
+            {tooltip}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
 
 const HIGH_RISK_COLUMNS = [
-  { key: "tool", label: "Tool" },
-  { key: "vendor", label: "Vendor" },
-  { key: "overall", label: "Overall" },
-  { key: "privacy", label: "Privacy" },
-  { key: "reason", label: "Risk Reasons" },
-  { key: "action", label: "Action", truncate: false },
+  { key: "tool", label: "Tool Name", resizable: true },
+  { key: "url", label: "URL", resizable: true },
+  {
+    key: "score",
+    label: (
+      <span className="flex items-center gap-1">
+        AGRI Score
+        <span className="relative group cursor-help text-gray-500">
+          <i className="fa-solid fa-circle-info text-xs"></i>
+
+          <span
+            className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+                       hidden group-hover:block
+                       bg-black text-white text-xs
+                       px-2 py-1 rounded whitespace-nowrap z-50"
+          >
+            AI Governance Readiness Index Score
+          </span>
+        </span>
+      </span>
+    ),
+    resizable: true,
+  },
+  { key: "reason", label: "Risk Reasons", resizable: true },
 ];
 
 const TOOL_COLUMNS = [
-  { key: "name", label: "Tool Name" },
-  { key: "category", label: "Category" },
-  { key: "overall", label: "Overall" },
-  { key: "recommendation", label: "Recommendation", truncate: false },
-  { key: "usage", label: "Allowed Usage" },
-  { key: "grade", label: "Grade Level" },
+  { key: "name", label: "Tool Name", resizable: true },
+  { key: "url", label: "URL", resizable: true },
+  {
+    key: "overall",
+    label: (
+      <span className="flex items-center gap-1">
+        AGRI Score
+        <span className="relative group cursor-help text-gray-500">
+          <i className="fa-solid fa-circle-info text-xs"></i>
+
+          <span
+            className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+                         hidden group-hover:block
+                         bg-black text-white text-xs
+                         px-2 py-1 rounded whitespace-nowrap z-50"
+          >
+            AI Governance Readiness Index Score
+            <span
+              className="absolute -top-1 left-1/2 -translate-x-1/2
+                           border-4 border-transparent border-b-black"
+            ></span>
+          </span>
+        </span>
+      </span>
+    ),
+    resizable: true,
+  },
+  {
+    key: "recommendation",
+    label: "Recommendation",
+    truncate: false,
+    resizable: true,
+  },
+  { key: "usage", label: "Allowed Usage", resizable: true },
+  { key: "restricted_usage", label: "Restricted Usage", resizable: true },
+  { key: "intended_users", label: "Intended Users", resizable: true },
 ];
 
-const renderHighRiskCell = (tool, key) => {
+const renderHighRiskCell = (navigate) => (tool, key) => {
   switch (key) {
     case "tool":
       return (
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded bg-blue-600 text-white flex items-center justify-center mr-3 font-bold text-xs">
-            {tool.project_name?.substring(0, 2).toUpperCase() || "??"}
+        <div
+          className="cursor-pointer"
+          onClick={() => navigate(`/dashboard/aicompliance/${tool.project_id}`)}
+        >
+          <div className="font-semibold text-primary hover:underline">
+            {tool.tool_name}
           </div>
-          <div>
-            <div className="font-semibold text-destructive">
-              {tool.project_name}
-            </div>
-            <div className="text-xs text-muted-foreground">AI Tool</div>
-          </div>
+          <div className="text-xs text-muted-foreground">{tool.developer}</div>
         </div>
       );
 
     case "vendor":
       return tool.developer || "Unknown";
 
-    case "overall":
-      return (
-        <span className="font-bold text-destructive">
-          {tool.overall_score?.toFixed(0) || 0}
-        </span>
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
       );
 
-    case "privacy":
+    case "score":
       return (
-        <span className="font-bold text-amber-600">
-          {tool.privacy_safety || 0}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+          <i className="fa-solid fa-circle-exclamation text-[10px]"></i>
+          {tool.overall_score || 0}
         </span>
       );
-
     case "reason":
       return (
         <span className="text-xs text-muted-foreground">
           {tool.high_risk_reason || "High risk detected"}
-        </span>
-      );
-
-    case "action":
-      return (
-        <span className="status-badge status-danger">
-          {tool.recommendation || "Block"}
         </span>
       );
 
@@ -76,28 +188,48 @@ const renderHighRiskCell = (tool, key) => {
   }
 };
 
-const renderToolCell = (tool, key) => {
+const renderToolCell = (navigate) => (tool, key) => {
   switch (key) {
     case "name":
       return (
-        <>
-          <div className="font-semibold text-primary">{tool.tool_name}</div>
+        <div
+          className="cursor-pointer"
+          onClick={() => navigate(`/dashboard/aicompliance/${tool.project_id}`)}
+        >
+          <div className="font-semibold text-primary hover:underline">
+            {tool.tool_name}
+          </div>
           <div className="text-xs text-muted-foreground">{tool.developer}</div>
-        </>
+        </div>
       );
 
-    case "category":
+    case "restricted_usage":
       return (
-        <span className="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">
-          AI Tool
+        <span className="text-xs max-w-[200px]">
+          {tool.restricted_usage || "Not specified"}
         </span>
       );
 
     case "overall":
       return (
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
-          {tool.overall_score?.toFixed(0) || 0}
+          {tool.overall_score || 0}
         </span>
+      );
+
+    case "url":
+      return tool.url ? (
+        <a
+          href={tool.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline text-xs break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tool.url}
+        </a>
+      ) : (
+        "N/A"
       );
 
     case "recommendation":
@@ -115,17 +247,16 @@ const renderToolCell = (tool, key) => {
 
     case "usage":
       return (
-        <span
-          className="text-xs max-w-[200px] truncate"
-          title={tool.allowed_usage}
-        >
+        <span className="text-xs max-w-[200px]">
           {tool.allowed_usage || "Not specified"}
         </span>
       );
 
-    case "grade":
+    case "intended_users":
       return (
-        <span className="text-xs">{tool.grade_level || "Not Specified"}</span>
+        <span className="text-xs">
+          {tool.intended_users || "Not Specified"}
+        </span>
       );
 
     default:
@@ -138,12 +269,168 @@ export default function AIDashboard() {
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRadarToolIds, setSelectedRadarToolIds] = useState([]);
+  const navigate = useNavigate();
+
+  const { userPlan } = useContextElement();
+  const isFreePlan = userPlan === "free";
+  const exportHighRiskTools = () => {
+    if (!highRiskTools?.length) return;
+
+    const exportData = highRiskTools.map((tool) => ({
+      "Tool Name": tool.tool_name,
+      URL: tool.url,
+      "AI Governance Readiness Index (AGRI) Score": tool.overall_score,
+      "Risk Reason": tool.high_risk_reason,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "High Risk Tools");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `high-risk-tools-${Date.now()}.xlsx`);
+  };
+
+  const exportAllTools = () => {
+    if (!allTools?.length) return;
+
+    const exportData = allTools.map((tool) => ({
+      "Tool Name": tool.tool_name,
+      URL: tool.url,
+      "AI Governance Readiness Index (AGRI) Score": tool.overall_score,
+      Recommendation: tool.recommendation,
+      "Allowed Usage": tool.allowed_usage,
+      "Restricted Usage": tool.restricted_usage,
+      "Intended Users": tool.intended_users,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tool Overview");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `tool-overview-${Date.now()}.xlsx`);
+  };
+  const extractAndNormalizeAudienceItems = (text = "") => {
+    if (!text) return [];
+
+    const stopWords = ["seeking", "who", "for", "with", "aged"];
+
+    return text
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/age\s*\d+/g, "")
+      .replace(/ and /g, ",")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const words = item.split(" ");
+
+        // remove descriptive tail after stop words
+        const stopIndex = words.findIndex((w) => stopWords.includes(w));
+        const cleaned =
+          stopIndex > -1 ? words.slice(0, stopIndex).join(" ") : item;
+
+        // basic plural normalization (students → student)
+        return cleaned.endsWith("s") ? cleaned.slice(0, -1) : cleaned;
+      })
+      .filter(Boolean);
+  };
+
+  const normalizedAudienceCounts = useMemo(() => {
+    if (!dashboardAnalytics?.tool_kpis) return {};
+
+    const counts = {};
+
+    dashboardAnalytics.tool_kpis.forEach((tool) => {
+      const items = extractAndNormalizeAudienceItems(tool.intended_users);
+
+      items.forEach((item) => {
+        counts[item] = (counts[item] || 0) + 1;
+      });
+    });
+
+    return counts;
+  }, [dashboardAnalytics]);
+
+  const normalizeCompliance = (name = "") => {
+    return name
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .trim();
+  };
+
+  const normalizedComplianceCounts = React.useMemo(() => {
+    if (!dashboardAnalytics?.distributions?.compliance) return {};
+
+    const counts = {};
+
+    dashboardAnalytics.distributions.compliance.forEach(({ name, value }) => {
+      const normalized = normalizeCompliance(name);
+      counts[normalized] = (counts[normalized] || 0) + value;
+    });
+
+    return counts;
+  }, [dashboardAnalytics]);
 
   useEffect(() => {
-    // Fetch dashboard data
     fetchDashboardAnalytics()
       .then((data) => {
-        setDashboardAnalytics(data);
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+
+        // Keep only scan completed tools
+        const scanCompletedTools = (data.tool_kpis || []).filter(
+          (tool) =>
+            tool.status === "scan_completed" ||
+            tool.status === "approved_for_usage" ||
+            tool.status === "rejected_for_usage",
+        );
+
+        const highRiskTools = scanCompletedTools.filter(
+          (tool) => tool.high_risk,
+        );
+
+        const approvedTools = scanCompletedTools.filter((tool) =>
+          tool.recommendation?.toLowerCase().includes("approved"),
+        );
+
+        const rejectedTools = scanCompletedTools.filter(
+          (tool) => tool.status === "rejected_for_usage",
+        );
+
+        setDashboardAnalytics({
+          ...data,
+          tool_kpis: scanCompletedTools,
+          high_risk_tools: highRiskTools,
+          overview: {
+            ...data.overview,
+            total_projects: scanCompletedTools.length,
+            high_risk_count: highRiskTools.length,
+            approved_count: data.overview?.approved_count || 0,
+            rejected_count: rejectedTools.length,
+          },
+        });
+
         setLoading(false);
       })
       .catch((err) => {
@@ -153,7 +440,6 @@ export default function AIDashboard() {
   }, []);
 
   useEffect(() => {
-    // Load Plotly and initialize charts when data is available
     if (!loading && dashboardAnalytics) {
       if (!window.Plotly) {
         const script = document.createElement("script");
@@ -190,7 +476,7 @@ export default function AIDashboard() {
     }
   }, [dashboardAnalytics, selectedRadarToolIds.length]);
 
-  const initializeCharts = () => {
+  const initializeCharts = React.useCallback(() => {
     if (!dashboardAnalytics) return;
 
     // Chart: Recommendation Distribution
@@ -198,7 +484,7 @@ export default function AIDashboard() {
       dashboardAnalytics.distributions?.recommendation || [];
     const recColors = {
       Approved: "#10b981",
-      "Approved with limitations": "#3b82f6",
+      "Approved with limitations": "#fce99a",
       Restricted: "#f59e0b",
       "Do not use": "#ef4444",
       "Not Recommended": "#ef4444",
@@ -211,24 +497,29 @@ export default function AIDashboard() {
         values: recDistribution.map((d) => d.value),
         labels: recDistribution.map((d) => d.name),
         type: "pie",
-        hole: 0.6,
+        hole: 0.55,
         marker: {
           colors: recDistribution.map((d) => recColors[d.name] || "#95a5a6"),
         },
         textinfo: "none",
+        domain: { x: [0.15, 0.85], y: [0.15, 0.85] }, // makes donut bigger
       },
     ];
 
     const recommendationLayout = {
       title: {
         text: "Recommendation Distribution",
-        font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
-        x: 0.05,
+        font: { size: 20, family: "Inter", color: "#0F3053" },
       },
       showlegend: true,
-      legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
-      height: 300,
+      legend: {
+        orientation: "h",
+        x: 0.5, // center horizontally
+        xanchor: "center",
+        y: -0.15, // position below chart
+      },
+      margin: { t: 80, b: 80, l: 40, r: 40 },
+      height: 450,
       paper_bgcolor: "rgba(0,0,0,0)",
     };
 
@@ -238,171 +529,24 @@ export default function AIDashboard() {
       recommendationLayout,
       { displayModeBar: false, responsive: true },
     );
+  }, [dashboardAnalytics]);
 
-    // Force resize to ensure full space is used
-    setTimeout(() => {
-      window.Plotly.Plots.resize("chart-recommendation");
-    }, 100);
-
-    // Chart: Intended Users
-    const usersDistribution =
-      dashboardAnalytics.distributions?.intended_users || [];
-    console.log("Intended Users Distribution:", usersDistribution);
-
-    // Sanitize legend labels for display using regex but keep original names
-    // available in hover via `customdata`.
-    const sanitizeLegendLabel = (name) => {
-      if (!name) return "Unknown";
-      // Remove parenthetical content and anything after a dash, trim whitespace
-      return name
-        .replace(/\s*\(.*\)\s*$/g, "")
-        .replace(/\s*-\s*.*/g, "")
-        .trim();
-    };
-
-    const usersPlotData = [
-      {
-        values: usersDistribution.map((d) => d.value),
-        labels: usersDistribution.map((d) => sanitizeLegendLabel(d.name)),
-        customdata: usersDistribution.map((d) => d.name),
-        type: "pie",
-        hole: 0.6,
-        marker: {
-          colors: [
-            "#3b82f6",
-            "#58BFCE",
-            "#f59e0b",
-            "#8b5cf6",
-            "#10b981",
-            "#ef4444",
-          ],
-        },
-        textinfo: "none",
-        hovertemplate: "<b>%{customdata}</b><br>Count: %{value}<extra></extra>",
-      },
-    ];
-
-    const usersLayout = {
-      title: {
-        text: "Intended Users Distribution",
-        font: { size: 16, family: "Inter", color: "#0F3053", weight: 700 },
-        x: 0.05,
-      },
-      showlegend: true,
-      legend: { orientation: "h", y: -0.2 },
-      margin: { t: 40, b: 20, l: 20, r: 20 },
-      height: 300,
-      paper_bgcolor: "rgba(0,0,0,0)",
-    };
-
-    window.Plotly.newPlot("chart-users", usersPlotData, usersLayout, {
-      displayModeBar: false,
-      responsive: true,
-    });
-
-    // Force resize to ensure full space is used
-    setTimeout(() => {
-      window.Plotly.Plots.resize("chart-users");
-    }, 100);
-
-    // Chart: Compliance Distribution (Horizontal Bar)
-    const complianceRaw = dashboardAnalytics.distributions?.compliance || [];
-
-    const normalizeStatus = (name) => {
-      const n = name.toLowerCase();
-      if (n.includes("partial")) return "partial";
-      if (n.includes("claimed")) return "claimed";
-      if (n.includes("not")) return "notVerified";
-      return "full";
-    };
-
-    const normalizeStandard = (name) =>
-      name
-        .replace(/- partial.*/i, "")
-        .replace(/- not.*/i, "")
-        .replace(/- claimed.*/i, "")
-        .trim();
-
-    const grouped = {};
-    complianceRaw.forEach(({ name, value }) => {
-      const standard = normalizeStandard(name);
-      const status = normalizeStatus(name);
-
-      if (!grouped[standard]) {
-        grouped[standard] = { full: 0, partial: 0, claimed: 0, notVerified: 0 };
-      }
-      grouped[standard][status] += value;
-    });
-
-    const standards = Object.keys(grouped);
-
-    // Abbreviate labels for display, keep full names for hover
-    const abbreviateLabel = (label) => {
-      return label.length > 40 ? label.substring(0, 17) + "..." : label;
-    };
-
-    const compliancePlotData = [
-      {
-        type: "bar",
-        x: standards.map(
-          (s) =>
-            grouped[s].full +
-            grouped[s].partial +
-            grouped[s].claimed +
-            grouped[s].notVerified,
-        ),
-        y: standards.map((s) => abbreviateLabel(s)),
-        customdata: standards.map((s) => s),
-        orientation: "h",
-        hovertemplate: "<b>%{customdata}</b><br>Count: %{x}<extra></extra>",
-        marker: {
-          color: standards.map((s) => {
-            const total =
-              grouped[s].full +
-              grouped[s].partial +
-              grouped[s].claimed +
-              grouped[s].notVerified;
-            const fullPercent = (grouped[s].full / total) * 100;
-            return fullPercent >= 80
-              ? "#10b981"
-              : fullPercent >= 50
-                ? "#3b82f6"
-                : "#f59e0b";
-          }),
-        },
-      },
-    ];
-
-    const complianceLayout = {
-      title: {
-        text: "Compliance Standard Distribution",
-        font: { size: 18, family: "Inter", color: "#0F3053", weight: 700 },
-      },
-      xaxis: { title: "Number of Tools", gridcolor: "#f1f5f9" },
-      yaxis: { autorange: "reversed" },
-      margin: { t: 50, b: 40, l: 250, r: 20 },
-      paper_bgcolor: "rgba(0,0,0,0)",
-      plot_bgcolor: "rgba(0,0,0,0)",
-      height: 450,
-    };
-
-    window.Plotly.newPlot(
-      "chart-compliance",
-      compliancePlotData,
-      complianceLayout,
-      { displayModeBar: false, responsive: true },
-    );
-
-    // Force resize to ensure full space is used
-    setTimeout(() => {
-      window.Plotly.Plots.resize("chart-compliance");
-    }, 100);
-  };
   useEffect(() => {
     if (selectedRadarToolIds.length === 5) {
       setDropdownOpen(false);
     }
   }, [selectedRadarToolIds]);
+
+  useEffect(() => {
+    if (!dashboardAnalytics || !window.Plotly) return;
+
+    const handleResize = () => {
+      initializeCharts();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dashboardAnalytics, initializeCharts]);
   const visibleRadarTools = React.useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return [];
 
@@ -437,7 +581,10 @@ export default function AIDashboard() {
   return (
     <div className="space-y-8">
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-4 gap-6">
+      <section
+        id="stats-section"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
+      >
         {/* Total Scanned Tools */}
         <SingleScore
           title="Total Scanned Tools"
@@ -445,7 +592,6 @@ export default function AIDashboard() {
           icon="fa-solid fa-database"
           iconBg="bg-blue-500/10"
           iconColor="text-blue-500"
-          trendText="From last month"
           highlightValue="true"
         />
         {/* High Risk Tools */}
@@ -455,7 +601,6 @@ export default function AIDashboard() {
           icon="fa-solid fa-triangle-exclamation"
           iconBg="bg-red-500/10"
           iconColor="text-red-500"
-          trendText="Requires immediate attention"
           highlightValue="true"
         />
         {/* Approved Tools */}
@@ -465,142 +610,88 @@ export default function AIDashboard() {
           icon="fa-solid fa-check-circle"
           iconBg="bg-green-500/10"
           iconColor="text-green-500"
-          trendText="Ready for enterprise usage"
           highlightValue="true"
         />
         {/* Rejected Tools */}
         <SingleScore
           title="Rejected Tools"
           value={overview.rejected_count || 0}
-          icon="fa-regular fa-clock"
+          icon="fa-solid fa-times-circle"
           iconBg="bg-orange-500/10"
           iconColor="text-orange-500"
-          trendText="Tools not recommended"
           highlightValue="true"
         />
       </section>
 
-      {/* Quality & Risk Charts */}
-      <section>
-        {/* Radar Chart */}
-        <div className="dashboard-card p-4 mb-4 h-[520px] flex flex-col">
-          <div className="flex items-center justify-between px-2">
-            <h5>Quality Comparison</h5>
-            <div className="flex items-center gap-2 w-full max-w-[600px]">
-              <label className="text-sm font-medium whitespace-nowrap">
-                Select Tools (Max 5):
-              </label>
-              <div className="relative flex-1" data-dropdown-container>
-                {/* Multi-Select Input with Pills */}
-                <div
-                  className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer bg-white flex items-center flex-wrap gap-2 min-h-[38px]"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                >
-                  {selectedRadarToolIds.length === 0 ? (
-                    <span className="text-gray-400 text-sm">
-                      Select tools...
-                    </span>
-                  ) : (
-                    selectedRadarToolIds.map((toolId) => {
-                      const tool = allTools.find(
-                        (t) => t.project_id === toolId,
-                      );
-
-                      return (
-                        <div
-                          key={toolId}
-                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
-                        >
-                          <span>{tool?.tool_name}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeRadarTool(toolId);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 font-bold"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Dropdown List with Checkboxes */}
-                {dropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 border border-gray-300 bg-white rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                    {allTools.map((tool) => {
-                      const isSelected = selectedRadarToolIds.includes(
-                        tool.project_id,
-                      );
-                      const isDisabled =
-                        selectedRadarToolIds.length >= 5 && !isSelected;
-
-                      return (
-                        <label
-                          key={tool.project_id}
-                          className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onChange={() => toggleRadarTool(tool.project_id)}
-                            className="mr-3"
-                          />
-                          <span className="text-sm">{tool.tool_name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <RadarQualityChart
-              key={selectedRadarToolIds.join(",")}
-              tools={visibleRadarTools}
-            />
-          </div>
+      <div className="grid grid-cols-1 gap-6">
+        <div className="dashboard-card p-6">
+          <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
         </div>
-      </section>
+
+        {/*<div className="dashboard-card p-6">
+          <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
+        </div>*/}
+      </div>
 
       {/* Recommendation & Intended Users Row */}
-      <section className="grid grid-cols-8 gap-6">
+      <section className="grid grid-cols-1 gap-6">
         {/* Recommendation Distribution */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
-          <div id="chart-recommendation" className="w-full h-full"></div>
+        <div className="dashboard-card p-6 min-h-[220px] flex flex-col">
+          <div id="chart-recommendation" className="w-full flex-1"></div>
         </div>
 
-        {/* Intended Users */}
-        <div className="col-span-4 dashboard-card p-2 h-[450px]">
-          <div id="chart-users" className="w-full h-full"></div>
+        {/* Intended Users Heatmap */}
+        <div className="dashboard-card p-6 min-h-[220px] flex flex-col">
+          <h3 className="font-bold text-center text-lg mb-4">
+            Intended Users Distribution
+          </h3>
+
+          <div className="flex-1">
+            <ToolUserHeatmap apiData={dashboardAnalytics} />
+          </div>
         </div>
       </section>
 
       {/* High Risk Alert Box */}
       <section className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden">
-          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
+        <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 relative flex items-center justify-center">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
-              <h3 className="font-bold text-lg">
+              <h3 className="font-bold text-lg text-center">
                 High-Risk Tools Requiring Immediate Attention
               </h3>
+            </div>
+
+            <div className="absolute right-6">
+              <DisabledTooltipButton
+                disabled={isFreePlan || highRiskTools.length === 0}
+                tooltip={
+                  highRiskTools.length === 0
+                    ? "No data available to export"
+                    : "Upgrade plan to export"
+                }
+                onClick={() => exportHighRiskTools()}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition
+        ${
+          isFreePlan
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-primary text-white hover:opacity-90"
+        }`}
+              >
+                <i className="fa-solid fa-file-excel mr-2" />
+                Export to Excel
+              </DisabledTooltipButton>
             </div>
           </div>
           <div className="p-0 overflow-x-auto flex-1">
             <ListTable
-              data={highRiskTools.slice(0, 3)}
+              data={highRiskTools}
               columns={HIGH_RISK_COLUMNS}
-              renderCell={renderHighRiskCell}
-              tableClassName="custom-table"
-              getRowClassName={(row, idx) => (idx === 0 ? "bg-red-50/30" : "")}
-              hideEmptyMessage
+              renderCell={renderHighRiskCell(navigate)}
+              enableExport={true}
+              isDisableExport={isFreePlan}
+              exportFileName="high-risk-tools-info"
             />
           </div>
         </div>
@@ -609,24 +700,44 @@ export default function AIDashboard() {
       {/* Complete Tool Information Table */}
       <section className="grid grid-cols-12 gap-6">
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-[664px]">
-          <div className="px-6 py-5 border-b flex justify-between items-center bg-white">
-            <h5>Complete Tool Information</h5>
+          <div className="bg-blue-50 border-b border-blue-100 px-6 py-4 relative flex items-center justify-center">
+            <div className="flex items-center text-blue-800">
+              <h3 className="font-bold text-lg text-center">Tool Overview</h3>
+            </div>
+
+            <div className="absolute right-6">
+              <DisabledTooltipButton
+                disabled={isFreePlan || allTools.length === 0}
+                tooltip={
+                  allTools.length === 0
+                    ? "No data available to export"
+                    : "Upgrade plan to export"
+                }
+                onClick={() => exportAllTools()}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition
+        ${
+          isFreePlan
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-primary text-white hover:opacity-90"
+        }`}
+              >
+                <i className="fa-solid fa-file-excel mr-2" />
+                Export to Excel
+              </DisabledTooltipButton>
+            </div>
           </div>
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-x-auto relative">
             <ListTable
-              data={allTools.slice(0, 10)}
+              data={allTools}
               columns={TOOL_COLUMNS}
-              renderCell={renderToolCell}
+              renderCell={renderToolCell(navigate)}
               tableClassName="custom-table"
-              hideEmptyMessage
+              enableExport={true}
+              isDisableExport={isFreePlan}
+              exportFileName="complete-tool-info"
             />
           </div>
         </div>
-      </section>
-
-      {/* Compliance Bar Chart Section */}
-      <section className="dashboard-card p-6 h-[500px]">
-        <div id="chart-compliance" className="w-full h-full"></div>
       </section>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AwsButton from "./AwsButton";
 import { FiSearch } from "react-icons/fi";
+import COLORS from "@/styles/colors";
 
 const PAGE_SIZES = [10, 25, 50, 100];
 
@@ -48,6 +49,7 @@ export default function TablePreferencesModal({
                   type="radio"
                   checked={pageSize === n}
                   onChange={() => setPageSize(n)}
+                  style={{ accentColor: COLORS.primary }}
                 />
                 <span>{n} rows</span>
               </label>
@@ -58,6 +60,7 @@ export default function TablePreferencesModal({
                 type="checkbox"
                 checked={wrapLines}
                 onChange={(e) => setWrapLines(e.target.checked)}
+                style={{ accentColor: COLORS.primary }}
               />
               <span>Wrap text</span>
             </label>
@@ -67,6 +70,7 @@ export default function TablePreferencesModal({
                 type="checkbox"
                 checked={stripedRows}
                 onChange={(e) => setStripedRows(e.target.checked)}
+                style={{ accentColor: COLORS.primary }}
               />
               <span>Striped rows</span>
             </label>
@@ -85,7 +89,7 @@ export default function TablePreferencesModal({
                 placeholder="Filter columns"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                style={searchInput}
+                style={{ searchInput, accentColor: COLORS.primary }}
               />
             </div>
 
@@ -104,13 +108,15 @@ export default function TablePreferencesModal({
                       <span
                         style={{
                           ...statusDot,
-                          background: enabled ? "#2563EB" : "#CBD5E1",
+                          background: enabled ? COLORS.primary : COLORS.border,
                         }}
                       />
 
                       <span
                         style={{
-                          color: enabled ? "#111827" : "#9CA3AF",
+                          color: enabled
+                            ? COLORS.textPrimary
+                            : COLORS.textLight,
                         }}
                       >
                         {col.label}
@@ -122,12 +128,14 @@ export default function TablePreferencesModal({
                         type="checkbox"
                         checked={enabled}
                         onChange={() => toggleColumn(col.key)}
-                        style={{ display: "none" }}
+                        style={{ display: "none", accentColor: COLORS.primary }}
                       />
                       <span
                         style={{
                           ...toggleTrack,
-                          background: enabled ? "#2563EB" : "#D1D5DB",
+                          background: enabled
+                            ? COLORS.primary
+                            : COLORS.borderLight,
                         }}
                       >
                         <span
@@ -160,7 +168,7 @@ export default function TablePreferencesModal({
 const overlay = {
   position: "fixed",
   inset: 0,
-  background: "rgba(0,0,0,0.45)",
+  background: COLORS.bgOverlay,
   zIndex: 3000,
   display: "flex",
   alignItems: "center",
@@ -173,7 +181,7 @@ const modal = {
   maxHeight: "85vh",
   display: "flex",
   flexDirection: "column",
-  background: "#FFFFFF",
+  background: COLORS.bgPrimary,
   borderRadius: 16,
   boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
   overflow: "hidden",
@@ -181,7 +189,7 @@ const modal = {
 
 const header = {
   padding: "20px 24px",
-  borderBottom: "1px solid #E5E7EB",
+  borderBottom: `1px solid ${COLORS.borderLight}`,
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -200,10 +208,10 @@ const body = {
 const left = { flex: 1 };
 const right = { flex: 1 };
 
-const divider = { width: 1, background: "#E5E7EB", margin: "0 28px" };
+const divider = { width: 1, background: COLORS.borderLight, margin: "0 28px" };
 
 const sectionTitle = { fontSize: 15, fontWeight: 700, marginBottom: 6 };
-const subText = { fontSize: 13, color: "#6B7280", marginBottom: 12 };
+const subText = { fontSize: 13, color: COLORS.textMuted, marginBottom: 12 };
 
 const radioRow = { display: "flex", gap: 10, marginBottom: 10 };
 const checkRow = { display: "flex", gap: 10, marginTop: 14 };
@@ -212,7 +220,7 @@ const searchBox = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  border: "1px solid #D1D5DB",
+  border: `1px solid ${COLORS.borderLight}`,
   borderRadius: 10,
   padding: "8px 12px",
   marginBottom: 12,
@@ -225,11 +233,11 @@ const columnRow = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "10px 0",
-  borderBottom: "1px solid #F1F5F9",
+  borderBottom: `1px solid ${COLORS.bgTertiary}`,
 };
 
 const columnLeft = { display: "flex", alignItems: "center", gap: 10 };
-const dragDots = { color: "#9CA3AF" };
+const dragDots = { color: COLORS.textLight };
 
 const statusDot = { width: 8, height: 8, borderRadius: "50%" };
 
@@ -253,13 +261,13 @@ const toggleThumb = {
   width: 14,
   height: 14,
   borderRadius: "50%",
-  background: "#FFFFFF",
+  background: COLORS.bgPrimary,
   transition: "transform 0.2s",
 };
 
 const footer = {
   padding: "16px 24px",
-  borderTop: "1px solid #E5E7EB",
+  borderTop: `1px solid ${COLORS.borderLight}`,
   display: "flex",
   justifyContent: "flex-end",
   gap: 12,

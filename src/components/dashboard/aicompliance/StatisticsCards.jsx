@@ -12,7 +12,7 @@ export default function StatisticsCards({
       value: totalScanned,
       color: "indigo",
       bgColor: "#EEF2FF",
-      textColor: "#4F46E5",
+      textColor: "#0F3053",
       icon: (
         <svg
           width="20"
@@ -23,7 +23,7 @@ export default function StatisticsCards({
         >
           <path
             d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-            stroke="#4F46E5"
+            stroke="#0F3053"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -32,7 +32,7 @@ export default function StatisticsCards({
       ),
     },
     {
-      label: "Compliant Tools",
+      label: "Approved Tools",
       value: compliantTools,
       color: "green",
       bgColor: "#D1FAE5",
@@ -80,26 +80,21 @@ export default function StatisticsCards({
       ),
     },
     {
-      label: "High Risk / Blocked",
+      label: "High Risk",
       value: highRiskBlocked,
       color: "red",
       bgColor: "#FEE2E2",
       textColor: "#DC2626",
       icon: (
         <svg
-          width="20"
-          height="20"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
-          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            d="M18.364 18.364C21.8787 14.8492 21.8787 9.15076 18.364 5.63604C14.8492 2.12132 9.15076 2.12132 5.63604 5.63604M18.364 18.364C14.8492 21.8787 9.15076 21.8787 5.63604 18.364C2.12132 14.8492 2.12132 9.15076 5.63604 5.63604M18.364 18.364L5.63604 5.63604"
-            stroke="#DC2626"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M12 2L22 20H2L12 2Z" fill="#DC2626" />
+          <rect x="11" y="9" width="2" height="6" fill="white" rx="1" />
+          <rect x="11" y="16.5" width="2" height="2" fill="white" rx="1" />
         </svg>
       ),
     },
@@ -108,9 +103,11 @@ export default function StatisticsCards({
   const styles = `
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .stat-card {
@@ -126,6 +123,8 @@ export default function StatisticsCards({
       position: relative;
       overflow: hidden;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+      min-width: 0;
     }
 
     .stat-card::before {
@@ -158,6 +157,7 @@ export default function StatisticsCards({
 
     .stat-content {
       flex: 1;
+      min-width: 0;
     }
 
     .stat-label {
@@ -166,6 +166,9 @@ export default function StatisticsCards({
       margin-bottom: 6px;
       font-weight: 500;
       letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-value {
@@ -246,7 +249,7 @@ export default function StatisticsCards({
     /* Standard Desktop (1024px - 1279px) */
     @media (min-width: 1024px) and (max-width: 1279px) {
       .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 12px;
         margin-bottom: 16px;
       }
@@ -256,7 +259,7 @@ export default function StatisticsCards({
       }
 
       .stat-value {
-        font-size: 22px;
+        font-size: 20px;
       }
 
       .stat-label {
@@ -265,8 +268,8 @@ export default function StatisticsCards({
       }
 
       .stat-icon-wrapper {
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         margin-left: 10px;
       }
     }

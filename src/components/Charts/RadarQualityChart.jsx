@@ -15,11 +15,11 @@ function RadarQualityChart({ tools = [] }) {
   const series = tools
     .map((tool) => {
       const data = [
+        Number(tool.overall_score),
         Number(tool.privacy_safety_score),
         Number(tool.instructional_impact_score),
         Number(tool.usability_score),
         Number(tool.data_quality_score),
-        Number(tool.overall_score),
       ];
 
       // filter out tools with invalid data
@@ -36,6 +36,7 @@ function RadarQualityChart({ tools = [] }) {
     chart: {
       type: "radar",
       toolbar: { show: false },
+      width: "100%",
     },
 
     colors: [
@@ -79,11 +80,11 @@ function RadarQualityChart({ tools = [] }) {
 
     xaxis: {
       categories: [
+        "Overall Score",
         "Privacy & Safety",
         "Instructional Impact",
         "Usability",
         "Data Quality",
-        "Overall Score",
       ],
     },
 
@@ -108,9 +109,34 @@ function RadarQualityChart({ tools = [] }) {
         },
       },
     },
+
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: { height: 350 },
+          legend: { position: "bottom" },
+          plotOptions: { radar: { size: 130 } },
+        },
+      },
+      {
+        breakpoint: 480,
+        options: {
+          chart: { height: 280 },
+          legend: { position: "bottom", fontSize: "11px" },
+          markers: { size: 4 },
+          stroke: { width: 2 },
+          plotOptions: { radar: { size: 100 } },
+        },
+      },
+    ],
   };
 
-  return <Chart options={options} series={series} type="radar" height={450} />;
+  return (
+    <div style={{ width: "100%", minHeight: 520 }}>
+      <Chart options={options} series={series} type="radar" height={520} width="100%" />
+    </div>
+  );
 }
 
 export default React.memo(RadarQualityChart, (prevProps, nextProps) => {

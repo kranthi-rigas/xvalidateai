@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { COLORS } from "../../styles/colors";
 import HeaderAuth from "../layout/headers/HeaderAuth";
-import AwsButton from "../common/AwsButton";
+import AuthButton from "../common/AuthButton";
 import { forgotPassword } from "../../apiIntegration/auth";
 import AuthFooter from "../../components/others/AuthFooter";
 
@@ -76,7 +76,7 @@ export default function ForgotPassword() {
                   marginTop: "1rem",
                 }}
               >
-                <AwsButton
+                <AuthButton
                   label="Send Reset Link"
                   onClick={submit}
                   disabled={!emailIsValid || status === "loading"}

@@ -12,6 +12,7 @@ import DeleteConfirmModal from "../../common/DeleteConfirmModal";
 import ApproveRejectModal from "./ApproveRejectModal";
 import ListTable from "../../common/ListTable";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import { HiPlus } from "react-icons/hi";
 
 import {
   updateComplianceProject,
@@ -70,11 +71,12 @@ export default function AIListViewModern({
 
   /* ---------------- COLUMN RESIZE ---------------- */
   const [columnWidths, setColumnWidths] = useState({
+    checkbox: 60,
     name: 220,
     status: 180,
     assessment_status: 160,
-    score: 120,
-    recommendation: 200,
+    score: 220,
+    recommendation: 210,
     description: 260,
     last_scanned_time: 180,
     requested_by: 220,
@@ -218,7 +220,7 @@ export default function AIListViewModern({
           );
 
           // 🔒 NEVER touch completed rows again
-          if (p.assessment_status === "completed") {
+          if (p.assessment_status === "completed" && !updated) {
             return p;
           }
 
@@ -269,7 +271,7 @@ export default function AIListViewModern({
         icon: "fa-spinner",
         spinning: true,
         color: "text-muted-foreground",
-        value: "--",
+        value: "",
       };
     }
 
@@ -281,7 +283,7 @@ export default function AIListViewModern({
     return {
       icon: "fa-circle-minus",
       color: "text-muted-foreground",
-      value: "--",
+      value: "",
     };
   };
 
@@ -330,41 +332,68 @@ export default function AIListViewModern({
         text: "text-yellow-700",
         border: "border-yellow-200",
         label: "Scan Completed",
+        icon: "fa-clipboard-check",
       },
+
       approved_for_usage: {
         bg: "bg-green-50",
         text: "text-green-700",
         border: "border-green-200",
         label: "Approved For Usage",
+        icon: "fa-circle-check",
       },
+
       rejected_for_usage: {
         bg: "bg-red-50",
         text: "text-red-700",
         border: "border-red-200",
         label: "Rejected For Usage",
+        icon: "fa-circle-xmark",
       },
+
       scan_in_progress: {
         bg: "bg-blue-50",
         text: "text-blue-700",
         border: "border-blue-200",
         label: "Scan In Progress",
+        icon: "fa-spinner",
+        spinning: true,
       },
+
       requested: {
         bg: "bg-gray-50",
         text: "text-gray-700",
         border: "border-gray-200",
         label: "Requested for Scan",
+        icon: "fa-clock",
+      },
+
+      approved_for_scan: {
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        border: "border-emerald-200",
+        label: "Approved For Scan",
+        icon: "fa-shield-check",
+      },
+
+      rejected_for_scan: {
+        bg: "bg-orange-50",
+        text: "text-orange-700",
+        border: "border-orange-200",
+        label: "Rejected For Scan",
+        icon: "fa-ban",
       },
     };
 
-    const config = statusMap[status] || {
-      bg: "bg-gray-50",
-      text: "text-gray-700",
-      border: "border-gray-200",
-      label: formatStatus(status),
-    };
-
-    return config;
+    return (
+      statusMap[status] || {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+        label: formatStatus(status),
+        icon: "fa-circle-question",
+      }
+    );
   };
 
   // Get recommendation badge styling
@@ -372,33 +401,50 @@ export default function AIListViewModern({
     const recMap = {
       approved: {
         bg: "bg-green-50",
+        icon: "fa-check-circle",
+        class: "badge-success",
         text: "text-green-700",
         border: "border-green-200",
-        label: "Fully Approved",
+        label: "Approved",
       },
       "approved with limitations": {
         bg: "bg-yellow-50",
+        icon: "fa-circle-exclamation",
+        class: "badge-warning",
         text: "text-yellow-700",
         border: "border-yellow-200",
         label: "Approved with limitations",
       },
       "not recommended": {
         bg: "bg-red-50",
+        icon: "fa-circle-xmark",
+        class: "badge-error",
         text: "text-red-700",
         border: "border-red-200",
         label: "Not Recommended",
       },
+      error: {
+        bg: "bg-red-50",
+        icon: "fa-triangle-exclamation",
+        class: "badge-warning",
+        text: "text-red-700",
+        border: "border-red-200",
+        label: "Error",
+      },
     };
 
-    const rec = (recommendation || "").toLowerCase();
-    const config = recMap[rec] || {
-      bg: "bg-gray-50",
-      text: "text-gray-600",
-      border: "border-gray-200",
-      label: "Pending Review",
-    };
+    const rec = (recommendation || "").toLowerCase().trim();
 
-    return config;
+    return (
+      recMap[rec] || {
+        bg: "bg-gray-50",
+        icon: "fa-clock", // ✅ default icon added
+        class: "badge-default",
+        text: "text-gray-600",
+        border: "border-gray-200",
+        label: "Pending Review",
+      }
+    );
   };
 
   //search helper
@@ -410,7 +456,7 @@ export default function AIListViewModern({
       project.name,
       formatStatus(project.status),
       formatStatus(project.assessment_status),
-      scoreDisplay?.value !== "--" ? scoreDisplay.value : null,
+      scoreDisplay?.value !== "" ? scoreDisplay.value : null,
       project.recommendation,
       project.requested_by?.first_name,
       project.requested_by?.last_name,
@@ -427,7 +473,14 @@ export default function AIListViewModern({
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "--";
-    const date = new Date(dateString);
+
+    // Fix invalid ISO format like +00:00Z
+    const cleaned = dateString.replace("+00:00Z", "Z");
+
+    const date = new Date(cleaned);
+
+    if (isNaN(date)) return "--";
+
     return date.toLocaleString("en-GB", {
       day: "2-digit",
       month: "2-digit",
@@ -475,7 +528,23 @@ export default function AIListViewModern({
     },
     {
       key: "score",
-      label: "Score",
+      label: "AGRI Score",
+      header: (
+        <span className="flex items-center gap-1">
+          AGRI Score
+          <span className="relative group cursor-help text-gray-500">
+            <i className="fa-solid fa-circle-info text-xs"></i>
+
+            <span
+              className="absolute left-1/2 -translate-x-1/2 top-full mt-2
+          hidden group-hover:block bg-black text-white text-xs
+          px-2 py-1 rounded whitespace-nowrap z-50"
+            >
+              AI Governance Readiness Index Score
+            </span>
+          </span>
+        </span>
+      ),
       sortable: true,
       resizable: true,
     },
@@ -532,15 +601,20 @@ export default function AIListViewModern({
 
       case "status": {
         const badge = getStatusBadge(project.status);
+
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
+            <i
+              className={`fa-solid ${badge.icon} text-[11px] ${
+                badge.spinning ? "fa-spin" : ""
+              }`}
+            ></i>
             {badge.label}
           </span>
         );
       }
-
       case "assessment_status":
         return (
           <span className="text-muted-foreground">
@@ -552,7 +626,9 @@ export default function AIListViewModern({
         const s = getScoreDisplay(project);
 
         return (
-          <div className={`flex items-center gap-2 font-semibold ${s.color}`}>
+          <div
+            className={`flex items-center justify-center w-full gap-2 font-semibold ${s.color}`}
+          >
             {s.icon === "warning" ? (
               <span
                 key={`${project.project_id}-warning`}
@@ -576,10 +652,12 @@ export default function AIListViewModern({
 
       case "recommendation": {
         const badge = getRecommendationBadge(project.recommendation);
+
         return (
           <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
+            <i className={`fa-solid ${badge.icon} text-[11px]`}></i>
             {badge.label}
           </span>
         );
@@ -749,24 +827,23 @@ export default function AIListViewModern({
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search */}
-          <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+          {/* Search + mobile refresh */}
+          <div className="flex items-center gap-2 w-full md:w-96">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
+              </div>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
+                placeholder="Find tool by name, ID or requester..."
+              />
             </div>
 
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
-              placeholder="Find tool by name, ID or requester..."
-            />
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            {/* Refresh */}
+            {/* Refresh – mobile only */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -775,7 +852,36 @@ export default function AIListViewModern({
                 setTimeout(() => setTableLoading(false), 300);
               }}
               title="Refresh"
-              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right"></i>
+            </button>
+
+            {/* Preferences – mobile only */}
+            <button
+              onClick={() => setShowPreferences(true)}
+              title="Table Preferences"
+              className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
+            </button>
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            {/* Refresh – desktop only */}
+            <button
+              onClick={async () => {
+                setTableLoading(true);
+                setSelected([]);
+                await refreshProjects();
+                setTimeout(() => setTableLoading(false), 300);
+              }}
+              title="Refresh"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
               <i className="fa-solid fa-rotate-right"></i>
             </button>
@@ -834,11 +940,11 @@ export default function AIListViewModern({
               />
             </div>
 
-            {/* Preferences button */}
+            {/* Preferences button – desktop only */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
-              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
               <AwsSettingsIconButton
                 title="Preferences"
@@ -854,9 +960,9 @@ export default function AIListViewModern({
               <AwsButton
                 onClick={() => setShowCreateModal(true)}
                 disabled={isAnalystOnly}
-                className="flex items-center px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md shadow-primary/20 transition-all transform hover:scale-[1.02]"
+                className="flex items-center px-5 py-2.5 shadow-md transition-all transform hover:scale-[1.02]"
               >
-                <i className="fa-solid fa-plus mr-2"></i>
+                <HiPlus size={18} className="mr-2" />
                 Tool Assessment
               </AwsButton>
             </OrgRequiredWrapper>
@@ -910,6 +1016,12 @@ export default function AIListViewModern({
               for (let id of pendingDeleteIds) {
                 await deleteComplianceProject(id);
               }
+
+              // 🔥 Immediately remove from UI
+              setLiveProjects((prev) =>
+                prev.filter((p) => !pendingDeleteIds.includes(p.project_id)),
+              );
+
               setShowDeleteModal(false);
               setSelected([]);
               refreshProjects();
@@ -1040,18 +1152,37 @@ export default function AIListViewModern({
               setShowApprovalModal(false);
               setSelected([]);
             } catch (err) {
-              const message =
-                err?.response?.data?.message ||
-                "Insufficient credits to run this scan.";
+              const rawMessage =
+                err?.response?.data?.message || err?.message || "";
 
-              show(message, { type: "error", duration: 10000 });
+              const isInsufficientCredits =
+                rawMessage.toLowerCase().includes("insufficient") ||
+                rawMessage.toLowerCase().includes("credit");
 
-              setApprovalError(true);
+              let message = "Something went wrong. Please try again.";
 
-              setTimeout(() => {
-                setApprovalError(false);
-                setShowApprovalModal(false);
-              }, 5000);
+              // ✅ ONLY override message for Approve-for-Scan
+              if (approvalAction === "scan_approve" && isInsufficientCredits) {
+                message = "Insufficient credits to run this scan.";
+              } else if (rawMessage) {
+                message = rawMessage;
+              }
+
+              toast(message, { type: "error", duration: 10000 });
+
+              // ❗ show red modal state ONLY for credit error on scan approval
+              const showCreditError =
+                approvalAction === "scan_approve" && isInsufficientCredits;
+
+              setApprovalError(showCreditError);
+
+              // ⏳ auto-close only for credit error
+              if (showCreditError) {
+                setTimeout(() => {
+                  setApprovalError(false);
+                  setShowApprovalModal(false);
+                }, 5000);
+              }
             }
           }}
         />

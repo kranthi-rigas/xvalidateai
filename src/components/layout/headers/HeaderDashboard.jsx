@@ -720,7 +720,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ marginBottom: "16px" }}>
+            <div style={{ marginBottom: "16px", textAlign: "center" }}>
               <div style={{
                 width: "48px",
                 height: "48px",
@@ -729,7 +729,8 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: "16px"
+                marginBottom: "16px",
+                margin: "0 auto 16px auto"
               }}>
                 <i className="icon icon-power" style={{ fontSize: "24px", color: COLORS.error }}></i>
               </div>
@@ -746,7 +747,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                 color: COLORS.textSecondary,
                 lineHeight: "1.5"
               }}>
-                Are you sure you want to logout? You'll need to sign in again to access your dashboard.
+                Are you sure you want to logout?
               </p>
             </div>
 
@@ -754,7 +755,7 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
             <div style={{
               display: "flex",
               gap: "12px",
-              justifyContent: "flex-end",
+              justifyContent: "center",
               marginTop: "24px"
             }}>
               <AwsButton

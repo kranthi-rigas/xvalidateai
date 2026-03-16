@@ -36,7 +36,8 @@ export const footerLinks = [
   {
     title: "SUPPORT",
     links: [
-      { href: "/terms", label: "Documentation" },
+      { href: "/terms", label: "Terms of Use" },
+      { href: "/privacy-policy", label: "Privacy Policy" },
       { href: "/help-center", label: "FAQs" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/contact-1", label: "Contact" },

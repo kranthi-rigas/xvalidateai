@@ -1,5 +1,6 @@
 import React, { useState, memo } from "react";
 import { updatePassword } from "../../../apiIntegration/auth";
+import AwsButton from "@/components/common/AwsButton";
 
 /* ===========================
    PASSWORD FIELD (MEMOIZED)
@@ -86,7 +87,7 @@ export default function Password({ activeTab }) {
       localStorage.clear();
       sessionStorage.clear();
 
-      window.location.replace("/login"); // ⬅️ IMPORTANT
+      window.location.replace("/"); // ⬅️ IMPORTANT
     } catch (err) {
       // ✅ Ignore token errors AFTER password change
       if (
@@ -95,7 +96,7 @@ export default function Password({ activeTab }) {
       ) {
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace("/login");
+        window.location.replace("/");
         return;
       }
 
@@ -152,12 +153,12 @@ export default function Password({ activeTab }) {
         {error && <div className="col-md-7 text-red-1 text-14">{error}</div>}
 
         <div className="col-12">
-          <button
+          <AwsButton
+            label={loading ? "Saving..." : "Save Password"}
+            variant="primary"
             disabled={loading || !passwordsMatch}
-            className="button -md -purple-1 text-white"
-          >
-            {loading ? "Saving..." : "Save Password"}
-          </button>
+            onClick={() => { }}
+          />
         </div>
       </form>
     </div>

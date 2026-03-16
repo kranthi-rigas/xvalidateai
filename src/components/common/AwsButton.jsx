@@ -1,53 +1,64 @@
 import React, { useState } from "react";
 import { COLORS } from "@/styles/colors";
+import ButtonLoader from "./ButtonLoader";
 
 export default function AwsButton({
   label,
   disabled = false,
+  loading = false, // ✅ NEW
   onClick,
   children,
-  variant = "primary", // "primary" or "secondary"
+  variant = "primary",
+  type = "button",
+  size = "md", // ✅ NEW - "sm" | "md" | "lg"
 }) {
   const [hover, setHover] = useState(false);
 
   const isSuccess = variant === "success";
   const isDanger = variant === "danger";
   const isOutlineDanger = variant === "outlineDanger";
-  // Design system colors
-  const primaryBg = COLORS.primary; // #0043ce Trust Blue
-  const primaryHoverBg = COLORS.primaryDark; // #001d6c
-
-  // Secondary (outline) button colors
-  const secondaryBg = "transparent";
-  const secondaryHoverBg = COLORS.bgSecondary; // #f4f4f4
-  const secondaryBorder = COLORS.border; // #c6c6c6
-  const secondaryText = COLORS.textPrimary; // #161616
-
   const isPrimary = variant === "primary";
+
+  const primaryBg = "#0F3053";
+  const primaryHoverBg = "#007d79";
+
+  const secondaryBg = "transparent";
+  const secondaryHoverBg = "#007d79";
+  const secondaryBorder = "#0F3053";
+  const secondaryText = "#0F3053";
+
+  // ✅ Size configurations
+  const sizeConfig = {
+    sm: { padding: "6px 16px", minHeight: 32, fontSize: "12px" },
+    md: { padding: "8px 20px", minHeight: 36, fontSize: "14px" },
+    lg: { padding: "14px 32px", minHeight: 48, fontSize: "16px" },
+  };
+
+  const currentSize = sizeConfig[size] || sizeConfig.md;
+
+  const isDisabled = disabled || loading; // ✅ auto-disable while loading
 
   return (
     <button
-      disabled={disabled}
-      onClick={!disabled ? onClick : undefined}
+      type={type}
+      disabled={isDisabled}
+      onClick={!isDisabled ? onClick : undefined}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="lh-1"
+      className="lh-1 tool-assessment-btn"
       style={{
-        padding: "8px 20px",
-        minHeight: 36,
-        fontSize: "14px",
+        ...currentSize,
         fontWeight: 500,
         borderRadius: 8,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
-        cursor: disabled ? "not-allowed" : "pointer",
+        cursor: isDisabled ? "not-allowed" : "pointer",
         transition: "all 0.2s ease",
         whiteSpace: "nowrap",
 
-        // Background
-        background: disabled
+        background: isDisabled
           ? COLORS.bgSecondary
           : isPrimary
             ? hover
@@ -55,12 +66,12 @@ export default function AwsButton({
               : primaryBg
             : isSuccess
               ? hover
-                ? "#047857"
-                : "#059669" // emerald hover / normal
+                ? primaryHoverBg
+                : primaryBg
               : isDanger
                 ? hover
                   ? "#b91c1c"
-                  : "#dc2626" // red solid
+                  : "#dc2626"
                 : isOutlineDanger
                   ? hover
                     ? "#dc2626"
@@ -69,18 +80,18 @@ export default function AwsButton({
                     ? secondaryHoverBg
                     : secondaryBg,
 
-        // Text color
-        color: disabled
+        color: isDisabled
           ? COLORS.textMuted
           : isPrimary || isSuccess || isDanger
             ? COLORS.white
             : isOutlineDanger && hover
               ? COLORS.white
-              : secondaryText,
+              : hover
+                ? COLORS.white
+                : secondaryText,
 
-        // Border
         border: `1px solid ${
-          disabled
+          isDisabled
             ? COLORS.borderLight
             : isPrimary
               ? hover
@@ -88,23 +99,26 @@ export default function AwsButton({
                 : primaryBg
               : isSuccess
                 ? hover
-                  ? "#047857"
-                  : "#059669"
+                  ? primaryHoverBg
+                  : primaryBg
                 : isDanger
                   ? hover
                     ? "#b91c1c"
                     : "#dc2626"
                   : isOutlineDanger
-                    ? hover
-                      ? "#dc2626"
-                      : "#dc2626"
-                    : hover
-                      ? COLORS.borderDark
-                      : secondaryBorder
+                    ? "#dc2626"
+                    : secondaryBorder
         }`,
       }}
     >
-      {children && <span style={{ display: "flex" }}>{children}</span>}
+      {/* ✅ Spinner shows only when loading */}
+      {loading && <ButtonLoader />}
+
+      {/* ✅ Hide icon while loading */}
+      {!loading && children && (
+        <span style={{ display: "flex" }}>{children}</span>
+      )}
+
       {label}
     </button>
   );

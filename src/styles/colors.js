@@ -11,7 +11,7 @@
 
 export const COLORS = {
   // Primary Brand Colors
-  primary: '#0043ce',           // Trust Blue - main brand color
+  primary: '#0F3357',           // Trust Blue - main brand color
   primaryDark: '#001d6c',       // Deep Blue - headers, navigation
   primaryLight: '#a6c8ff',      // Sky Blue - highlights, backgrounds
   primaryLighter: '#e3edfd',    // Very light blue - subtle backgrounds
@@ -33,7 +33,7 @@ export const COLORS = {
   neutral: '#8d8d8d',           // Gray - pending, not applicable
   
   // Text Colors
-  textPrimary: '#161616',       // Primary text color
+  textPrimary: '#001d6c',       // Primary text color
   textSecondary: '#525252',     // Secondary text color
   textMuted: '#6b7280',         // Muted/disabled text
   textLight: '#9ca3af',         // Very light text

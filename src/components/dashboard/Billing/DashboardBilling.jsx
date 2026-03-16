@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { verifyVoucher, redeemVoucher } from "@/apiIntegration/vouchers";
+import {
+  verifyVoucher,
+  redeemVoucher,
+  createPaypalSubscription,
+} from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
+import AwsButton from "@/components/common/AwsButton";
 
 export default function DashboardBilling() {
   const navigate = useNavigate();
@@ -11,6 +16,7 @@ export default function DashboardBilling() {
   const plan = location.state?.plan || null;
   const show = useToast();
   const { refreshUserPlan } = useContextElement();
+  const [isPaying, setIsPaying] = useState(false);
 
   const [formData, setFormData] = useState({
     billingAddress: "",
@@ -22,6 +28,33 @@ export default function DashboardBilling() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [voucherData, setVoucherData] = useState(null); // Store verified voucher data
+
+  //PayPal Helper
+  const handlePaypalCheckout = async () => {
+    if (!plan) return;
+
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setIsPaying(true);
+    console.log(plan);
+
+    try {
+      const response = await createPaypalSubscription(plan.name);
+
+      if (response && response.approval_url) {
+        window.location.href = response.approval_url;
+      } else {
+        throw new Error("Failed to create PayPal subscription");
+      }
+    } catch (error) {
+      show(error.message || "Subscription failed", { planType: "error" });
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   // Reset form state when navigating to this page (when location changes)
   useEffect(() => {
@@ -57,9 +90,6 @@ export default function DashboardBilling() {
     if (!formData.billingAddress.trim()) {
       newErrors.billingAddress = "Billing address is required";
     }
-    //  else if (formData.billingAddress.trim().length < 10) {
-    //   newErrors.billingAddress = "Please enter a complete billing address";
-    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,6 +119,24 @@ export default function DashboardBilling() {
 
       // Handle successful voucher verification
       if (response && response.valid) {
+        // Check if voucher plan type matches the selected plan
+        const selectedPlanType = plan?.name?.toUpperCase();
+        const voucherPlanType = response.plan_type?.toUpperCase();
+
+        if (
+          selectedPlanType &&
+          voucherPlanType &&
+          voucherPlanType !== selectedPlanType
+        ) {
+          setErrors((prev) => ({
+            ...prev,
+            voucherCode: `This voucher can not be applied for this plan.`,
+          }));
+          setVoucherApplied(false);
+          setVoucherData(null);
+          return;
+        }
+
         setVoucherApplied(true);
         setVoucherData(response);
         console.log("Voucher applied successfully");
@@ -131,6 +179,14 @@ export default function DashboardBilling() {
     return plan.price;
   };
 
+  useEffect(() => {
+    const fetchPlan = async () => {
+      await refreshUserPlan();
+    };
+
+    fetchPlan();
+  }, [refreshUserPlan]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submission started", { voucherApplied, plan, formData });
@@ -145,8 +201,11 @@ export default function DashboardBilling() {
     try {
       // If voucher is applied, redeem it now
       if (voucherApplied && formData.voucherCode.trim()) {
-        console.log("Attempting to redeem voucher:", formData.voucherCode.trim());
-        
+        console.log(
+          "Attempting to redeem voucher:",
+          formData.voucherCode.trim(),
+        );
+
         const redeemResponse = await redeemVoucher(
           formData.voucherCode.trim(),
           plan?.id || null,
@@ -163,18 +222,24 @@ export default function DashboardBilling() {
         await refreshUserPlan();
         navigate("/dashboard/pricing");
       } else {
-        console.log("No voucher applied - this should not happen as button should be disabled");
-        show("Please apply a valid voucher to complete purchase.", { type: "error" });
+        console.log(
+          "No voucher applied - this should not happen as button should be disabled",
+        );
+        show("Please apply a valid voucher to complete purchase.", {
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Purchase error details:", error);
-      show(
-        error.message || "Failed to complete purchase. Please try again.", 
-        { type: "error" }
-      );
+
+      const errorMessage =
+        error.message || "Failed to complete purchase. Please try again.";
+
+      show(errorMessage, { type: "error" });
+
       setErrors((prev) => ({
         ...prev,
-        submit: error.message || "Failed to complete purchase. Please try again.",
+        submit: errorMessage,
       }));
     } finally {
       setIsSubmitting(false);
@@ -182,7 +247,7 @@ export default function DashboardBilling() {
   };
 
   return (
-    <div className="dashboard__content bg-light-4">
+    <div className="spicy-y">
       <div className="row">
         <div className="col-xl-8 col-lg-7">
           {/* Billing Form */}
@@ -191,8 +256,7 @@ export default function DashboardBilling() {
             style={{ padding: "2rem" }}
           >
             <div className="py-30 px-30">
-              <h4 className="text-20 fw-600 mb-30">Billing Details</h4>
-
+              <h2 className="text-20 fw-600 mb-30">Billing Details</h2>
               <form onSubmit={handleSubmit}>
                 {/* Billing Address */}
                 <div className="mb-30">
@@ -233,7 +297,7 @@ export default function DashboardBilling() {
                 {/* Voucher Code */}
                 <div className="mb-30">
                   <label htmlFor="voucherCode" className="text-16 fw-500 mb-10">
-                    Voucher Code (Optional)
+                    Voucher Code
                   </label>
                   <div
                     className="d-flex gap-10"
@@ -260,14 +324,17 @@ export default function DashboardBilling() {
                         }}
                       />
                       {errors.voucherCode && (
-                        <div className="text-red-1 text-14 mt-10">
+                        <div
+                          className="text-14 mt-10 d-flex items-center gap-2"
+                          style={{ color: "#dc3545" }}
+                        >
+                          <i className="fa-solid fa-circle-exclamation"></i>
                           {errors.voucherCode}
                         </div>
                       )}
                       {voucherApplied && voucherData && (
-                        // <div className="text-yellow-1 text-14 mt-10" style={{ color: "#FFD700" }}>
                         <div
-                          className=" text-14 mt-10"
+                          className="text-14 mt-10"
                           style={{ color: COLORS.success }}
                         >
                           ✓ Voucher verified! {voucherData.plan_name} plan (
@@ -287,6 +354,7 @@ export default function DashboardBilling() {
                           marginLeft: "1rem",
                           height: "4rem",
                           flexShrink: 0,
+                          color: "#0f3053",
                         }}
                       >
                         {isApplyingVoucher ? "Verifying..." : "Apply"}
@@ -317,52 +385,79 @@ export default function DashboardBilling() {
                   </div>
                 )}
 
-                {/* Submit Button */}
-                <div className="d-flex gap-15 mt-40">
-                  {!voucherApplied && (
-                    <div className="text-14 text-orange-1 mb-10 w-100">
-                      ⚠️ Please apply a valid voucher code to complete your
-                      purchase
-                    </div>
-                  )}
+                {/* Checkout Section */}
+                <div className="mt-10 space-y-6">
+                  {/* Buttons Row */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Cancel */}
+                    <button
+                      type="button"
+                      onClick={() => navigate("/dashboard/pricing")}
+                      disabled={isSubmitting || isPaying}
+                      className="w-full sm:flex-1 h-14 rounded-lg 
+               bg-[#0f3053] text-white font-semibold
+               hover:bg-[#0c2744] 
+               transition duration-200 disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+
+                    {/* Voucher Activation */}
+                    {voucherApplied && (
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full sm:flex-1 h-14 rounded-lg bg-[#0f3053]
+      text-white font-semibold hover:bg-[#0c2744]
+      transition flex items-center justify-center gap-3
+      disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            Activating...
+                          </>
+                        ) : (
+                          "Activate with Voucher"
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* OR Divider */}
+                  <div className="flex items-center">
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                    <span className="px-4 text-sm text-gray-500 font-medium">
+                      OR
+                    </span>
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                  </div>
+
+                  {/* PayPal Button */}
                   <button
                     type="button"
-                    onClick={() => navigate("/dashboard/pricing")}
-                    className="button -outline-dark-1 text-dark-1 px-40 py-15"
-                    style={{
-                      borderRadius: "8px",
-                      whiteSpace: "nowrap",
-                      marginRight: "1rem",
-                    }}
-                    disabled={isSubmitting}
+                    onClick={handlePaypalCheckout}
+                    disabled={isPaying || !plan}
+                    className="w-full h-14 rounded-lg bg-[#0f3053] text-white
+    font-semibold flex items-center justify-center gap-3
+    hover:bg-[#0c2744] transition
+    disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className={`button px-40 py-15 ${
-                      isSubmitting || !plan || !voucherApplied
-                        ? ""
-                        : "-purple-1 text-white"
-                    }`}
-                    style={{
-                      borderRadius: "8px",
-                      backgroundColor:
-                        isSubmitting || !plan || !voucherApplied
-                          ? "#9e9e9e"
-                          : undefined,
-                      color:
-                        isSubmitting || !plan || !voucherApplied
-                          ? "#F0F8FF"
-                          : undefined,
-                      cursor:
-                        isSubmitting || !plan || !voucherApplied
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                    disabled={isSubmitting || !plan || !voucherApplied}
-                  >
-                    {isSubmitting ? "Processing..." : "Complete Purchase"}
+                    {isPaying ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Redirecting to PayPal...
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
+                          alt="PayPal"
+                          className="h-5"
+                        />
+                        Checkout with PayPal
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -439,9 +534,9 @@ export default function DashboardBilling() {
                           <div
                             className="text-11 "
                             style={{ color: COLORS.success }}
-                            mt-5
                           >
-                            $ {voucherData.credits} credits will be activated on
+                            <i className="fa-solid fa-coins mr-1"></i>{" "}
+                            {voucherData.credits} credits will be activated on
                             purchase
                           </div>
                         </div>
@@ -468,8 +563,8 @@ export default function DashboardBilling() {
                   {(voucherData?.credits || plan.credits) && (
                     <div className="mt-20 px-15 py-10 rounded-8 bg-purple-3">
                       <div className="text-13 text-purple-1 text-center">
-                        $ {voucherData?.credits || plan.credits} credits
-                        included
+                        <i className="fa-solid fa-coins mr-1"></i>
+                        {voucherData?.credits || plan.credits} credits included
                       </div>
                     </div>
                   )}

@@ -1,5 +1,65 @@
-import { right } from "@popperjs/core";
+import { createPortal } from "react-dom";
 import React from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+function DisabledTooltipButton({
+  disabled,
+  tooltip,
+  onClick,
+  children,
+  className,
+}) {
+  const ref = React.useRef(null);
+  const [position, setPosition] = React.useState(null);
+
+  const handleMouseEnter = () => {
+    if (!disabled || !ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + window.scrollX + rect.width / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setPosition(null);
+  };
+
+  return (
+    <>
+      <div
+        ref={ref}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-block"
+      >
+        <button disabled={disabled} onClick={onClick} className={className}>
+          {children}
+        </button>
+      </div>
+
+      {disabled &&
+        position &&
+        createPortal(
+          <div
+            style={{
+              position: "absolute",
+              top: position.top,
+              left: position.left,
+              transform: "translate(-50%, -100%)",
+            }}
+            className="bg-gray-900 text-white text-xs px-3 py-2 rounded-md shadow-2xl z-[99999] whitespace-nowrap"
+          >
+            {tooltip}
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
 
 /* ---------- SAFE HELPERS ---------- */
 const safeRenderCell = (renderCell, row, key) => {
@@ -51,19 +111,186 @@ export default function ListTable({
   onSort,
 
   /* resizing */
-  columnWidths = {},
-  startResize,
   pagination,
   loading = false,
   hideEmptyMessage = false,
   selectedCount = 0,
-  selectionCounterLabel = null, // ✅ NEW: Custom label (e.g., "tool", "project", "item")
+  selectionCounterLabel = null,
+
+  enableExport = false,
+  isDisableExport = false,
+  exportFileName = "table-export",
+
+  columnWidths,
+  startResize,
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
+  const hasData = Array.isArray(data) && data.length > 0;
 
   const totalPages = pagination
     ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
     : 1;
+
+  const handleExport = () => {
+    if (!data?.length) return;
+
+    const exportData = data.map((row) => {
+      const obj = {};
+
+      columns.forEach((col) => {
+        if (col.key === "checkbox") return;
+
+        const value = safeRenderCell(renderCell, row, col.key);
+
+        const extractText = (node) => {
+          if (typeof node === "string" || typeof node === "number") {
+            return node;
+          }
+          if (React.isValidElement(node) && node.props?.children) {
+            return React.Children.toArray(node.props.children)
+              .map(extractText)
+              .join(" ");
+          }
+          return "";
+        };
+
+        obj[col.label] = extractText(value);
+      });
+
+      return obj;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(blob, `${exportFileName}-${Date.now()}.xlsx`);
+  };
+
+  const TruncatedCell = ({ children }) => {
+    const ref = React.useRef(null);
+    const [isOverflowing, setIsOverflowing] = React.useState(false);
+    const [position, setPosition] = React.useState(null);
+
+    const getTextContent = (node) => {
+      if (typeof node === "string" || typeof node === "number") {
+        return String(node);
+      }
+      if (React.isValidElement(node) && node.props?.children) {
+        return React.Children.toArray(node.props.children)
+          .map(getTextContent)
+          .join(" ");
+      }
+      return "";
+    };
+
+    const textContent = getTextContent(children);
+
+    React.useEffect(() => {
+      const el = ref.current;
+      if (el) {
+        setIsOverflowing(el.scrollWidth > el.clientWidth);
+      }
+    }, [children]);
+
+    const handleMouseEnter = () => {
+      if (!ref.current) return;
+
+      const rect = ref.current.getBoundingClientRect();
+
+      setPosition({
+        top: rect.bottom + window.scrollY + 6,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    };
+
+    const handleMouseLeave = () => {
+      setPosition(null);
+    };
+
+    return (
+      <>
+        <div
+          ref={ref}
+          className="truncate w-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {children}
+        </div>
+
+        {isOverflowing &&
+          position &&
+          createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: position.top,
+                left: position.left,
+                minWidth: position.width,
+                maxWidth: 500,
+              }}
+              className="bg-gray-900 text-white text-xs rounded-md px-3 py-2 shadow-2xl whitespace-normal break-words z-[99999]"
+            >
+              {textContent}
+            </div>,
+            document.body,
+          )}
+      </>
+    );
+  };
+
+  const isWidthControlled = !!columnWidths;
+
+  const [internalWidths, setInternalWidths] = React.useState(() => {
+    const initial = {};
+    columns.forEach((col) => {
+      initial[col.key] = col.key === "checkbox" ? 60 : col.width || 260;
+    });
+    return initial;
+  });
+
+  const resizingRef = React.useRef(null);
+
+  const startInternalResize = (key, e) => {
+    e.preventDefault();
+    resizingRef.current = {
+      key,
+      startX: e.clientX,
+      startWidth: internalWidths[key],
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", stopResize);
+  };
+
+  const onMouseMove = (e) => {
+    if (!resizingRef.current) return;
+
+    const { key, startX, startWidth } = resizingRef.current;
+    const newWidth = Math.max(80, startWidth + (e.clientX - startX));
+
+    setInternalWidths((prev) => ({
+      ...prev,
+      [key]: newWidth,
+    }));
+  };
+
+  const stopResize = () => {
+    resizingRef.current = null;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", stopResize);
+  };
 
   // ✅ Generate dynamic text based on count and label
   const getSelectionText = () => {
@@ -118,41 +345,54 @@ export default function ListTable({
           {/* STICKY HEADER */}
           <thead className="sticky top-0 z-40 bg-white border-b border-border">
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => col.sortable && onSort(col.key)}
-                  className={`p-4 text-xs font-semibold uppercase tracking-wider
-                    text-muted-foreground group relative select-none
-                    ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}`}
-                  style={{ width: columnWidths[col.key] || col.width || 160 }}
-                >
-                  <div className="flex items-center justify-between">
-                    {col.key === "checkbox" ? (
-                      <input
-                        type="checkbox"
-                        checked={col.allSelected || false}
-                        onChange={(e) => col.onToggleAll?.(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-primary"
-                      />
-                    ) : (
-                      <>
-                        <span>{col.label}</span>
-                        {col.sortable && (
-                          <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100" />
-                        )}
-                      </>
-                    )}
-                  </div>
+              {columns.map((col) => {
+                const width = isWidthControlled
+                  ? columnWidths?.[col.key]
+                  : internalWidths?.[col.key];
 
-                  {col.resizable && (
-                    <div
-                      onMouseDown={(e) => startResize(col.key, e)}
-                      className="absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary cursor-col-resize"
-                    />
-                  )}
-                </th>
-              ))}
+                return (
+                  <th
+                    key={col.key}
+                    onClick={() => col.sortable && onSort(col.key)}
+                    className={`p-4 text-xs font-semibold uppercase tracking-wider text-center
+    text-muted-foreground group relative select-none
+    border-r border-border
+    ${col.sortable ? "cursor-pointer hover:bg-muted/50" : ""}
+    ${col.key === columns[columns.length - 1]?.key ? "border-r-0" : ""}
+  `}
+                    style={{ width }}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      {col.key === "checkbox" ? (
+                        <input
+                          type="checkbox"
+                          checked={col.allSelected || false}
+                          onChange={(e) => col.onToggleAll?.(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-primary"
+                        />
+                      ) : (
+                        <>
+                          <span>{col.label}</span>
+                          {col.sortable && (
+                            <i className="fa-solid fa-sort ml-1 opacity-30 group-hover:opacity-100" />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {col.resizable && (
+                      <div
+                        onMouseDown={(e) =>
+                          isWidthControlled
+                            ? startResize?.(col.key, e)
+                            : startInternalResize(col.key, e)
+                        }
+                        className="absolute right-0 top-0 bottom-0 w-1 bg-border hover:bg-primary cursor-col-resize"
+                      />
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
@@ -170,23 +410,36 @@ export default function ListTable({
             ) : (
               sortedData.map((row, rowIndex) => (
                 <tr key={row[rowKey] ?? rowIndex} className="hover:bg-muted/20">
-                  {columns.map((col) => (
-                    <td
-                      key={`${row[rowKey] ?? rowIndex}-${col.key}`}
-                      className={`p-4 ${
-                        col.key === "checkbox"
-                          ? "pl-6 pr-2"
-                          : col.truncate === false
-                            ? "break-words whitespace-normal"
-                            : "truncate"
-                      }`}
-                      style={{
-                        width: columnWidths[col.key] || col.width || 160,
-                      }}
-                    >
-                      {safeRenderCell(renderCell, row, col.key)}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                    const width = isWidthControlled
+                      ? columnWidths?.[col.key]
+                      : internalWidths?.[col.key];
+
+                    return (
+                      <td
+                        key={`${row[rowKey] ?? rowIndex}-${col.key}`}
+                        className={`p-4 text-center ${
+                          col.key === "checkbox"
+                            ? "pl-6 pr-2"
+                            : col.truncate === false
+                              ? "break-words whitespace-normal"
+                              : "truncate"
+                        }`}
+                        style={{
+                          width,
+                          minWidth: width,
+                        }}
+                      >
+                        {col.truncate === false ? (
+                          safeRenderCell(renderCell, row, col.key)
+                        ) : (
+                          <TruncatedCell>
+                            {safeRenderCell(renderCell, row, col.key)}
+                          </TruncatedCell>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}

@@ -179,9 +179,9 @@ export default function DashboardHome() {
   const allTools = dashboardAnalytics.tool_kpis || [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-h-full">
       {/* Stats Cards Row */}
-      <section id="stats-section" className="grid grid-cols-5 gap-6">
+      <section id="stats-section" className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
         {/* Credits Card */}
         <div className="dashboard-card p-6 flex flex-col justify-between border-l-4" style={{ borderLeftColor: COLORS.secondary }}>
           <div className="flex justify-between items-start mb-4">
@@ -260,9 +260,9 @@ export default function DashboardHome() {
       </section>
 
       {/* High Risk & Charts Row */}
-      <section className="grid grid-cols-12 gap-6 h-[400px]">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 lg:h-[400px]">
         {/* High Risk Alert Box */}
-        <div className="col-span-8 dashboard-card flex flex-col overflow-hidden">
+        <div className="col-span-1 lg:col-span-8 dashboard-card flex flex-col overflow-hidden">
           <div className="bg-amber-50 border-b border-amber-100 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center text-amber-800">
               <i className="fa-solid fa-triangle-exclamation mr-2"></i>
@@ -316,7 +316,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Score Gauges */}
-        <div className="col-span-4 dashboard-card p-6 flex flex-col">
+        <div className="col-span-1 lg:col-span-4 dashboard-card p-6 flex flex-col">
           <h3 className="font-bold text-foreground mb-6">Overall Compliance Health</h3>
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
             <div className="grid grid-cols-2 gap-8 w-full">
@@ -350,9 +350,9 @@ export default function DashboardHome() {
       </section>
 
       {/* Charts & Table Row */}
-      <section className="grid grid-cols-12 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
         {/* Charts Column */}
-        <div className="col-span-4 space-y-6">
+        <div className="col-span-1 lg:col-span-4 space-y-6">
           {/* Recommendation Distribution */}
           <div className="dashboard-card p-4 h-[320px]">
             <div id="chart-recommendation" className="w-full h-full"></div>
@@ -365,7 +365,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Main Table Column */}
-        <div className="col-span-8 dashboard-card flex flex-col overflow-hidden h-[664px]">
+        <div className="col-span-1 lg:col-span-8 dashboard-card flex flex-col overflow-hidden lg:h-[664px]">
           <div className="px-6 py-5 border-b border-border flex justify-between items-center bg-white">
             <h3 className="font-bold text-lg text-primary">Complete Tool Information</h3>
             <div className="flex space-x-2">

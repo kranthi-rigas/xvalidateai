@@ -2,7 +2,7 @@ import MetaComponent from "@/components/common/MetaComponent";
 import AIDashboard from "@/components/dashboard/AIDashboard";
 
 const metadata = {
-  title: "AI Dashboard || Academy51 - Smart Learning for smarter generation",
+  title: "AI Dashboard || XValidate",
   description: "AI analytics dashboard",
 };
 

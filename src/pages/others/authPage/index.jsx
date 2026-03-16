@@ -6,15 +6,15 @@ import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
 import CountrySelect from "@/components/common/CountrySelect";
+import AwsButton from "@/components/common/AwsButton";
 import { useContextElement } from "@/context/Context";
 
 // Auth Components
 import AuthHeader from "@/components/others/AuthHeader";
 import AuthFooter from "@/components/others/AuthFooter";
-import AuthBackgroundElements from "@/components/others/AuthBackgroundElements";
+import AuthHeroSection from "@/components/others/AuthHeroSection";
 import AuthFormInput from "@/components/others/AuthFormInput";
 import SocialLoginButtons from "@/components/others/SocialLoginButtons";
-import AuthSecurityBadges from "@/components/others/AuthSecurityBadges";
 
 // CSS is loaded via public/assets/css/dashboard-styles/AuthPages.css
 
@@ -77,7 +77,7 @@ export default function AuthPage() {
       const selectors = [
         ".auth-page",
         ".auth-main",
-        ".auth-section",
+        ".auth-form-section",
         ".auth-form-container",
         "main",
         "#root",
@@ -113,7 +113,7 @@ export default function AuthPage() {
       return "The email or password you entered is incorrect. Please try again.";
     }
     if (status === 403) {
-      return "Your account has been temporarily locked. Contact support.";
+      return "Please verify your email before logging in.";
     }
     if (status >= 500) {
       return "We're having trouble signing you in right now. Please try again later.";
@@ -299,58 +299,64 @@ export default function AuthPage() {
         rel="stylesheet"
       />
 
-      <div className="auth-page auth-page-container">
+      <div className="auth-page auth-page-container" data-mode={mode}>
         {/* Header */}
         <AuthHeader />
 
-        {/* Main Content */}
-        <main className="auth-main">
-          <section className="auth-section">
-            {/* Background Elements */}
-            <AuthBackgroundElements />
+        {/* Main Content - 2 Column Layout */}
+        <main className="auth-main auth-main-2col">
+          {/* Background Elements */}
+          <div className="auth-bg-gradient"></div>
+          <div className="auth-bg-orb auth-bg-orb--1"></div>
+          <div className="auth-bg-orb auth-bg-orb--2"></div>
 
-            {/* Login Form Container */}
+          {/* Left Column - Hero Section */}
+          <AuthHeroSection mode={mode} />
+
+          {/* Right Column - Form Section */}
+          <section className="auth-form-section">
             <div className="auth-form-container">
-              {/* Form Header */}
-              <div className="auth-form-header">
-                <h1 className="auth-form-title">
-                  <span className="auth-gradient-text">
-                    {mode === "signup" ? "Create Account" : "Welcome Back"}
-                  </span>
-                </h1>
-                <p className="auth-form-subtitle">
-                  {mode === "signup"
-                    ? "Sign up to start your compliance journey"
-                    : "Sign in to access your compliance dashboard"}
-                </p>
-              </div>
-
               {/* Login Card */}
-              <div className="auth-login-card">
+              <div className="auth-login-card glass-card">
+                {/* Form Header */}
+                <div className="auth-form-header">
+                  <h2 className="auth-form-title">
+                    {mode === "signup" ? "Create Account" : "Welcome Back"}
+                  </h2>
+                  <p className="auth-form-subtitle">
+                    {mode === "signup"
+                      ? "Sign up to start your compliance journey"
+                      : "Secure access to your compliance dashboard"}
+                  </p>
+                </div>
+
                 <form onSubmit={handleSubmit} className="auth-form">
                   {/* Signup Only Fields */}
                   {mode === "signup" && (
                     <>
-                      <AuthFormInput
-                        id="first_name"
-                        name="first_name"
-                        type="text"
-                        label="First Name"
-                        placeholder="First Name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                        icon="fa-user"
-                      />
-                      <AuthFormInput
-                        id="last_name"
-                        name="last_name"
-                        type="text"
-                        label="Last Name"
-                        placeholder="Last Name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                        icon="fa-user"
-                      />
+                      {/* Name Fields - Side by Side */}
+                      <div className="auth-form-row">
+                        <AuthFormInput
+                          id="first_name"
+                          name="first_name"
+                          type="text"
+                          label="First Name"
+                          placeholder="First Name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          icon="fa-user"
+                        />
+                        <AuthFormInput
+                          id="last_name"
+                          name="last_name"
+                          type="text"
+                          label="Last Name"
+                          placeholder="Last Name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          icon="fa-user"
+                        />
+                      </div>
                     </>
                   )}
 
@@ -359,8 +365,8 @@ export default function AuthPage() {
                     id="email"
                     name="email"
                     type="email"
-                    label="Email Address"
-                    placeholder="you@company.com"
+                    label="Work Email"
+                    placeholder="name@company.com"
                     value={formData.email}
                     readOnly={emailLocked}
                     onChange={(e) => {
@@ -370,21 +376,19 @@ export default function AuthPage() {
                     icon="fa-envelope"
                   />
 
-                  {/* Password Field */}
-                  <AuthFormInput
-                    id="password"
-                    name="password"
-                    type="password"
-                    label="Password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    icon="fa-lock"
-                  />
-
-                  {/* Confirm Password (Signup Only) */}
-                  {mode === "signup" && (
-                    <>
+                  {/* Password Fields - Side by Side for Signup */}
+                  {mode === "signup" ? (
+                    <div className="auth-form-row">
+                      <AuthFormInput
+                        id="password"
+                        name="password"
+                        type="password"
+                        label="Password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleChange}
+                        icon="fa-key"
+                      />
                       <AuthFormInput
                         id="confirm_password"
                         name="confirm_password"
@@ -396,7 +400,23 @@ export default function AuthPage() {
                         icon="fa-lock"
                         showToggle={false}
                       />
+                    </div>
+                  ) : (
+                    <AuthFormInput
+                      id="password"
+                      name="password"
+                      type="password"
+                      label="Password"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      icon="fa-key"
+                    />
+                  )}
 
+                  {/* Country & Phone - Separate Fields (Signup Only) */}
+                  {mode === "signup" && (
+                    <>
                       {/* Country Selection */}
                       <div className="auth-input-group">
                         <label className="auth-input-label">Country</label>
@@ -433,13 +453,11 @@ export default function AuthPage() {
                     </>
                   )}
 
-                  {/* Remember Me & Forgot Password (Login Only) */}
+
+                  {/* Forgot Password (Login Only) */}
                   {mode === "login" && (
                     <div className="auth-form-options">
-                      <label className="auth-remember-me">
-                        <input type="checkbox" id="remember" name="remember" />
-                        <span>Remember me</span>
-                      </label>
+                      <div></div>
                       <Link
                         to="/forgot-password"
                         className="auth-forgot-password"
@@ -449,57 +467,49 @@ export default function AuthPage() {
                     </div>
                   )}
 
+
                   {/* Submit Button */}
-                  <button
+                  <AwsButton
                     type="submit"
                     disabled={loading}
-                    className="auth-submit-btn"
+                    size="lg"
+                    loading={loading}
+                    label={
+                      loading
+                        ? mode === "signup"
+                          ? "Creating Account..."
+                          : "Signing In..."
+                        : mode === "signup"
+                          ? "Create Account"
+                          : "Sign In"
+                    }
+                    variant="primary"
                   >
-                    {loading
-                      ? mode === "signup"
-                        ? "Creating Account..."
-                        : "Signing In..."
-                      : mode === "signup"
-                        ? "Create Account"
-                        : "Sign In"}
                     {!loading && (
-                      <i
-                        className="fa-solid fa-arrow-right"
-                        style={{ marginLeft: "0.5rem" }}
-                      ></i>
+                      <i className="fa-solid fa-arrow-right"></i>
                     )}
-                  </button>
+                  </AwsButton>
 
                   {/* Terms Agreement (Signup Only) */}
                   {mode === "signup" && (
-                    <div
-                      className="auth-terms-agreement"
-                      style={{
-                        marginTop: "1rem",
-                        textAlign: "center",
-                        fontSize: "0.875rem",
-                        color: "#64748b",
-                      }}
-                    >
+                    <div className="auth-terms-agreement">
                       <p>
-                        By creating an account, you agree to our{" "}
+                        By creating an account, you agree to our
+                        <br />
                         <a
-                          href="https://myacademy51.com/terms-of-use"
+                          href="/terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`auth-switch-link ${loading ? "disabled-link" : ""}`}
-                          // style={{ textDecoration: "underline" }}
                         >
                           Terms&nbsp;of&nbsp;Service&nbsp;
                         </a>
                         {"  "}and{" "}
                         <a
-                          // href="/privacy-policy"
-                          href="https://myacademy51.com/privacy-policy/"
+                          href="/privacy-policy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`auth-switch-link ${loading ? "disabled-link" : ""}`}
-                          // style={{ textDecoration: "underline" }}
                         >
                           &nbsp;Privacy&nbsp;Policy
                         </a>
@@ -534,7 +544,7 @@ export default function AuthPage() {
                             to="/auth?mode=signup"
                             className="auth-switch-link"
                           >
-                            Sign up for free
+                            Sign up
                           </Link>
                         </>
                       )}
@@ -542,9 +552,6 @@ export default function AuthPage() {
                   </div>
                 </form>
               </div>
-
-              {/* Security Badges */}
-              <AuthSecurityBadges />
             </div>
           </section>
         </main>

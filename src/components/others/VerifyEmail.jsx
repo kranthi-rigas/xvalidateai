@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { COLORS } from "../../styles/colors";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyEmail } from "../../apiIntegration/auth";
-import AwsButton from "../common/AwsButton";
+import AuthButton from "../common/AuthButton";
 import HeaderAuth from "../layout/headers/HeaderAuth";
 import AuthFooter from "../../components/others/AuthFooter";
 
@@ -101,7 +101,7 @@ export default function VerifyEmail() {
                   marginTop: "1rem",
                 }}
               >
-                <AwsButton label="Go to Login" onClick={() => navigate("/")} />
+                <AuthButton label="Go to Login" onClick={() => navigate("/")} />
               </div>
             </>
           )}
@@ -133,7 +133,7 @@ export default function VerifyEmail() {
                   marginTop: "1rem",
                 }}
               >
-                <AwsButton label="Go to Login" onClick={() => navigate("/")} />
+                <AuthButton label="Go to Login" onClick={() => navigate("/")} />
               </div>
             </>
           )}
@@ -155,7 +155,7 @@ export default function VerifyEmail() {
                   marginTop: "1rem",
                 }}
               >
-                <AwsButton
+                <AuthButton
                   label="Back to Login"
                   onClick={() => navigate("/")}
                 />

@@ -9,8 +9,8 @@
      PRIMARY COLORS - Trust Blue Foundation
      ============================================================================ */
   
-  --color-primary: #0043ce;           /* Trust Blue - 7:1 contrast (AAA) */
-  --color-primary-dark: #001d6c;      /* Deep Blue - 12:1 contrast (AAA) */
+  --color-primary: #0f3053;           /* Trust Blue - 7:1 contrast (AAA) */
+  --color-primary-dark: #0F3357;      /* Deep Blue - 12:1 contrast (AAA) */
   --color-primary-light: #a6c8ff;     /* Sky Blue - 3.2:1 on dark */
   --color-primary-hover: #0036a8;     /* Hover state */
   --color-primary-pressed: #002d8a;   /* Pressed state */
@@ -29,7 +29,7 @@
      SECONDARY COLORS
      ============================================================================ */
   
-  --color-secondary: #007d79;         /* Teal - 4.5:1 contrast (AA) */
+  --color-secondary: #0F3357;         /* Teal - 4.5:1 contrast (AA) */
   --color-secondary-dark: #005f5c;    /* Dark Teal */
   --color-secondary-light: #b3e5e3;   /* Light Teal */
   
@@ -150,7 +150,7 @@
 
 @media (prefers-contrast: high) {
   :root {
-    --color-primary: #001d6c;         /* Darker blue for better contrast */
+    --color-primary: #0F3357;         /* Darker blue for better contrast */
     --color-border: #000000;          /* Solid black borders */
     --color-text-primary: #000000;    /* Pure black text */
   }

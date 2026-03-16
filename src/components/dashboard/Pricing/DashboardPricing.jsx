@@ -2,6 +2,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import { useEffect } from "react";
 
 const pricingPlans = [
   {
@@ -15,13 +18,12 @@ const pricingPlans = [
     credits: 20,
     popular: false,
     features: [
-      { text: "20 credits included", included: true },
+      { text: "2 Scans included(20 Credits)", included: true },
+      { text: "Single User", included: true },
+      { text: "Basic Report", included: true },
       { text: "Downloadable Report", included: false },
       { text: "Priority support", included: false },
-      { text: "Downloadable Report", included: false },
       { text: "Create organizations", included: false },
-      { text: "Download content", included: false },
-      { text: "Share content", included: false },
       { text: "AI Analytics", included: false },
       { text: "Business workflow", included: false },
       { text: "Customizability", included: false },
@@ -33,19 +35,19 @@ const pricingPlans = [
     description: "Best for growing learners",
     icon: "fa-solid fa-star",
     iconColor: COLORS.primary,
-    price: null,
-    period: "yearly",
+    price: 1000,
+    period: "Annually",
     credits: 100,
     popular: true,
     buttonText: "Get Premium",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "100 credits included", included: true },
+      { text: "10 Scans included(100 Credits)", included: true },
+      { text: "Single User", included: true },
       { text: "Downloadable Report", included: true },
+      { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: false },
-      { text: "Download content", included: false },
-      { text: "Share content", included: false },
       { text: "AI Analytics", included: false },
       { text: "Business workflow", included: false },
       { text: "Customizability", included: false },
@@ -57,19 +59,19 @@ const pricingPlans = [
     description: "For organizations",
     icon: "fa-solid fa-building",
     iconColor: COLORS.success,
-    price: null,
-    period: "yearly",
+    price: 3000,
+    period: "Annually",
     credits: 300,
     popular: false,
     buttonText: "Get Business",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "300 credits included", included: true },
+      { text: "30 Scans included(300 Credits)", included: true },
+      { text: "Multiple Users", included: true },
       { text: "Downloadable Report", included: true },
+      { text: "Basic Report", included: true },
       { text: "Priority support", included: true },
       { text: "Create organizations", included: true },
-      { text: "Download content", included: true },
-      { text: "Share content", included: true },
       { text: "AI Analytics", included: true },
       { text: "Business workflow", included: true },
       { text: "Customizability", included: true },
@@ -79,6 +81,7 @@ const pricingPlans = [
 
 export default function DashboardPricing() {
   const navigate = useNavigate();
+  const { refreshUserPlan } = useContextElement();
 
   // Use userPlan from Context for reactive updates after checkout
   const { userPlan } = useContextElement();
@@ -103,6 +106,23 @@ export default function DashboardPricing() {
   const getPrice = (price) => {
     return price;
   };
+  useEffect(() => {
+    AOS.init({
+      once: true,
+      disable: () => window.innerWidth < 1024,
+    });
+
+    // Use refreshHard instead of refresh — forces AOS to re-scan the DOM
+    const timer = setTimeout(() => {
+      AOS.refreshHard();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []); // Keep empty deps — runs on every mount
+
+  useEffect(() => {
+    refreshUserPlan();
+  }, [refreshUserPlan]);
 
   const handlePlanClick = (plan) => {
     // Navigate to billing page with plan data, or dashboard for free plan
@@ -265,7 +285,7 @@ export default function DashboardPricing() {
                               }}
                             >
                               <i className="fa-solid fa-coins mr-1"></i>
-                              {plan.credits} credits included
+                              {plan.credits} Credits included
                             </div>
                           )}
                         </div>
@@ -389,10 +409,10 @@ export default function DashboardPricing() {
                   <p className="text-14 text-light-1">
                     For any questions or enterprise inquiries, contact us at{" "}
                     <a
-                      href="mailto:support@academy51.com"
+                      href="mailto:support@xvalidateai.com"
                       className="text-purple-1 fw-500"
                     >
-                      support@academy51.com
+                      support@xvalidateai.com
                     </a>
                   </p>
                 </div>

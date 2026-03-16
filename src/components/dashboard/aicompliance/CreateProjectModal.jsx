@@ -130,7 +130,7 @@ export default function CreateProjectModal({
     try {
       await createComplianceProject({
         ...form,
-        status: isAuditor ? "requested" : "pending_assessment",
+        status: isAuditor ? "requested_for_scan" : "pending_assessment",
       });
 
       show(
@@ -183,26 +183,24 @@ export default function CreateProjectModal({
       />
       <AwsButton
         label={
-          saving
-            ? isAuditor
+          isAuditor
+            ? saving
               ? "Requesting…"
-              : "Saving…"
-            : isAuditor
-              ? "Request"
+              : "Request"
+            : saving
+              ? "Saving…"
               : "Save & Evaluate"
         }
         variant="primary"
         onClick={saveProject}
-        disabled={!isValid || saving}
+        disabled={!isValid}
         loading={saving}
       >
-        {!saving && (
-          <i
-            className="fa-solid fa-gear"
-            style={{ fontSize: "14px" }}
-            aria-hidden="true"
-          ></i>
-        )}
+        <i
+          className="fa-solid fa-gear"
+          style={{ fontSize: "14px" }}
+          aria-hidden="true"
+        />
       </AwsButton>
     </>
   );

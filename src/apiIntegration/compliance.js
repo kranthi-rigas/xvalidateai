@@ -47,13 +47,13 @@ export async function createComplianceProject(payload) {
    Endpoint: PUT /compliance-projects/{id}/assessment
 ===================================================== */
 export async function updateComplianceTool(projectId, payload) {
+
   const body = {
     name: payload.projectName,
     description: payload.description,
     url: payload.url,
   };
 
-  // send only if required (instructor flow)
   if (payload.justification) {
     body.justification = payload.justification;
   }

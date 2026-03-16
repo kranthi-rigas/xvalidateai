@@ -43,18 +43,18 @@ export default function HeaderCredits() {
   }, [userCredits]);
 
   return (
-    <div className="flex items-center px-3 py-1.5 rounded-lg border border-border bg-muted/50">
+    <div className="flex items-center px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg border border-border bg-muted/50 flex-shrink-0">
       <i
-        className="fa-solid fa-coins mr-2"
-        style={{ color: COLORS.secondary, fontSize: "16px" }}
+        className="fa-solid fa-coins mr-1.5"
+        style={{ color: COLORS.secondary, fontSize: "14px" }}
       />
       <div className="flex items-baseline gap-1">
-        <span className="text-lg font-bold" style={{ color: COLORS.secondary }}>
+        <span className="text-sm lg:text-lg font-bold" style={{ color: COLORS.secondary }}>
           {creditsRemaining}
         </span>
         <span className="text-xs text-muted-foreground">/ {creditsTotal}</span>
       </div>
-      <span className="ml-2 text-xs text-muted-foreground font-medium">
+      <span className="ml-1.5 text-xs text-muted-foreground font-medium hidden sm:inline">
         Credits
       </span>
     </div>

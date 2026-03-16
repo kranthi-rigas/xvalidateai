@@ -79,3 +79,20 @@ export async function redeemVoucher(voucherCode, planId = null) {
     throw err;
   }
 }
+
+//PayPal Integration API Function
+export async function createPaypalSubscription(payload) {
+  const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/paypal`, {
+    method: "POST",
+    body: JSON.stringify({
+      plan_type: payload, // FREE | PREMIUM | BUSINESS
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Failed to create PayPal subscription");
+  }
+
+  return res.json();
+}
