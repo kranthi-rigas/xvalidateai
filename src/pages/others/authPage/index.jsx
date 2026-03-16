@@ -113,7 +113,7 @@ export default function AuthPage() {
       return "The email or password you entered is incorrect. Please try again.";
     }
     if (status === 403) {
-      return "Your account has been temporarily locked. Contact support.";
+      return "Please verify your email before logging in.";
     }
     if (status >= 500) {
       return "We're having trouble signing you in right now. Please try again later.";
