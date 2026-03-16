@@ -10,9 +10,10 @@ const SubscriptionCancel = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       navigate("/dashboard/pricing", {
-        state: { status: "cancelled" },
+        replace: true, // Replace history entry
+        state: { status: "cancelled", ts: Date.now() }, // Unique key forces remount detection
       });
-    }, 8000); // Wait 8 seconds before redirect
+    }, 8000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
@@ -41,14 +42,14 @@ const SubscriptionCancel = () => {
         <div className="cancel-actions">
           <button
             className="cancel-primary"
-            onClick={() => navigate("/dashboard/pricing")}
+            onClick={() => navigate("/dashboard/pricing", { replace: true })}
           >
             Back to Pricing
           </button>
 
           <button
             className="cancel-secondary"
-            onClick={() => navigate("/dashboard/pricing")}
+            onClick={() => navigate("/dashboard/pricing", { replace: true })}
           >
             Try Again
           </button>

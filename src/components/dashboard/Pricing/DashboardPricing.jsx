@@ -104,14 +104,18 @@ export default function DashboardPricing() {
     return price;
   };
   useEffect(() => {
-    // Disable AOS on mobile/tablet: the scrollable area is a div (not window),
-    // so AOS intersection never fires and cards stay stuck at opacity:0.
     AOS.init({
       once: true,
       disable: () => window.innerWidth < 1024,
     });
-    AOS.refresh();
-  }, []);
+
+    // Use refreshHard instead of refresh — forces AOS to re-scan the DOM
+    const timer = setTimeout(() => {
+      AOS.refreshHard();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []); // Keep empty deps — runs on every mount
 
   useEffect(() => {
     refreshUserPlan();
