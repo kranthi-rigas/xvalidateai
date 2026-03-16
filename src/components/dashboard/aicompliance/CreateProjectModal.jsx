@@ -130,7 +130,7 @@ export default function CreateProjectModal({
     try {
       await createComplianceProject({
         ...form,
-        status: isAuditor ? "requested" : "pending_assessment",
+        status: isAuditor ? "requested_for_scan" : "pending_assessment",
       });
 
       show(
