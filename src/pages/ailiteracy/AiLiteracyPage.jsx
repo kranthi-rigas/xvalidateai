@@ -13,13 +13,13 @@ import PageTransition from "@/components/common/PageTransition";
 export default function AiLiteracyPage() {
   const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
-  const defaultAnswers = Object.fromEntries(questions.map((_, i) => [i, 1]));
-  const [answers, setAnswers] = useState(defaultAnswers);
+  const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
   const showToast = useToast();
   const topRef = useRef(null);
   const playbookRef = useRef(null);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -32,16 +32,19 @@ export default function AiLiteracyPage() {
   };
 
   const handleSubmit = () => {
-    if (Object.keys(answers).length < questions.length) {
-      const unanswered = questions.length - Object.keys(answers).length;
-      showToast(
-        `Please answer all questions before submitting. ${unanswered} question${unanswered > 1 ? "s" : ""} remaining.`,
-        { type: "error" },
-      );
+    const answeredCount = Object.values(answers).filter(
+      (value) => Number.isInteger(value) && value >= 1 && value <= 4,
+    ).length;
+    if (answeredCount < questions.length) {
+      setShowIncompleteModal(true);
       return;
     }
-    const totalScore = Object.values(answers).reduce(
-      (sum, val) => sum + val,
+    submitAndScore();
+  };
+
+  const submitAndScore = () => {
+    const totalScore = questions.reduce(
+      (sum, _, idx) => sum + (answers[idx] || 0),
       0,
     );
     setResult(totalScore);
@@ -54,13 +57,13 @@ export default function AiLiteracyPage() {
 
   useEffect(() => {
     setView("landing");
-    setAnswers(Object.fromEntries(questions.map((_, i) => [i, 1])));
+    setAnswers({});
     setResult(null);
     setShowPlaybook(false);
   }, [location.key]);
 
   const handleRetake = () => {
-    setAnswers(Object.fromEntries(questions.map((_, i) => [i, 1])));
+    setAnswers({});
     setResult(null);
     setShowPlaybook(false);
     setView("landing");
@@ -607,6 +610,103 @@ export default function AiLiteracyPage() {
           </PageTransition>
         )}
       </div>
-    </div>
+    {/* Incomplete Answers Modal */}
+    {showIncompleteModal && (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: COLORS.bgOverlay,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999,
+        }}
+        onClick={() => setShowIncompleteModal(false)}
+      >
+        <div
+          style={{
+            backgroundColor: COLORS.white,
+            borderRadius: "12px",
+            padding: "24px",
+            maxWidth: "400px",
+            width: "90%",
+            boxShadow:
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ marginBottom: "16px", textAlign: "center" }}>
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                backgroundColor: COLORS.errorLight,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "16px",
+                margin: "0 auto 16px auto",
+              }}
+            >
+              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: "24px", color: COLORS.error }}></i>
+            </div>
+            <h3 style={{ fontSize: "18px", fontWeight: "600", color: COLORS.textPrimary, marginBottom: "8px" }}>
+              Submit Incomplete Assessment?
+            </h3>
+            <p style={{ fontSize: "14px", color: COLORS.textSecondary, lineHeight: "1.5" }}>
+              {questions.length - Object.values(answers).filter((v) => Number.isInteger(v) && v >= 1 && v <= 4).length} question(s) unanswered. Unanswered questions will count as 0.
+            </p>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "center",
+              marginTop: "24px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowIncompleteModal(false)}
+              style={{
+                padding: "10px 24px",
+                borderRadius: 8,
+                border: `1px solid ${COLORS.borderLight}`,
+                background: COLORS.bgSecondary,
+                color: COLORS.textPrimary,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Go Back
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowIncompleteModal(false);
+                submitAndScore();
+              }}
+              style={{
+                padding: "10px 24px",
+                borderRadius: 8,
+                border: `1px solid ${COLORS.primary}`,
+                background: COLORS.primary,
+                color: "#fff",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Submit Anyway
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }
