@@ -504,22 +504,50 @@ export default function OrgUsers({ refreshProjects }) {
                 groups,
               });
 
-              show("Users invited successfully!", { type: "success" });
+              // ✅ Check for failed invitations (duplicate users etc.)
+              const failed = res?.failed_invitations || [];
+              const invited = res?.invited_users || [];
 
+              if (failed.length > 0 && invited.length === 0) {
+                // ❌ All failed — show error for each
+                failed.forEach((f) => {
+                  show(`${f.email}: ${f.reason}`, {
+                    type: "error",
+                    duration: 5000,
+                  });
+                });
+                return { success: false };
+              }
+
+              if (failed.length > 0 && invited.length > 0) {
+                // ⚠️ Partial success — some invited, some failed
+                show(`${invited.length} user(s) invited successfully.`, {
+                  type: "success",
+                });
+                failed.forEach((f) => {
+                  show(`${f.email}: ${f.reason}`, {
+                    type: "error",
+                    duration: 5000,
+                  });
+                });
+                loadUsers();
+                return { success: true };
+              }
+
+              // ✅ All invited successfully
+              show("Users invited successfully!", { type: "success" });
               loadUsers();
               return { success: true };
             } catch (err) {
               console.error("Invite failed:", err);
 
               let message = "Failed to invite users";
-
               try {
                 const parsed = JSON.parse(err.message);
                 message = parsed.message || message;
               } catch {}
 
               show(message, { type: "error" });
-
               return { success: false, error: message };
             }
           }}
