@@ -222,6 +222,8 @@ div:focus-within .password-view {
   --auth-input: #FFFFFF;
   --auth-ring: #58BFCE;
   --auth-radius: 10px;
+  --auth-safe-top: env(safe-area-inset-top, 0px);
+  --auth-header-height: calc(4rem + var(--auth-safe-top));
 }
 
 /* Hide scrollbar */
@@ -347,6 +349,7 @@ div:focus-within .password-view {
   top: 0;
   left: 0;
   right: 0;
+  padding-top: var(--auth-safe-top);
   z-index: 50;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
@@ -400,7 +403,7 @@ div:focus-within .password-view {
 
 /* Auth Main Section */
 .auth-main {
-  padding-top: 5rem;
+  padding-top: var(--auth-header-height);
 }
 
 .auth-section {
@@ -1183,7 +1186,7 @@ div:focus-within .password-view {
 .auth-main-2col {
   height: 100vh;
   display: flex;
-  padding-top: 4rem;
+  padding-top: var(--auth-header-height);
   position: relative;
   background: linear-gradient(to bottom right, #fafafa, rgba(88, 191, 206, 0.05), #f8fafc);
   overflow: hidden;
@@ -1239,15 +1242,15 @@ div:focus-within .password-view {
   justify-content: flex-start;
   padding-top: 3rem;
   position: sticky;
-  top: 4rem;
-  height: calc(100vh - 4rem);
+  top: var(--auth-header-height);
+  height: calc(100vh - var(--auth-header-height));
   z-index: 10;
   overflow: hidden;
 }
 
 /* Signup-specific adjustments */
 .auth-page[data-mode="signup"] .auth-main-2col {
-  padding-top: 4rem;
+  padding-top: var(--auth-header-height);
 }
 
 .auth-page[data-mode="signup"] .auth-hero {
@@ -1403,7 +1406,7 @@ div:focus-within .password-view {
   z-index: 10;
   overflow-x: hidden;
   overflow-y: auto;
-  height: calc(100vh - 4rem);
+  height: calc(100vh - var(--auth-header-height));
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
 }
@@ -1626,7 +1629,7 @@ div:focus-within .password-view {
 @media (max-width: 1023px) {
   .auth-main-2col {
     flex-direction: column;
-    padding-top: 5rem;
+    padding-top: calc(5rem + var(--auth-safe-top));
     padding-bottom: 5rem;
     height: auto;
     overflow: auto;
@@ -1710,8 +1713,12 @@ div:focus-within .password-view {
 
   /* Remove top padding since there's no hero above */
   .auth-main-2col {
-    padding-top: 4rem;
+    padding-top: calc(4rem + var(--auth-safe-top));
     padding-bottom: 5rem;
+  }
+
+  .auth-form-section {
+    min-height: calc(100vh - (4rem + var(--auth-safe-top)));
   }
 
   /* Keep side-by-side layout for name + password rows on signup */

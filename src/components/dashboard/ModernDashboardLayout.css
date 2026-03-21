@@ -36,6 +36,21 @@
   font-weight: 400;
 }
 
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+/* Keep top bars clear of camera cutouts on Android/iOS devices. */
+#header {
+  padding-top: var(--safe-area-top);
+  height: calc(5rem + var(--safe-area-top));
+}
+
+aside#sidebar > div:first-child {
+  padding-top: var(--safe-area-top);
+  height: calc(5rem + var(--safe-area-top));
+}
+
 /* Sidebar transition */
 aside {
   transition: width 0.3s ease-in-out;
