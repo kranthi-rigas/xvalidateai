@@ -156,7 +156,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pdf.setFontSize(8);
           pdf.setFont("helvetica", "normal");
           pdf.text(
-            "Disclaimer: Based on Tool's T&C, Privacy Policy, and website content. Scores are as reported by the respective tool websites.",
+            "Disclaimer: Scores are algorithmically calculated using each tool’s Terms, Privacy Policy, and website content.",
             pageWidth / 2,
             pageHeight - 14,
             { align: "center", maxWidth: pageWidth - 30 },
@@ -1310,15 +1310,14 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          <strong>Disclaimer:</strong> Based on Tool's T&C, Privacy Policy, and
-          website content. Scores are as reported by the respective tool
-          websites.
+          <strong>Disclaimer:</strong> Scores are algorithmically calculated
+          using each tool’s Terms, Privacy Policy, and website content.
         </p>
         <p
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          For questions or concerns, contact compliance@xvalidateai.com
+          For questions or concerns, contact support@xvalidateai.com
         </p>
       </div>
 

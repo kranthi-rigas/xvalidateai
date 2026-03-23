@@ -73,4 +73,12 @@ export const sidebarItems = [
         permission: null,
         requiredPlan: null,
     },
+    {
+        id: 9,
+        href: "/dashboard/administration",
+        icon: "fa-solid fa-users-gear fa-lg",
+        text: "Administration",
+        permission: null,
+        requiredPlan: null,
+    },
 ];
