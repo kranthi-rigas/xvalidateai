@@ -43,6 +43,11 @@ const headerContentMap = {
   title: "FAQs",
   description: "Access quick answers about AI compliance, governance policies, platform features, and implementation guidance.",
 },
+"/dashboard/administration": {
+  title: "Administration",
+  description: "Manage and track credit requests from your organization.",
+},
+
 };
 
 export function useHeaderContent(pathname) {

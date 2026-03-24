@@ -48,6 +48,7 @@ import FaqsPage from "./pages/dashboard/dashboard-faqs";
 import SubscriptionSuccess from "./components/dashboard/Billing/SubscriptionSuccess";
 import SubscriptionCancel from "./components/dashboard/Billing/SubscriptionCancel";
 import AuditLogsPage from "./pages/dashboard/dashboard-audittrail";
+import AdministrationPage from "./pages/dashboard/dashboard-administration";
 
 function App() {
   useEffect(() => {
@@ -106,6 +107,7 @@ function App() {
 
                 <Route path="faqs" element={<FaqsPage />} />
                 <Route path="audittrail" element={<AuditLogsPage />} />
+                <Route path="administration" element={<AdministrationPage />} />
                 <Route path="forums" element={<DshbForumsPage />} />
                 <Route path="grades" element={<DshbGradesPage />} />
                 <Route path="messages" element={<DshbMessagesPage />} />
