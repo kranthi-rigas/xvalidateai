@@ -27,6 +27,10 @@ export default function ModernDashboardLayout() {
   const [userRole, setUserRole] = useState("User");
   const [userPlan, setUserPlan] = useState("free");
 
+  // ✅ Staff flags — controls Administration visibility
+  const [isStaffAdmin, setIsStaffAdmin] = useState(false);
+  const [isStaffUser, setIsStaffUser] = useState(false);
+
   const handleParentClick = (item) => {
     if (!item.children) return;
     if (sidebarCollapsed) {
@@ -68,6 +72,15 @@ export default function ModernDashboardLayout() {
           setUserName(fullName);
           setUserRole(formattedRole);
           setRoleBadgeClass(badgeClass);
+
+          // ✅ Read staff flags from stored user_info
+          setIsStaffAdmin(userData?.is_staff_admin === true);
+          setIsStaffUser(userData?.is_staff_user === true);
+
+          // ✅ Normalize plan to lowercase
+          const userPlanLocal =
+            userData?.plan?.plan_type?.toLowerCase() || "free";
+          setUserPlan(userPlanLocal);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -76,24 +89,52 @@ export default function ModernDashboardLayout() {
     loadUserData();
   }, []);
 
+  // ✅ Also fetch fresh profile from API to get latest staff flags
   useEffect(() => {
-    const loadUserData = () => {
+    const fetchProfile = async () => {
       try {
-        const userInfo = localStorage.getItem("user_info");
-        if (userInfo) {
-          const userData = JSON.parse(userInfo);
-          console.log("🔍 User data loaded for plan access:", userData);
-          // ✅ Normalize to lowercase for consistent comparison
-          const userPlanLocal =
-            userData?.plan?.plan_type?.toLowerCase() || "free";
-          setUserPlan(userPlanLocal);
-          console.log("🔍 userPlan set to:", userPlanLocal);
-        }
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(
+          "https://dev-api.xvalidateai.com/profile",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // ✅ Update staff flags from fresh API response
+        setIsStaffAdmin(data?.is_staff_admin === true);
+        setIsStaffUser(data?.is_staff_user === true);
+
+        // ✅ Persist updated user_info back to localStorage
+        const existingInfo = JSON.parse(
+          localStorage.getItem("user_info") || "{}",
+        );
+        localStorage.setItem(
+          "user_info",
+          JSON.stringify({
+            ...existingInfo,
+            is_staff_admin: data?.is_staff_admin,
+            is_staff_user: data?.is_staff_user,
+          }),
+        );
+
+        console.log("🔍 Profile API - is_staff_admin:", data?.is_staff_admin);
+        console.log("🔍 Profile API - is_staff_user:", data?.is_staff_user);
       } catch (error) {
-        console.error("Error loading user data:", error);
+        console.error("Error fetching profile:", error);
       }
     };
-    loadUserData();
+
+    fetchProfile();
   }, []);
 
   useEffect(() => {
@@ -163,8 +204,15 @@ export default function ModernDashboardLayout() {
     return item.href === "/dashboard/audittrail" && userPlan !== "business";
   };
 
-  // ✅ Show all items — no filtering out Audit Trail
-  const filteredSidebarItems = sidebarItems;
+  // ✅ Filter sidebar — hide Administration unless is_staff_admin or is_staff_user
+  const canSeeAdministration = isStaffAdmin || isStaffUser;
+
+  const filteredSidebarItems = sidebarItems.filter((item) => {
+    if (item.href === "/dashboard/administration") {
+      return canSeeAdministration;
+    }
+    return true;
+  });
 
   return (
     <div className="bg-background text-foreground font-sans overflow-hidden h-screen w-full flex">
@@ -271,17 +319,12 @@ export default function ModernDashboardLayout() {
                   <div className="relative group">
                     <button
                       onClick={() => navigate("/dashboard/pricing")}
-                      title={
-                        effectiveCollapsed
-                          ? "Upgrade to Business to Avail this feature"
-                          : ""
-                      }
+                      title={effectiveCollapsed ? "Business Plan Required" : ""}
                       className={`nav-item flex items-center justify-between w-full ${
                         effectiveCollapsed ? "px-2" : "px-4"
                       } py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer`}
                       style={{ opacity: 0.5 }}
                     >
-                      {/* LEFT SIDE */}
                       <div
                         className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
                       >
@@ -295,14 +338,14 @@ export default function ModernDashboardLayout() {
                           </span>
                         )}
                       </div>
-
-                      {/* ✅ Lock icon + upgrade badge — hidden when collapsed */}
                       {!effectiveCollapsed && (
-                        <div className="flex items-center gap-1"></div>
+                        <div className="flex items-center gap-1">
+                          <i className="fa-solid fa-lock text-xs text-muted-foreground/70" />
+                        </div>
                       )}
                     </button>
 
-                    {/* ✅ Tooltip shown on hover when expanded */}
+                    {/* Tooltip on hover */}
                     {!effectiveCollapsed && (
                       <div
                         className="absolute left-0 right-0 bottom-full mb-1 mx-2 hidden group-hover:flex items-center justify-center"
@@ -312,13 +355,13 @@ export default function ModernDashboardLayout() {
                           className="text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap"
                           style={{ backgroundColor: "#0F3053" }}
                         >
-                          🔒 Upgrade to Business to Avail this feature
+                          🔒 Business Plan Required
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  // ✅ NORMAL STATE — existing rendering logic unchanged
+                  // ✅ NORMAL STATE
                   <div>
                     <Link
                       to={item.children ? "#" : item.href}
@@ -338,7 +381,6 @@ export default function ModernDashboardLayout() {
                       }`}
                       style={{ display: "inline-flex" }}
                     >
-                      {/* LEFT SIDE */}
                       <div
                         className={`flex items-center ${effectiveCollapsed ? "" : "flex-1"}`}
                       >
@@ -351,7 +393,7 @@ export default function ModernDashboardLayout() {
                         {!effectiveCollapsed && <span>{item.text}</span>}
                       </div>
 
-                      {/* RIGHT SIDE (CHEVRON) */}
+                      {/* CHEVRON for parent items */}
                       {!effectiveCollapsed && item.children && (
                         <span
                           className={`fa-solid fa-chevron-right text-xs text-muted-foreground/50 transition-transform ${
