@@ -11,17 +11,13 @@ import { COLORS } from "../../../styles/colors";
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export default function InviteUsersModal({ onClose, onInvite }) {
-  // Tab state
-  const [activeTab, setActiveTab] = useState("manual");
-
-  // Manual tab state
+  // Email chip state
   const [chipEmails, setChipEmails] = useState([]);
   const [emailInput, setEmailInput] = useState("");
 
-  // Bulk tab state
-  const [bulkEmails, setBulkEmails] = useState([]);
+  // File upload state
   const [bulkFile, setBulkFile] = useState(null);
-  const [bulkDragOver, setBulkDragOver] = useState(false);
+  const [bulkEmails, setBulkEmails] = useState([]); // { email, valid }[] — for counts display
   const bulkFileRef = useRef(null);
 
   // Shared state
@@ -55,16 +51,11 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     chipInputRef.current?.focus();
   }, []);
 
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const errs = {};
-    const activeEmails =
-      activeTab === "manual" ? chipEmails : bulkEmails.map((e) => e.email);
-
-    if (activeEmails.length === 0) {
-      errs.emails =
-        activeTab === "manual"
-          ? "At least one email is required."
-          : "Please upload a file with at least one email.";
+    if (chipEmails.length === 0) {
+      errs.emails = "At least one email is required.";
     }
     if (!rolesSelected) {
       errs.roles = "Select at least one role.";
@@ -72,7 +63,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     return errs;
   };
 
-  // Manual: chip handling
+  // ── Manual chip handling ───────────────────────────────────────────────────
   const addEmail = (email) => {
     const clean = email.trim();
     if (!clean) return;
@@ -104,20 +95,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     }
   };
 
-  // Bulk: parse CSV / Excel
-  const extractEmailsFromText = (text) => {
-    const lines = text
-      .split(/[\n,;]+/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    const filtered = lines.filter(
-      (l) => !l.toLowerCase().startsWith("email") || l.includes("@"),
-    );
-    setBulkEmails(
-      filtered.map((email) => ({ email, valid: isValidEmail(email) })),
-    );
-  };
-
+  // ── File parsing — imports directly into chip emails ───────────────────────
   const parseFile = (file) => {
     if (!file) return;
     setBulkFile(file);
@@ -127,7 +105,22 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
     if (ext === "csv") {
       const reader = new FileReader();
-      reader.onload = (e) => extractEmailsFromText(e.target.result);
+      reader.onload = (e) => {
+        const lines = e.target.result
+          .split(/[\n,;]+/)
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .filter((l) => l.includes("@")); // only email-like values
+
+        const parsed = lines.map((email) => ({
+          email,
+          valid: isValidEmail(email),
+        }));
+        setBulkEmails(parsed);
+        // ✅ Merge valid emails directly into chip emails
+        const validEmails = parsed.filter((e) => e.valid).map((e) => e.email);
+        setChipEmails((prev) => [...new Set([...prev, ...validEmails])]);
+      };
       reader.readAsText(file);
     } else if (["xlsx", "xls"].includes(ext)) {
       const reader = new FileReader();
@@ -137,10 +130,15 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         const allCells = rows.flat().map((c) => String(c || "").trim());
-        const emails = allCells.filter((c) => c.includes("@"));
-        setBulkEmails(
-          emails.map((email) => ({ email, valid: isValidEmail(email) })),
-        );
+        const emailCells = allCells.filter((c) => c.includes("@"));
+        const parsed = emailCells.map((email) => ({
+          email,
+          valid: isValidEmail(email),
+        }));
+        setBulkEmails(parsed);
+        // ✅ Merge valid emails directly into chip emails
+        const validEmails = parsed.filter((e) => e.valid).map((e) => e.email);
+        setChipEmails((prev) => [...new Set([...prev, ...validEmails])]);
       };
       reader.readAsArrayBuffer(file);
     } else {
@@ -150,23 +148,13 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     }
   };
 
-  const handleBulkDrop = (e) => {
-    e.preventDefault();
-    setBulkDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) parseFile(file);
-  };
-
-  const removeBulkEmail = (index) => {
-    setBulkEmails((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const clearBulkUpload = () => {
     setBulkFile(null);
     setBulkEmails([]);
     if (bulkFileRef.current) bulkFileRef.current.value = "";
   };
 
+  // ── Download CSV template ──────────────────────────────────────────────────
   const downloadTemplate = () => {
     const csv =
       "email\nuser1@example.com\nuser2@example.com\nuser3@example.com";
@@ -179,18 +167,14 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     URL.revokeObjectURL(url);
   };
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleInvite = async () => {
     setSubmitted(true);
     const validation = validate();
     setErrors(validation);
     if (Object.keys(validation).length) return;
 
-    const emailsToInvite =
-      activeTab === "manual"
-        ? chipEmails
-        : bulkEmails.filter((e) => e.valid).map((e) => e.email);
-
-    if (emailsToInvite.length === 0) {
+    if (chipEmails.length === 0) {
       setErrors((p) => ({ ...p, emails: "No valid emails to invite." }));
       return;
     }
@@ -198,7 +182,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     try {
       setLoading(true);
       const result = await onInvite(
-        emailsToInvite,
+        chipEmails,
         [rolesSelected],
         selectedGroups,
       );
@@ -217,6 +201,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     }
   };
 
+  // ── Chip box style ─────────────────────────────────────────────────────────
   const chipBoxStyle = () => {
     const hasError =
       (submitted || touched.emails) &&
@@ -249,9 +234,9 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
   const validBulkCount = bulkEmails.filter((e) => e.valid).length;
   const invalidBulkCount = bulkEmails.filter((e) => !e.valid).length;
-  const inviteCount =
-    activeTab === "manual" ? chipEmails.length : validBulkCount;
+  const inviteCount = chipEmails.length;
 
+  // ── Footer ─────────────────────────────────────────────────────────────────
   const footer = (
     <>
       <AwsButton
@@ -286,431 +271,219 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       error={modalError}
       closeOnOverlayClick={!loading}
     >
-      {/* ── TAB SWITCHER ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: 0,
-          marginBottom: 20,
-          background: COLORS.surfaceLight || "#F3F4F6",
-          borderRadius: 10,
-          padding: 4,
-        }}
-      >
-        {[
-          { key: "manual", label: "✏️ Manual Entry" },
-          { key: "bulk", label: "📄 Bulk Upload" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => {
-              setActiveTab(tab.key);
-              setSubmitted(false);
-              setErrors({});
-            }}
-            style={{
-              flex: 1,
-              padding: "8px 0",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: 13,
-              transition: "all 0.15s ease",
-              background: activeTab === tab.key ? "#fff" : "transparent",
-              color:
-                activeTab === tab.key
-                  ? COLORS.textPrimary || "#111827"
-                  : COLORS.textSecondary || "#6B7280",
-              boxShadow:
-                activeTab === tab.key ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── MANUAL ENTRY TAB ── */}
-      {activeTab === "manual" && (
-        <div style={{ marginBottom: 20 }}>
+      {/* ── EMAILS ── */}
+      <div style={{ marginBottom: 20 }}>
+        {/* Label row — label left, Import File button right */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
+          }}
+        >
           <label
             style={{
-              display: "block",
               fontWeight: 600,
               fontSize: 14,
               lineHeight: 1.5,
               color: COLORS.textPrimary,
-              marginBottom: 6,
             }}
           >
             Email(s){" "}
             <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>
           </label>
 
-          <div
-            style={chipBoxStyle()}
-            onClick={() => chipInputRef.current?.focus()}
+          {/* ✅ Import File button */}
+          <button
+            type="button"
+            onClick={() => bulkFileRef.current?.click()}
+            title="Import emails from CSV or Excel"
+            style={{
+              background: "none",
+              border: `1px solid ${COLORS.borderLight || "#D1D5DB"}`,
+              borderRadius: 8,
+              cursor: "pointer",
+              fontSize: 12,
+              color: COLORS.textSecondary || "#6B7280",
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 10px",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor =
+                COLORS.borderFocus || "#2563EB";
+              e.currentTarget.style.color = COLORS.borderFocus || "#2563EB";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor =
+                COLORS.borderLight || "#D1D5DB";
+              e.currentTarget.style.color = COLORS.textSecondary || "#6B7280";
+            }}
           >
-            {chipEmails.map((email, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "4px 10px",
-                  background: isValidEmail(email) ? "#E0E7FF" : "#FEE2E2",
-                  color: isValidEmail(email) ? "#3730A3" : "#B91C1C",
-                  borderRadius: 20,
-                  fontSize: 13,
-                }}
-              >
-                {email}
-                <span
-                  style={{ marginLeft: 8, cursor: "pointer", fontWeight: 700 }}
-                  onClick={() => removeEmail(i)}
-                >
-                  ×
-                </span>
-              </div>
-            ))}
-            <input
-              ref={chipInputRef}
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              onKeyDown={handleChipInput}
-              onFocus={() => setFocused("emails")}
-              onBlur={() => {
-                setFocused(null);
-                setTouched((p) => ({ ...p, emails: true }));
-                setErrors(validate());
-                if (emailInput.trim()) addEmail(emailInput);
-              }}
-              placeholder="Enter email and press Enter…"
-              style={{
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                flex: 1,
-                minWidth: 140,
-                fontSize: 14,
-                padding: "4px",
-              }}
-            />
-          </div>
+            <i className="fa-solid fa-file-arrow-up" style={{ fontSize: 12 }} />
+            Import File
+          </button>
 
-          {(submitted || touched.emails) &&
-            errors.emails &&
-            focused !== "emails" && (
-              <p
-                style={{
-                  color: COLORS.error,
-                  fontSize: 12,
-                  marginTop: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <i
-                  className="fa-solid fa-circle-exclamation"
-                  style={{ fontSize: 12 }}
-                />
-                {errors.emails}
-              </p>
-            )}
+          {/* Hidden file input */}
+          <input
+            ref={bulkFileRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            style={{ display: "none" }}
+            onChange={(e) => parseFile(e.target.files[0])}
+          />
         </div>
-      )}
 
-      {/* ── BULK UPLOAD TAB ── */}
-      {activeTab === "bulk" && (
-        <div style={{ marginBottom: 20 }}>
-          {/* Download template link */}
+        {/* Chip input box */}
+        <div
+          style={chipBoxStyle()}
+          onClick={() => chipInputRef.current?.focus()}
+        >
+          {chipEmails.map((email, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "4px 10px",
+                background: isValidEmail(email) ? "#E0E7FF" : "#FEE2E2",
+                color: isValidEmail(email) ? "#3730A3" : "#B91C1C",
+                borderRadius: 20,
+                fontSize: 13,
+              }}
+            >
+              {email}
+              <span
+                style={{ marginLeft: 8, cursor: "pointer", fontWeight: 700 }}
+                onClick={() => removeEmail(i)}
+              >
+                ×
+              </span>
+            </div>
+          ))}
+          <input
+            ref={chipInputRef}
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            onKeyDown={handleChipInput}
+            onFocus={() => setFocused("emails")}
+            onBlur={() => {
+              setFocused(null);
+              setTouched((p) => ({ ...p, emails: true }));
+              setErrors(validate());
+              if (emailInput.trim()) addEmail(emailInput);
+            }}
+            placeholder="Enter email and press Enter…"
+            style={{
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              flex: 1,
+              minWidth: 140,
+              fontSize: 14,
+              padding: "4px",
+            }}
+          />
+        </div>
+
+        {/* ✅ File import info bar — shown after a file is uploaded */}
+        {bulkFile && (
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 8,
+              gap: 8,
+              marginTop: 8,
+              padding: "7px 12px",
+              background: "#F0FDF4",
+              border: "1px solid #86EFAC",
+              borderRadius: 8,
             }}
           >
-            <label
-              style={{
-                fontWeight: 600,
-                fontSize: 14,
-                color: COLORS.textPrimary,
-              }}
-            >
-              Upload File <span style={{ color: COLORS.error }}>*</span>
-            </label>
+            <i
+              className="fa-solid fa-file-csv"
+              style={{ color: "#16A34A", fontSize: 14, flexShrink: 0 }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#15803D",
+                  display: "block",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {bulkFile.name}
+              </span>
+              <span style={{ fontSize: 11, color: "#4ADE80" }}>
+                {validBulkCount} email{validBulkCount !== 1 ? "s" : ""} imported
+                {invalidBulkCount > 0 && (
+                  <span style={{ color: "#EF4444", marginLeft: 6 }}>
+                    · {invalidBulkCount} skipped (invalid)
+                  </span>
+                )}
+              </span>
+            </div>
             <button
               type="button"
-              onClick={downloadTemplate}
+              onClick={() => {
+                clearBulkUpload();
+                // Remove imported emails from chips? Optional — keep them since user may want them
+              }}
               style={{
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                fontSize: 12,
-                color: COLORS.borderFocus || "#2563EB",
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
+                color: "#6B7280",
+                fontSize: 16,
+                lineHeight: 1,
+                flexShrink: 0,
               }}
+              title="Dismiss"
             >
-              <i className="fa-solid fa-download" style={{ fontSize: 11 }} />
-              Download Template
+              ×
             </button>
           </div>
+        )}
 
-          {/* Drop zone */}
-          {!bulkFile ? (
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setBulkDragOver(true);
-              }}
-              onDragLeave={() => setBulkDragOver(false)}
-              onDrop={handleBulkDrop}
-              onClick={() => bulkFileRef.current?.click()}
-              style={{
-                border: `2px dashed ${bulkDragOver ? COLORS.borderFocus || "#2563EB" : COLORS.borderLight || "#D1D5DB"}`,
-                borderRadius: 12,
-                padding: "32px 20px",
-                textAlign: "center",
-                cursor: "pointer",
-                background: bulkDragOver
-                  ? "#EFF6FF"
-                  : COLORS.surfaceLight || "#F9FAFB",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <i
-                className="fa-solid fa-file-arrow-up"
-                style={{
-                  fontSize: 32,
-                  color: "#9CA3AF",
-                  marginBottom: 10,
-                  display: "block",
-                }}
-              />
-              <p
-                style={{
-                  fontSize: 14,
-                  color: COLORS.textPrimary,
-                  fontWeight: 500,
-                  margin: 0,
-                }}
-              >
-                <span
-                  style={{
-                    color: COLORS.borderFocus || "#2563EB",
-                    fontWeight: 600,
-                  }}
-                >
-                  Click to upload
-                </span>{" "}
-                or drag & drop
-              </p>
-              <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>
-                CSV, XLS, or XLSX — one email per row under an "email" column
-              </p>
-              <input
-                ref={bulkFileRef}
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                style={{ display: "none" }}
-                onChange={(e) => parseFile(e.target.files[0])}
-              />
-            </div>
-          ) : (
-            /* File uploaded — show parsed results */
-            <div>
-              {/* File info bar */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 14px",
-                  background: "#F0FDF4",
-                  border: "1px solid #86EFAC",
-                  borderRadius: 10,
-                  marginBottom: 12,
-                }}
-              >
-                <i
-                  className="fa-solid fa-file-csv"
-                  style={{ color: "#16A34A", fontSize: 18 }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#15803D",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {bulkFile.name}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 11, color: "#4ADE80" }}>
-                    {validBulkCount} valid email
-                    {validBulkCount !== 1 ? "s" : ""}
-                    {invalidBulkCount > 0 && (
-                      <span style={{ color: "#EF4444", marginLeft: 6 }}>
-                        · {invalidBulkCount} invalid
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearBulkUpload}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#6B7280",
-                    fontSize: 16,
-                    lineHeight: 1,
-                  }}
-                  title="Remove file"
-                >
-                  ×
-                </button>
-              </div>
+        {/* ✅ Download template link — always visible below chip box */}
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 12,
+            color: COLORS.borderFocus || "#2563EB",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginTop: bulkFile ? 6 : 8,
+            padding: 0,
+          }}
+        >
+          <i className="fa-solid fa-download" style={{ fontSize: 11 }} />
+          Download Template
+        </button>
 
-              {/* Email list preview */}
-              <div
-                style={{
-                  maxHeight: 180,
-                  overflowY: "auto",
-                  border: `1px solid ${COLORS.borderLight || "#E5E7EB"}`,
-                  borderRadius: 10,
-                  background: "#fff",
-                }}
-              >
-                {bulkEmails.length === 0 ? (
-                  <p
-                    style={{
-                      textAlign: "center",
-                      padding: 16,
-                      fontSize: 13,
-                      color: "#9CA3AF",
-                    }}
-                  >
-                    No emails found in file
-                  </p>
-                ) : (
-                  bulkEmails.map((item, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "8px 12px",
-                        borderBottom:
-                          i < bulkEmails.length - 1
-                            ? `1px solid ${COLORS.borderLight || "#F3F4F6"}`
-                            : "none",
-                        gap: 8,
-                      }}
-                    >
-                      <i
-                        className={
-                          item.valid
-                            ? "fa-solid fa-circle-check"
-                            : "fa-solid fa-circle-xmark"
-                        }
-                        style={{
-                          fontSize: 14,
-                          color: item.valid ? "#22C55E" : "#EF4444",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span
-                        style={{
-                          flex: 1,
-                          fontSize: 13,
-                          color: item.valid ? COLORS.textPrimary : "#EF4444",
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        {item.email}
-                      </span>
-                      {!item.valid && (
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: "#EF4444",
-                            background: "#FEE2E2",
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                          }}
-                        >
-                          Invalid
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeBulkEmail(i)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#9CA3AF",
-                          fontSize: 14,
-                          lineHeight: 1,
-                          padding: "0 2px",
-                        }}
-                        title="Remove"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Re-upload link */}
-              <button
-                type="button"
-                onClick={() => {
-                  clearBulkUpload();
-                  setTimeout(() => bulkFileRef.current?.click(), 50);
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  color: COLORS.borderFocus || "#2563EB",
-                  marginTop: 8,
-                  fontWeight: 500,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <i
-                  className="fa-solid fa-arrow-rotate-left"
-                  style={{ fontSize: 11 }}
-                />
-                Upload a different file
-              </button>
-            </div>
-          )}
-
-          {submitted && errors.emails && (
+        {/* Validation error */}
+        {(submitted || touched.emails) &&
+          errors.emails &&
+          focused !== "emails" && (
             <p
               style={{
                 color: COLORS.error,
                 fontSize: 12,
-                marginTop: 6,
+                marginTop: 4,
                 display: "flex",
                 alignItems: "center",
                 gap: 4,
@@ -723,10 +496,9 @@ export default function InviteUsersModal({ onClose, onInvite }) {
               {errors.emails}
             </p>
           )}
-        </div>
-      )}
+      </div>
 
-      {/* ── ROLES (shared) ── */}
+      {/* ── ROLES ── */}
       <SingleSelectDropdown
         ref={rolesRef}
         label="Assign to Role"
@@ -740,7 +512,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         error={(submitted || touched.roles) && errors.roles}
       />
 
-      {/* ── GROUPS (shared, optional) ── */}
+      {/* ── GROUPS (optional) ── */}
       <MultiSelectDropdown
         label="Assign to Group(s)"
         options={groups.map((g) => ({
