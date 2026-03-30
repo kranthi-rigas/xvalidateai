@@ -268,6 +268,12 @@ export default function ModernSettings() {
                       id="firstName"
                       name="firstName"
                       value={userData.first_name}
+                      onChange={(e) =>
+                        setUserData((prev) => ({
+                          ...prev,
+                          first_name: e.target.value,
+                        }))
+                      }
                       className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
                     />
                   </div>
@@ -290,6 +296,12 @@ export default function ModernSettings() {
                       id="lastName"
                       name="lastName"
                       value={userData.last_name}
+                      onChange={(e) =>
+                        setUserData((prev) => ({
+                          ...prev,
+                          last_name: e.target.value,
+                        }))
+                      }
                       className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
                     />
                   </div>
