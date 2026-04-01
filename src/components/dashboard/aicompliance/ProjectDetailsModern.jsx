@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Plot from "react-plotly.js";
 import { COLORS } from "@/styles/colors";
 import { updateComplianceProject } from "../../../apiIntegration/compliance";
+import { trackUIEvent } from "../../../apiIntegration/audittrail";
 import ApproveRejectModal from "./ApproveRejectModal";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -58,6 +59,13 @@ export default function ProjectDetailsModern({ project, onBack }) {
     try {
       setIsDownloading(true);
       setIsPdfRendering(true);
+
+      // Track UI event: Export PDF button clicked
+      const auditResponse = await trackUIEvent({
+        event_type: "EXPORT_PDF_BUTTON_CLICKED",
+        resource_type: "REPORT_EXPORT",
+        resource_id: "export_pdf_button",
+      });
 
       await new Promise((r) => setTimeout(r, 100)); // wait for React state + Plotly to settle
 

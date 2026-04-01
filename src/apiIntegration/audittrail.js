@@ -36,3 +36,35 @@ export async function getAuditTrail(filters = {}) {
 
   return res.json();
 }
+
+export async function trackUIEvent(eventData) {
+  const {
+    event_type,
+    resource_type,
+    resource_id,
+    metadata = {},
+  } = eventData;
+
+  try {
+    const res = await fetchWithAuth(`${ENDPOINT}/ui-event`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event_type,
+        resource_type,
+        resource_id,
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      console.warn("Failed to track UI event:", error?.message || "Unknown error");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.warn("Error tracking UI event:", error);
+  }
+}
