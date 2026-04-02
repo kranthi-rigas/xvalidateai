@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import ListTable from "@/components/common/ListTable";
 import AwsButton from "@/components/common/AwsButton";
+import PageLoader from "@/components/common/PageLoader";
 import { HiPlus } from "react-icons/hi";
+import { getIncidents, createIncident } from "@/apiIntegration/incidents";
+
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ISSUE_TYPES = [
@@ -49,11 +53,10 @@ function Toast({ toasts, removeToast }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium min-w-[280px] ${
-            t.type === "success"
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium min-w-[280px] ${t.type === "success"
               ? "bg-green-50 border-green-200 text-green-800"
               : "bg-red-50 border-red-200 text-red-800"
-          }`}
+            }`}
         >
           <span>{t.type === "success" ? "✅" : "❌"}</span>
           <span className="flex-1">{t.message}</span>
@@ -92,7 +95,7 @@ function IssueRequestForm({ onBack, onSubmit, loading }) {
         ...prev,
         email: userInfo?.email || "",
       }));
-    } catch {}
+    } catch { }
   }, []);
 
   const validate = () => {
@@ -144,10 +147,9 @@ function IssueRequestForm({ onBack, onSubmit, loading }) {
     "w-full px-4 py-3 rounded-xl border text-sm transition-all outline-none bg-white focus:ring-2 focus:ring-[#0F3053]/20 focus:border-[#0F3053]";
 
   const inputClass = (field) =>
-    `${inputBase} ${
-      errors[field]
-        ? "border-red-400 bg-red-50/30"
-        : "border-gray-200 hover:border-gray-300"
+    `${inputBase} ${errors[field]
+      ? "border-red-400 bg-red-50/30"
+      : "border-gray-200 hover:border-gray-300"
     }`;
 
   return (
@@ -374,11 +376,10 @@ function IssueRequestForm({ onBack, onSubmit, loading }) {
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                      dragOver
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${dragOver
                         ? "border-[#0F3053] bg-[#0F3053]/5"
                         : "border-gray-200 hover:border-[#0F3053]/50 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <i className="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 mb-2 block" />
                     <p className="text-xs text-gray-600">
@@ -528,7 +529,8 @@ function IssueRequestForm({ onBack, onSubmit, loading }) {
 
 // ─── Main Administration Page ─────────────────────────────────────────────────
 export default function AdministrationPage() {
-  const [requests, setRequests] = useState([]); // ✅ empty — no mock data
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
@@ -539,12 +541,12 @@ export default function AdministrationPage() {
   const [toasts, setToasts] = useState([]);
 
   const [columnWidths, setColumnWidths] = useState({
-    id: 110,
+    request_id: 110,
     title: 200,
     email: 180,
     issue_type: 150,
     status: 130,
-    created_at: 130,
+    date: 130,
     attachments: 110,
   });
 
@@ -589,22 +591,23 @@ export default function AdministrationPage() {
   const removeToast = (id) =>
     setToasts((prev) => prev.filter((t) => t.id !== id));
 
+  const fetchIncidents = () => {
+    setLoading(true);
+    getIncidents()
+      .then((data) => setRequests(data.incidents ?? []))
+      .catch(() => addToast("Failed to load incidents.", "error"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
   const handleSubmit = async (formData) => {
     setSubmitting(true);
     try {
-      // TODO: replace with actual API call
-      await new Promise((r) => setTimeout(r, 1200));
-
-      const newRequest = {
-        id: `REQ-${String(requests.length + 1).padStart(3, "0")}`,
-        title: formData.title,
-        email: formData.email,
-        issue_type: formData.issue_type,
-        status: "pending",
-        created_at: Math.floor(Date.now() / 1000),
-        attachments: formData.attachments.map((f) => f.name),
-      };
-
+      const { attachments, issue_type, ...rest } = formData;
+      const newRequest = await createIncident({ ...rest, category: issue_type }, attachments);
       setRequests((prev) => [newRequest, ...prev]);
       setShowForm(false);
       addToast("Issue request submitted successfully!", "success");
@@ -615,9 +618,9 @@ export default function AdministrationPage() {
     }
   };
 
-  const formatDate = (ts) => {
-    if (!ts) return "-";
-    return new Date(ts * 1000).toLocaleDateString("en-GB", {
+  const formatDate = (val) => {
+    if (!val) return "-";
+    return new Date(val).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -637,33 +640,28 @@ export default function AdministrationPage() {
 
   const stats = {
     total: requests.length,
-    pending: requests.filter((r) => r.status === "pending").length,
+    pending: requests.filter((r) => r.status === "open").length,
     in_review: requests.filter((r) => r.status === "in_review").length,
     resolved: requests.filter((r) => r.status === "resolved").length,
   };
 
   // ── ListTable columns ──
   const columns = [
-    { key: "id", label: "Request ID", sortable: true, resizable: true },
+    { key: "request_id", label: "Request ID", sortable: true, resizable: true },
     { key: "title", label: "Title", sortable: true, resizable: true },
     { key: "email", label: "Email", sortable: true, resizable: true },
     { key: "issue_type", label: "Issue Type", sortable: true, resizable: true },
     { key: "status", label: "Status", sortable: true, resizable: true },
-    { key: "created_at", label: "Date", sortable: true, resizable: true },
-    {
-      key: "attachments",
-      label: "Attachments",
-      sortable: false,
-      resizable: true,
-    },
+    { key: "date", label: "Date", sortable: true, resizable: true },
+    { key: "attachments", label: "Attachments", sortable: false, resizable: true },
   ];
 
   const renderCell = (row, key) => {
     switch (key) {
-      case "id":
+      case "request_id":
         return (
           <span className="font-mono text-xs font-semibold text-[#0F3053] bg-blue-50 px-2 py-1 rounded-md">
-            {row.id}
+            {row.request_id}
           </span>
         );
       case "title":
@@ -693,10 +691,10 @@ export default function AdministrationPage() {
           </span>
         );
       }
-      case "created_at":
+      case "date":
         return (
           <span className="text-xs text-gray-500">
-            {formatDate(row.created_at)}
+            {formatDate(row.date)}
           </span>
         );
       case "attachments":
@@ -811,11 +809,10 @@ export default function AdministrationPage() {
                     setFilterStatus(s);
                     setPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    filterStatus === s
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterStatus === s
                       ? "text-white shadow-sm"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                    }`}
                   style={
                     filterStatus === s ? { backgroundColor: "#0F3053" } : {}
                   }
@@ -823,11 +820,18 @@ export default function AdministrationPage() {
                   {s === "all"
                     ? "All"
                     : s
-                        .replace("_", " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                      .replace("_", " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
                 </button>
               ),
             )}
+            <button
+              onClick={fetchIncidents}
+              title="Refresh"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            >
+              <i className="fa-solid fa-rotate-right" />
+            </button>
             <AwsButton
               onClick={() => setShowForm(true)}
               className="flex items-center px-5 py-2.5 shadow-md transition-all transform hover:scale-[1.02]"
@@ -839,31 +843,37 @@ export default function AdministrationPage() {
         </div>
 
         {/* ListTable */}
-        <div className="flex-1 overflow-hidden">
-          <ListTable
-            columns={columns}
-            data={paginated}
-            rowKey="id"
-            renderCell={renderCell}
-            sortConfig={sortConfig}
-            onSort={(key) =>
-              setSortConfig((prev) => ({
-                key,
-                direction:
-                  prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-              }))
-            }
-            columnWidths={columnWidths}
-            startResize={startResize}
-            pagination={{
-              page,
-              pageSize,
-              total: filtered.length,
-              onPageChange: setPage,
-            }}
-            enableExport={true}
-            exportFileName="issue-requests"
-          />
+        <div className="relative flex-1 overflow-hidden">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <PageLoader loading />
+            </div>
+          ) : (
+            <ListTable
+              columns={columns}
+              data={paginated}
+              rowKey="request_id"
+              renderCell={renderCell}
+              sortConfig={sortConfig}
+              onSort={(key) =>
+                setSortConfig((prev) => ({
+                  key,
+                  direction:
+                    prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+                }))
+              }
+              columnWidths={columnWidths}
+              startResize={startResize}
+              pagination={{
+                page,
+                pageSize,
+                total: filtered.length,
+                onPageChange: setPage,
+              }}
+              enableExport={true}
+              exportFileName="issue-requests"
+            />
+          )}
         </div>
       </div>
     </div>
