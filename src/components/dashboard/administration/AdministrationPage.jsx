@@ -16,8 +16,8 @@ const ISSUE_TYPES = [
 ];
 
 const STATUS_CONFIG = {
-  pending: {
-    label: "Pending",
+  open: {
+    label: "open",
     bg: "bg-amber-50",
     text: "text-amber-700",
     border: "border-amber-200",
@@ -607,10 +607,10 @@ export default function AdministrationPage() {
     setSubmitting(true);
     try {
       const { attachments, issue_type, ...rest } = formData;
-      const newRequest = await createIncident({ ...rest, category: issue_type }, attachments);
-      setRequests((prev) => [newRequest, ...prev]);
+      await createIncident({ ...rest, category: issue_type }, attachments);
       setShowForm(false);
       addToast("Issue request submitted successfully!", "success");
+      fetchIncidents();
     } catch {
       addToast("Failed to submit request. Please try again.", "error");
     } finally {
@@ -640,7 +640,7 @@ export default function AdministrationPage() {
 
   const stats = {
     total: requests.length,
-    pending: requests.filter((r) => r.status === "open").length,
+    open: requests.filter((r) => r.status === "open").length,
     in_review: requests.filter((r) => r.status === "in_review").length,
     resolved: requests.filter((r) => r.status === "resolved").length,
   };
@@ -681,7 +681,7 @@ export default function AdministrationPage() {
         );
       }
       case "status": {
-        const s = STATUS_CONFIG[row.status] || STATUS_CONFIG.pending;
+        const s = STATUS_CONFIG[row.status] || STATUS_CONFIG.open;
         return (
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${s.bg} ${s.text} ${s.border}`}
@@ -761,8 +761,8 @@ export default function AdministrationPage() {
             bg: "bg-blue-50",
           },
           {
-            label: "Pending",
-            value: stats.pending,
+            label: "open",
+            value: stats.open,
             icon: "fa-clock",
             color: "text-amber-600",
             bg: "bg-amber-50",
@@ -820,7 +820,7 @@ export default function AdministrationPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {["all", "pending", "in_review", "resolved", "rejected"].map(
+            {["all", "open", "in_review", "resolved", "rejected"].map(
               (s) => (
                 <button
                   key={s}
