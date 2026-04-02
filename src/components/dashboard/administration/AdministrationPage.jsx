@@ -699,12 +699,31 @@ export default function AdministrationPage() {
         );
       case "attachments":
         return row.attachments?.length > 0 ? (
-          <div className="flex items-center gap-1 justify-center">
-            <i className="fa-solid fa-paperclip text-gray-400 text-xs" />
-            <span className="text-xs text-gray-500">
-              {row.attachments.length} file
-              {row.attachments.length > 1 ? "s" : ""}
-            </span>
+          <div className="flex flex-col gap-1">
+            {row.attachments.map((att) =>
+              att.download_url ? (
+                <a
+                  key={att.filename}
+                  href={att.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-[#0F3053] hover:underline truncate max-w-[120px]"
+                  title={att.filename}
+                >
+                  <i className="fa-solid fa-paperclip text-[10px] flex-shrink-0" />
+                  {att.filename}
+                </a>
+              ) : (
+                <span
+                  key={att.filename}
+                  className="flex items-center gap-1 text-xs text-gray-500 truncate max-w-[120px]"
+                  title={att.filename}
+                >
+                  <i className="fa-solid fa-paperclip text-[10px] flex-shrink-0" />
+                  {att.filename}
+                </span>
+              )
+            )}
           </div>
         ) : (
           <span className="text-xs text-gray-300">—</span>
