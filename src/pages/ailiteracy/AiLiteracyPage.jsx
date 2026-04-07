@@ -9,6 +9,7 @@ import IncidentResponseExercise from "./IncidentResponseExercise";
 import MermaidDiagram from "./MermaidDiagram";
 import { useLocation } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
+import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 
 export default function AiLiteracyPage() {
   const location = useLocation();
@@ -79,6 +80,73 @@ export default function AiLiteracyPage() {
         });
       }
     }, 50);
+  };
+
+  const PD_DOCS = [
+    {
+      id: "ai_resilient",
+      file: "ai_resilient_assessments_PD.pdf",
+      title: "AI-Resilient Assessments",
+      description:
+        "Strategies and frameworks for designing assessments that remain meaningful and valid in an AI-enabled environment.",
+      icon: "fa-solid fa-shield-halved",
+      color: "#0F3357",
+      bg: "#e8f0f8",
+    },
+    {
+      id: "ai_tools_landscape",
+      file: "ai_tools_landscape_PD.pdf",
+      title: "AI Tools Landscape",
+      description:
+        "A curated overview of current AI tools relevant to education — capabilities, risks, and guidance for responsible use.",
+      icon: "fa-solid fa-layer-group",
+      color: "#7c3aed",
+      bg: "#ede9fe",
+    },
+    {
+      id: "how_ai_works",
+      file: "how_ai_works_primer_PD.pdf",
+      title: "How AI Works: A Primer",
+      description:
+        "An accessible introduction to how modern AI systems work, written for educators without a technical background.",
+      icon: "fa-solid fa-microchip",
+      color: "#0891b2",
+      bg: "#e0f2fe",
+    },
+    {
+      id: "prompt_literacy",
+      file: "prompt_literacy_PD.pdf",
+      title: "Prompt Literacy",
+      description:
+        "Developing the skills to communicate effectively with AI systems — crafting prompts that produce useful, reliable outputs.",
+      icon: "fa-solid fa-keyboard",
+      color: "#ea580c",
+      bg: "#fff7ed",
+    },
+    {
+      id: "teaching_ai_responsible",
+      file: "teaching_ai_responsible_PD.pdf",
+      title: "Teaching AI Responsibly",
+      description:
+        "Practical guidance on embedding responsible AI principles into classroom practice and school-wide policy.",
+      icon: "fa-solid fa-chalkboard-user",
+      color: "#198038",
+      bg: "#e8f5e9",
+    },
+  ];
+
+  const handleDownloadDoc = async (doc) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+      const organizationName = userInfo?.organization?.name || "XVALIDATEAI";
+      await downloadPdfWithWatermark(
+        `/documents/${doc.file}`,
+        doc.file,
+        organizationName
+      );
+    } catch (err) {
+      showToast("Failed to download document. Please try again.", "error");
+    }
   };
 
   const headings = {
@@ -472,6 +540,134 @@ export default function AiLiteracyPage() {
                 >
                   Start Exercise
                 </button>
+              </div>
+            </div>
+
+            {/* ── Professional Development Resources ─────────────────────── */}
+            <div style={{ maxWidth: 1000, margin: "40px auto 0" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 20,
+                }}
+              >
+                <div
+                  style={{
+                    width: 4,
+                    height: 22,
+                    background: COLORS.primary,
+                    borderRadius: 2,
+                  }}
+                />
+                <h3
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: COLORS.textPrimary,
+                    margin: 0,
+                  }}
+                >
+                  Professional Development Resources
+                </h3>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: 16,
+                }}
+              >
+                {PD_DOCS.map((doc) => (
+                  <div
+                    key={doc.id}
+                    style={{
+                      border: `1px solid ${COLORS.borderLight}`,
+                      borderRadius: 12,
+                      padding: "20px 22px",
+                      background: COLORS.bgPrimary,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 10,
+                          background: doc.bg,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <i
+                          className={doc.icon}
+                          style={{ fontSize: 17, color: doc.color }}
+                        />
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            fontSize: 14,
+                            color: COLORS.textPrimary,
+                            marginBottom: 4,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {doc.title}
+                        </div>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: COLORS.textMuted,
+                            margin: 0,
+                            lineHeight: 1.55,
+                          }}
+                        >
+                          {doc.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleDownloadDoc(doc)}
+                      style={{
+                        marginTop: "auto",
+                        padding: "9px 0",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: doc.color,
+                        background: doc.bg,
+                        border: `1px solid ${doc.color}`,
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 7,
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = doc.color;
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = doc.bg;
+                        e.currentTarget.style.color = doc.color;
+                      }}
+                    >
+                      <i className="fa-solid fa-download" style={{ fontSize: 13 }} />
+                      Download
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </PageTransition>
