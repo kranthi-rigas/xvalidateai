@@ -123,40 +123,45 @@ export default function AuditLogPage() {
   const startIndex = (page - 1) * pageSize;
   const paginatedData = filtered.slice(startIndex, startIndex + pageSize);
 
-  /* ---------------- EXPORT CSV ---------------- */
+  /* ---------------- EXPORT XLSX ---------------- */
 
-  const exportExcel = () => {
-    if (!filtered.length) return;
+const exportExcel = () => {
+  if (!filtered.length) return;
 
-    const rows = filtered.map((row) => ({
-      audit_id: row.audit_id,
-      // user_id: row.user_id,
-      user: row.performed_by
-        ? `${row.performed_by.first_name} ${row.performed_by.last_name} <${row.performed_by.email}>`
-        : "",
-      event_type: row.event_type,
-      result: row.result,
-      resource_type: row.resource_type,
-      timestamp: row.timestamp,
-      user_agent: row.user_agent,
-      details: JSON.stringify(row.details),
-    }));
+  const rows = filtered.map((row) => ({
+    "Audit ID": row.audit_id,
+    User: row.performed_by
+      ? `${row.performed_by.first_name} ${row.performed_by.last_name} <${row.performed_by.email}>`
+      : "",
+    "Event Type": row.event_type,
+    Result: row.result,
+    "Resource Type": row.resource_type,
+    Timestamp: row.timestamp ? new Date(row.timestamp).toLocaleString() : "",
+    "User Agent": row.user_agent,
+    Details: JSON.stringify(row.details),
+  }));
 
-    const csv = [
-      Object.keys(rows[0]).join(","),
-      ...rows.map((r) => Object.values(r).join(",")),
-    ].join("\n");
+  // Dynamically import SheetJS
+  import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs").then((XLSX) => {
+    const ws = XLSX.utils.json_to_sheet(rows);
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 36 }, // Audit ID
+      { wch: 40 }, // User
+      { wch: 20 }, // Event Type
+      { wch: 12 }, // Result
+      { wch: 20 }, // Resource Type
+      { wch: 22 }, // Timestamp
+      { wch: 50 }, // User Agent
+      { wch: 50 }, // Details
+    ];
 
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "audit_logs.csv";
-    a.click();
-  };
-
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Audit Logs");
+    XLSX.writeFile(wb, "audit_logs.xlsx");
+  });
+};
   /* ---------------- TABLE COLUMNS ---------------- */
 
   const columns = [
