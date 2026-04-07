@@ -99,7 +99,7 @@ export default function OrgUsers({ refreshProjects }) {
   async function loadUsers() {
     try {
       const res = await getUsers();
-      setUsers(res.users || []);
+      setUsers(res); // ✅ res is already the array
     } catch (err) {
       console.error("Failed to load users:", err);
     }

@@ -129,20 +129,49 @@ export async function inviteUsers(payload) {
 }
 
 // Fetch all users
-export async function getUsers({ limit = 100, lastKey = null } = {}) {
-  let query = `?limit=${limit}`;
-  if (lastKey) query += `&last_evaluated_key=${encodeURIComponent(lastKey)}`;
+export async function getUsers({ limit = 100 } = {}) {
+  let allUsers = [];
+  let lastKey = null;
+  let hasMore = true;
+  let pageCount = 0;
+  const MAX_PAGES = 50; // safety cap
 
-  const res = await fetchWithAuth(`${ENDPOINT}/users${query}`, {
-    method: "GET",
-  });
+  try {
+    while (hasMore && pageCount < MAX_PAGES) {
+      pageCount++;
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Failed to fetch users");
+      let query = `?limit=${limit}`;
+      if (lastKey) {
+        query += `&last_evaluated_key=${encodeURIComponent(lastKey)}`;
+      }
+
+      const res = await fetchWithAuth(`${ENDPOINT}/users${query}`, {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Failed to fetch users");
+      }
+
+      const data = await res.json();
+
+      const users = data.users || [];
+      allUsers.push(...users);
+
+      hasMore = data.has_more === true;
+      lastKey = data.last_evaluated_key || null;
+
+      // Stop if no pagination key returned
+      if (!lastKey) hasMore = false;
+    }
+
+    return allUsers;
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
   }
-
-  return res.json();
 }
 
 // Add users to a group

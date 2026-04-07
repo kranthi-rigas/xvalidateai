@@ -1,7 +1,74 @@
 import React, { useState, useEffect } from "react";
+import Select from "react-select";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
-import { updatePassword } from "@/apiIntegration/auth";
+import {
+  updatePassword,
+  fetchUserProfile,
+  updateUserProfile,
+} from "@/apiIntegration/auth";
+
+// ── Country flag helpers ───────────────────────────────────────────────────
+const CountryOption = ({ data, innerProps, innerRef, isFocused }) => (
+  <div
+    ref={innerRef}
+    {...innerProps}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "8px 12px",
+      background: isFocused ? "#EEF2FF" : "#fff",
+      cursor: "pointer",
+    }}
+  >
+    <img
+      src={data.flag}
+      alt={data.label}
+      width={20}
+      height={14}
+      style={{ borderRadius: 2 }}
+    />
+    <span>{data.label}</span>
+  </div>
+);
+
+const CountrySingleValue = ({ data }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <img
+      src={data.flag}
+      alt={data.label}
+      width={20}
+      height={14}
+      style={{ borderRadius: 2 }}
+    />
+    <span>{data.label}</span>
+  </div>
+);
+
+const selectStyles = {
+  control: (base) => ({
+    ...base,
+    minHeight: 40,
+    borderRadius: 8,
+    borderColor: "hsl(var(--border))",
+    boxShadow: "none",
+    "&:hover": { borderColor: "hsl(var(--border))" },
+  }),
+  valueContainer: (base) => ({
+    ...base,
+    display: "flex",
+    alignItems: "center",
+    padding: "0 12px",
+  }),
+  singleValue: (base) => ({
+    ...base,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  }),
+  indicatorSeparator: () => ({ display: "none" }),
+};
 
 // ── Reusable password input ────────────────────────────────────────────────
 function PasswordInput({
@@ -15,7 +82,6 @@ function PasswordInput({
 }) {
   return (
     <div className="relative flex items-center">
-      {/* Fixed-width icon container so text never overlaps */}
       <span className="absolute left-0 w-10 h-full flex items-center justify-center text-muted-foreground pointer-events-none">
         <i className="fa-solid fa-lock text-sm" />
       </span>
@@ -44,50 +110,197 @@ function PasswordInput({
   );
 }
 
+// ── Main Component ─────────────────────────────────────────────────────────
 export default function ModernSettings() {
   const [activeTab, setActiveTab] = useState("edit");
-  const [userData, setUserData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
+
+  // ── Profile state ──────────────────────────────────────────────────────
+  const [countries, setCountries] = useState([]);
+  const [profile, setProfile] = useState({
+    firstName: "",
+    lastName: "",
     phone: "",
-    country: "",
+    phoneCode: "",
+    email: "",
+    country: null,
   });
+  const [previewImage, setPreviewImage] = useState("");
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState(null);
+  const [profileError, setProfileError] = useState(null);
 
-  useEffect(() => {
-    try {
-      const userInfo = localStorage.getItem("user_info");
-      if (userInfo) {
-        const parsed = JSON.parse(userInfo);
-        setUserData({
-          first_name: parsed.first_name || "",
-          last_name: parsed.last_name || "",
-          email: parsed.email || "",
-          phone: parsed.phone || "",
-          country: parsed.country || "",
-        });
-      }
-    } catch (error) {
-      console.error("Error loading user data:", error);
-    }
-  }, []);
-
+  // ── Password state ─────────────────────────────────────────────────────
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
     confirm_password: "",
   });
-
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false,
   });
-
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
+  // ── Load countries ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const res = await fetch(
+          "https://restcountries.com/v3.1/all?fields=name,idd,cca2",
+        );
+        const data = await res.json();
+        const formatted = data
+          .filter(
+            (c) =>
+              c?.idd?.root &&
+              c?.name?.common &&
+              typeof c?.name?.common === "string" &&
+              c?.cca2,
+          )
+          .map((c) => ({
+            label: c.name.common,
+            value: c.name.common,
+            code: c.idd.root + (c.idd.suffixes?.[0] || ""),
+            flag: `https://flagcdn.com/w20/${c.cca2.toLowerCase()}.png`,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+        setCountries(formatted);
+      } catch (err) {
+        console.error("Failed to load countries", err);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // ── Fetch profile from API (runs after countries load) ─────────────────
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setProfileLoading(false);
+        return;
+      }
+      try {
+        const data = await fetchUserProfile(token);
+        const matchedCountry =
+          countries.find((c) => c.value === data.country) || null;
+
+        setProfile({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: data.email || "",
+          country: matchedCountry,
+          phoneCode: matchedCountry?.code || "",
+          phone: matchedCountry
+            ? (data.phone || "").replace(matchedCountry.code, "")
+            : data.phone || "",
+        });
+
+        if (data.avatar_url) setPreviewImage(data.avatar_url);
+      } catch (err) {
+        setProfileError("Failed to load profile. Please try again later.");
+        console.error("Error fetching user profile:", err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    loadProfile();
+  }, [countries]);
+
+  // ── Phone validation ───────────────────────────────────────────────────
+  const validatePhone = () => {
+    if (!profile.country) return "Please select a country";
+    if (profile.country.label === "India") {
+      if (profile.phone.length !== 10)
+        return "Indian phone number must be 10 digits";
+    } else {
+      if (profile.phone.length < 6 || profile.phone.length > 15)
+        return "Phone number must be between 6 and 15 digits";
+    }
+    return null;
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    if (profile.country?.label === "India" && value.length > 10) return;
+    if (value.length > 15) return;
+    setProfile((prev) => ({ ...prev, phone: value }));
+  };
+
+  // ── Image upload ───────────────────────────────────────────────────────
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewImage(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setPreviewImage("");
+  };
+
+  // ── Profile submit ─────────────────────────────────────────────────────
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileMessage(null);
+    setProfileError(null);
+
+    const validationError = validatePhone();
+    if (validationError) {
+      setProfileError(validationError);
+      return;
+    }
+
+    setProfileSaving(true);
+    const token = localStorage.getItem("access_token");
+
+    const payload = {
+      first_name: profile.firstName,
+      last_name: profile.lastName,
+      phone: `${profile.phoneCode}${profile.phone}`,
+      country: profile.country?.label || "",
+      avatar_url: previewImage || "",
+    };
+
+    try {
+      await updateUserProfile(token, payload);
+
+      // ✅ Update localStorage so sidebar/header reflects changes immediately
+      const existing = JSON.parse(localStorage.getItem("user_info") || "{}");
+      localStorage.setItem(
+        "user_info",
+        JSON.stringify({
+          ...existing,
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          phone: `${profile.phoneCode}${profile.phone}`,
+          country: profile.country?.label || "",
+        }),
+      );
+
+      setProfileMessage("Profile updated successfully!");
+    } catch (err) {
+      setProfileError("Failed to update profile. Please try again later.");
+      console.error("Update profile error:", err);
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  // ── Computed values ────────────────────────────────────────────────────
+  const initials =
+    (profile.firstName?.[0] || "").toUpperCase() +
+    (profile.lastName?.[0] || "").toUpperCase();
+
+  const phoneValidationError = validatePhone();
+  const isProfileFormInvalid = !!phoneValidationError || profileSaving;
+
+  // ── Password handlers ──────────────────────────────────────────────────
   const passwordsMatch =
     passwordForm.new_password &&
     passwordForm.confirm_password &&
@@ -143,18 +356,13 @@ export default function ModernSettings() {
         window.location.replace("/");
       }, 2000);
     } catch (err) {
-      // Extract the human-readable message from various error shapes:
-      // 1. API throws { error: "Current password is incorrect", error_code: "..." }
-      // 2. API throws Error with .message already set to the error string
-      // 3. API attaches response body to err.data / err.response
       const errorMessage =
-        err?.error || // { error: "..." } thrown directly
-        err?.data?.error || // axios-style err.data
-        err?.response?.data?.error || // axios-style err.response.data
-        err?.message || // plain Error object
+        err?.error ||
+        err?.data?.error ||
+        err?.response?.data?.error ||
+        err?.message ||
         "Failed to update password";
 
-      // Token/session expired → redirect silently
       if (
         errorMessage.toLowerCase().includes("token") ||
         errorMessage.toLowerCase().includes("expired")
@@ -164,13 +372,13 @@ export default function ModernSettings() {
         window.location.replace("/");
         return;
       }
-
       setPasswordError(errorMessage);
     } finally {
       setPasswordLoading(false);
     }
   };
 
+  // ── Tab button helper ──────────────────────────────────────────────────
   const TAB = (key, label, extra = "") => (
     <button
       onClick={() => setActiveTab(key)}
@@ -186,7 +394,7 @@ export default function ModernSettings() {
 
   return (
     <div className="spicy-y">
-      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
+      {/* ── Tabs ──────────────────────────────────────────────────────────── */}
       <div className="mb-8 border-b border-border">
         <nav className="flex space-x-8" aria-label="Tabs">
           {TAB("edit", "Edit Profile")}
@@ -201,26 +409,41 @@ export default function ModernSettings() {
         </nav>
       </div>
 
-      {/* ── Edit Profile ─────────────────────────────────────────────────── */}
+      {/* ── Edit Profile Tab ──────────────────────────────────────────────── */}
       {activeTab === "edit" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-          {/* Avatar */}
+          {/* Avatar section */}
           <div className="p-6 sm:p-8 border-b border-border bg-gradient-to-r from-blue-50/50 to-transparent">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
               <div className="relative flex-shrink-0">
-                <div
-                  className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white"
-                  style={{ backgroundColor: COLORS.primary }}
-                >
-                  {(userData.first_name?.[0] || "").toUpperCase()}
-                  {(userData.last_name?.[0] || "").toUpperCase()}
-                </div>
-                <button
-                  className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm border-2 border-white"
+                {previewImage ? (
+                  <img
+                    src={previewImage}
+                    alt="Avatar"
+                    className="w-24 h-24 rounded-full object-cover shadow-md ring-4 ring-white"
+                  />
+                ) : (
+                  <div
+                    className="w-24 h-24 rounded-full text-white flex items-center justify-center text-2xl font-bold shadow-md ring-4 ring-white"
+                    style={{ backgroundColor: COLORS.primary }}
+                  >
+                    {initials || "?"}
+                  </div>
+                )}
+                <label
+                  htmlFor="avatarUpload"
+                  className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm border-2 border-white cursor-pointer"
                   style={{ backgroundColor: COLORS.secondary }}
                 >
                   <i className="fa-solid fa-camera text-xs" />
-                </button>
+                  <input
+                    id="avatarUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-1">
@@ -230,14 +453,15 @@ export default function ModernSettings() {
                   PNG or JPG no bigger than 800px wide and tall.
                 </p>
                 <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="px-4 py-2 text-xs font-medium bg-white border border-border rounded-lg text-foreground hover:bg-muted transition-colors shadow-sm"
+                  <label
+                    htmlFor="avatarUpload"
+                    className="px-4 py-2 text-xs font-medium bg-white border border-border rounded-lg text-foreground hover:bg-muted transition-colors shadow-sm cursor-pointer"
                   >
                     Upload New
-                  </button>
+                  </label>
                   <button
                     type="button"
+                    onClick={handleRemoveImage}
                     className="px-4 py-2 text-xs font-medium text-destructive hover:bg-red-50 rounded-lg transition-colors"
                   >
                     Remove
@@ -247,212 +471,210 @@ export default function ModernSettings() {
             </div>
           </div>
 
-          {/* Fields */}
+          {/* Profile form */}
           <div className="p-6 sm:p-8">
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                {/* First Name */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="firstName"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    First Name
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                      <i className="fa-regular fa-user" />
-                    </span>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={userData.first_name}
-                      className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
-                    />
+            {profileLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <i className="fa-solid fa-spinner fa-spin text-2xl text-muted-foreground" />
+                <span className="ml-3 text-sm text-muted-foreground">
+                  Loading profile...
+                </span>
+              </div>
+            ) : (
+              <form onSubmit={handleProfileSubmit}>
+                {/* Success / Error banners */}
+                {profileMessage && (
+                  <div className="mb-5 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                    <i className="fa-solid fa-circle-check text-green-600 mt-0.5" />
+                    <p className="text-sm text-green-800">{profileMessage}</p>
                   </div>
-                </div>
-
-                {/* Last Name */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="lastName"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Last Name
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                      <i className="fa-regular fa-user" />
-                    </span>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={userData.last_name}
-                      className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
-                    />
+                )}
+                {profileError && (
+                  <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                    <i className="fa-solid fa-circle-exclamation text-red-600 mt-0.5" />
+                    <p className="text-sm text-red-800">{profileError}</p>
                   </div>
-                </div>
+                )}
 
-                {/* Email */}
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor="email"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Email Address
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                      <i className="fa-regular fa-envelope" />
-                    </span>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={userData.email}
-                      className="block w-full pl-11 pr-24 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
-                    />
-                    <span className="absolute right-3 pointer-events-none">
-                      <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
-                        Verified
-                      </span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Country */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="country"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Country
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                      <i className="fa-solid fa-globe" />
-                    </span>
-                    <select
-                      id="country"
-                      name="country"
-                      className="block w-full pl-11 pr-10 py-2 bg-white border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-sm text-foreground appearance-none cursor-pointer"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                  {/* First Name */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="firstName"
+                      className="text-sm font-medium text-foreground"
                     >
-                      <option value="">Select country</option>
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
-                      <option value="UK">United Kingdom</option>
-                      <option value="IN" selected>
-                        India
-                      </option>
-                    </select>
-                    <span className="absolute right-3 pointer-events-none">
-                      <i className="fa-solid fa-chevron-down text-xs text-muted-foreground" />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Phone */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="phone"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Phone Number
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative w-20 flex-none flex items-center">
-                      <select className="block w-full pl-2 pr-6 py-2 bg-white border border-border rounded-lg outline-none text-sm text-foreground appearance-none cursor-pointer">
-                        <option value="+1">+1</option>
-                        <option value="+91" selected>
-                          +91
-                        </option>
-                        <option value="+44">+44</option>
-                      </select>
-                      <span className="absolute right-1.5 pointer-events-none">
-                        <i className="fa-solid fa-chevron-down text-xs text-muted-foreground" />
-                      </span>
-                    </div>
-                    <div className="relative flex-1 flex items-center">
+                      First Name
+                    </label>
+                    <div className="relative flex items-center">
                       <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                        <i className="fa-solid fa-phone" />
+                        <i className="fa-regular fa-user" />
                       </span>
                       <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        placeholder="98765 43210"
-                        value={userData.phone}
-                        className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-sm text-foreground placeholder-muted-foreground"
+                        type="text"
+                        id="firstName"
+                        value={profile.firstName}
+                        onChange={(e) =>
+                          setProfile((prev) => ({
+                            ...prev,
+                            firstName: e.target.value,
+                          }))
+                        }
+                        placeholder="First Name"
+                        required
+                        className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* Job Title */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="jobTitle"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Job Title
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-muted-foreground pointer-events-none">
-                      <i className="fa-solid fa-briefcase" />
-                    </span>
-                    <input
-                      type="text"
-                      id="jobTitle"
-                      name="jobTitle"
-                      placeholder="e.g. Senior Developer"
-                      className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-sm text-foreground placeholder-muted-foreground"
+                  {/* Last Name */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="lastName"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Last Name
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-muted-foreground pointer-events-none">
+                        <i className="fa-regular fa-user" />
+                      </span>
+                      <input
+                        type="text"
+                        id="lastName"
+                        value={profile.lastName}
+                        onChange={(e) =>
+                          setProfile((prev) => ({
+                            ...prev,
+                            lastName: e.target.value,
+                          }))
+                        }
+                        placeholder="Last Name"
+                        required
+                        className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email — read-only */}
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Email Address
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3 text-muted-foreground pointer-events-none">
+                        <i className="fa-regular fa-envelope" />
+                      </span>
+                      <input
+                        type="email"
+                        id="email"
+                        value={profile.email}
+                        disabled
+                        className="block w-full pl-11 pr-24 py-2 bg-muted/50 border border-border rounded-lg outline-none text-sm text-foreground opacity-70 cursor-not-allowed"
+                      />
+                      <span className="absolute right-3 pointer-events-none">
+                        <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
+                          Verified
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Country — react-select with flags */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">
+                      Country
+                    </label>
+                    <Select
+                      options={countries}
+                      value={profile.country}
+                      placeholder="Select country"
+                      isClearable
+                      isSearchable
+                      components={{
+                        Option: CountryOption,
+                        SingleValue: CountrySingleValue,
+                      }}
+                      onChange={(selected) => {
+                        setProfile((prev) => ({
+                          ...prev,
+                          country: selected,
+                          phoneCode: selected?.code || "",
+                          phone: "",
+                        }));
+                      }}
+                      styles={selectStyles}
                     />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="phone"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Phone Number
+                    </label>
+                    <div className="flex gap-2">
+                      {/* Phone code — read-only, auto-filled from country */}
+                      <input
+                        type="text"
+                        value={profile.phoneCode}
+                        disabled
+                        className="w-20 flex-none px-2 py-2 bg-muted border border-border rounded-lg outline-none text-sm text-center font-medium text-foreground opacity-70 cursor-not-allowed"
+                      />
+                      <div className="relative flex-1 flex items-center">
+                        <span className="absolute left-3 text-muted-foreground pointer-events-none">
+                          <i className="fa-solid fa-phone" />
+                        </span>
+                        <input
+                          type="tel"
+                          id="phone"
+                          value={profile.phone}
+                          onChange={handlePhoneChange}
+                          placeholder="Phone number"
+                          required
+                          className="block w-full pl-11 pr-3 py-2 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-sm text-foreground placeholder-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                    {phoneValidationError && (
+                      <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                        <i className="fa-solid fa-circle-exclamation" />
+                        {phoneValidationError}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Bio */}
-                <div className="space-y-1.5 md:col-span-2">
-                  <label
-                    htmlFor="bio"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Bio{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Optional)
-                    </span>
-                  </label>
-                  <textarea
-                    id="bio"
-                    rows="3"
-                    placeholder="Brief description for your profile..."
-                    className="block w-full p-3 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-sm text-foreground placeholder-muted-foreground resize-none"
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-5 border-t border-border">
+                  <AwsButton
+                    type="button"
+                    label="Cancel"
+                    variant="secondary"
+                    onClick={() => {
+                      setProfileMessage(null);
+                      setProfileError(null);
+                    }}
                   />
-                  <p className="text-xs text-muted-foreground text-right">
-                    0/250 characters
-                  </p>
+                  <AwsButton
+                    type="submit"
+                    label={profileSaving ? "Saving..." : "Update Profile"}
+                    variant="primary"
+                    disabled={isProfileFormInvalid}
+                    loading={profileSaving}
+                  />
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-5 border-t border-border">
-                <AwsButton
-                  label="Cancel"
-                  variant="secondary"
-                  onClick={() => {}}
-                />
-                <AwsButton
-                  label="Update Profile"
-                  variant="primary"
-                  onClick={() => {}}
-                />
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}
 
-      {/* ── Password Tab ─────────────────────────────────────────────────── */}
+      {/* ── Password Tab ──────────────────────────────────────────────────── */}
       {activeTab === "password" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
           <div className="mb-6">
@@ -466,15 +688,12 @@ export default function ModernSettings() {
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="max-w-md">
-            {/* Success */}
             {passwordSuccess && (
               <div className="mb-5 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
                 <i className="fa-solid fa-circle-check text-green-600 mt-0.5" />
                 <p className="text-sm text-green-800">{passwordSuccess}</p>
               </div>
             )}
-
-            {/* Error */}
             {passwordError && (
               <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <i className="fa-solid fa-circle-exclamation text-red-600 mt-0.5" />
@@ -483,7 +702,6 @@ export default function ModernSettings() {
             )}
 
             <div className="space-y-5">
-              {/* Current Password */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="current_password"
@@ -502,7 +720,6 @@ export default function ModernSettings() {
                 />
               </div>
 
-              {/* New Password */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="new_password"
@@ -530,7 +747,6 @@ export default function ModernSettings() {
                 </p>
               </div>
 
-              {/* Confirm Password */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="confirm_password"
@@ -567,7 +783,6 @@ export default function ModernSettings() {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
               <button
                 type="button"
@@ -597,7 +812,6 @@ export default function ModernSettings() {
             </div>
           </form>
 
-          {/* Security Tips */}
           <div className="mt-6 max-w-md p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
               <i className="fa-solid fa-shield-halved" /> Security Tips
@@ -615,7 +829,7 @@ export default function ModernSettings() {
         </div>
       )}
 
-      {/* ── Preferences ──────────────────────────────────────────────────── */}
+      {/* ── Preferences Tab ───────────────────────────────────────────────── */}
       {activeTab === "preferences" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
           <h2 className="text-xl font-semibold text-primary mb-6">
@@ -627,7 +841,7 @@ export default function ModernSettings() {
         </div>
       )}
 
-      {/* ── Close Account ─────────────────────────────────────────────────── */}
+      {/* ── Close Account Tab ─────────────────────────────────────────────── */}
       {activeTab === "close" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
           <h2

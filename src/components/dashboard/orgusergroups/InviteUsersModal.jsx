@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import * as XLSX from "xlsx";
 import { getUserAttributes } from "../../../apiIntegration/organization";
 import SingleSelectDropdown from "../../common/SingleSelectDropdown";
 import MultiSelectDropdown from "../../common/MultiSelectDropdown";
@@ -10,9 +11,16 @@ import { COLORS } from "../../../styles/colors";
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export default function InviteUsersModal({ onClose, onInvite }) {
+  // Email chip state
   const [chipEmails, setChipEmails] = useState([]);
   const [emailInput, setEmailInput] = useState("");
 
+  // File upload state
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkEmails, setBulkEmails] = useState([]); // { email, valid }[] — for counts display
+  const bulkFileRef = useRef(null);
+
+  // Shared state
   const [roles, setRoles] = useState([]);
   const [groups, setGroups] = useState([]);
   const rolesRef = useRef(null);
@@ -20,18 +28,14 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
   const [rolesSelected, setRolesSelected] = useState("");
   const [selectedGroups, setSelectedGroups] = useState([]);
-
-  /* ---------- VALIDATION STATE ---------- */
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [focused, setFocused] = useState(null);
-
   const [loading, setLoading] = useState(false);
   const [modalError, setModalError] = useState(false);
   const show = useToast();
 
-  /* ---------- LOAD ROLES / GROUPS ---------- */
   useEffect(() => {
     async function loadAttributes() {
       try {
@@ -43,35 +47,29 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         show("Failed to load user attributes", { type: "error" });
       }
     }
-
     loadAttributes();
     chipInputRef.current?.focus();
   }, []);
 
-  /* ---------- VALIDATION ---------- */
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const errs = {};
-
     if (chipEmails.length === 0) {
       errs.emails = "At least one email is required.";
     }
-
     if (!rolesSelected) {
       errs.roles = "Select at least one role.";
     }
-
     return errs;
   };
 
-  /* ---------- EMAIL CHIP HANDLING ---------- */
+  // ── Manual chip handling ───────────────────────────────────────────────────
   const addEmail = (email) => {
     const clean = email.trim();
     if (!clean) return;
-
     if (!chipEmails.includes(clean)) {
       setChipEmails((prev) => [...prev, clean]);
     }
-
     setEmailInput("");
     setErrors((p) => ({ ...p, emails: "" }));
   };
@@ -82,62 +80,120 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
   const handleChipInput = (e) => {
     const saveKeys = ["Enter", ",", " "];
-
     if (e.key === "Tab") {
-      if (emailInput.trim()) {
-        addEmail(emailInput);
-      }
-
-      // 🔥 MARK TOUCHED BEFORE LEAVING
+      if (emailInput.trim()) addEmail(emailInput);
       setTouched((p) => ({ ...p, emails: true }));
       setFocused(null);
-
-      // 🔥 VALIDATE BEFORE MOVING
-      const validation = validate();
-      setErrors(validation);
-
+      setErrors(validate());
       e.preventDefault();
-
-      // move focus to roles
       setTimeout(() => rolesRef.current?.focus?.(), 0);
       return;
     }
-
     if (saveKeys.includes(e.key) && emailInput.trim()) {
       e.preventDefault();
       addEmail(emailInput);
     }
   };
 
-  /* ---------- SUBMIT ---------- */
+  // ── File parsing — imports directly into chip emails ───────────────────────
+  const parseFile = (file) => {
+    if (!file) return;
+    setBulkFile(file);
+    setErrors((p) => ({ ...p, emails: "" }));
+
+    const ext = file.name.split(".").pop().toLowerCase();
+
+    if (ext === "csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const lines = e.target.result
+          .split(/[\n,;]+/)
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .filter((l) => l.includes("@")); // only email-like values
+
+        const parsed = lines.map((email) => ({
+          email,
+          valid: isValidEmail(email),
+        }));
+        setBulkEmails(parsed);
+        // ✅ Merge valid emails directly into chip emails
+        const validEmails = parsed.filter((e) => e.valid).map((e) => e.email);
+        setChipEmails((prev) => [...new Set([...prev, ...validEmails])]);
+      };
+      reader.readAsText(file);
+    } else if (["xlsx", "xls"].includes(ext)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const allCells = rows.flat().map((c) => String(c || "").trim());
+        const emailCells = allCells.filter((c) => c.includes("@"));
+        const parsed = emailCells.map((email) => ({
+          email,
+          valid: isValidEmail(email),
+        }));
+        setBulkEmails(parsed);
+        // ✅ Merge valid emails directly into chip emails
+        const validEmails = parsed.filter((e) => e.valid).map((e) => e.email);
+        setChipEmails((prev) => [...new Set([...prev, ...validEmails])]);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      show("Unsupported file. Please upload a CSV or Excel file.", {
+        type: "error",
+      });
+    }
+  };
+
+  const clearBulkUpload = () => {
+    setBulkFile(null);
+    setBulkEmails([]);
+    if (bulkFileRef.current) bulkFileRef.current.value = "";
+  };
+
+  // ── Download CSV template ──────────────────────────────────────────────────
+  const downloadTemplate = () => {
+    const csv =
+      "email\nuser1@example.com\nuser2@example.com\nuser3@example.com";
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "invite-users-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleInvite = async () => {
     setSubmitted(true);
-
     const validation = validate();
     setErrors(validation);
     if (Object.keys(validation).length) return;
+
+    if (chipEmails.length === 0) {
+      setErrors((p) => ({ ...p, emails: "No valid emails to invite." }));
+      return;
+    }
 
     try {
       setLoading(true);
       const result = await onInvite(
         chipEmails,
-        [rolesSelected], // 👈 wrap single role
+        [rolesSelected],
         selectedGroups,
       );
-
-      if (result?.success) {
-        onClose();
-      }
+      if (result?.success) onClose();
     } catch (err) {
       console.error("Invite error:", err);
-
       const message =
         err?.response?.data?.message ||
         err?.message ||
         "Failed to invite users. Please try again.";
-
       show(message, { type: "error", duration: 5000 });
-
       setModalError(true);
       setTimeout(() => setModalError(false), 5000);
     } finally {
@@ -145,31 +201,24 @@ export default function InviteUsersModal({ onClose, onInvite }) {
     }
   };
 
-  /* ---------- CHIP INPUT STYLE ---------- */
-  /* ---------- CHIP INPUT STYLE ---------- */
+  // ── Chip box style ─────────────────────────────────────────────────────────
   const chipBoxStyle = () => {
     const hasError =
       (submitted || touched.emails) &&
       Boolean(errors.emails) &&
       focused !== "emails";
-
     const isFocused = focused === "emails";
-
     return {
       width: "100%",
       minHeight: 48,
       borderRadius: 12,
-
-      // Single border - no double ring
       border: hasError
         ? `2px solid ${COLORS.error || "#DC2626"}`
         : isFocused
           ? `2px solid ${COLORS.borderFocus || "#2563EB"}`
           : `1px solid ${COLORS.borderLight || "#D1D5DB"}`,
-
       boxShadow: "none",
       outline: "none",
-
       background: COLORS.surfaceLight || "#F9FAFB",
       padding: "6px 10px",
       display: "flex",
@@ -177,15 +226,17 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       gap: 6,
       transition: "border 0.15s ease",
       cursor: "text",
-
-      // Force remove any inherited properties
       WebkitAppearance: "none",
       MozAppearance: "none",
       appearance: "none",
     };
   };
 
-  /* ---------- FOOTER ---------- */
+  const validBulkCount = bulkEmails.filter((e) => e.valid).length;
+  const invalidBulkCount = bulkEmails.filter((e) => !e.valid).length;
+  const inviteCount = chipEmails.length;
+
+  // ── Footer ─────────────────────────────────────────────────────────────────
   const footer = (
     <>
       <AwsButton
@@ -195,7 +246,13 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         disabled={loading}
       />
       <AwsButton
-        label={loading ? "Inviting…" : "Invite Users"}
+        label={
+          loading
+            ? "Inviting…"
+            : inviteCount > 0
+              ? `Invite ${inviteCount} User${inviteCount !== 1 ? "s" : ""}`
+              : "Invite Users"
+        }
         variant="primary"
         disabled={loading}
         loading={loading}
@@ -214,21 +271,74 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       error={modalError}
       closeOnOverlayClick={!loading}
     >
-      {/* EMAILS */}
-      <div style={{ marginBottom: "20px" }}>
-        <label
+      {/* ── EMAILS ── */}
+      <div style={{ marginBottom: 20 }}>
+        {/* Label row — label left, Import File button right */}
+        <div
           style={{
-            display: "block",
-            fontWeight: 600,
-            fontSize: "14px",
-            lineHeight: 1.5,
-            color: COLORS.textPrimary,
-            marginBottom: "6px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 6,
           }}
         >
-          Email(s) <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>
-        </label>
+          <label
+            style={{
+              fontWeight: 600,
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: COLORS.textPrimary,
+            }}
+          >
+            Email(s){" "}
+            <span style={{ color: COLORS.error, marginLeft: 4 }}>*</span>
+          </label>
 
+          {/* ✅ Import File button */}
+          <button
+            type="button"
+            onClick={() => bulkFileRef.current?.click()}
+            title="Import emails from CSV or Excel"
+            style={{
+              background: "none",
+              border: `1px solid ${COLORS.borderLight || "#D1D5DB"}`,
+              borderRadius: 8,
+              cursor: "pointer",
+              fontSize: 12,
+              color: COLORS.textSecondary || "#6B7280",
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 10px",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor =
+                COLORS.borderFocus || "#2563EB";
+              e.currentTarget.style.color = COLORS.borderFocus || "#2563EB";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor =
+                COLORS.borderLight || "#D1D5DB";
+              e.currentTarget.style.color = COLORS.textSecondary || "#6B7280";
+            }}
+          >
+            <i className="fa-solid fa-file-arrow-up" style={{ fontSize: 12 }} />
+            Import File
+          </button>
+
+          {/* Hidden file input */}
+          <input
+            ref={bulkFileRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            style={{ display: "none" }}
+            onChange={(e) => parseFile(e.target.files[0])}
+          />
+        </div>
+
+        {/* Chip input box */}
         <div
           style={chipBoxStyle()}
           onClick={() => chipInputRef.current?.focus()}
@@ -248,18 +358,13 @@ export default function InviteUsersModal({ onClose, onInvite }) {
             >
               {email}
               <span
-                style={{
-                  marginLeft: 8,
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
+                style={{ marginLeft: 8, cursor: "pointer", fontWeight: 700 }}
                 onClick={() => removeEmail(i)}
               >
                 ×
               </span>
             </div>
           ))}
-
           <input
             ref={chipInputRef}
             value={emailInput}
@@ -269,12 +374,8 @@ export default function InviteUsersModal({ onClose, onInvite }) {
             onBlur={() => {
               setFocused(null);
               setTouched((p) => ({ ...p, emails: true }));
-              const validation = validate();
-              setErrors(validation);
-
-              if (emailInput.trim()) {
-                addEmail(emailInput);
-              }
+              setErrors(validate());
+              if (emailInput.trim()) addEmail(emailInput);
             }}
             placeholder="Enter email and press Enter…"
             style={{
@@ -289,6 +390,92 @@ export default function InviteUsersModal({ onClose, onInvite }) {
           />
         </div>
 
+        {/* ✅ File import info bar — shown after a file is uploaded */}
+        {bulkFile && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 8,
+              padding: "7px 12px",
+              background: "#F0FDF4",
+              border: "1px solid #86EFAC",
+              borderRadius: 8,
+            }}
+          >
+            <i
+              className="fa-solid fa-file-csv"
+              style={{ color: "#16A34A", fontSize: 14, flexShrink: 0 }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#15803D",
+                  display: "block",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {bulkFile.name}
+              </span>
+              <span style={{ fontSize: 11, color: "#4ADE80" }}>
+                {validBulkCount} email{validBulkCount !== 1 ? "s" : ""} imported
+                {invalidBulkCount > 0 && (
+                  <span style={{ color: "#EF4444", marginLeft: 6 }}>
+                    · {invalidBulkCount} skipped (invalid)
+                  </span>
+                )}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                clearBulkUpload();
+                // Remove imported emails from chips? Optional — keep them since user may want them
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#6B7280",
+                fontSize: 16,
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+              title="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ✅ Download template link — always visible below chip box */}
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 12,
+            color: COLORS.borderFocus || "#2563EB",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginTop: bulkFile ? 6 : 8,
+            padding: 0,
+          }}
+        >
+          <i className="fa-solid fa-download" style={{ fontSize: 11 }} />
+          Download Template
+        </button>
+
+        {/* Validation error */}
         {(submitted || touched.emails) &&
           errors.emails &&
           focused !== "emails" && (
@@ -302,25 +489,16 @@ export default function InviteUsersModal({ onClose, onInvite }) {
                 gap: 4,
               }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path
-                  d="M7 0C3.13438 0 0 3.13438 0 7C0 10.8656 3.13438 14 7 14C10.8656 14 14 10.8656 14 7C14 3.13438 10.8656 0 7 0ZM7 10.5C6.65625 10.5 6.375 10.2188 6.375 9.875V7C6.375 6.65625 6.65625 6.375 7 6.375C7.34375 6.375 7.625 6.65625 7.625 7V9.875C7.625 10.2188 7.34375 10.5 7 10.5ZM7 5.25C6.65625 5.25 6.375 4.96875 6.375 4.625V4.125C6.375 3.78125 6.65625 3.5 7 3.5C7.34375 3.5 7.625 3.78125 7.625 4.125V4.625C7.625 4.96875 7.34375 5.25 7 5.25Z"
-                  fill={COLORS.error}
-                />
-              </svg>
+              <i
+                className="fa-solid fa-circle-exclamation"
+                style={{ fontSize: 12 }}
+              />
               {errors.emails}
             </p>
           )}
       </div>
 
-      {/* ROLES */}
+      {/* ── ROLES ── */}
       <SingleSelectDropdown
         ref={rolesRef}
         label="Assign to Role"
@@ -334,7 +512,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         error={(submitted || touched.roles) && errors.roles}
       />
 
-      {/* GROUPS (OPTIONAL) */}
+      {/* ── GROUPS (optional) ── */}
       <MultiSelectDropdown
         label="Assign to Group(s)"
         options={groups.map((g) => ({
