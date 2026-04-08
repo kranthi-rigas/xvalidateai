@@ -10,6 +10,95 @@ import MermaidDiagram from "./MermaidDiagram";
 import { useLocation } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
 import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
+import PdfViewerModal from "./PdfViewerModal";
+
+const PD_DOCS = [
+  {
+    id: "ai_resilient",
+    file: "ai_resilient_assessments_PD.pdf",
+    title: "AI-Resilient Assessments",
+    description:
+      "Strategies and frameworks for designing assessments that remain meaningful and valid in an AI-enabled environment.",
+    icon: "fa-solid fa-shield-halved",
+    color: "#7c3aed",
+    bg: "#ede9fe",
+  },
+  {
+    id: "ai_tools_landscape",
+    file: "ai_tools_landscape_PD.pdf",
+    title: "AI Tools Landscape",
+    description:
+      "A curated overview of current AI tools relevant to education — capabilities, risks, and guidance for responsible use.",
+    icon: "fa-solid fa-layer-group",
+    color: "#0891b2",
+    bg: "#e0f2fe",
+  },
+  {
+    id: "how_ai_works",
+    file: "how_ai_works_primer_PD.pdf",
+    title: "How AI Works: A Primer",
+    description:
+      "An accessible introduction to how modern AI systems work, written for educators without a technical background.",
+    icon: "fa-solid fa-microchip",
+    color: "#0891b2",
+    bg: "#e0f2fe",
+  },
+  {
+    id: "prompt_literacy",
+    file: "prompt_literacy_PD.pdf",
+    title: "Prompt Literacy",
+    description:
+      "Developing the skills to communicate effectively with AI systems — crafting prompts that produce useful, reliable outputs.",
+    icon: "fa-solid fa-keyboard",
+    color: "#ea580c",
+    bg: "#fff7ed",
+  },
+  {
+    id: "teaching_ai_responsible",
+    file: "teaching_ai_responsible_PD.pdf",
+    title: "Teaching AI Responsibly",
+    description:
+      "Practical guidance on embedding responsible AI principles into classroom practice and school-wide policy.",
+    icon: "fa-solid fa-chalkboard-user",
+    color: "#198038",
+    bg: "#e8f5e9",
+  },
+];
+
+const PD_MODULES = [
+  {
+    id: "understanding_ai",
+    title: "Understanding AI",
+    icon: "fa-solid fa-microchip",
+    color: "#0891b2",
+    bg: "#e0f2fe",
+    docs: [
+      PD_DOCS.find((d) => d.id === "how_ai_works"),
+      PD_DOCS.find((d) => d.id === "ai_tools_landscape"),
+    ],
+  },
+  {
+    id: "teaching_practice",
+    title: "Teaching Practice",
+    icon: "fa-solid fa-chalkboard-user",
+    color: "#198038",
+    bg: "#e8f5e9",
+    docs: [
+      PD_DOCS.find((d) => d.id === "teaching_ai_responsible"),
+      PD_DOCS.find((d) => d.id === "prompt_literacy"),
+    ],
+  },
+  {
+    id: "assessment_resilience",
+    title: "Assessment & Resilience",
+    icon: "fa-solid fa-shield-halved",
+    color: "#7c3aed",
+    bg: "#ede9fe",
+    docs: [
+      PD_DOCS.find((d) => d.id === "ai_resilient"),
+    ],
+  },
+];
 
 export default function AiLiteracyPage() {
   const location = useLocation();
@@ -21,6 +110,7 @@ export default function AiLiteracyPage() {
   const topRef = useRef(null);
   const playbookRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+  const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -81,59 +171,6 @@ export default function AiLiteracyPage() {
       }
     }, 50);
   };
-
-  const PD_DOCS = [
-    {
-      id: "ai_resilient",
-      file: "ai_resilient_assessments_PD.pdf",
-      title: "AI-Resilient Assessments",
-      description:
-        "Strategies and frameworks for designing assessments that remain meaningful and valid in an AI-enabled environment.",
-      icon: "fa-solid fa-shield-halved",
-      color: "#0F3357",
-      bg: "#e8f0f8",
-    },
-    {
-      id: "ai_tools_landscape",
-      file: "ai_tools_landscape_PD.pdf",
-      title: "AI Tools Landscape",
-      description:
-        "A curated overview of current AI tools relevant to education — capabilities, risks, and guidance for responsible use.",
-      icon: "fa-solid fa-layer-group",
-      color: "#7c3aed",
-      bg: "#ede9fe",
-    },
-    {
-      id: "how_ai_works",
-      file: "how_ai_works_primer_PD.pdf",
-      title: "How AI Works: A Primer",
-      description:
-        "An accessible introduction to how modern AI systems work, written for educators without a technical background.",
-      icon: "fa-solid fa-microchip",
-      color: "#0891b2",
-      bg: "#e0f2fe",
-    },
-    {
-      id: "prompt_literacy",
-      file: "prompt_literacy_PD.pdf",
-      title: "Prompt Literacy",
-      description:
-        "Developing the skills to communicate effectively with AI systems — crafting prompts that produce useful, reliable outputs.",
-      icon: "fa-solid fa-keyboard",
-      color: "#ea580c",
-      bg: "#fff7ed",
-    },
-    {
-      id: "teaching_ai_responsible",
-      file: "teaching_ai_responsible_PD.pdf",
-      title: "Teaching AI Responsibly",
-      description:
-        "Practical guidance on embedding responsible AI principles into classroom practice and school-wide policy.",
-      icon: "fa-solid fa-chalkboard-user",
-      color: "#198038",
-      bg: "#e8f5e9",
-    },
-  ];
 
   const handleDownloadDoc = async (doc) => {
     try {
@@ -543,129 +580,152 @@ export default function AiLiteracyPage() {
               </div>
             </div>
 
-            {/* ── Professional Development Resources ─────────────────────── */}
+            {/* ── Professional Development Modules ───────────────────────── */}
             <div style={{ maxWidth: 1000, margin: "40px auto 0" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 20,
-                }}
-              >
-                <div
-                  style={{
-                    width: 4,
-                    height: 22,
-                    background: COLORS.primary,
-                    borderRadius: 2,
-                  }}
-                />
-                <h3
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: COLORS.textPrimary,
-                    margin: 0,
-                  }}
-                >
-                  Professional Development Resources
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                <div style={{ width: 4, height: 22, background: COLORS.primary, borderRadius: 2 }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>
+                  Professional Development Modules
                 </h3>
               </div>
 
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
                   gap: 16,
                 }}
               >
-                {PD_DOCS.map((doc) => (
+                {PD_MODULES.map((module) => (
                   <div
-                    key={doc.id}
+                    key={module.id}
                     style={{
                       border: `1px solid ${COLORS.borderLight}`,
+                      borderLeft: `4px solid ${module.color}`,
                       borderRadius: 12,
                       padding: "20px 22px",
                       background: COLORS.bgPrimary,
                       display: "flex",
                       flexDirection: "column",
-                      gap: 12,
+                      gap: 14,
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    {/* Module header */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div
                         style={{
                           width: 40,
                           height: 40,
                           borderRadius: 10,
-                          background: doc.bg,
+                          background: module.bg,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           flexShrink: 0,
                         }}
                       >
-                        <i
-                          className={doc.icon}
-                          style={{ fontSize: 17, color: doc.color }}
-                        />
+                        <i className={module.icon} style={{ fontSize: 17, color: module.color }} />
                       </div>
-                      <div>
-                        <div
-                          style={{
-                            fontWeight: 700,
-                            fontSize: 14,
-                            color: COLORS.textPrimary,
-                            marginBottom: 4,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {doc.title}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textPrimary, lineHeight: 1.3 }}>
+                          {module.title}
                         </div>
-                        <p
-                          style={{
-                            fontSize: 13,
-                            color: COLORS.textMuted,
-                            margin: 0,
-                            lineHeight: 1.55,
-                          }}
-                        >
-                          {doc.description}
-                        </p>
                       </div>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: module.color,
+                          background: module.bg,
+                          padding: "2px 8px",
+                          borderRadius: 20,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {module.docs.length} {module.docs.length === 1 ? "resource" : "resources"}
+                      </span>
                     </div>
 
-                    <button
-                      onClick={() => handleDownloadDoc(doc)}
-                      style={{
-                        marginTop: "auto",
-                        padding: "9px 0",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: doc.color,
-                        background: doc.bg,
-                        border: `1px solid ${doc.color}`,
-                        borderRadius: 8,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 7,
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = doc.color;
-                        e.currentTarget.style.color = "#fff";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = doc.bg;
-                        e.currentTarget.style.color = doc.color;
-                      }}
-                    >
-                      <i className="fa-solid fa-download" style={{ fontSize: 13 }} />
-                      Download
-                    </button>
+                    {/* Divider */}
+                    <div style={{ height: 1, background: COLORS.borderLight }} />
+
+                    {/* Document rows */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {module.docs.map((doc) => (
+                        <div
+                          key={doc.id}
+                          style={{ display: "flex", alignItems: "center", gap: 10 }}
+                        >
+                          <div
+                            style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 6,
+                              background: doc.bg,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <i className={doc.icon} style={{ fontSize: 12, color: doc.color }} />
+                          </div>
+                          <span
+                            style={{
+                              flex: 1,
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: COLORS.textPrimary,
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {doc.title}
+                          </span>
+                          {/* View button */}
+                          <button
+                            onClick={() => setPdfViewerDoc(doc)}
+                            title="View"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: module.color,
+                              padding: "5px 8px",
+                              borderRadius: 6,
+                              fontSize: 13,
+                              display: "flex",
+                              alignItems: "center",
+                              transition: "background 0.15s",
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.background = module.bg)}
+                            onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
+                          >
+                            <i className="fa-solid fa-eye" />
+                          </button>
+                          {/* Download button */}
+                          <button
+                            onClick={() => handleDownloadDoc(doc)}
+                            title="Download"
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: COLORS.textMuted,
+                              padding: "5px 8px",
+                              borderRadius: 6,
+                              fontSize: 13,
+                              display: "flex",
+                              alignItems: "center",
+                              transition: "background 0.15s",
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.background = COLORS.bgSecondary)}
+                            onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
+                          >
+                            <i className="fa-solid fa-download" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -806,6 +866,14 @@ export default function AiLiteracyPage() {
           </PageTransition>
         )}
       </div>
+    {/* PDF Viewer Modal */}
+    <PdfViewerModal
+      isOpen={pdfViewerDoc !== null}
+      onClose={() => setPdfViewerDoc(null)}
+      doc={pdfViewerDoc}
+      onDownload={handleDownloadDoc}
+    />
+
     {/* Incomplete Answers Modal */}
     {showIncompleteModal && (
       <div
