@@ -134,7 +134,7 @@ export default function PdfViewerModal({ isOpen, onClose, doc, onDownload }) {
   });
 
   /* ── Footer ─────────────────────────────────────────────────────────────── */
-  const footer = doc && (
+  const footer = doc && onDownload && (
     <button
       onClick={() => onDownload(doc)}
       style={{

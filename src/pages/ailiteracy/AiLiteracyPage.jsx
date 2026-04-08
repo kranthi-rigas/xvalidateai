@@ -11,6 +11,8 @@ import { useLocation } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
 import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
+import { useContextElement } from "@/context/Context";
+import { hasAccess } from "@/utils/planAccess";
 
 const PD_DOCS = [
   {
@@ -107,11 +109,12 @@ export default function AiLiteracyPage() {
   const [result, setResult] = useState(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
   const showToast = useToast();
+  const { userPlan } = useContextElement();
+  const canDownload = hasAccess("business", userPlan);
   const topRef = useRef(null);
   const playbookRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
-  const [selectedModule, setSelectedModule] = useState(PD_MODULES[0]?.id || null);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -757,7 +760,7 @@ export default function AiLiteracyPage() {
           </PageTransition>
         )}
 
-        {/* PROFESSIONAL DEVELOPMENT (folder-like view) */}
+        {/* PROFESSIONAL DEVELOPMENT */}
         {view === "pd" && (
           <PageTransition>
             <div style={{ marginBottom: 20 }}>
@@ -780,77 +783,163 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
-              {/* Left: folder list */}
-              <div style={{ border: `1px solid ${COLORS.borderLight}`, borderRadius: 12, padding: 14, background: COLORS.bgPrimary }}>
-                <div style={{ fontWeight: 700, marginBottom: 10 }}>Modules</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {PD_MODULES.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedModule(m.id)}
+            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+              {PD_MODULES.map((mod) => (
+                <div key={mod.id}>
+                  {/* Module heading */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div
                       style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: mod.bg,
                         display: "flex",
                         alignItems: "center",
-                        gap: 10,
-                        background: selectedModule === m.id ? COLORS.bgSecondary : "transparent",
-                        border: "none",
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        cursor: "pointer",
+                        justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
-                      <div style={{ width: 34, height: 34, borderRadius: 8, background: m.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <i className={m.icon} style={{ color: m.color }} />
-                      </div>
-                      <div style={{ textAlign: "left" }}>
-                        <div style={{ fontWeight: 600 }}>{m.title}</div>
-                        <div style={{ fontSize: 12, color: COLORS.textMuted }}>{m.docs.length} {m.docs.length === 1 ? "resource" : "resources"}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: selected module content */}
-              <div style={{ border: `1px solid ${COLORS.borderLight}`, borderRadius: 12, padding: 18, background: COLORS.bgPrimary }}>
-                {(() => {
-                  const mod = PD_MODULES.find((x) => x.id === selectedModule) || PD_MODULES[0];
-                  if (!mod) return <div>No modules available</div>;
-                  return (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 48, height: 48, borderRadius: 10, background: mod.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <i className={mod.icon} style={{ fontSize: 20, color: mod.color }} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 16 }}>{mod.title}</div>
-                        </div>
-                      </div>
-
-                      <div style={{ height: 1, background: COLORS.borderLight }} />
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {mod.docs.map((doc) => (
-                          <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ width: 34, height: 34, borderRadius: 8, background: doc.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <i className={doc.icon} style={{ color: doc.color }} />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 700 }}>{doc.title}</div>
-                              <div style={{ fontSize: 13, color: COLORS.textMuted }}>{doc.description}</div>
-                            </div>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button onClick={() => setPdfViewerDoc(doc)} style={{ background: "none", border: "none", cursor: "pointer", color: mod.color }} title="View"><i className="fa-solid fa-eye" /></button>
-                              <button onClick={() => handleDownloadDoc(doc)} style={{ background: "none", border: "none", cursor: "pointer", color: COLORS.textMuted }} title="Download"><i className="fa-solid fa-download" /></button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
                     </div>
-                  );
-                })()}
-              </div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: mod.color,
+                        background: mod.bg,
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        marginLeft: 4,
+                      }}
+                    >
+                      {mod.docs.length} {mod.docs.length === 1 ? "resource" : "resources"}
+                    </span>
+                  </div>
+
+                  {/* Document cards */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {mod.docs.map((doc) => (
+                      <div
+                        key={doc.id}
+                        style={{
+                          border: `1px solid ${COLORS.borderLight}`,
+                          borderRadius: 12,
+                          padding: "16px 20px",
+                          background: COLORS.bgPrimary,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            background: doc.bg,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <i className={doc.icon} style={{ fontSize: 16, color: doc.color }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                            {doc.title}
+                          </div>
+                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                            {doc.description}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                          <button
+                            onClick={() => setPdfViewerDoc(doc)}
+                            title="View document"
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 8,
+                              border: `1px solid ${COLORS.borderLight}`,
+                              background: COLORS.bgPrimary,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: mod.color,
+                              fontSize: 14,
+                              transition: "all 0.15s",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = mod.bg;
+                              e.currentTarget.style.borderColor = mod.color;
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                            }}
+                          >
+                            <i className="fa-solid fa-eye" />
+                          </button>
+                          {canDownload ? (
+                            <button
+                              onClick={() => handleDownloadDoc(doc)}
+                              title="Download with watermark"
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                border: `1px solid ${COLORS.borderLight}`,
+                                background: COLORS.bgPrimary,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: COLORS.textMuted,
+                                fontSize: 14,
+                                transition: "all 0.15s",
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.background = COLORS.bgSecondary;
+                                e.currentTarget.style.borderColor = COLORS.textMuted;
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.background = COLORS.bgPrimary;
+                                e.currentTarget.style.borderColor = COLORS.borderLight;
+                              }}
+                            >
+                              <i className="fa-solid fa-download" />
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              title="Upgrade to Business or Enterprise to download"
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                border: `1px solid ${COLORS.borderLight}`,
+                                background: COLORS.bgSecondary,
+                                cursor: "not-allowed",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: COLORS.borderLight,
+                                fontSize: 14,
+                              }}
+                            >
+                              <i className="fa-solid fa-lock" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </PageTransition>
         )}
@@ -910,7 +999,7 @@ export default function AiLiteracyPage() {
       isOpen={pdfViewerDoc !== null}
       onClose={() => setPdfViewerDoc(null)}
       doc={pdfViewerDoc}
-      onDownload={handleDownloadDoc}
+      onDownload={canDownload ? handleDownloadDoc : null}
     />
 
     {/* Incomplete Answers Modal */}
