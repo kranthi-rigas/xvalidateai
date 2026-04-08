@@ -109,8 +109,16 @@ export default function AiLiteracyPage() {
   const showToast = useToast();
   const topRef = useRef(null);
   const playbookRef = useRef(null);
+  const pdRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
+  const [pdOpen, setPdOpen] = useState(false);
+  const [openModules, setOpenModules] = useState(() => {
+    const obj = {};
+    PD_MODULES.forEach((m) => (obj[m.id] = false));
+    return obj;
+  });
+  const [selectedModule, setSelectedModule] = useState(PD_MODULES[0]?.id || null);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -168,6 +176,20 @@ export default function AiLiteracyPage() {
           behavior: "smooth",
           block: "start",
         });
+      }
+    }, 50);
+  };
+
+  const handleViewPD = (moduleId) => {
+    setPdOpen(true);
+    setView("pd");
+    if (moduleId) {
+      setSelectedModule(moduleId);
+      setOpenModules((prev) => ({ ...prev, [moduleId]: true }));
+    }
+    setTimeout(() => {
+      if (pdRef.current) {
+        pdRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 50);
   };
@@ -329,6 +351,87 @@ export default function AiLiteracyPage() {
                   }
                 >
                   Take Assessment
+                </button>
+              </div>
+
+              {/* Professional Development Modules Card */}
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 14,
+                  padding: 32,
+                  background: COLORS.bgPrimary,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "#eef2ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-folder"
+                    style={{ fontSize: 22, color: COLORS.primary }}
+                  />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Professional Development Modules
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Curated modules and resources for educator professional
+                    development.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleViewPD()}
+                  style={{
+                    marginTop: 4,
+                    padding: "11px 32px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: COLORS.primary,
+                    background: "#eef2ff",
+                    border: `1px solid ${COLORS.primary}`,
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    width: "100%",
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = COLORS.primary;
+                    e.target.style.color = "#fff";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = "#eef2ff";
+                    e.target.style.color = COLORS.primary;
+                  }}
+                >
+                  View Modules
                 </button>
               </div>
 
@@ -581,7 +684,7 @@ export default function AiLiteracyPage() {
             </div>
 
             {/* ── Professional Development Modules ───────────────────────── */}
-            <div style={{ maxWidth: 1000, margin: "40px auto 0" }}>
+            <div ref={pdRef} style={{ maxWidth: 1000, margin: "40px auto 0" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                 <div style={{ width: 4, height: 22, background: COLORS.primary, borderRadius: 2 }} />
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: COLORS.textPrimary, margin: 0 }}>
@@ -610,8 +713,11 @@ export default function AiLiteracyPage() {
                       gap: 14,
                     }}
                   >
-                    {/* Module header */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* Module header (click to expand) */}
+                    <div
+                      onClick={() => setOpenModules((p) => ({ ...p, [module.id]: !p[module.id] }))}
+                      style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
+                    >
                       <div
                         style={{
                           width: 40,
@@ -631,101 +737,106 @@ export default function AiLiteracyPage() {
                           {module.title}
                         </div>
                       </div>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: module.color,
-                          background: module.bg,
-                          padding: "2px 8px",
-                          borderRadius: 20,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {module.docs.length} {module.docs.length === 1 ? "resource" : "resources"}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: module.color,
+                            background: module.bg,
+                            padding: "2px 8px",
+                            borderRadius: 20,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {module.docs.length} {module.docs.length === 1 ? "resource" : "resources"}
+                        </span>
+                        <i className={`fa-solid ${openModules[module.id] ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ color: module.color }} />
+                      </div>
                     </div>
 
                     {/* Divider */}
                     <div style={{ height: 1, background: COLORS.borderLight }} />
 
-                    {/* Document rows */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {module.docs.map((doc) => (
-                        <div
-                          key={doc.id}
-                          style={{ display: "flex", alignItems: "center", gap: 10 }}
-                        >
+                    {/* Document rows (expandable) */}
+                    {openModules[module.id] && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {module.docs.map((doc) => (
                           <div
-                            style={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: 6,
-                              background: doc.bg,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
+                            key={doc.id}
+                            style={{ display: "flex", alignItems: "center", gap: 10 }}
                           >
-                            <i className={doc.icon} style={{ fontSize: 12, color: doc.color }} />
+                            <div
+                              style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 6,
+                                background: doc.bg,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <i className={doc.icon} style={{ fontSize: 12, color: doc.color }} />
+                            </div>
+                            <span
+                              style={{
+                                flex: 1,
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: COLORS.textPrimary,
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {doc.title}
+                            </span>
+                            {/* View button */}
+                            <button
+                              onClick={() => setPdfViewerDoc(doc)}
+                              title="View"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: module.color,
+                                padding: "5px 8px",
+                                borderRadius: 6,
+                                fontSize: 13,
+                                display: "flex",
+                                alignItems: "center",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseOver={(e) => (e.currentTarget.style.background = module.bg)}
+                              onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
+                            >
+                              <i className="fa-solid fa-eye" />
+                            </button>
+                            {/* Download button */}
+                            <button
+                              onClick={() => handleDownloadDoc(doc)}
+                              title="Download"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: COLORS.textMuted,
+                                padding: "5px 8px",
+                                borderRadius: 6,
+                                fontSize: 13,
+                                display: "flex",
+                                alignItems: "center",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseOver={(e) => (e.currentTarget.style.background = COLORS.bgSecondary)}
+                              onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
+                            >
+                              <i className="fa-solid fa-download" />
+                            </button>
                           </div>
-                          <span
-                            style={{
-                              flex: 1,
-                              fontSize: 13,
-                              fontWeight: 500,
-                              color: COLORS.textPrimary,
-                              lineHeight: 1.35,
-                            }}
-                          >
-                            {doc.title}
-                          </span>
-                          {/* View button */}
-                          <button
-                            onClick={() => setPdfViewerDoc(doc)}
-                            title="View"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              color: module.color,
-                              padding: "5px 8px",
-                              borderRadius: 6,
-                              fontSize: 13,
-                              display: "flex",
-                              alignItems: "center",
-                              transition: "background 0.15s",
-                            }}
-                            onMouseOver={(e) => (e.currentTarget.style.background = module.bg)}
-                            onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
-                          >
-                            <i className="fa-solid fa-eye" />
-                          </button>
-                          {/* Download button */}
-                          <button
-                            onClick={() => handleDownloadDoc(doc)}
-                            title="Download"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              color: COLORS.textMuted,
-                              padding: "5px 8px",
-                              borderRadius: 6,
-                              fontSize: 13,
-                              display: "flex",
-                              alignItems: "center",
-                              transition: "background 0.15s",
-                            }}
-                            onMouseOver={(e) => (e.currentTarget.style.background = COLORS.bgSecondary)}
-                            onMouseOut={(e)  => (e.currentTarget.style.background = "none")}
-                          >
-                            <i className="fa-solid fa-download" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -811,6 +922,104 @@ export default function AiLiteracyPage() {
                 }}
               >
                 <MermaidDiagram chart={incidentFlowchart} />
+              </div>
+            </div>
+          </PageTransition>
+        )}
+
+        {/* PROFESSIONAL DEVELOPMENT (folder-like view) */}
+        {view === "pd" && (
+          <PageTransition>
+            <div style={{ marginBottom: 20 }}>
+              <button
+                onClick={() => setView("landing")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: COLORS.primary,
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <i className="fa-solid fa-arrow-left" /> Back
+              </button>
+            </div>
+
+            <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
+              {/* Left: folder list */}
+              <div style={{ border: `1px solid ${COLORS.borderLight}`, borderRadius: 12, padding: 14, background: COLORS.bgPrimary }}>
+                <div style={{ fontWeight: 700, marginBottom: 10 }}>Modules</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {PD_MODULES.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setSelectedModule(m.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        background: selectedModule === m.id ? COLORS.bgSecondary : "transparent",
+                        border: "none",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div style={{ width: 34, height: 34, borderRadius: 8, background: m.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <i className={m.icon} style={{ color: m.color }} />
+                      </div>
+                      <div style={{ textAlign: "left" }}>
+                        <div style={{ fontWeight: 600 }}>{m.title}</div>
+                        <div style={{ fontSize: 12, color: COLORS.textMuted }}>{m.docs.length} {m.docs.length === 1 ? "resource" : "resources"}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: selected module content */}
+              <div style={{ border: `1px solid ${COLORS.borderLight}`, borderRadius: 12, padding: 18, background: COLORS.bgPrimary }}>
+                {(() => {
+                  const mod = PD_MODULES.find((x) => x.id === selectedModule) || PD_MODULES[0];
+                  if (!mod) return <div>No modules available</div>;
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 10, background: mod.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <i className={mod.icon} style={{ fontSize: 20, color: mod.color }} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 16 }}>{mod.title}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ height: 1, background: COLORS.borderLight }} />
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {mod.docs.map((doc) => (
+                          <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 8, background: doc.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <i className={doc.icon} style={{ color: doc.color }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 700 }}>{doc.title}</div>
+                              <div style={{ fontSize: 13, color: COLORS.textMuted }}>{doc.description}</div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button onClick={() => setPdfViewerDoc(doc)} style={{ background: "none", border: "none", cursor: "pointer", color: mod.color }} title="View"><i className="fa-solid fa-eye" /></button>
+                              <button onClick={() => handleDownloadDoc(doc)} style={{ background: "none", border: "none", cursor: "pointer", color: COLORS.textMuted }} title="Download"><i className="fa-solid fa-download" /></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </PageTransition>
