@@ -26,7 +26,29 @@ H4 --> I
 H5 --> I
 I[Investigation & Resolution<br>Identify root cause and fix] --> J[Follow-up & Documentation]
 J --> K[Update Policy if Needed]
-K --> L[Training & Preventive Measures]`;
+K --> L[Training & Preventive Measures]
+
+classDef detection fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+classDef assessment fill:#fef3c7,stroke:#d97706,color:#78350f
+classDef low fill:#dcfce7,stroke:#16a34a,color:#14532d
+classDef moderate fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+classDef critical fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+classDef containment fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,font-weight:bold
+classDef notification fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+classDef stakeholder fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+classDef resolution fill:#cffafe,stroke:#0891b2,color:#164e63
+classDef followup fill:#dcfce7,stroke:#16a34a,color:#14532d
+
+class A,B detection
+class C assessment
+class D1 low
+class D2 moderate
+class D3 critical
+class E containment
+class F,G notification
+class H1,H2,H3,H4,H5 stakeholder
+class I resolution
+class J,K,L followup`;
 
 export default function IncidentPlaybook() {
   const containerRef = useRef(null);
