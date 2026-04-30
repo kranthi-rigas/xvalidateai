@@ -102,6 +102,72 @@ const PD_MODULES = [
   },
 ];
 
+const PLAYBOOK_ITEMS = [
+  {
+    id: "assessment",
+    title: "AI Literacy Assessment",
+    description:
+      "Rate 16 statements across four pillars to receive a score and your organisation's AI literacy level.",
+    icon: "fa-solid fa-graduation-cap",
+    color: "#0F3357",
+    bg: "#e3edfd",
+    actionTitle: "Start Assessment",
+  },
+  {
+    id: "incident_playbook",
+    title: "Incident Response Playbook",
+    description:
+      "A step-by-step guide for detecting, containing, and resolving AI-related incidents in your organisation.",
+    icon: "fa-solid fa-book-open",
+    color: "#198038",
+    bg: "#e8f5e9",
+    actionTitle: "View Playbook",
+  },
+  {
+    id: "incident_flowchart",
+    title: "Incident Response Flowchart",
+    description:
+      "Visualise the full end-to-end AI incident response process from detection through to resolution.",
+    icon: "fa-solid fa-diagram-project",
+    color: "#ea580c",
+    bg: "#fff7ed",
+    actionTitle: "View Flowchart",
+  },
+  {
+    id: "incident_exercise",
+    title: "Incident Response Exercise",
+    description:
+      "Complete the interactive playbook template to design your school's AI incident response process.",
+    icon: "fa-solid fa-pen-to-square",
+    color: "#7c3aed",
+    bg: "#ede9fe",
+    actionTitle: "Start Exercise",
+  },
+];
+
+const PLAYBOOK_MODULES = [
+  {
+    id: "ai_literacy",
+    title: "AI Literacy",
+    icon: "fa-solid fa-graduation-cap",
+    color: "#0F3357",
+    bg: "#e3edfd",
+    items: [PLAYBOOK_ITEMS.find((i) => i.id === "assessment")],
+  },
+  {
+    id: "incident_response",
+    title: "Incident Response",
+    icon: "fa-solid fa-shield-halved",
+    color: "#198038",
+    bg: "#e8f5e9",
+    items: [
+      PLAYBOOK_ITEMS.find((i) => i.id === "incident_playbook"),
+      PLAYBOOK_ITEMS.find((i) => i.id === "incident_flowchart"),
+      PLAYBOOK_ITEMS.find((i) => i.id === "incident_exercise"),
+    ],
+  },
+];
+
 export default function AiLiteracyPage() {
   const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
@@ -178,6 +244,20 @@ export default function AiLiteracyPage() {
 
   const handleViewPD = () => {
     setView("pd");
+  };
+
+  const handlePlaybookItemAction = (item) => {
+    if (item.id === "assessment") {
+      setView("questionnaire");
+    } else if (item.id === "incident_playbook") {
+      setShowPlaybook(true);
+      setView("results");
+      setResult(null);
+    } else if (item.id === "incident_flowchart") {
+      setView("flowchart");
+    } else if (item.id === "incident_exercise") {
+      setView("exercise");
+    }
   };
 
   const handleDownloadDoc = async (doc) => {
@@ -415,246 +495,111 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* AI Literacy Assessment */}
-              <div
-                style={{
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  background: COLORS.bgPrimary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: COLORS.primaryLighter,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <i className="fa-solid fa-graduation-cap" style={{ fontSize: 16, color: COLORS.primary }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
-                    AI Literacy Assessment
+            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+              {PLAYBOOK_MODULES.map((mod) => (
+                <div key={mod.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: mod.bg,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: mod.color,
+                        background: mod.bg,
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        marginLeft: 4,
+                      }}
+                    >
+                      {mod.items.length} {mod.items.length === 1 ? "resource" : "resources"}
+                    </span>
                   </div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
-                    Rate 16 statements across four pillars to receive a score and your organisation's AI literacy level.
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setView("questionnaire")}
-                    title="Start Assessment"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      border: `1px solid ${COLORS.borderLight}`,
-                      background: COLORS.bgPrimary,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: COLORS.primary,
-                      fontSize: 14,
-                      transition: "all 0.15s",
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = COLORS.primaryLighter; e.currentTarget.style.borderColor = COLORS.primary; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = COLORS.bgPrimary; e.currentTarget.style.borderColor = COLORS.borderLight; }}
-                  >
-                    <i className="fa-solid fa-arrow-right" />
-                  </button>
-                </div>
-              </div>
 
-              {/* Incident Response Playbook */}
-              <div
-                style={{
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  background: COLORS.bgPrimary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: "#e8f5e9",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <i className="fa-solid fa-book-open" style={{ fontSize: 16, color: COLORS.success }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
-                    Incident Response Playbook
-                  </div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
-                    A step-by-step guide for detecting, containing, and resolving AI-related incidents in your organisation.
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => { setShowPlaybook(true); setView("results"); setResult(null); }}
-                    title="View Playbook"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      border: `1px solid ${COLORS.borderLight}`,
-                      background: COLORS.bgPrimary,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: COLORS.success,
-                      fontSize: 14,
-                      transition: "all 0.15s",
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = "#e8f5e9"; e.currentTarget.style.borderColor = COLORS.success; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = COLORS.bgPrimary; e.currentTarget.style.borderColor = COLORS.borderLight; }}
-                  >
-                    <i className="fa-solid fa-arrow-right" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Incident Response Flowchart */}
-              <div
-                style={{
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  background: COLORS.bgPrimary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: "#fff7ed",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <i className="fa-solid fa-diagram-project" style={{ fontSize: 16, color: "#ea580c" }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
-                    Incident Response Flowchart
-                  </div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
-                    Visualise the full end-to-end AI incident response process from detection through to resolution.
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {mod.items.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          border: `1px solid ${COLORS.borderLight}`,
+                          borderRadius: 12,
+                          padding: "16px 20px",
+                          background: COLORS.bgPrimary,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            background: item.bg,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <i className={item.icon} style={{ fontSize: 16, color: item.color }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                            {item.title}
+                          </div>
+                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                            {item.description}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                          <button
+                            onClick={() => handlePlaybookItemAction(item)}
+                            title={item.actionTitle}
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 8,
+                              border: `1px solid ${COLORS.borderLight}`,
+                              background: COLORS.bgPrimary,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: item.color,
+                              fontSize: 14,
+                              transition: "all 0.15s",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = item.bg;
+                              e.currentTarget.style.borderColor = item.color;
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                            }}
+                          >
+                            <i className="fa-solid fa-arrow-right" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setView("flowchart")}
-                    title="View Flowchart"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      border: `1px solid ${COLORS.borderLight}`,
-                      background: COLORS.bgPrimary,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#ea580c",
-                      fontSize: 14,
-                      transition: "all 0.15s",
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = "#fff7ed"; e.currentTarget.style.borderColor = "#ea580c"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = COLORS.bgPrimary; e.currentTarget.style.borderColor = COLORS.borderLight; }}
-                  >
-                    <i className="fa-solid fa-arrow-right" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Incident Response Exercise */}
-              <div
-                style={{
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 12,
-                  padding: "16px 20px",
-                  background: COLORS.bgPrimary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    background: "#ede9fe",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <i className="fa-solid fa-pen-to-square" style={{ fontSize: 16, color: "#7c3aed" }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
-                    Incident Response Exercise
-                  </div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
-                    Complete the interactive playbook template to design your school's AI incident response process.
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setView("exercise")}
-                    title="Start Exercise"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 8,
-                      border: `1px solid ${COLORS.borderLight}`,
-                      background: COLORS.bgPrimary,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#7c3aed",
-                      fontSize: 14,
-                      transition: "all 0.15s",
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = "#ede9fe"; e.currentTarget.style.borderColor = "#7c3aed"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = COLORS.bgPrimary; e.currentTarget.style.borderColor = COLORS.borderLight; }}
-                  >
-                    <i className="fa-solid fa-arrow-right" />
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
           </PageTransition>
         )}
