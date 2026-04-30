@@ -1,10 +1,15 @@
 import { coursesData } from "@/data/courses";
 import { events } from "@/data/events";
 import { productData } from "@/data/products";
-import { fetchUserProfile } from "@/apiIntegration/auth";
+import { fetchUserProfile, logoutUser } from "@/apiIntegration/auth";
 import { getUserPlan } from "@/utils/planAccess";
 import React from "react";
-import { useContext, useState, useCallback, useEffect } from "react";
+import { useContext, useState, useCallback, useEffect, useRef } from "react";
+
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const IDLE_CHECK_INTERVAL_MS = 180 * 1000;
+const AUTH_REDIRECT_URL = "/auth?mode=login";
+
 const dataContext = React.createContext();
 export const useContextElement = () => {
   return useContext(dataContext);
@@ -20,6 +25,7 @@ export default function Context({ children }) {
   const [userPlan, setUserPlan] = useState("free");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
+  const lastActivityRef = useRef(Date.now());
 
   // Initialize user plan from localStorage on component mount
   useEffect(() => {
@@ -102,6 +108,64 @@ export default function Context({ children }) {
     setCartCourses([]);
     setCartEvents([]);
   }, []);
+
+  const forceLogout = useCallback(async () => {
+    const refreshToken =
+      localStorage.getItem("refresh_token") ||
+      sessionStorage.getItem("refresh_token");
+
+    if (refreshToken) {
+      try {
+        await logoutUser(refreshToken);
+      } catch (error) {
+        console.error("Auto logout API call failed:", error);
+      }
+    }
+
+    localStorage.clear();
+    sessionStorage.clear();
+    resetUserState();
+
+    if (window.location.pathname !== "/auth") {
+      window.location.assign(AUTH_REDIRECT_URL);
+    }
+  }, [resetUserState]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    activityEvents.forEach((ev) =>
+      window.addEventListener(ev, updateActivity, { passive: true }),
+    );
+
+    lastActivityRef.current = Date.now();
+
+    const intervalId = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current >= IDLE_TIMEOUT_MS) {
+        forceLogout();
+      }
+    }, IDLE_CHECK_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+      activityEvents.forEach((ev) =>
+        window.removeEventListener(ev, updateActivity),
+      );
+    };
+  }, [forceLogout, isLoggedIn]);
 
   // Function to update user plan from localStorage (call after login)
   const loadUserPlanFromStorage = useCallback(() => {
