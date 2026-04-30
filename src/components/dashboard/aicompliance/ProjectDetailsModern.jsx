@@ -164,7 +164,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pdf.setFontSize(8);
           pdf.setFont("helvetica", "normal");
           pdf.text(
-            "Disclaimer: Scores are based solely on information each company publicly discloses. xValidate AI is not liable for the accuracy of these scores.",
+            "Disclaimer: Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.",
             pageWidth / 2,
             pageHeight - 14,
             { align: "center", maxWidth: pageWidth - 30 },
