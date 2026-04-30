@@ -1318,7 +1318,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          <strong>Disclaimer:</strong> Disclaimer: Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.
+          <strong>Disclaimer:</strong> Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.
         </p>
         <p
           className="footer-subtext"
