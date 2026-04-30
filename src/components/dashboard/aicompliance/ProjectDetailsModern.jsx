@@ -164,7 +164,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           pdf.setFontSize(8);
           pdf.setFont("helvetica", "normal");
           pdf.text(
-            "Disclaimer: Scores are algorithmically calculated using each tool’s Terms, Privacy Policy, and website content.",
+            "Disclaimer: Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.",
             pageWidth / 2,
             pageHeight - 14,
             { align: "center", maxWidth: pageWidth - 30 },
@@ -1318,8 +1318,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          <strong>Disclaimer:</strong> Scores are algorithmically calculated
-          using each tool’s Terms, Privacy Policy, and website content.
+          <strong>Disclaimer:</strong> Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.
         </p>
         <p
           className="footer-subtext"
