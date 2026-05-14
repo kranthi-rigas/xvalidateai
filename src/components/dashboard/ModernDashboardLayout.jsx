@@ -196,9 +196,11 @@ export default function ModernDashboardLayout() {
     return location.pathname.startsWith(href);
   };
 
-  // ✅ Check if Audit Trail is locked for current user
+  // ✅ Lock any item whose requiredPlan isn't met by the current user's plan
   const isAuditTrailLocked = (item) => {
-    return item.href === "/dashboard/audittrail" && userPlan !== "business";
+    if (!item.requiredPlan) return false;
+    if (userPlan === "enterprise") return false; // enterprise >= business
+    return userPlan !== item.requiredPlan.toLowerCase();
   };
 
   // ✅ Filter sidebar — hide Administration unless is_staff_admin or is_staff_user
