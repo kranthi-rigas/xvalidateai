@@ -326,3 +326,69 @@ export async function reviewOrganization(org_id, payload) {
 
   return res.json();
 }
+
+// Update user by ID
+export async function updateUser(userId, payload) {
+  const res = await fetchWithAuth(`${ENDPOINT}/user/${userId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: payload.email,
+      roles: payload.roles, // array e.g. ["ADMIN"]
+    }),
+  });
+
+  if (!res.ok) {
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: await res.text() };
+    }
+
+    const error = new Error(
+      data?.error || data?.message || "Failed to update user"
+    );
+    error.response = { status: res.status, data };
+    throw error;
+  }
+
+  return res.json();
+}
+
+// Delete multiple users
+export async function deleteUsers(userIds = []) {
+  const res = await fetchWithAuth(`${ENDPOINT}/users`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_ids: userIds,
+    }),
+  });
+
+  if (res.status === 204) return { success: true };
+
+  if (!res.ok) {
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: await res.text() };
+    }
+    const error = new Error(
+      data?.error || data?.message || "Failed to delete users"
+    );
+    error.response = { status: res.status, data };
+    throw error;
+  }
+
+  try {
+    return await res.json();
+  } catch {
+    return { success: true };
+  }
+}
