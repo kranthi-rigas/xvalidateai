@@ -6,7 +6,11 @@ import { SlUserFollow } from "react-icons/sl";
 import InviteUsersModal from "./InviteUsersModal";
 import AwsButton from "../../common/AwsButton";
 import RefreshButton from "../../common/RefreshButton";
-import { getUsers, inviteUsers } from "../../../apiIntegration/organization";
+import {
+  getUsers,
+  inviteUsers,
+  deleteUsers,
+} from "../../../apiIntegration/organization"; // ✅ added deleteUsers
 import PageLoader from "@/components/common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 import useToast from "../../../hooks/useToast";
@@ -14,6 +18,8 @@ import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { hasOrganization } from "@/data/orgGuard";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import EditUserModal from "./EditUserModal";
+import DeleteUsersModal from "./DeleteUsersModal"; // ✅ new
 
 export default function OrgUsers({ refreshProjects }) {
   const [users, setUsers] = useState(null);
@@ -26,36 +32,34 @@ export default function OrgUsers({ refreshProjects }) {
   const [tableLoading, setTableLoading] = useState(false);
   const [page, setPage] = useState(1);
   const actionsRef = useRef(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ new
+  const [usersToDelete, setUsersToDelete] = useState([]); // ✅ new
 
   // ADMIN Check helper
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const loggedInUserId = userInfo?.user_id || userInfo?.sub || "";
 
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
-
   const hasOrg = hasOrganization();
 
   const DEFAULT_ORGS = ["xvalidateai", "myacademy51", "academy51"];
-
   const orgNameRaw = userInfo?.organization?.name;
   const orgName = (orgNameRaw || "").toLowerCase();
-
-  /* ⭐ Treat empty/null as default */
   const isDefaultOrg = !orgName || DEFAULT_ORGS.includes(orgName);
-
   const canManage = hasOrg && isAdmin && !isDefaultOrg;
 
-  // Preferences modal
   const [showPreferences, setShowPreferences] = useState(false);
 
   /* ---------- Column Widths ---------- */
   const [columnWidths, setColumnWidths] = useState({
     checkbox: 60,
     email: 220,
-    groups: 150,
     roles: 140,
     status: 120,
     created_at: 180,
@@ -81,9 +85,7 @@ export default function OrgUsers({ refreshProjects }) {
         [key]: Math.max(120, startWidth + (e.clientX - startX)),
       }));
     };
-
     const onUp = () => (resizingCol.current = null);
-
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => {
@@ -99,17 +101,14 @@ export default function OrgUsers({ refreshProjects }) {
   async function loadUsers() {
     try {
       const res = await getUsers();
-      setUsers(res); // ✅ res is already the array
+      setUsers(res);
     } catch (err) {
       console.error("Failed to load users:", err);
     }
   }
 
   /* ---------- SORTING ---------- */
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: "asc",
-  });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
   const requestSort = (key) => {
     setSortConfig((prev) => ({
@@ -146,7 +145,6 @@ export default function OrgUsers({ refreshProjects }) {
       return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
     });
 
-  /* ---------- Search Helper ---------- */
   function buildSearchText(user) {
     const name = `${user.first_name || ""} ${user.last_name || ""}`.trim();
     const email = user.email || "";
@@ -155,7 +153,6 @@ export default function OrgUsers({ refreshProjects }) {
       .map((g) => (typeof g.name === "object" ? g.name.name : g.name))
       .join(" ");
     const status = user.status || "";
-
     return [name, email, roles, groups, status]
       .filter(Boolean)
       .join(" ")
@@ -164,8 +161,7 @@ export default function OrgUsers({ refreshProjects }) {
 
   /* ---------- Pagination ---------- */
   const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedData = filtered.slice(startIndex, endIndex);
+  const paginatedData = filtered.slice(startIndex, startIndex + pageSize);
 
   /* ---------- Selection ---------- */
   const toggleSelect = (id) =>
@@ -176,13 +172,12 @@ export default function OrgUsers({ refreshProjects }) {
   const toggleSelectAll = (checked) =>
     setSelected(checked ? filtered.map((u) => u.user_id) : []);
 
-  /* ---------- Capitalize First Letter ---------- */
+  /* ---------- Helpers ---------- */
   const capitalize = (str) =>
     typeof str === "string"
       ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
       : str;
 
-  /* ---------- Get Status Badge ---------- */
   const getStatusBadge = (status) => {
     const statusMap = {
       invited: {
@@ -201,10 +196,8 @@ export default function OrgUsers({ refreshProjects }) {
         border: "border-red-200",
       },
     };
-
-    const lowerStatus = (status || "").toLowerCase();
     return (
-      statusMap[lowerStatus] || {
+      statusMap[(status || "").toLowerCase()] || {
         bg: "bg-gray-50",
         text: "text-gray-700",
         border: "border-gray-200",
@@ -212,11 +205,9 @@ export default function OrgUsers({ refreshProjects }) {
     );
   };
 
-  /* ---------- Format Date ---------- */
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString("en-GB", {
+    return new Date(timestamp * 1000).toLocaleString("en-GB", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -236,30 +227,10 @@ export default function OrgUsers({ refreshProjects }) {
       allSelected: filtered.length > 0 && selected.length === filtered.length,
       onToggleAll: toggleSelectAll,
     },
-    {
-      key: "email",
-      label: "Email",
-      sortable: true,
-      resizable: true,
-    },
-    {
-      key: "groups",
-      label: "Groups",
-      sortable: false,
-      resizable: true,
-    },
-    {
-      key: "roles",
-      label: "Roles",
-      sortable: true,
-      resizable: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      resizable: true,
-    },
+    { key: "email", label: "Email", sortable: true, resizable: true },
+    { key: "groups", label: "Groups", sortable: false, resizable: true },
+    { key: "roles", label: "Roles", sortable: true, resizable: true },
+    { key: "status", label: "Status", sortable: true, resizable: true },
     {
       key: "created_at",
       label: "Creation Time",
@@ -280,55 +251,45 @@ export default function OrgUsers({ refreshProjects }) {
             className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
           />
         );
-
       case "email":
         return (
           <span className="text-muted-foreground">{row.email || "-"}</span>
         );
-
       case "roles": {
-        const rolesList = (row.roles || []).map(capitalize);
-        const text = rolesList.length ? rolesList.join(", ") : "-";
+        const text = (row.roles || []).map(capitalize).join(", ") || "-";
         return (
           <span className="text-muted-foreground" title={text}>
             {text}
           </span>
         );
       }
-
       case "groups": {
         const groups =
           row.groups
             ?.map((g) => (typeof g.name === "object" ? g.name.name : g.name))
             .join(", ") || "-";
-
         return (
           <span className="truncate text-muted-foreground" title={groups}>
             {groups}
           </span>
         );
       }
-
       case "status": {
         const badge = getStatusBadge(row.status);
-        const statusText = capitalize(row.status || "-");
-
         return (
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
           >
-            {statusText}
+            {capitalize(row.status || "-")}
           </span>
         );
       }
-
       case "created_at":
         return (
           <span className="font-mono text-xs text-muted-foreground">
             {formatDate(row.created_at)}
           </span>
         );
-
       default:
         return row[key] || "-";
     }
@@ -338,36 +299,122 @@ export default function OrgUsers({ refreshProjects }) {
     (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );
 
+  /* ---------- Delete Guard ---------- */
+  // ✅ A user is deletable if:
+  //    - they are NOT the logged-in user
+  //    - they are NOT an admin (admins are protected)
+  const isDeletable = (user) => {
+    const userIsAdmin = (user.roles || [])
+      .map((r) => r.toUpperCase())
+      .includes("ADMIN");
+    return user.user_id !== loggedInUserId && !userIsAdmin;
+  };
+
+  const selectedUsers = (users || []).filter((u) =>
+    selected.includes(u.user_id),
+  );
+  const deletableUsers = selectedUsers.filter(isDeletable);
+  const nonDeletableCount = selectedUsers.length - deletableUsers.length;
+
+  // Delete is available if at least one selected user is deletable
+  const deleteEnabled =
+    canManage && selected.length > 0 && deletableUsers.length > 0;
+
+  const deleteTooltip = (() => {
+    if (!canManage) return "";
+    if (selected.length === 0) return "";
+    if (deletableUsers.length === 0) {
+      if (
+        nonDeletableCount === 1 &&
+        selectedUsers[0]?.user_id === loggedInUserId
+      )
+        return "You cannot delete your own account.";
+      return "Admin accounts cannot be deleted. Reassign their role first.";
+    }
+    if (nonDeletableCount > 0)
+      return `${nonDeletableCount} admin/self account(s) will be skipped. ${deletableUsers.length} user(s) will be deleted.`;
+    return "";
+  })();
+
   /* ---------- Actions Menu ---------- */
   const actionItems = (() => {
     if (!canManage || selected.length === 0) return [];
 
-    // Multi-select: could add bulk actions here
-    if (selected.length > 1) return [];
+    const isSingleSelect = selected.length === 1;
+    const selectedUser = isSingleSelect
+      ? users?.find((u) => u.user_id === selected[0])
+      : null;
 
-    // Single select: add edit/delete actions
-    return [
-      { key: "edit", label: "Edit", disabled: true },
-      { key: "delete", label: "Delete", danger: true, disabled: true },
-    ];
+    // --- Edit (single select only) ---
+    const editItem = (() => {
+      if (!isSingleSelect) return null;
+
+      const isSelf = selectedUser?.user_id === loggedInUserId;
+      const adminCount = (users || []).filter((u) =>
+        (u.roles || []).map((r) => r.toUpperCase()).includes("ADMIN"),
+      ).length;
+      const selectedIsAdmin = (selectedUser?.roles || [])
+        .map((r) => r.toUpperCase())
+        .includes("ADMIN");
+      const wouldLeaveNoAdmin = selectedIsAdmin && adminCount <= 1;
+      const editDisabled = isSelf || wouldLeaveNoAdmin;
+
+      const editTooltip = isSelf
+        ? "You can't edit your own account. Ask another admin to make changes."
+        : wouldLeaveNoAdmin
+          ? "This is the only admin. Assign another admin before editing this account."
+          : "";
+
+      return {
+        key: "edit",
+        label: "Edit",
+        disabled: editDisabled,
+        tooltip: editTooltip,
+        onClick: () => {
+          if (editDisabled) {
+            show(editTooltip, { type: "warning", duration: 5000 });
+            return;
+          }
+          setEditingUser(selectedUser);
+          setShowEditModal(true);
+        },
+      };
+    })();
+
+    // --- Delete (single or multi) ---
+    const deleteItem = {
+      key: "delete",
+      label:
+        selected.length > 1 ? `Delete (${deletableUsers.length})` : "Delete",
+      danger: true,
+      disabled: !deleteEnabled,
+      tooltip: deleteTooltip,
+      onClick: () => {
+        if (!deleteEnabled) {
+          if (deleteTooltip)
+            show(deleteTooltip, { type: "warning", duration: 5000 });
+          return;
+        }
+        setUsersToDelete(deletableUsers);
+        setShowDeleteModal(true);
+      },
+    };
+
+    return [...(editItem ? [editItem] : []), deleteItem];
   })();
 
-  if (pageLoading) {
-    return <PageLoader loading={true} />;
-  }
+  if (pageLoading) return <PageLoader loading={true} />;
 
   return (
     <div className="space-y">
       <section className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden">
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search + mobile refresh */}
           <div className="flex items-center gap-2 w-full md:w-96">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                 <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
               </div>
-
               <input
                 type="text"
                 value={search}
@@ -377,7 +424,7 @@ export default function OrgUsers({ refreshProjects }) {
               />
             </div>
 
-            {/* Refresh – mobile only */}
+            {/* Refresh – mobile */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -388,10 +435,10 @@ export default function OrgUsers({ refreshProjects }) {
               title="Refresh"
               className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
-              <i className="fa-solid fa-rotate-right"></i>
+              <i className="fa-solid fa-rotate-right" />
             </button>
 
-            {/* Preferences – mobile only */}
+            {/* Preferences – mobile */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
@@ -404,9 +451,8 @@ export default function OrgUsers({ refreshProjects }) {
             </button>
           </div>
 
-          {/* Right actions */}
           <div className="flex items-center gap-3">
-            {/* Refresh – desktop only */}
+            {/* Refresh – desktop */}
             <button
               onClick={async () => {
                 setTableLoading(true);
@@ -417,7 +463,7 @@ export default function OrgUsers({ refreshProjects }) {
               title="Refresh"
               className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
-              <i className="fa-solid fa-rotate-right"></i>
+              <i className="fa-solid fa-rotate-right" />
             </button>
 
             {/* Actions dropdown */}
@@ -425,11 +471,14 @@ export default function OrgUsers({ refreshProjects }) {
               <ActionsMenu
                 disabled={!canManage || selected.length === 0}
                 items={actionItems}
-                onSelect={() => {}}
+                onSelect={(key) => {
+                  const item = actionItems.find((a) => a.key === key);
+                  if (item?.onClick) item.onClick();
+                }}
               />
             </div>
 
-            {/* Preferences button – desktop only */}
+            {/* Preferences – desktop */}
             <button
               onClick={() => setShowPreferences(true)}
               title="Table Preferences"
@@ -441,7 +490,7 @@ export default function OrgUsers({ refreshProjects }) {
               />
             </button>
 
-            {/* Invite Users Button */}
+            {/* Invite Users */}
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
@@ -468,7 +517,7 @@ export default function OrgUsers({ refreshProjects }) {
         {/* TABLE */}
         <div className="relative flex-1 overflow-hidden">
           {tableLoading && (
-            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
+            <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center" />
           )}
           <ListTable
             columns={visibleTableColumns}
@@ -498,58 +547,73 @@ export default function OrgUsers({ refreshProjects }) {
           onClose={() => setShowInviteModal(false)}
           onInvite={async (emails, roles, groups) => {
             try {
-              const res = await inviteUsers({
-                emails,
-                roles,
-                groups,
-              });
-
-              // ✅ Check for failed invitations (duplicate users etc.)
+              const res = await inviteUsers({ emails, roles, groups });
               const failed = res?.failed_invitations || [];
               const invited = res?.invited_users || [];
 
               if (failed.length > 0 && invited.length === 0) {
-                // ❌ All failed — show error for each
-                failed.forEach((f) => {
+                failed.forEach((f) =>
                   show(`${f.email}: ${f.reason}`, {
                     type: "error",
                     duration: 5000,
-                  });
-                });
+                  }),
+                );
                 return { success: false };
               }
-
               if (failed.length > 0 && invited.length > 0) {
-                // ⚠️ Partial success — some invited, some failed
                 show(`${invited.length} user(s) invited successfully.`, {
                   type: "success",
                 });
-                failed.forEach((f) => {
+                failed.forEach((f) =>
                   show(`${f.email}: ${f.reason}`, {
                     type: "error",
                     duration: 5000,
-                  });
-                });
+                  }),
+                );
                 loadUsers();
                 return { success: true };
               }
-
-              // ✅ All invited successfully
               show("Users invited successfully!", { type: "success" });
               loadUsers();
               return { success: true };
             } catch (err) {
-              console.error("Invite failed:", err);
-
               let message = "Failed to invite users";
               try {
                 const parsed = JSON.parse(err.message);
                 message = parsed.message || message;
               } catch {}
-
               show(message, { type: "error" });
               return { success: false, error: message };
             }
+          }}
+        />
+      )}
+
+      {showEditModal && editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingUser(null);
+          }}
+          onSave={async () => {
+            setSelected([]);
+            await loadUsers();
+          }}
+        />
+      )}
+
+      {/* ✅ Delete Modal */}
+      {showDeleteModal && usersToDelete.length > 0 && (
+        <DeleteUsersModal
+          users={usersToDelete}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setUsersToDelete([]);
+          }}
+          onDeleted={() => {
+            setSelected([]);
+            loadUsers();
           }}
         />
       )}

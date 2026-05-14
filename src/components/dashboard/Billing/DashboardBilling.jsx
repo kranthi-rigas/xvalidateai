@@ -15,7 +15,7 @@ export default function DashboardBilling() {
   const location = useLocation();
   const plan = location.state?.plan || null;
   const show = useToast();
-  const { refreshUserPlan } = useContextElement();
+  const { refreshUserPlan, setUserPlan, setUserCredits } = useContextElement();
   const [isPaying, setIsPaying] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -218,8 +218,53 @@ export default function DashboardBilling() {
           { type: "success" },
         );
 
-        // Refresh user plan in Context and localStorage, then navigate
-        await refreshUserPlan();
+        // ── Instant context update from redeem response ──────────────────────────
+        // Extract plan type and credits directly from what the server just returned
+        const newPlanType = (
+          redeemResponse?.subscription?.plan_type ??
+          redeemResponse?.plan?.plan_type ??
+          voucherData?.plan_type ??
+          plan?.name ??
+          "business"
+        ).toLowerCase();
+
+        const newCredits =
+          redeemResponse?.subscription?.credits_remaining ??
+          redeemResponse?.subscription?.credits ??
+          voucherData?.credits ??
+          0;
+
+        // 1. Update React context immediately — unblocks Audit Trail right away
+        setUserPlan(newPlanType);
+        setUserCredits(newCredits);
+
+        // 2. Patch localStorage immediately so any component reading it directly
+        //    (sidebar, guards, etc.) also sees the new plan without a page reload
+        try {
+          const stored = localStorage.getItem("user_info");
+          const parsed = stored ? JSON.parse(stored) : {};
+          localStorage.setItem(
+            "user_info",
+            JSON.stringify({
+              ...parsed,
+              plan: {
+                ...(parsed?.plan || {}),
+                plan_type: newPlanType,
+                credits_remaining: newCredits,
+                credits: newCredits, // ✅ also update total so HeaderCredits shows correct denominator
+              },
+            }),
+          );
+        } catch (err) {
+          console.warn("localStorage patch failed:", err);
+        }
+
+        // 3. Background server sync — non-blocking, updates any fields we missed
+        refreshUserPlan().catch((err) =>
+          console.warn("Background plan refresh failed:", err),
+        );
+
+        // Navigate immediately — context + localStorage already reflect new plan
         navigate("/dashboard/pricing");
       } else {
         console.log(

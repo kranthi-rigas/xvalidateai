@@ -116,7 +116,6 @@ export default function ActionsMenu({
     fontSize: "12px",
     transition: "transform 0.2s ease",
     transform: open ? "rotate(180deg)" : "rotate(0deg)",
-    // Color will inherit from button text color
   };
 
   return (
@@ -161,12 +160,19 @@ export default function ActionsMenu({
                 key={item.key}
                 role="menuitem"
                 tabIndex={isDisabled ? -1 : 0}
+                title={item.tooltip || undefined}
                 onClick={() => {
-                  if (isDisabled) return;
+                  if (isDisabled) {
+                    item.onClick?.();
+                    return;
+                  }
                   setOpen(false);
                   onSelect(item.key);
                 }}
-                onMouseEnter={() => !isDisabled && setHoverKey(item.key)}
+                onMouseEnter={() => {
+                  if (!isDisabled) setHoverKey(item.key);
+                  // removed item.onMouseEnter?.() — toast only fires on click
+                }}
                 onMouseLeave={() => setHoverKey(null)}
                 onKeyDown={(e) => {
                   if (isDisabled) return;
@@ -187,19 +193,16 @@ export default function ActionsMenu({
       )}
 
       <style>{`
-        /* Focus visible for accessibility */
         button:focus-visible {
           outline: 2px solid ${COLORS.borderFocus};
           outline-offset: 2px;
         }
         
-        /* Menu item focus */
         div[role="menuitem"]:focus-visible {
           outline: 2px solid ${COLORS.borderFocus};
           outline-offset: -2px;
         }
         
-        /* Reduced motion support */
         @media (prefers-reduced-motion: reduce) {
           button,
           button i,

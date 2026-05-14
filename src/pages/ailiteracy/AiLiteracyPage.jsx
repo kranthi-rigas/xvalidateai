@@ -96,9 +96,7 @@ const PD_MODULES = [
     icon: "fa-solid fa-shield-halved",
     color: "#7c3aed",
     bg: "#ede9fe",
-    docs: [
-      PD_DOCS.find((d) => d.id === "ai_resilient"),
-    ],
+    docs: [PD_DOCS.find((d) => d.id === "ai_resilient")],
   },
 ];
 
@@ -167,6 +165,80 @@ const PLAYBOOK_MODULES = [
     ],
   },
 ];
+
+function NotifyForm({ showToast }) {
+  const [email, setEmail] = React.useState("");
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const handleNotify = () => {
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!valid) {
+      showToast("Please enter a valid email address.", "warning");
+      return;
+    }
+    // TODO: subscribeToNotification(email)
+    setSubmitted(true);
+    showToast("You're on the list! We'll notify you at launch.", "success");
+  };
+
+  if (submitted) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          color: "#198038",
+          fontWeight: 600,
+          fontSize: 13,
+        }}
+      >
+        <i className="fa-solid fa-circle-check" />
+        You're on the list!
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleNotify()}
+        placeholder="your@email.com"
+        style={{
+          padding: "7px 12px",
+          borderRadius: 7,
+          border: "1px solid #c7d4f5",
+          background: "#fff",
+          color: "#0F3357",
+          fontSize: 13,
+          outline: "none",
+          width: 140,
+        }}
+      />
+      <button
+        onClick={handleNotify}
+        style={{
+          padding: "7px 14px",
+          borderRadius: 7,
+          border: "none",
+          background: "#0F3357",
+          color: "#fff",
+          fontWeight: 600,
+          fontSize: 13,
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.background = "#1a5276")}
+        onMouseOut={(e) => (e.currentTarget.style.background = "#0F3357")}
+      >
+        Notify Me
+      </button>
+    </div>
+  );
+}
 
 export default function AiLiteracyPage() {
   const location = useLocation();
@@ -267,7 +339,7 @@ export default function AiLiteracyPage() {
       await downloadPdfWithWatermark(
         `/documents/${doc.file}`,
         doc.file,
-        organizationName
+        organizationName,
       );
     } catch (err) {
       showToast("Failed to download document. Please try again.", "error");
@@ -342,6 +414,60 @@ export default function AiLiteracyPage() {
         {/* LANDING */}
         {view === "landing" && (
           <PageTransition>
+            {/* ── Coming Soon Banner ── */}
+            <div
+              style={{
+                maxWidth: 700,
+                margin: "0 auto 24px auto",
+                background: "linear-gradient(135deg, #f0f4ff 0%, #e8edfa 100%)",
+                border: "1px solid #c7d4f5",
+                borderLeft: "4px solid #0F3357",
+                borderRadius: 12,
+                padding: "14px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Badge */}
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  color: "#fff",
+                  background: "#0F3357",
+                  padding: "3px 9px",
+                  borderRadius: 20,
+                  flexShrink: 0,
+                  textTransform: "uppercase",
+                }}
+              >
+                Coming Soon
+              </span>
+
+              {/* Text */}
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <span
+                  style={{ fontWeight: 700, fontSize: 13, color: "#0F3357" }}
+                >
+                  Chief AI Officer Program
+                </span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    color: COLORS.textMuted,
+                    marginLeft: 6,
+                  }}
+                >
+                  — Be first to know.
+                </span>
+              </div>
+
+              {/* Inline email form */}
+              <NotifyForm showToast={showToast} />
+            </div>
             <div
               style={{
                 display: "grid",
@@ -378,18 +504,39 @@ export default function AiLiteracyPage() {
                     justifyContent: "center",
                   }}
                 >
-                  <i className="fa-solid fa-folder-open" style={{ fontSize: 22, color: COLORS.primary }} />
+                  <i
+                    className="fa-solid fa-folder-open"
+                    style={{ fontSize: 22, color: COLORS.primary }}
+                  />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
                     AI Literacy Playbook
                   </div>
-                  <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                    Assessments, incident response playbooks, flowcharts, and exercises for your organisation.
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Assessments, incident response playbooks, flowcharts, and
+                    exercises for your organisation.
                   </p>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setView("playbook"); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setView("playbook");
+                  }}
                   style={{
                     marginTop: 4,
                     padding: "11px 32px",
@@ -403,8 +550,12 @@ export default function AiLiteracyPage() {
                     transition: "background 0.2s ease",
                     width: "100%",
                   }}
-                  onMouseOver={(e) => (e.target.style.background = COLORS.primaryDark)}
-                  onMouseOut={(e) => (e.target.style.background = COLORS.primary)}
+                  onMouseOver={(e) =>
+                    (e.target.style.background = COLORS.primaryDark)
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.background = COLORS.primary)
+                  }
                 >
                   Open Folder
                 </button>
@@ -437,18 +588,39 @@ export default function AiLiteracyPage() {
                     justifyContent: "center",
                   }}
                 >
-                  <i className="fa-solid fa-folder" style={{ fontSize: 22, color: COLORS.primary }} />
+                  <i
+                    className="fa-solid fa-folder"
+                    style={{ fontSize: 22, color: COLORS.primary }}
+                  />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
                     Professional Development Modules
                   </div>
-                  <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                    Curated modules and resources for educator professional development.
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Curated modules and resources for educator professional
+                    development.
                   </p>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleViewPD(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewPD();
+                  }}
                   style={{
                     marginTop: 4,
                     padding: "11px 32px",
@@ -462,8 +634,14 @@ export default function AiLiteracyPage() {
                     transition: "all 0.2s ease",
                     width: "100%",
                   }}
-                  onMouseOver={(e) => { e.target.style.background = COLORS.primary; e.target.style.color = "#fff"; }}
-                  onMouseOut={(e) => { e.target.style.background = "#eef2ff"; e.target.style.color = COLORS.primary; }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = COLORS.primary;
+                    e.target.style.color = "#fff";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = "#eef2ff";
+                    e.target.style.color = COLORS.primary;
+                  }}
                 >
                   Open Folder
                 </button>
@@ -495,10 +673,25 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div
+              style={{
+                maxWidth: 900,
+                margin: "0 auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 28,
+              }}
+            >
               {PLAYBOOK_MODULES.map((mod) => (
                 <div key={mod.id}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
                     <div
                       style={{
                         width: 36,
@@ -511,9 +704,20 @@ export default function AiLiteracyPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
+                      <i
+                        className={mod.icon}
+                        style={{ fontSize: 15, color: mod.color }}
+                      />
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      {mod.title}
+                    </div>
                     <span
                       style={{
                         fontSize: 11,
@@ -525,11 +729,18 @@ export default function AiLiteracyPage() {
                         marginLeft: 4,
                       }}
                     >
-                      {mod.items.length} {mod.items.length === 1 ? "resource" : "resources"}
+                      {mod.items.length}{" "}
+                      {mod.items.length === 1 ? "resource" : "resources"}
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     {mod.items.map((item) => (
                       <div
                         key={item.id}
@@ -555,13 +766,29 @@ export default function AiLiteracyPage() {
                             flexShrink: 0,
                           }}
                         >
-                          <i className={item.icon} style={{ fontSize: 16, color: item.color }} />
+                          <i
+                            className={item.icon}
+                            style={{ fontSize: 16, color: item.color }}
+                          />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 14,
+                              color: COLORS.textPrimary,
+                              marginBottom: 2,
+                            }}
+                          >
                             {item.title}
                           </div>
-                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: COLORS.textMuted,
+                              lineHeight: 1.45,
+                            }}
+                          >
                             {item.description}
                           </div>
                         </div>
@@ -588,8 +815,10 @@ export default function AiLiteracyPage() {
                               e.currentTarget.style.borderColor = item.color;
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = COLORS.bgPrimary;
-                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                              e.currentTarget.style.background =
+                                COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor =
+                                COLORS.borderLight;
                             }}
                           >
                             <i className="fa-solid fa-arrow-right" />
@@ -710,11 +939,26 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div
+              style={{
+                maxWidth: 900,
+                margin: "0 auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 28,
+              }}
+            >
               {PD_MODULES.map((mod) => (
                 <div key={mod.id}>
                   {/* Module heading */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
                     <div
                       style={{
                         width: 36,
@@ -727,9 +971,20 @@ export default function AiLiteracyPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
+                      <i
+                        className={mod.icon}
+                        style={{ fontSize: 15, color: mod.color }}
+                      />
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      {mod.title}
+                    </div>
                     <span
                       style={{
                         fontSize: 11,
@@ -741,12 +996,19 @@ export default function AiLiteracyPage() {
                         marginLeft: 4,
                       }}
                     >
-                      {mod.docs.length} {mod.docs.length === 1 ? "resource" : "resources"}
+                      {mod.docs.length}{" "}
+                      {mod.docs.length === 1 ? "resource" : "resources"}
                     </span>
                   </div>
 
                   {/* Document cards */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     {mod.docs.map((doc) => (
                       <div
                         key={doc.id}
@@ -772,13 +1034,29 @@ export default function AiLiteracyPage() {
                             flexShrink: 0,
                           }}
                         >
-                          <i className={doc.icon} style={{ fontSize: 16, color: doc.color }} />
+                          <i
+                            className={doc.icon}
+                            style={{ fontSize: 16, color: doc.color }}
+                          />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 14,
+                              color: COLORS.textPrimary,
+                              marginBottom: 2,
+                            }}
+                          >
                             {doc.title}
                           </div>
-                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: COLORS.textMuted,
+                              lineHeight: 1.45,
+                            }}
+                          >
                             {doc.description}
                           </div>
                         </div>
@@ -805,8 +1083,10 @@ export default function AiLiteracyPage() {
                               e.currentTarget.style.borderColor = mod.color;
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = COLORS.bgPrimary;
-                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                              e.currentTarget.style.background =
+                                COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor =
+                                COLORS.borderLight;
                             }}
                           >
                             <i className="fa-solid fa-eye" />
@@ -830,12 +1110,16 @@ export default function AiLiteracyPage() {
                                 transition: "all 0.15s",
                               }}
                               onMouseOver={(e) => {
-                                e.currentTarget.style.background = COLORS.bgSecondary;
-                                e.currentTarget.style.borderColor = COLORS.textMuted;
+                                e.currentTarget.style.background =
+                                  COLORS.bgSecondary;
+                                e.currentTarget.style.borderColor =
+                                  COLORS.textMuted;
                               }}
                               onMouseOut={(e) => {
-                                e.currentTarget.style.background = COLORS.bgPrimary;
-                                e.currentTarget.style.borderColor = COLORS.borderLight;
+                                e.currentTarget.style.background =
+                                  COLORS.bgPrimary;
+                                e.currentTarget.style.borderColor =
+                                  COLORS.borderLight;
                               }}
                             >
                               <i className="fa-solid fa-download" />
@@ -921,111 +1205,131 @@ export default function AiLiteracyPage() {
           </PageTransition>
         )}
       </div>
-    {/* PDF Viewer Modal */}
-    <PdfViewerModal
-      isOpen={pdfViewerDoc !== null}
-      onClose={() => setPdfViewerDoc(null)}
-      doc={pdfViewerDoc}
-      onDownload={canDownload ? handleDownloadDoc : null}
-    />
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        isOpen={pdfViewerDoc !== null}
+        onClose={() => setPdfViewerDoc(null)}
+        doc={pdfViewerDoc}
+        onDownload={canDownload ? handleDownloadDoc : null}
+      />
 
-    {/* Incomplete Answers Modal */}
-    {showIncompleteModal && (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: COLORS.bgOverlay,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-        }}
-        onClick={() => setShowIncompleteModal(false)}
-      >
+      {/* Incomplete Answers Modal */}
+      {showIncompleteModal && (
         <div
           style={{
-            backgroundColor: COLORS.white,
-            borderRadius: "12px",
-            padding: "24px",
-            maxWidth: "400px",
-            width: "90%",
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: COLORS.bgOverlay,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={() => setShowIncompleteModal(false)}
         >
-          <div style={{ marginBottom: "16px", textAlign: "center" }}>
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                backgroundColor: COLORS.errorLight,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "16px",
-                margin: "0 auto 16px auto",
-              }}
-            >
-              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: "24px", color: COLORS.error }}></i>
-            </div>
-            <h3 style={{ fontSize: "18px", fontWeight: "600", color: COLORS.textPrimary, marginBottom: "8px" }}>
-              Submit Incomplete Assessment?
-            </h3>
-            <p style={{ fontSize: "14px", color: COLORS.textSecondary, lineHeight: "1.5" }}>
-              {questions.length - Object.values(answers).filter((v) => Number.isInteger(v) && v >= 1 && v <= 4).length} question(s) unanswered. Unanswered questions will count as 0.
-            </p>
-          </div>
           <div
             style={{
-              display: "flex",
-              gap: "12px",
-              justifyContent: "center",
-              marginTop: "24px",
+              backgroundColor: COLORS.white,
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => setShowIncompleteModal(false)}
+            <div style={{ marginBottom: "16px", textAlign: "center" }}>
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  backgroundColor: COLORS.errorLight,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "16px",
+                  margin: "0 auto 16px auto",
+                }}
+              >
+                <i
+                  className="fa-solid fa-triangle-exclamation"
+                  style={{ fontSize: "24px", color: COLORS.error }}
+                ></i>
+              </div>
+              <h3
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: COLORS.textPrimary,
+                  marginBottom: "8px",
+                }}
+              >
+                Submit Incomplete Assessment?
+              </h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: COLORS.textSecondary,
+                  lineHeight: "1.5",
+                }}
+              >
+                {questions.length -
+                  Object.values(answers).filter(
+                    (v) => Number.isInteger(v) && v >= 1 && v <= 4,
+                  ).length}{" "}
+                question(s) unanswered. Unanswered questions will count as 0.
+              </p>
+            </div>
+            <div
               style={{
-                padding: "10px 24px",
-                borderRadius: 8,
-                border: `1px solid ${COLORS.borderLight}`,
-                background: COLORS.bgSecondary,
-                color: COLORS.textPrimary,
-                fontWeight: 600,
-                cursor: "pointer",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                marginTop: "24px",
               }}
             >
-              Go Back
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowIncompleteModal(false);
-                submitAndScore();
-              }}
-              style={{
-                padding: "10px 24px",
-                borderRadius: 8,
-                border: `1px solid ${COLORS.primary}`,
-                background: COLORS.primary,
-                color: "#fff",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Submit Anyway
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowIncompleteModal(false)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.borderLight}`,
+                  background: COLORS.bgSecondary,
+                  color: COLORS.textPrimary,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIncompleteModal(false);
+                  submitAndScore();
+                }}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.primary}`,
+                  background: COLORS.primary,
+                  color: "#fff",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Submit Anyway
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 }

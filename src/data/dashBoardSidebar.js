@@ -35,7 +35,7 @@ export const sidebarItems = [
         permission: "organization",
         requiredPlan: "business",
         children: [
-            { id: "user-groups", icon: "fa fa-user fa-lg", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
+            //{ id: "user-groups", icon: "fa fa-user fa-lg", text: "User groups", permission: "organization", href: "/dashboard/orgusergroups", requiredPlan: null },
             { id: "users", icon: "fa fa-users fa-lg", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
             { id: "organizations", icon: "fa fa-sitemap fa-lg", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
         ],
