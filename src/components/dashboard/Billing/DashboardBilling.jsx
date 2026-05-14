@@ -167,15 +167,16 @@ export default function DashboardBilling() {
     setVoucherData(null);
   };
 
+  // Change calculateTotal() to this:
   const calculateTotal = () => {
     if (!plan) return 0;
 
-    // If voucher is applied, use the voucher price
     if (voucherApplied && voucherData) {
-      return voucherData.price || 0;
+      // voucherData.price null/0 means free — show $0.00 not N/A
+      const vPrice = voucherData.price;
+      return vPrice == null || vPrice === 0 ? 0 : vPrice;
     }
 
-    // Otherwise use the original plan price
     return plan.price;
   };
 
@@ -561,11 +562,11 @@ export default function DashboardBilling() {
                             className="text-16 "
                             style={{ color: COLORS.success }}
                           >
-                            {plan.price !== null && voucherData.price !== null
-                              ? `-$${(plan.price - voucherData.price).toFixed(
-                                  2,
-                                )}`
-                              : "N/A"}
+                            {plan.price != null && voucherData.price != null
+                              ? `-$${(plan.price - voucherData.price).toFixed(2)}`
+                              : voucherData.price == null
+                                ? `-$${Number(plan.price).toFixed(2)}` // full discount — voucher covers 100%
+                                : "N/A"}
                           </span>
                         </div>
                         <div className="mt-10 px-10 py-8 rounded-6 bg-green-3">
@@ -594,13 +595,9 @@ export default function DashboardBilling() {
                     <span className="text-24 fw-700 text-purple-1">
                       {(() => {
                         const total = calculateTotal();
-                        return total === null || total === 0
+                        return total === null
                           ? "N/A"
-                          : `$${
-                              typeof total === "number"
-                                ? total.toFixed(2)
-                                : total
-                            }`;
+                          : `$${typeof total === "number" ? total.toFixed(2) : total}`;
                       })()}
                     </span>
                   </div>
