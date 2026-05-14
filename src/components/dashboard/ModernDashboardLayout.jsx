@@ -25,7 +25,6 @@ export default function ModernDashboardLayout() {
   const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("User");
-  const [userPlan, setUserPlan] = useState("free");
 
   // ✅ Staff flags — controls Administration visibility
   const [isStaffAdmin, setIsStaffAdmin] = useState(false);
@@ -78,9 +77,7 @@ export default function ModernDashboardLayout() {
           setIsStaffUser(userData?.is_staff_user === true);
 
           // ✅ Normalize plan to lowercase
-          const userPlanLocal =
-            userData?.plan?.plan_type?.toLowerCase() || "free";
-          setUserPlan(userPlanLocal);
+          // ✅ Plan is managed by Context (refreshUserPlan) — no local state needed
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -173,7 +170,7 @@ export default function ModernDashboardLayout() {
     }
   };
 
-  const { userCredits, setIsLoggedIn } = useContextElement();
+  const { userCredits, setIsLoggedIn, userPlan } = useContextElement();
 
   useEffect(() => {
     if (mobileSidebarOpen) {
