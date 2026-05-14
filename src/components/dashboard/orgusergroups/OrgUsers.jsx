@@ -55,7 +55,6 @@ export default function OrgUsers({ refreshProjects }) {
   const [columnWidths, setColumnWidths] = useState({
     checkbox: 60,
     email: 220,
-    groups: 150,
     roles: 140,
     status: 120,
     created_at: 180,

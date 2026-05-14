@@ -5,6 +5,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import ReactDOM from "react-dom";
 import { COLORS } from "../../styles/colors";
 
 const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
@@ -12,6 +13,7 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
   ref,
 ) {
   const [open, setOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({});
   const wrapperRef = useRef(null);
   const boxRef = useRef(null);
 
@@ -22,6 +24,7 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
     },
   }));
 
+  // Close on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -32,7 +35,60 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // ✅ Recalculate position whenever open changes
+  useEffect(() => {
+    if (open && boxRef.current) {
+      const rect = boxRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        background: "white",
+        border: "1px solid #E2E8F0",
+        borderRadius: 12,
+        padding: "8px 0",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+        zIndex: 9999,
+      });
+    }
+  }, [open]);
+
   const selectedLabel = options.find((o) => o.value === selected)?.label || "";
+
+  // ✅ Portal dropdown — renders outside modal DOM, no overflow clipping
+  const dropdownMenu = open
+    ? ReactDOM.createPortal(
+        <div style={dropdownStyle}>
+          {options.map((opt) => (
+            <div
+              key={opt.value}
+              onMouseDown={(e) => {
+                e.preventDefault(); // prevent blur before click registers
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              style={{
+                padding: "6px 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="radio"
+                name="role-select"
+                checked={selected === opt.value}
+                readOnly
+              />
+              <span style={{ fontSize: 14 }}>{opt.label}</span>
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )
+    : null;
 
   return (
     <div ref={wrapperRef} style={{ marginBottom: 14, position: "relative" }}>
@@ -65,53 +121,14 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
           display: "flex",
           alignItems: "center",
           fontSize: 14,
-          color: selected ? "#0F172A" : "#94A3B8",
+          color: selected ? "#0f172a" : "#94A3B8",
         }}
       >
         {selected ? selectedLabel : "Select role…"}
       </div>
 
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "105%",
-            left: 0,
-            width: "100%",
-            background: "white",
-            border: "1px solid #E2E8F0",
-            borderRadius: 12,
-            padding: "8px 0",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            zIndex: 6000,
-          }}
-        >
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              style={{
-                padding: "6px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="radio"
-                name="role-select"
-                checked={selected === opt.value}
-                readOnly
-              />
-              <span style={{ fontSize: 14 }}>{opt.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* ✅ Rendered via portal — floats above modal, never pushes footer */}
+      {dropdownMenu}
 
       {error && (
         <div style={{ color: COLORS.error, fontSize: 13, marginTop: 4 }}>

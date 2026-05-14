@@ -32,6 +32,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [focused, setFocused] = useState(null);
+  const [emailActivated, setEmailActivated] = useState(false); // ✅ ADD THIS
   const [loading, setLoading] = useState(false);
   const [modalError, setModalError] = useState(false);
   const show = useToast();
@@ -48,7 +49,6 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       }
     }
     loadAttributes();
-    chipInputRef.current?.focus();
   }, []);
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -340,8 +340,15 @@ export default function InviteUsersModal({ onClose, onInvite }) {
 
         {/* Chip input box */}
         <div
-          style={chipBoxStyle()}
-          onClick={() => chipInputRef.current?.focus()}
+          style={{
+            ...chipBoxStyle(),
+            cursor: emailActivated ? "text" : "default",
+          }}
+          onClick={() => {
+            setEmailActivated(true); // ✅ activate on click
+            setTimeout(() => chipInputRef.current?.focus(), 0);
+          }}
+          tabIndex={-1}
         >
           {chipEmails.map((email, i) => (
             <div
@@ -381,11 +388,17 @@ export default function InviteUsersModal({ onClose, onInvite }) {
             style={{
               border: "none",
               outline: "none",
+              boxShadow: "none",
+              WebkitAppearance: "none",
+              MozAppearance: "none",
+              appearance: "none",
               background: "transparent",
               flex: 1,
               minWidth: 140,
               fontSize: 14,
               padding: "4px",
+              pointerEvents: emailActivated ? "auto" : "none", // ✅ blocks mouse until activated
+              cursor: emailActivated ? "text" : "default",
             }}
           />
         </div>
@@ -513,8 +526,11 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       />
 
       {/* ── GROUPS (optional) ── */}
+
+      {/*
       <MultiSelectDropdown
-        label="Assign to Group(s)"
+      
+       label="Assign to Group(s)"
         options={groups.map((g) => ({
           label: g.name,
           value: g.group_id,
@@ -522,6 +538,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
         selected={selectedGroups}
         onChange={setSelectedGroups}
       />
+*/}
     </ReusableModal>
   );
 }
