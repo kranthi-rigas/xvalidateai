@@ -196,11 +196,7 @@ export default function CreateProjectModal({
         disabled={!isValid}
         loading={saving}
       >
-        <i
-          className="fa-solid fa-gear"
-          style={{ fontSize: "14px" }}
-          aria-hidden="true"
-        />
+        
       </AwsButton>
     </>
   );
