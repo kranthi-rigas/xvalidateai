@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import COLORS from "../../styles/colors";
 
 export default function ActionsMenu({
@@ -9,7 +10,10 @@ export default function ActionsMenu({
   const [open, setOpen] = useState(false);
   const [buttonHovered, setButtonHovered] = useState(false);
   const [hoverKey, setHoverKey] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const [tooltipText, setTooltipText] = useState("");
   const ref = useRef(null);
+  const itemRefs = useRef({});
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
   useEffect(() => {
@@ -18,14 +22,8 @@ export default function ActionsMenu({
         setOpen(false);
       }
     }
-
-    if (open) {
-      document.addEventListener("mousedown", handleOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutside);
-    };
+    if (open) document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
   }, [open]);
 
   /* ---------- BUTTON STYLES ---------- */
@@ -79,7 +77,6 @@ export default function ActionsMenu({
   /* ---------- ITEM STYLES ---------- */
   const getItemStyle = (item, isHovered) => {
     const isDisabled = !!item.disabled;
-
     return {
       display: "flex",
       alignItems: "center",
@@ -93,21 +90,13 @@ export default function ActionsMenu({
       background: isDisabled
         ? "transparent"
         : item.danger
-          ? isHovered
-            ? COLORS.errorLight
-            : "transparent"
-          : isHovered
-            ? COLORS.hover
-            : "transparent",
+          ? isHovered ? COLORS.errorLight : "transparent"
+          : isHovered ? COLORS.hover : "transparent",
       color: isDisabled
         ? COLORS.textDisabled
         : item.danger
-          ? isHovered
-            ? COLORS.errorDark
-            : COLORS.error
-          : isHovered
-            ? COLORS.primary
-            : COLORS.textPrimary,
+          ? isHovered ? COLORS.errorDark : COLORS.error
+          : isHovered ? COLORS.primary : COLORS.textPrimary,
     };
   };
 
@@ -116,6 +105,28 @@ export default function ActionsMenu({
     fontSize: "12px",
     transition: "transform 0.2s ease",
     transform: open ? "rotate(180deg)" : "rotate(0deg)",
+  };
+
+  /* ---------- TOOLTIP HANDLERS ---------- */
+  const handleItemMouseEnter = (item) => {
+    if (!item.disabled) {
+      setHoverKey(item.key);
+      return;
+    }
+    if (!item.tooltip) return;
+    const el = itemRefs.current[item.key];
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setTooltipPos({
+      top: rect.top - 8,
+      left: rect.left + rect.width / 2,
+    });
+    setTooltipText(item.tooltip);
+  };
+
+  const handleItemMouseLeave = () => {
+    setHoverKey(null);
+    setTooltipText("");
   };
 
   return (
@@ -136,11 +147,7 @@ export default function ActionsMenu({
         aria-haspopup="true"
       >
         Actions
-        <i
-          className="fa-solid fa-caret-down"
-          style={caretStyle}
-          aria-hidden="true"
-        />
+        <i className="fa-solid fa-caret-down" style={caretStyle} aria-hidden="true" />
       </button>
 
       {/* ---------- DROPDOWN ---------- */}
@@ -158,22 +165,16 @@ export default function ActionsMenu({
             return (
               <div
                 key={item.key}
+                ref={(el) => (itemRefs.current[item.key] = el)}
                 role="menuitem"
                 tabIndex={isDisabled ? -1 : 0}
-                title={item.tooltip || undefined}
                 onClick={() => {
-                  if (isDisabled) {
-                    item.onClick?.();
-                    return;
-                  }
+                  if (isDisabled) return;
                   setOpen(false);
                   onSelect(item.key);
                 }}
-                onMouseEnter={() => {
-                  if (!isDisabled) setHoverKey(item.key);
-                  // removed item.onMouseEnter?.() — toast only fires on click
-                }}
-                onMouseLeave={() => setHoverKey(null)}
+                onMouseEnter={() => handleItemMouseEnter(item)}
+                onMouseLeave={handleItemMouseLeave}
                 onKeyDown={(e) => {
                   if (isDisabled) return;
                   if (e.key === "Enter" || e.key === " ") {
@@ -192,22 +193,37 @@ export default function ActionsMenu({
         </div>
       )}
 
+      {/* ---------- DARK PORTAL TOOLTIP ---------- */}
+      {tooltipText &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div
+            className="fixed z-[9999] pointer-events-none"
+            style={{
+              top: tooltipPos.top,
+              left: tooltipPos.left,
+              transform: "translate(-50%, -100%)",
+            }}
+          >
+            <div className="bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg">
+              {tooltipText}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+            </div>
+          </div>,
+          document.body,
+        )}
+
       <style>{`
         button:focus-visible {
           outline: 2px solid ${COLORS.borderFocus};
           outline-offset: 2px;
         }
-        
         div[role="menuitem"]:focus-visible {
           outline: 2px solid ${COLORS.borderFocus};
           outline-offset: -2px;
         }
-        
         @media (prefers-reduced-motion: reduce) {
-          button,
-          button i,
-          button span,
-          div[style*="transition"] {
+          button, button i, button span, div[style*="transition"] {
             transition: none !important;
           }
         }
