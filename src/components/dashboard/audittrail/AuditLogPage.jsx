@@ -33,8 +33,10 @@ export default function AuditLogPage() {
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
     : String(userInfo.roles || "").split(",");
-  const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
-  const canExport = isAdmin;
+  const upperRoles = roles.map((r) => r.toUpperCase());
+  const isUserOnly =
+    upperRoles.includes("USER") && upperRoles.every((r) => r === "USER");
+  const canExport = !isUserOnly;
 
   /* ---------------- COLUMN WIDTHS ---------------- */
 
