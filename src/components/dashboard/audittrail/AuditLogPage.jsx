@@ -3,6 +3,7 @@ import ListTable from "@/components/common/ListTable";
 import PageLoader from "@/components/common/PageLoader";
 import { getAuditTrail } from "@/apiIntegration/audittrail";
 import AwsButton from "@/components/common/AwsButton";
+import ReactDOM from "react-dom";
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState([]);
@@ -11,6 +12,31 @@ export default function AuditLogPage() {
 
   const [page, setPage] = useState(1);
   const pageSize = 50;
+
+  const exportBtnRef = useRef(null);
+  const [showExportTooltip, setShowExportTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+
+  const handleExportMouseEnter = () => {
+    if (canExport) return;
+    const rect = exportBtnRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPos({
+      top: rect.top - 8, // 8px gap above button
+      left: rect.left + rect.width / 2,
+    });
+    setShowExportTooltip(true);
+  };
+
+  /* ---------------- ROLE CHECK ---------------- */
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const roles = Array.isArray(userInfo.roles)
+    ? userInfo.roles
+    : String(userInfo.roles || "").split(",");
+  const upperRoles = roles.map((r) => r.toUpperCase());
+  const isUserOnly =
+    upperRoles.includes("USER") && upperRoles.every((r) => r === "USER");
+  const canExport = !isUserOnly;
 
   /* ---------------- COLUMN WIDTHS ---------------- */
 
@@ -125,43 +151,45 @@ export default function AuditLogPage() {
 
   /* ---------------- EXPORT XLSX ---------------- */
 
-const exportExcel = () => {
-  if (!filtered.length) return;
+  const exportExcel = () => {
+    if (!filtered.length) return;
 
-  const rows = filtered.map((row) => ({
-    "Audit ID": row.audit_id,
-    User: row.performed_by
-      ? `${row.performed_by.first_name} ${row.performed_by.last_name} <${row.performed_by.email}>`
-      : "",
-    "Event Type": row.event_type,
-    Result: row.result,
-    "Resource Type": row.resource_type,
-    Timestamp: row.timestamp ? new Date(row.timestamp).toLocaleString() : "",
-    "User Agent": row.user_agent,
-    Details: JSON.stringify(row.details),
-  }));
+    const rows = filtered.map((row) => ({
+      "Audit ID": row.audit_id,
+      User: row.performed_by
+        ? `${row.performed_by.first_name} ${row.performed_by.last_name} <${row.performed_by.email}>`
+        : "",
+      "Event Type": row.event_type,
+      Result: row.result,
+      "Resource Type": row.resource_type,
+      Timestamp: row.timestamp ? new Date(row.timestamp).toLocaleString() : "",
+      "User Agent": row.user_agent,
+      Details: JSON.stringify(row.details),
+    }));
 
-  // Dynamically import SheetJS
-  import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs").then((XLSX) => {
-    const ws = XLSX.utils.json_to_sheet(rows);
+    // Dynamically import SheetJS
+    import("https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs").then(
+      (XLSX) => {
+        const ws = XLSX.utils.json_to_sheet(rows);
 
-    // Set column widths
-    ws["!cols"] = [
-      { wch: 36 }, // Audit ID
-      { wch: 40 }, // User
-      { wch: 20 }, // Event Type
-      { wch: 12 }, // Result
-      { wch: 20 }, // Resource Type
-      { wch: 22 }, // Timestamp
-      { wch: 50 }, // User Agent
-      { wch: 50 }, // Details
-    ];
+        // Set column widths
+        ws["!cols"] = [
+          { wch: 36 }, // Audit ID
+          { wch: 40 }, // User
+          { wch: 20 }, // Event Type
+          { wch: 12 }, // Result
+          { wch: 20 }, // Resource Type
+          { wch: 22 }, // Timestamp
+          { wch: 50 }, // User Agent
+          { wch: 50 }, // Details
+        ];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Audit Logs");
-    XLSX.writeFile(wb, "audit_logs.xlsx");
-  });
-};
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Audit Logs");
+        XLSX.writeFile(wb, "audit_logs.xlsx");
+      },
+    );
+  };
   /* ---------------- TABLE COLUMNS ---------------- */
 
   const columns = [
@@ -324,9 +352,7 @@ const exportExcel = () => {
       case "resource_type": {
         const val = row[key];
         if (!val) return "-";
-        return val
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        return val.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
       }
 
       case "result":
@@ -371,15 +397,50 @@ const exportExcel = () => {
 
           {/* EXPORT */}
 
-          <AwsButton
-            onClick={exportExcel}
-            className="flex items-center px-4 py-2 text-sm rounded-lg
-             bg-[#1D4ED8] text-white
-             hover:bg-[#1e40af] transition-colors"
+          {/* Export Button */}
+          <div
+            ref={exportBtnRef}
+            onMouseEnter={handleExportMouseEnter}
+            onMouseLeave={() => setShowExportTooltip(false)}
+            className="inline-block"
           >
-            <i className="fa-solid fa-file-excel text-green-300 mr-2"></i>
-            Export
-          </AwsButton>
+            <AwsButton
+              onClick={canExport ? exportExcel : undefined}
+              disabled={!canExport}
+              className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
+                canExport
+                  ? "bg-[#1D4ED8] text-white hover:bg-[#1e40af]"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+              }`}
+            >
+              <i className="fa-solid fa-file-excel mr-2"></i>
+              Export
+            </AwsButton>
+          </div>
+
+          {/* Portal Tooltip — renders at document.body level, never clipped */}
+          {showExportTooltip &&
+            !canExport &&
+            typeof document !== "undefined" &&
+            ReactDOM.createPortal(
+              <div
+                className="fixed z-[9999] pointer-events-none"
+                style={{
+                  top: tooltipPos.top,
+                  left: tooltipPos.left,
+                  transform: "translate(-50%, -100%)",
+                }}
+              >
+                <div className="bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg">
+                  You have view-only access
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/2
+                        border-4 border-transparent border-t-gray-900"
+                  />
+                </div>
+              </div>,
+              document.body,
+            )}
         </div>
 
         {/* ===== TABLE ===== */}

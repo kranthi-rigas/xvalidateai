@@ -13,6 +13,7 @@ import ApproveRejectModal from "./ApproveRejectModal";
 import ListTable from "../../common/ListTable";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { HiPlus } from "react-icons/hi";
+import ReactDOM from "react-dom";
 
 import {
   updateComplianceProject,
@@ -39,6 +40,13 @@ export default function AIListViewModern({
   const actionsRef = useRef(null);
   const [page, setPage] = useState(1);
   const scoreCacheRef = useRef({});
+
+  const actionsBtnRef = useRef(null);
+  const [showActionsTooltip, setShowActionsTooltip] = useState(false);
+  const [actionsTooltipPos, setActionsTooltipPos] = useState({
+    top: 0,
+    left: 0,
+  });
 
   useEffect(() => {
     function handleOutside(e) {
@@ -887,58 +895,97 @@ export default function AIListViewModern({
             </button>
 
             {/* Actions dropdown */}
+            {/* Add these refs/state near your other tooltip state at the top of the component */}
+            {/* const actionsBtnRef = useRef(null);                                            */}
+            {/* const [showActionsTooltip, setShowActionsTooltip] = useState(false);           */}
+            {/* const [actionsTooltipPos, setActionsTooltipPos] = useState({ top:0, left:0 }); */}
+
             <div ref={actionsRef} className="relative">
-              <ActionsMenu
-                disabled={selected.length === 0}
-                items={actionItems}
-                onSelect={(key) => {
-                  const project = liveProjects.find(
-                    (p) => p.project_id === selected[0],
-                  );
-                  if (!project) return;
+              <div
+                ref={actionsBtnRef}
+                onMouseEnter={() => {
+                  if (!isAnalystOnly || selected.length === 0) return;
+                  const rect = actionsBtnRef.current?.getBoundingClientRect();
+                  if (!rect) return;
+                  setActionsTooltipPos({
+                    top: rect.top - 8,
+                    left: rect.left + rect.width / 2,
+                  });
+                  setShowActionsTooltip(true);
+                }}
+                onMouseLeave={() => setShowActionsTooltip(false)}
+              >
+                <ActionsMenu
+                  disabled={selected.length === 0 || isAnalystOnly}
+                  items={actionItems}
+                  onSelect={(key) => {
+                    const project = liveProjects.find(
+                      (p) => p.project_id === selected[0],
+                    );
+                    if (!project) return;
 
-                  setActiveProject(project);
+                    setActiveProject(project);
 
-                  if (
-                    key === "scan_approve" ||
-                    key === "scan_reject" ||
-                    key === "approve" ||
-                    key === "reject"
-                  ) {
-                    setApprovalAction(key);
-                    setShowApprovalModal(true);
-                    return;
-                  }
-
-                  if (key === "request_scan") {
-                    setApprovalAction("request_scan");
-                    setShowApprovalModal(true);
-                    return;
-                  }
-
-                  if (key === "cancel_request") {
-                    setApprovalAction("cancel_request");
-                    setShowApprovalModal(true);
-                    return;
-                  }
-
-                  if (key === "edit") {
-                    setEditProjectData(project);
-                    setShowEditModal(true);
-                  }
-
-                  if (key === "delete") {
-                    // 🔒 FINAL GUARD
-                    if (project.assessment_status === "scan_in_progress") {
+                    if (
+                      key === "scan_approve" ||
+                      key === "scan_reject" ||
+                      key === "approve" ||
+                      key === "reject"
+                    ) {
+                      setApprovalAction(key);
+                      setShowApprovalModal(true);
                       return;
                     }
 
-                    setPendingDeleteIds(selected);
-                    setShowDeleteModal(true);
-                  }
-                }}
-              />
+                    if (key === "request_scan") {
+                      setApprovalAction("request_scan");
+                      setShowApprovalModal(true);
+                      return;
+                    }
+
+                    if (key === "cancel_request") {
+                      setApprovalAction("cancel_request");
+                      setShowApprovalModal(true);
+                      return;
+                    }
+
+                    if (key === "edit") {
+                      setEditProjectData(project);
+                      setShowEditModal(true);
+                    }
+
+                    if (key === "delete") {
+                      if (project.assessment_status === "scan_in_progress")
+                        return;
+                      setPendingDeleteIds(selected);
+                      setShowDeleteModal(true);
+                    }
+                  }}
+                />
+              </div>
             </div>
+
+            {/* Portal Tooltip — outside overflow-hidden, always visible */}
+            {showActionsTooltip &&
+              isAnalystOnly &&
+              selected.length > 0 &&
+              typeof document !== "undefined" &&
+              ReactDOM.createPortal(
+                <div
+                  className="fixed z-[9999] pointer-events-none"
+                  style={{
+                    top: actionsTooltipPos.top,
+                    left: actionsTooltipPos.left,
+                    transform: "translate(-50%, -100%)",
+                  }}
+                >
+                  <div className="bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg">
+                    You have view-only access
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                  </div>
+                </div>,
+                document.body,
+              )}
 
             {/* Preferences button – desktop only */}
             <button
