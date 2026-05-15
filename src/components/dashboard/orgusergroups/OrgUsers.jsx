@@ -290,10 +290,7 @@ export default function OrgUsers({ refreshProjects }) {
   //    - they are NOT the logged-in user
   //    - they are NOT an admin (admins are protected)
   const isDeletable = (user) => {
-    const userIsAdmin = (user.roles || [])
-      .map((r) => r.toUpperCase())
-      .includes("ADMIN");
-    return user.user_id !== loggedInUserId && !userIsAdmin;
+    return user.user_id !== loggedInUserId;
   };
 
   const selectedUsers = (users || []).filter((u) =>
@@ -309,16 +306,10 @@ export default function OrgUsers({ refreshProjects }) {
   const deleteTooltip = (() => {
     if (!canManage) return "";
     if (selected.length === 0) return "";
-    if (deletableUsers.length === 0) {
-      if (
-        nonDeletableCount === 1 &&
-        selectedUsers[0]?.user_id === loggedInUserId
-      )
-        return "You cannot delete your own account.";
-      return "Admin accounts cannot be deleted. Reassign their role first.";
-    }
+    if (deletableUsers.length === 0)
+      return "You cannot delete your own account.";
     if (nonDeletableCount > 0)
-      return `${nonDeletableCount} admin/self account(s) will be skipped. ${deletableUsers.length} user(s) will be deleted.`;
+      return `Your own account will be skipped. ${deletableUsers.length} user(s) will be deleted.`;
     return "";
   })();
 
@@ -343,13 +334,11 @@ export default function OrgUsers({ refreshProjects }) {
         .map((r) => r.toUpperCase())
         .includes("ADMIN");
       const wouldLeaveNoAdmin = selectedIsAdmin && adminCount <= 1;
-      const editDisabled = isSelf || wouldLeaveNoAdmin;
+      const editDisabled = isSelf;
 
       const editTooltip = isSelf
         ? "You can't edit your own account. Ask another admin to make changes."
-        : wouldLeaveNoAdmin
-          ? "This is the only admin. Assign another admin before editing this account."
-          : "";
+        : "";
 
       return {
         key: "edit",

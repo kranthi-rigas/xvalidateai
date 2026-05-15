@@ -273,6 +273,15 @@ export default function AIDashboard() {
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
+
+  const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const userRoles = Array.isArray(userInfo.roles)
+    ? userInfo.roles
+    : String(userInfo.roles || "").split(",");
+  const upperRoles = userRoles.map((r) => r.toUpperCase());
+  const isUserOnly =
+    upperRoles.includes("USER") && upperRoles.every((r) => r === "USER");
+
   const exportHighRiskTools = () => {
     if (!highRiskTools?.length) return;
 
@@ -665,16 +674,20 @@ export default function AIDashboard() {
 
             <div className="w-full flex justify-center pt-1 md:pt-0 md:w-auto md:absolute md:right-6">
               <DisabledTooltipButton
-                disabled={isFreePlan || highRiskTools.length === 0}
+                disabled={
+                  isUserOnly || isFreePlan || highRiskTools.length === 0
+                }
                 tooltip={
-                  highRiskTools.length === 0
-                    ? "No data available to export"
-                    : "Upgrade plan to export"
+                  isUserOnly
+                    ? "You have view-only access"
+                    : highRiskTools.length === 0
+                      ? "No data available to export"
+                      : "Upgrade plan to export"
                 }
                 onClick={() => exportHighRiskTools()}
                 className={`w-full max-w-[220px] sm:w-auto sm:min-w-[170px] px-4 py-2 text-sm font-medium rounded-lg transition
         ${
-          isFreePlan
+          isUserOnly || isFreePlan
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-primary text-white hover:opacity-90"
         }`}
@@ -702,21 +715,25 @@ export default function AIDashboard() {
         <div className="col-span-12 dashboard-card flex flex-col overflow-hidden h-auto md:h-[664px]">
           <div className="bg-blue-50 border-b border-blue-100 px-4 sm:px-6 py-4 sm:py-5 md:py-4 flex flex-col items-center justify-center gap-2 sm:gap-3 text-center md:relative md:flex-row md:justify-center">
             <div className="inline-flex items-center justify-center gap-2 text-blue-800 max-w-3xl md:max-w-none">
-              <h3 className="font-semibold md:font-bold text-base sm:text-lg leading-snug text-center">Tool Overview</h3>
+              <h3 className="font-semibold md:font-bold text-base sm:text-lg leading-snug text-center">
+                Tool Overview
+              </h3>
             </div>
 
             <div className="w-full flex justify-center pt-1 md:pt-0 md:w-auto md:absolute md:right-6">
               <DisabledTooltipButton
-                disabled={isFreePlan || allTools.length === 0}
+                disabled={isUserOnly || isFreePlan || allTools.length === 0}
                 tooltip={
-                  allTools.length === 0
-                    ? "No data available to export"
-                    : "Upgrade plan to export"
+                  isUserOnly
+                    ? "You have view-only access"
+                    : allTools.length === 0
+                      ? "No data available to export"
+                      : "Upgrade plan to export"
                 }
                 onClick={() => exportAllTools()}
                 className={`w-full max-w-[220px] sm:w-auto sm:min-w-[170px] px-4 py-2 text-sm font-medium rounded-lg transition
         ${
-          isFreePlan
+          isUserOnly || isFreePlan
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-primary text-white hover:opacity-90"
         }`}
