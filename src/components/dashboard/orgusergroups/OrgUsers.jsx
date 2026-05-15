@@ -148,15 +148,12 @@ export default function OrgUsers({ refreshProjects }) {
   function buildSearchText(user) {
     const name = `${user.first_name || ""} ${user.last_name || ""}`.trim();
     const email = user.email || "";
-    const roles = (user.roles || []).join(" ");
-    const groups = (user.groups || [])
+    const roles = (user.roles || [])
+      .join(" ")
       .map((g) => (typeof g.name === "object" ? g.name.name : g.name))
       .join(" ");
     const status = user.status || "";
-    return [name, email, roles, groups, status]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    return [name, email, roles, status].filter(Boolean).join(" ").toLowerCase();
   }
 
   /* ---------- Pagination ---------- */
@@ -228,7 +225,6 @@ export default function OrgUsers({ refreshProjects }) {
       onToggleAll: toggleSelectAll,
     },
     { key: "email", label: "Email", sortable: true, resizable: true },
-    { key: "groups", label: "Groups", sortable: false, resizable: true },
     { key: "roles", label: "Roles", sortable: true, resizable: true },
     { key: "status", label: "Status", sortable: true, resizable: true },
     {
@@ -263,17 +259,7 @@ export default function OrgUsers({ refreshProjects }) {
           </span>
         );
       }
-      case "groups": {
-        const groups =
-          row.groups
-            ?.map((g) => (typeof g.name === "object" ? g.name.name : g.name))
-            .join(", ") || "-";
-        return (
-          <span className="truncate text-muted-foreground" title={groups}>
-            {groups}
-          </span>
-        );
-      }
+
       case "status": {
         const badge = getStatusBadge(row.status);
         return (
@@ -545,9 +531,9 @@ export default function OrgUsers({ refreshProjects }) {
       {showInviteModal && (
         <InviteUsersModal
           onClose={() => setShowInviteModal(false)}
-          onInvite={async (emails, roles, groups) => {
+          onInvite={async (emails, roles) => {
             try {
-              const res = await inviteUsers({ emails, roles, groups });
+              const res = await inviteUsers({ emails, roles });
               const failed = res?.failed_invitations || [];
               const invited = res?.invited_users || [];
 
