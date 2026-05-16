@@ -13,6 +13,7 @@ import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
+import { subscribeToNewsletter } from "../../apiIntegration/newsletter";
 
 const PD_DOCS = [
   {
@@ -166,19 +167,29 @@ const PLAYBOOK_MODULES = [
   },
 ];
 
-function NotifyForm({ showToast }) {
-  const [email, setEmail] = React.useState("");
+function NotifyButton({ showToast }) {
   const [submitted, setSubmitted] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
-  const handleNotify = () => {
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!valid) {
-      showToast("Please enter a valid email address.", "warning");
+  const handleNotify = async () => {
+    const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+    const email = userInfo?.email || "";
+
+    if (!email) {
+      showToast("Could not find your email. Please log in again.", "error");
       return;
     }
-    // TODO: subscribeToNotification(email)
-    setSubmitted(true);
-    showToast("You're on the list! We'll notify you at launch.", "success");
+
+    setLoading(true);
+    try {
+      await subscribeToNewsletter(email, true);
+      setSubmitted(true);
+      showToast("You're on the list! We'll notify you at launch.", "success");
+    } catch (err) {
+      showToast(err?.message || "Something went wrong. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -190,7 +201,7 @@ function NotifyForm({ showToast }) {
           gap: 6,
           color: "#198038",
           fontWeight: 600,
-          fontSize: 13,
+          fontSize: 14,
         }}
       >
         <i className="fa-solid fa-circle-check" />
@@ -200,46 +211,50 @@ function NotifyForm({ showToast }) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleNotify()}
-        placeholder="your@email.com"
-        style={{
-          padding: "7px 12px",
-          borderRadius: 7,
-          border: "1px solid #c7d4f5",
-          background: "#fff",
-          color: "#0F3357",
-          fontSize: 13,
-          outline: "none",
-          width: 140,
-        }}
-      />
-      <button
-        onClick={handleNotify}
-        style={{
-          padding: "7px 14px",
-          borderRadius: 7,
-          border: "none",
-          background: "#0F3357",
-          color: "#fff",
-          fontWeight: 600,
-          fontSize: 13,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.background = "#1a5276")}
-        onMouseOut={(e) => (e.currentTarget.style.background = "#0F3357")}
-      >
-        Notify Me
-      </button>
-    </div>
+    <button
+      onClick={handleNotify}
+      disabled={loading}
+      style={{
+        marginTop: 4,
+        padding: "11px 32px",
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#fff",
+        background: loading ? "#6b8cb8" : "#0F3357",
+        border: "none",
+        borderRadius: 8,
+        cursor: loading ? "not-allowed" : "pointer",
+        transition: "background 0.2s ease",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+      }}
+      onMouseOver={(e) => {
+        if (!loading) e.currentTarget.style.background = "#1a5276";
+      }}
+      onMouseOut={(e) => {
+        if (!loading) e.currentTarget.style.background = "#0F3357";
+      }}
+    >
+      {loading ? (
+        <>
+          <i
+            className="fa-solid fa-circle-notch fa-spin"
+            style={{ fontSize: 13 }}
+          />
+          Sending...
+        </>
+      ) : (
+        <>
+          <i className="fa-solid fa-bell" style={{ fontSize: 13 }} />
+          Notify Me
+        </>
+      )}
+    </button>
   );
 }
-
 export default function AiLiteracyPage() {
   const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
@@ -414,70 +429,95 @@ export default function AiLiteracyPage() {
         {/* LANDING */}
         {view === "landing" && (
           <PageTransition>
-            {/* ── Coming Soon Banner ── */}
-            <div
-              style={{
-                maxWidth: 700,
-                margin: "0 auto 24px auto",
-                background: "linear-gradient(135deg, #f0f4ff 0%, #e8edfa 100%)",
-                border: "1px solid #c7d4f5",
-                borderLeft: "4px solid #0F3357",
-                borderRadius: 12,
-                padding: "14px 20px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                flexWrap: "wrap",
-              }}
-            >
-              {/* Badge */}
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  color: "#fff",
-                  background: "#0F3357",
-                  padding: "3px 9px",
-                  borderRadius: 20,
-                  flexShrink: 0,
-                  textTransform: "uppercase",
-                }}
-              >
-                Coming Soon
-              </span>
-
-              {/* Text */}
-              <div style={{ flex: 1, minWidth: 160 }}>
-                <span
-                  style={{ fontWeight: 700, fontSize: 13, color: "#0F3357" }}
-                >
-                  Chief AI Officer Program
-                </span>
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: COLORS.textMuted,
-                    marginLeft: 6,
-                  }}
-                >
-                  — Be first to know.
-                </span>
-              </div>
-
-              {/* Inline email form */}
-              <NotifyForm showToast={showToast} />
-            </div>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
                 gap: 24,
-                maxWidth: 700,
+                maxWidth: 900,
                 margin: "0 auto",
               }}
             >
-              {/* AI Literacy Playbook Card */}
+              {/* ── Chief AI Officer Program Card ── */}
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 14,
+                  padding: 32,
+                  background: COLORS.bgPrimary,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                {/* Coming Soon badge */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                    background: "#0F3357",
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Coming Soon
+                </span>
+
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "#e3edfd",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-user-tie"
+                    style={{ fontSize: 22, color: "#0F3357" }}
+                  />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Chief AI Officer Program
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Be the first to know when our Chief AI Officer Program
+                    launches. We'll notify you as soon as it's available.
+                  </p>
+                </div>
+
+                {/* Spacer to push button to bottom like other cards */}
+                <div style={{ flex: 1 }} />
+
+                <NotifyButton showToast={showToast} />
+              </div>
+
+              {/* ── AI Literacy Playbook Card ── */}
               <div
                 style={{
                   border: `1px solid ${COLORS.borderLight}`,
@@ -532,6 +572,9 @@ export default function AiLiteracyPage() {
                     exercises for your organisation.
                   </p>
                 </div>
+
+                <div style={{ flex: 1 }} />
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -543,25 +586,29 @@ export default function AiLiteracyPage() {
                     fontSize: 14,
                     fontWeight: 600,
                     color: "#fff",
-                    background: COLORS.primary,
+                    background: "#0F3357",
                     border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
                     transition: "background 0.2s ease",
                     width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
                   }}
                   onMouseOver={(e) =>
-                    (e.target.style.background = COLORS.primaryDark)
+                    (e.currentTarget.style.background = "#1a5276")
                   }
                   onMouseOut={(e) =>
-                    (e.target.style.background = COLORS.primary)
+                    (e.currentTarget.style.background = "#0F3357")
                   }
                 >
                   Open Folder
                 </button>
               </div>
 
-              {/* Professional Development Modules Card */}
+              {/* ── Professional Development Modules Card ── */}
               <div
                 style={{
                   border: `1px solid ${COLORS.borderLight}`,
@@ -616,6 +663,9 @@ export default function AiLiteracyPage() {
                     development.
                   </p>
                 </div>
+
+                <div style={{ flex: 1 }} />
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -626,22 +676,24 @@ export default function AiLiteracyPage() {
                     padding: "11px 32px",
                     fontSize: 14,
                     fontWeight: 600,
-                    color: COLORS.primary,
-                    background: "#eef2ff",
-                    border: `1px solid ${COLORS.primary}`,
+                    color: "#fff",
+                    background: "#0F3357",
+                    border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
-                    transition: "all 0.2s ease",
+                    transition: "background 0.2s ease",
                     width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
                   }}
-                  onMouseOver={(e) => {
-                    e.target.style.background = COLORS.primary;
-                    e.target.style.color = "#fff";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.background = "#eef2ff";
-                    e.target.style.color = COLORS.primary;
-                  }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "#1a5276")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "#0F3357")
+                  }
                 >
                   Open Folder
                 </button>

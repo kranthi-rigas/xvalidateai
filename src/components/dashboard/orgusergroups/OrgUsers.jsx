@@ -19,6 +19,7 @@ import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import EditUserModal from "./EditUserModal";
 import DeleteUsersModal from "./DeleteUsersModal";
 
+
 export default function OrgUsers({ refreshProjects }) {
   const [users, setUsers] = useState(null);
   const [search, setSearch] = useState("");
@@ -37,6 +38,9 @@ export default function OrgUsers({ refreshProjects }) {
   /* ---------- Role / Org checks ---------- */
   const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
   const loggedInUserId = userInfo?.user_id || userInfo?.sub || "";
+
+  // Derive the org_admin ID from the logged-in user's profile
+  const orgAdminId = userInfo?.organization?.org_admin || "";
 
   const roles = Array.isArray(userInfo.roles)
     ? userInfo.roles
@@ -209,8 +213,10 @@ export default function OrgUsers({ refreshProjects }) {
             className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
           />
         );
+
       case "email":
         return <span className="text-muted-foreground">{row.email || "-"}</span>;
+
       case "roles": {
         const text = (row.roles || []).map(capitalize).join(", ") || "-";
         return <span className="text-muted-foreground" title={text}>{text}</span>;
@@ -239,19 +245,39 @@ export default function OrgUsers({ refreshProjects }) {
   );
 
   /* ---------- Delete Guard ---------- */
-  const isDeletable = (user) => user.user_id !== loggedInUserId;
+  // A user is deletable if they are not the logged-in user AND not the org admin
+  const isDeletable = (user) =>
+    user.user_id !== loggedInUserId && user.user_id !== orgAdminId;
 
   const selectedUsers = (users || []).filter((u) => selected.includes(u.user_id));
   const deletableUsers = selectedUsers.filter(isDeletable);
   const nonDeletableCount = selectedUsers.length - deletableUsers.length;
 
-  const deleteEnabled = canManage && selected.length > 0 && deletableUsers.length > 0;
+  // Break down why users are non-deletable for precise tooltip messaging
+  const selfSelected = selectedUsers.some((u) => u.user_id === loggedInUserId);
+  const orgAdminSelected = selectedUsers.some(
+    (u) => u.user_id === orgAdminId && u.user_id !== loggedInUserId,
+  );
+
+  // Block delete entirely if the org admin is among the selected — never allow deleting the owner
+  const deleteEnabled =
+    canManage && selected.length > 0 && deletableUsers.length > 0 && !orgAdminSelected;
 
   const deleteTooltip = (() => {
     if (!canManage || selected.length === 0) return "";
-    if (deletableUsers.length === 0) return "You cannot delete your own account.";
-    if (nonDeletableCount > 0)
+
+    // Org admin is selected — always fully blocked, regardless of other selections
+    if (orgAdminSelected)
+      return "This user's email is associated with the current organization. Please contact support@xvalidateai.com.";
+
+    // Only self selected and no one else deletable
+    if (deletableUsers.length === 0 && selfSelected)
+      return "You cannot delete your own account.";
+
+    // Self is in selection alongside other deletable users — warn self will be skipped
+    if (selfSelected)
       return `Your own account will be skipped. ${deletableUsers.length} user(s) will be deleted.`;
+
     return "";
   })();
 
@@ -268,16 +294,19 @@ export default function OrgUsers({ refreshProjects }) {
     const editItem = (() => {
       if (!isSingleSelect) return null;
       const isSelf = selectedUser?.user_id === loggedInUserId;
+      const isOrgOwner =
+        orgAdminId && selectedUser?.user_id === orgAdminId && !isSelf;
       return {
         key: "edit",
         label: "Edit",
-        disabled: isSelf,
-        // ✅ tooltip shown via ActionsMenu item, no toast
+        disabled: isSelf || isOrgOwner,
         tooltip: isSelf
           ? "You can't edit your own account. Ask another admin to make changes."
+          : isOrgOwner
+          ? "This user is the organization owner. Please contact support@xvalidateai.com to make changes."
           : "",
         onClick: () => {
-          if (isSelf) return; // blocked — tooltip handles the message
+          if (isSelf || isOrgOwner) return;
           setEditingUser(selectedUser);
           setShowEditModal(true);
         },
@@ -290,10 +319,9 @@ export default function OrgUsers({ refreshProjects }) {
       label: selected.length > 1 ? `Delete (${deletableUsers.length})` : "Delete",
       danger: true,
       disabled: !deleteEnabled,
-      // ✅ tooltip shown via ActionsMenu item, no toast
       tooltip: deleteTooltip,
       onClick: () => {
-        if (!deleteEnabled) return; // blocked — tooltip handles the message
+        if (!deleteEnabled) return;
         setUsersToDelete(deletableUsers);
         setShowDeleteModal(true);
       },
@@ -361,7 +389,7 @@ export default function OrgUsers({ refreshProjects }) {
               <i className="fa-solid fa-rotate-right" />
             </button>
 
-            {/* Actions dropdown — wrapped for tooltip when canManage but items disabled */}
+            {/* Actions dropdown */}
             <div ref={actionsRef} className="relative">
               <ActionsMenu
                 disabled={!canManage || selected.length === 0}
@@ -381,7 +409,7 @@ export default function OrgUsers({ refreshProjects }) {
               <AwsSettingsIconButton title="Preferences" onClick={() => setShowPreferences(true)} />
             </button>
 
-            {/* Invite Users — OrgRequiredWrapper shows tooltip, no toast */}
+            {/* Invite Users */}
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
