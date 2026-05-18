@@ -27,6 +27,7 @@ export default function AIListViewModern({
   setShowCreateModal,
   setOpenedProject,
   refreshProjects,
+  onLiveProjectsChange,
 }) {
   const pageLoading = usePageLoader([projects]);
   const toast = useToast();
@@ -253,6 +254,12 @@ export default function AIListViewModern({
 
     return () => clearInterval(interval);
   }, [liveProjects]);
+
+  useEffect(() => {
+    if (onLiveProjectsChange) {
+      onLiveProjectsChange(liveProjects);
+    }
+  }, [liveProjects, onLiveProjectsChange]);
 
   useEffect(() => {
     setShowActions(false);
