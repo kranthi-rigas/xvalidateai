@@ -26,6 +26,7 @@ export default function AICompliance() {
   const [openedProject, setOpenedProject] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const pageLoading = usePageLoader([projects]);
+  const [liveProjects, setLiveProjects] = useState([]);
 
   const show = useToast();
   const didFetchRef = useRef(false);
@@ -148,19 +149,22 @@ export default function AICompliance() {
   }
 
   /* ---------- STATISTICS (derived fresh from projects state) ---------- */
-  const totalScanned = (projects || []).filter(
+  // CORRECT - use statsSource which reads from liveProjects
+  const statsSource = liveProjects.length > 0 ? liveProjects : projects || [];
+
+  const totalScanned = statsSource.filter(
     (p) => p.assessment_status === "completed",
   ).length;
 
-  const compliantTools = (projects || []).filter(
+  const compliantTools = statsSource.filter(
     (p) => p.status?.toLowerCase() === "approved_for_usage",
   ).length;
 
-  const approvedWithLimits = (projects || []).filter(
+  const approvedWithLimits = statsSource.filter(
     (p) => p.recommendation?.toLowerCase() === "approved with limitations",
   ).length;
 
-  const highRiskBlocked = (projects || []).filter(
+  const highRiskBlocked = statsSource.filter(
     (p) =>
       p.recommendation?.toLowerCase() === "not recommended" ||
       (p.score && Number(p.score) < 40),
@@ -184,6 +188,7 @@ export default function AICompliance() {
         setOpenedProject={openProject}
         // ✅ Pass loadProjects so list can also trigger stat refresh
         refreshProjects={loadProjects}
+        onLiveProjectsChange={setLiveProjects}
       />
 
       {showCreateModal && (
