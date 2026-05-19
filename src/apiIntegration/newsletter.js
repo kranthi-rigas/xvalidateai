@@ -20,3 +20,21 @@ export async function subscribeToNewsletter(email, optedIn = true) {
 
   return res.json();
 }
+
+const NEWSLETTER_STATUS_ENDPOINT = `${API_BASE_URL}/newsletter/subscriptions/status`;
+
+/**
+ * Check if the current user is already subscribed to the newsletter.
+ * @returns {Promise<boolean>} - true if opted in, false otherwise.
+ */
+export async function getNewsletterStatus() {
+  const res = await fetchWithAuth(NEWSLETTER_STATUS_ENDPOINT, { method: "GET" });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error?.message || "Failed to fetch newsletter status");
+  }
+
+  const data = await res.json();
+  return data.opted_in === true;
+}

@@ -13,7 +13,12 @@ import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
-import { subscribeToNewsletter } from "../../apiIntegration/newsletter";
+import {
+  subscribeToNewsletter,
+  getNewsletterStatus,
+} from "../../apiIntegration/newsletter";
+import PageLoader from "@/components/common/PageLoader";
+import usePageLoader from "@/data/usePageLoader";
 
 const PD_DOCS = [
   {
@@ -166,10 +171,8 @@ const PLAYBOOK_MODULES = [
     ],
   },
 ];
-
-function NotifyButton({ showToast }) {
-  const [submitted, setSubmitted] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+function NotifyButton({ showToast, enrolled, setEnrolled }) {
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleNotify = async () => {
     const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
@@ -180,50 +183,62 @@ function NotifyButton({ showToast }) {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     try {
       await subscribeToNewsletter(email, true);
-      setSubmitted(true);
+      setEnrolled(true);
       showToast("You're on the list! We'll notify you at launch.", "success");
     } catch (err) {
-      showToast(err?.message || "Something went wrong. Please try again.", "error");
+      showToast(
+        err?.message || "Something went wrong. Please try again.",
+        "error",
+      );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (submitted) {
+  if (enrolled) {
     return (
-      <div
+      <button
+        disabled
         style={{
+          marginTop: 4,
+          padding: "11px 32px",
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#198038",
+          background: "#e8f5e9",
+          border: "1px solid #a5d6a7",
+          borderRadius: 8,
+          cursor: "not-allowed",
+          width: "100%",
           display: "flex",
           alignItems: "center",
-          gap: 6,
-          color: "#198038",
-          fontWeight: 600,
-          fontSize: 14,
+          justifyContent: "center",
+          gap: 8,
         }}
       >
-        <i className="fa-solid fa-circle-check" />
-        You're on the list!
-      </div>
+        <i className="fa-solid fa-circle-check" style={{ fontSize: 13 }} />
+        You're Enrolled
+      </button>
     );
   }
 
   return (
     <button
       onClick={handleNotify}
-      disabled={loading}
+      disabled={submitting}
       style={{
         marginTop: 4,
         padding: "11px 32px",
         fontSize: 14,
         fontWeight: 600,
         color: "#fff",
-        background: loading ? "#6b8cb8" : "#0F3357",
+        background: submitting ? "#6b8cb8" : "#0F3357",
         border: "none",
         borderRadius: 8,
-        cursor: loading ? "not-allowed" : "pointer",
+        cursor: submitting ? "not-allowed" : "pointer",
         transition: "background 0.2s ease",
         width: "100%",
         display: "flex",
@@ -232,13 +247,13 @@ function NotifyButton({ showToast }) {
         gap: 8,
       }}
       onMouseOver={(e) => {
-        if (!loading) e.currentTarget.style.background = "#1a5276";
+        if (!submitting) e.currentTarget.style.background = "#1a5276";
       }}
       onMouseOut={(e) => {
-        if (!loading) e.currentTarget.style.background = "#0F3357";
+        if (!submitting) e.currentTarget.style.background = "#0F3357";
       }}
     >
-      {loading ? (
+      {submitting ? (
         <>
           <i
             className="fa-solid fa-circle-notch fa-spin"
@@ -268,6 +283,14 @@ export default function AiLiteracyPage() {
   const playbookRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
+  const [newsletterStatus, setNewsletterStatus] = useState(null); // null = not yet fetched
+  const pageLoading = usePageLoader([newsletterStatus]);
+
+  useEffect(() => {
+    getNewsletterStatus()
+      .then((isEnrolled) => setNewsletterStatus(isEnrolled))
+      .catch(() => setNewsletterStatus(false)); // unblock loader on error
+  }, []);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -406,6 +429,8 @@ export default function AiLiteracyPage() {
 
   const currentHeading = headings[view] ?? headings.landing;
 
+  if (pageLoading) return <PageLoader loading={true} />;
+
   return (
     <div ref={topRef} className="spicy-y">
       <div className="dashboard-body">
@@ -514,7 +539,11 @@ export default function AiLiteracyPage() {
                 {/* Spacer to push button to bottom like other cards */}
                 <div style={{ flex: 1 }} />
 
-                <NotifyButton showToast={showToast} />
+                <NotifyButton
+                  showToast={showToast}
+                  enrolled={newsletterStatus === true}
+                  setEnrolled={(val) => setNewsletterStatus(val)}
+                />
               </div>
 
               {/* ── AI Literacy Playbook Card ── */}
