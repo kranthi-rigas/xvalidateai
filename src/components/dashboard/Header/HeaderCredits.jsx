@@ -5,41 +5,56 @@ import { COLORS } from "@/styles/colors";
 
 export default function HeaderCredits() {
   const { userCredits, setUserCredits } = useContextElement();
-  const [creditsRemaining, setCreditsRemaining] = useState(0);
   const [creditsTotal, setCreditsTotal] = useState(0);
 
-  const loadCredits = async () => {
-    try {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        const userData = await fetchUserProfile(token);
-        if (userData?.plan) {
-          setCreditsRemaining(userData.plan.credits_remaining || 0);
-          setCreditsTotal(userData.plan.credits || 0);
-          // Update context as well
-          if (setUserCredits) {
-            setUserCredits(userData.plan.credits_remaining || 0);
+  // ── Load total credits once on mount (for the denominator display) ────────
+  useEffect(() => {
+    const loadTotal = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        // Try localStorage first — instant, no API wait
+        const stored = localStorage.getItem("user_info");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const total = parsed?.plan?.credits ?? 0;
+          if (total) {
+            setCreditsTotal(total);
+            return; // localStorage had it, skip API call
           }
         }
+
+        // Fallback: fetch from API
+        const userData = await fetchUserProfile(token);
+        if (userData?.plan) {
+          setCreditsTotal(userData.plan.credits ?? 0);
+          setUserCredits(userData.plan.credits_remaining ?? 0);
+        }
+      } catch (error) {
+        console.error("Error loading credits total:", error);
       }
-    } catch (error) {
-      console.error("Error loading credits:", error);
-    }
-  };
+    };
 
-  useEffect(() => {
-    loadCredits();
-
-    // Refetch every 30 seconds as fallback
-    const interval = setInterval(loadCredits, 30000);
-    return () => clearInterval(interval);
+    loadTotal();
   }, []);
 
-  // Listen for plan purchase or credits update from context
+  // ── Sync total when userCredits context updates (after voucher/PayPal) ────
+  // ── Sync total whenever userCredits context updates ───────────────────────
   useEffect(() => {
-    if (userCredits && typeof userCredits === "number") {
-      setCreditsRemaining(userCredits);
-    }
+    if (!userCredits) return;
+    try {
+      const stored = localStorage.getItem("user_info");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // ✅ read both fields — DashboardBilling now writes both on redemption
+        const total =
+          parsed?.plan?.credits ??
+          parsed?.plan?.credits_remaining ??
+          userCredits;
+        setCreditsTotal(total);
+      }
+    } catch {}
   }, [userCredits]);
 
   return (
@@ -49,8 +64,12 @@ export default function HeaderCredits() {
         style={{ color: COLORS.secondary, fontSize: "14px" }}
       />
       <div className="flex items-baseline gap-1">
-        <span className="text-sm lg:text-lg font-bold" style={{ color: COLORS.secondary }}>
-          {creditsRemaining}
+        {/* ✅ userCredits from Context — updates instantly on voucher redemption */}
+        <span
+          className="text-sm lg:text-lg font-bold"
+          style={{ color: COLORS.secondary }}
+        >
+          {userCredits ?? 0}
         </span>
         <span className="text-xs text-muted-foreground">/ {creditsTotal}</span>
       </div>

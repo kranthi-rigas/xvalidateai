@@ -1,41 +1,19 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import React, { forwardRef, useRef, useImperativeHandle } from "react";
 import { COLORS } from "../../styles/colors";
 
 const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
   { label, options = [], selected, onChange, error, required = false },
   ref,
 ) {
-  const [open, setOpen] = useState(false);
-  const wrapperRef = useRef(null);
-  const boxRef = useRef(null);
+  const selectRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
-    focus: () => {
-      boxRef.current?.focus();
-      setOpen(true);
-    },
+    focus: () => selectRef.current?.focus(),
   }));
 
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const selectedLabel = options.find((o) => o.value === selected)?.label || "";
-
   return (
-    <div ref={wrapperRef} style={{ marginBottom: 14, position: "relative" }}>
+    <div style={{ marginBottom: 14 }}>
+      {/* Label */}
       <label
         style={{
           display: "block",
@@ -51,70 +29,61 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
         )}
       </label>
 
-      <div
-        ref={boxRef}
-        tabIndex={0}
-        onClick={() => setOpen((p) => !p)}
+      {/* Native select */}
+      <select
+        ref={selectRef}
+        value={selected || ""}
+        onChange={(e) => onChange(e.target.value)}
         style={{
+          width: "100%",
           borderRadius: 12,
           border: error ? "1.5px solid #DC2626" : "1px solid #D1D5DB",
           background: "#F9FAFB",
           padding: "10px 12px",
-          cursor: "pointer",
           minHeight: 42,
-          display: "flex",
-          alignItems: "center",
           fontSize: 14,
-          color: selected ? "#0F172A" : "#94A3B8",
+          color: selected ? "#0f172a" : "#94A3B8",
+          cursor: "pointer",
+          outline: "none",
+          appearance: "auto", // keeps native OS dropdown arrow
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = error ? "#DC2626" : "#2563EB";
+          e.target.style.boxShadow = error
+            ? "0 0 0 3px rgba(220,38,38,0.1)"
+            : "0 0 0 3px rgba(37,99,235,0.1)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = error ? "#DC2626" : "#D1D5DB";
+          e.target.style.boxShadow = "none";
         }}
       >
-        {selected ? selectedLabel : "Select role…"}
-      </div>
+        <option value="" disabled>
+          Select role…
+        </option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
 
-      {open && (
+      {/* Error */}
+      {error && (
         <div
           style={{
-            position: "absolute",
-            top: "105%",
-            left: 0,
-            width: "100%",
-            background: "white",
-            border: "1px solid #E2E8F0",
-            borderRadius: 12,
-            padding: "8px 0",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            zIndex: 6000,
+            color: COLORS.error,
+            fontSize: 12,
+            marginTop: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
           }}
         >
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              style={{
-                padding: "6px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="radio"
-                name="role-select"
-                checked={selected === opt.value}
-                readOnly
-              />
-              <span style={{ fontSize: 14 }}>{opt.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {error && (
-        <div style={{ color: COLORS.error, fontSize: 13, marginTop: 4 }}>
+          <i
+            className="fa-solid fa-circle-exclamation"
+            style={{ fontSize: 12 }}
+          />
           {error}
         </div>
       )}

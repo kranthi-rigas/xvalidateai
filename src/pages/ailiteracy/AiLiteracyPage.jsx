@@ -13,6 +13,12 @@ import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
+import {
+  subscribeToNewsletter,
+  getNewsletterStatus,
+} from "../../apiIntegration/newsletter";
+import PageLoader from "@/components/common/PageLoader";
+import usePageLoader from "@/data/usePageLoader";
 
 const PD_DOCS = [
   {
@@ -96,9 +102,7 @@ const PD_MODULES = [
     icon: "fa-solid fa-shield-halved",
     color: "#7c3aed",
     bg: "#ede9fe",
-    docs: [
-      PD_DOCS.find((d) => d.id === "ai_resilient"),
-    ],
+    docs: [PD_DOCS.find((d) => d.id === "ai_resilient")],
   },
 ];
 
@@ -167,7 +171,105 @@ const PLAYBOOK_MODULES = [
     ],
   },
 ];
+function NotifyButton({ showToast, enrolled, setEnrolled }) {
+  const [submitting, setSubmitting] = React.useState(false);
 
+  const handleNotify = async () => {
+    const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
+    const email = userInfo?.email || "";
+
+    if (!email) {
+      showToast("Could not find your email. Please log in again.", "error");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await subscribeToNewsletter(email, true);
+      setEnrolled(true);
+      showToast("You're on the list! We'll notify you at launch.", "success");
+    } catch (err) {
+      showToast(
+        err?.message || "Something went wrong. Please try again.",
+        "error",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (enrolled) {
+    return (
+      <button
+        disabled
+        style={{
+          marginTop: 4,
+          padding: "11px 32px",
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#198038",
+          background: "#e8f5e9",
+          border: "1px solid #a5d6a7",
+          borderRadius: 8,
+          cursor: "not-allowed",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+        }}
+      >
+        <i className="fa-solid fa-circle-check" style={{ fontSize: 13 }} />
+        You're Enrolled
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleNotify}
+      disabled={submitting}
+      style={{
+        marginTop: 4,
+        padding: "11px 32px",
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#fff",
+        background: submitting ? "#6b8cb8" : "#0F3357",
+        border: "none",
+        borderRadius: 8,
+        cursor: submitting ? "not-allowed" : "pointer",
+        transition: "background 0.2s ease",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+      }}
+      onMouseOver={(e) => {
+        if (!submitting) e.currentTarget.style.background = "#1a5276";
+      }}
+      onMouseOut={(e) => {
+        if (!submitting) e.currentTarget.style.background = "#0F3357";
+      }}
+    >
+      {submitting ? (
+        <>
+          <i
+            className="fa-solid fa-circle-notch fa-spin"
+            style={{ fontSize: 13 }}
+          />
+          Sending...
+        </>
+      ) : (
+        <>
+          <i className="fa-solid fa-bell" style={{ fontSize: 13 }} />
+          Notify Me
+        </>
+      )}
+    </button>
+  );
+}
 export default function AiLiteracyPage() {
   const location = useLocation();
   const [view, setView] = useState("landing"); // "landing" | "questionnaire" | "results"
@@ -181,6 +283,14 @@ export default function AiLiteracyPage() {
   const playbookRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
+  const [newsletterStatus, setNewsletterStatus] = useState(null); // null = not yet fetched
+  const pageLoading = usePageLoader([newsletterStatus]);
+
+  useEffect(() => {
+    getNewsletterStatus()
+      .then((isEnrolled) => setNewsletterStatus(isEnrolled))
+      .catch(() => setNewsletterStatus(false)); // unblock loader on error
+  }, []);
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -267,7 +377,7 @@ export default function AiLiteracyPage() {
       await downloadPdfWithWatermark(
         `/documents/${doc.file}`,
         doc.file,
-        organizationName
+        organizationName,
       );
     } catch (err) {
       showToast("Failed to download document. Please try again.", "error");
@@ -319,6 +429,8 @@ export default function AiLiteracyPage() {
 
   const currentHeading = headings[view] ?? headings.landing;
 
+  if (pageLoading) return <PageLoader loading={true} />;
+
   return (
     <div ref={topRef} className="spicy-y">
       <div className="dashboard-body">
@@ -347,11 +459,94 @@ export default function AiLiteracyPage() {
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
                 gap: 24,
-                maxWidth: 700,
+                maxWidth: 900,
                 margin: "0 auto",
               }}
             >
-              {/* AI Literacy Playbook Card */}
+              {/* ── Chief AI Officer Program Card ── */}
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 14,
+                  padding: 32,
+                  background: COLORS.bgPrimary,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                {/* Coming Soon badge */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                    background: "#0F3357",
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Coming Soon
+                </span>
+
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "#e3edfd",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-user-tie"
+                    style={{ fontSize: 22, color: "#0F3357" }}
+                  />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Chief AI Officer Program
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Be the first to know when our Chief AI Officer Program
+                    launches. We'll notify you as soon as it's available.
+                  </p>
+                </div>
+
+                {/* Spacer to push button to bottom like other cards */}
+                <div style={{ flex: 1 }} />
+
+                <NotifyButton
+                  showToast={showToast}
+                  enrolled={newsletterStatus === true}
+                  setEnrolled={(val) => setNewsletterStatus(val)}
+                />
+              </div>
+
+              {/* ── AI Literacy Playbook Card ── */}
               <div
                 style={{
                   border: `1px solid ${COLORS.borderLight}`,
@@ -378,39 +573,71 @@ export default function AiLiteracyPage() {
                     justifyContent: "center",
                   }}
                 >
-                  <i className="fa-solid fa-folder-open" style={{ fontSize: 22, color: COLORS.primary }} />
+                  <i
+                    className="fa-solid fa-folder-open"
+                    style={{ fontSize: 22, color: COLORS.primary }}
+                  />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
                     AI Literacy Playbook
                   </div>
-                  <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                    Assessments, incident response playbooks, flowcharts, and exercises for your organisation.
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Assessments, incident response playbooks, flowcharts, and
+                    exercises for your organisation.
                   </p>
                 </div>
+
+                <div style={{ flex: 1 }} />
+
                 <button
-                  onClick={(e) => { e.stopPropagation(); setView("playbook"); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setView("playbook");
+                  }}
                   style={{
                     marginTop: 4,
                     padding: "11px 32px",
                     fontSize: 14,
                     fontWeight: 600,
                     color: "#fff",
-                    background: COLORS.primary,
+                    background: "#0F3357",
                     border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
                     transition: "background 0.2s ease",
                     width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
                   }}
-                  onMouseOver={(e) => (e.target.style.background = COLORS.primaryDark)}
-                  onMouseOut={(e) => (e.target.style.background = COLORS.primary)}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "#1a5276")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "#0F3357")
+                  }
                 >
                   Open Folder
                 </button>
               </div>
 
-              {/* Professional Development Modules Card */}
+              {/* ── Professional Development Modules Card ── */}
               <div
                 style={{
                   border: `1px solid ${COLORS.borderLight}`,
@@ -437,33 +664,65 @@ export default function AiLiteracyPage() {
                     justifyContent: "center",
                   }}
                 >
-                  <i className="fa-solid fa-folder" style={{ fontSize: 22, color: COLORS.primary }} />
+                  <i
+                    className="fa-solid fa-folder"
+                    style={{ fontSize: 22, color: COLORS.primary }}
+                  />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textPrimary, marginBottom: 8 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
                     Professional Development Modules
                   </div>
-                  <p style={{ fontSize: 14, color: COLORS.textMuted, lineHeight: 1.6, margin: 0 }}>
-                    Curated modules and resources for educator professional development.
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Curated modules and resources for educator professional
+                    development.
                   </p>
                 </div>
+
+                <div style={{ flex: 1 }} />
+
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleViewPD(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewPD();
+                  }}
                   style={{
                     marginTop: 4,
                     padding: "11px 32px",
                     fontSize: 14,
                     fontWeight: 600,
-                    color: COLORS.primary,
-                    background: "#eef2ff",
-                    border: `1px solid ${COLORS.primary}`,
+                    color: "#fff",
+                    background: "#0F3357",
+                    border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
-                    transition: "all 0.2s ease",
+                    transition: "background 0.2s ease",
                     width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
                   }}
-                  onMouseOver={(e) => { e.target.style.background = COLORS.primary; e.target.style.color = "#fff"; }}
-                  onMouseOut={(e) => { e.target.style.background = "#eef2ff"; e.target.style.color = COLORS.primary; }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "#1a5276")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "#0F3357")
+                  }
                 >
                   Open Folder
                 </button>
@@ -495,10 +754,25 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div
+              style={{
+                maxWidth: 900,
+                margin: "0 auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 28,
+              }}
+            >
               {PLAYBOOK_MODULES.map((mod) => (
                 <div key={mod.id}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
                     <div
                       style={{
                         width: 36,
@@ -511,9 +785,20 @@ export default function AiLiteracyPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
+                      <i
+                        className={mod.icon}
+                        style={{ fontSize: 15, color: mod.color }}
+                      />
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      {mod.title}
+                    </div>
                     <span
                       style={{
                         fontSize: 11,
@@ -525,11 +810,18 @@ export default function AiLiteracyPage() {
                         marginLeft: 4,
                       }}
                     >
-                      {mod.items.length} {mod.items.length === 1 ? "resource" : "resources"}
+                      {mod.items.length}{" "}
+                      {mod.items.length === 1 ? "resource" : "resources"}
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     {mod.items.map((item) => (
                       <div
                         key={item.id}
@@ -555,13 +847,29 @@ export default function AiLiteracyPage() {
                             flexShrink: 0,
                           }}
                         >
-                          <i className={item.icon} style={{ fontSize: 16, color: item.color }} />
+                          <i
+                            className={item.icon}
+                            style={{ fontSize: 16, color: item.color }}
+                          />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 14,
+                              color: COLORS.textPrimary,
+                              marginBottom: 2,
+                            }}
+                          >
                             {item.title}
                           </div>
-                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: COLORS.textMuted,
+                              lineHeight: 1.45,
+                            }}
+                          >
                             {item.description}
                           </div>
                         </div>
@@ -588,8 +896,10 @@ export default function AiLiteracyPage() {
                               e.currentTarget.style.borderColor = item.color;
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = COLORS.bgPrimary;
-                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                              e.currentTarget.style.background =
+                                COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor =
+                                COLORS.borderLight;
                             }}
                           >
                             <i className="fa-solid fa-arrow-right" />
@@ -710,11 +1020,26 @@ export default function AiLiteracyPage() {
               </button>
             </div>
 
-            <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+            <div
+              style={{
+                maxWidth: 900,
+                margin: "0 auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 28,
+              }}
+            >
               {PD_MODULES.map((mod) => (
                 <div key={mod.id}>
                   {/* Module heading */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 14,
+                    }}
+                  >
                     <div
                       style={{
                         width: 36,
@@ -727,9 +1052,20 @@ export default function AiLiteracyPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <i className={mod.icon} style={{ fontSize: 15, color: mod.color }} />
+                      <i
+                        className={mod.icon}
+                        style={{ fontSize: 15, color: mod.color }}
+                      />
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary }}>{mod.title}</div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      {mod.title}
+                    </div>
                     <span
                       style={{
                         fontSize: 11,
@@ -741,12 +1077,19 @@ export default function AiLiteracyPage() {
                         marginLeft: 4,
                       }}
                     >
-                      {mod.docs.length} {mod.docs.length === 1 ? "resource" : "resources"}
+                      {mod.docs.length}{" "}
+                      {mod.docs.length === 1 ? "resource" : "resources"}
                     </span>
                   </div>
 
                   {/* Document cards */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
                     {mod.docs.map((doc) => (
                       <div
                         key={doc.id}
@@ -772,13 +1115,29 @@ export default function AiLiteracyPage() {
                             flexShrink: 0,
                           }}
                         >
-                          <i className={doc.icon} style={{ fontSize: 16, color: doc.color }} />
+                          <i
+                            className={doc.icon}
+                            style={{ fontSize: 16, color: doc.color }}
+                          />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.textPrimary, marginBottom: 2 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 14,
+                              color: COLORS.textPrimary,
+                              marginBottom: 2,
+                            }}
+                          >
                             {doc.title}
                           </div>
-                          <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.45 }}>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: COLORS.textMuted,
+                              lineHeight: 1.45,
+                            }}
+                          >
                             {doc.description}
                           </div>
                         </div>
@@ -805,8 +1164,10 @@ export default function AiLiteracyPage() {
                               e.currentTarget.style.borderColor = mod.color;
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = COLORS.bgPrimary;
-                              e.currentTarget.style.borderColor = COLORS.borderLight;
+                              e.currentTarget.style.background =
+                                COLORS.bgPrimary;
+                              e.currentTarget.style.borderColor =
+                                COLORS.borderLight;
                             }}
                           >
                             <i className="fa-solid fa-eye" />
@@ -830,12 +1191,16 @@ export default function AiLiteracyPage() {
                                 transition: "all 0.15s",
                               }}
                               onMouseOver={(e) => {
-                                e.currentTarget.style.background = COLORS.bgSecondary;
-                                e.currentTarget.style.borderColor = COLORS.textMuted;
+                                e.currentTarget.style.background =
+                                  COLORS.bgSecondary;
+                                e.currentTarget.style.borderColor =
+                                  COLORS.textMuted;
                               }}
                               onMouseOut={(e) => {
-                                e.currentTarget.style.background = COLORS.bgPrimary;
-                                e.currentTarget.style.borderColor = COLORS.borderLight;
+                                e.currentTarget.style.background =
+                                  COLORS.bgPrimary;
+                                e.currentTarget.style.borderColor =
+                                  COLORS.borderLight;
                               }}
                             >
                               <i className="fa-solid fa-download" />
@@ -921,111 +1286,131 @@ export default function AiLiteracyPage() {
           </PageTransition>
         )}
       </div>
-    {/* PDF Viewer Modal */}
-    <PdfViewerModal
-      isOpen={pdfViewerDoc !== null}
-      onClose={() => setPdfViewerDoc(null)}
-      doc={pdfViewerDoc}
-      onDownload={canDownload ? handleDownloadDoc : null}
-    />
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        isOpen={pdfViewerDoc !== null}
+        onClose={() => setPdfViewerDoc(null)}
+        doc={pdfViewerDoc}
+        onDownload={canDownload ? handleDownloadDoc : null}
+      />
 
-    {/* Incomplete Answers Modal */}
-    {showIncompleteModal && (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: COLORS.bgOverlay,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-        }}
-        onClick={() => setShowIncompleteModal(false)}
-      >
+      {/* Incomplete Answers Modal */}
+      {showIncompleteModal && (
         <div
           style={{
-            backgroundColor: COLORS.white,
-            borderRadius: "12px",
-            padding: "24px",
-            maxWidth: "400px",
-            width: "90%",
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: COLORS.bgOverlay,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={() => setShowIncompleteModal(false)}
         >
-          <div style={{ marginBottom: "16px", textAlign: "center" }}>
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                backgroundColor: COLORS.errorLight,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "16px",
-                margin: "0 auto 16px auto",
-              }}
-            >
-              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: "24px", color: COLORS.error }}></i>
-            </div>
-            <h3 style={{ fontSize: "18px", fontWeight: "600", color: COLORS.textPrimary, marginBottom: "8px" }}>
-              Submit Incomplete Assessment?
-            </h3>
-            <p style={{ fontSize: "14px", color: COLORS.textSecondary, lineHeight: "1.5" }}>
-              {questions.length - Object.values(answers).filter((v) => Number.isInteger(v) && v >= 1 && v <= 4).length} question(s) unanswered. Unanswered questions will count as 0.
-            </p>
-          </div>
           <div
             style={{
-              display: "flex",
-              gap: "12px",
-              justifyContent: "center",
-              marginTop: "24px",
+              backgroundColor: COLORS.white,
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => setShowIncompleteModal(false)}
+            <div style={{ marginBottom: "16px", textAlign: "center" }}>
+              <div
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  backgroundColor: COLORS.errorLight,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "16px",
+                  margin: "0 auto 16px auto",
+                }}
+              >
+                <i
+                  className="fa-solid fa-triangle-exclamation"
+                  style={{ fontSize: "24px", color: COLORS.error }}
+                ></i>
+              </div>
+              <h3
+                style={{
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: COLORS.textPrimary,
+                  marginBottom: "8px",
+                }}
+              >
+                Submit Incomplete Assessment?
+              </h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: COLORS.textSecondary,
+                  lineHeight: "1.5",
+                }}
+              >
+                {questions.length -
+                  Object.values(answers).filter(
+                    (v) => Number.isInteger(v) && v >= 1 && v <= 4,
+                  ).length}{" "}
+                question(s) unanswered. Unanswered questions will count as 0.
+              </p>
+            </div>
+            <div
               style={{
-                padding: "10px 24px",
-                borderRadius: 8,
-                border: `1px solid ${COLORS.borderLight}`,
-                background: COLORS.bgSecondary,
-                color: COLORS.textPrimary,
-                fontWeight: 600,
-                cursor: "pointer",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                marginTop: "24px",
               }}
             >
-              Go Back
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowIncompleteModal(false);
-                submitAndScore();
-              }}
-              style={{
-                padding: "10px 24px",
-                borderRadius: 8,
-                border: `1px solid ${COLORS.primary}`,
-                background: COLORS.primary,
-                color: "#fff",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Submit Anyway
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowIncompleteModal(false)}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.borderLight}`,
+                  background: COLORS.bgSecondary,
+                  color: COLORS.textPrimary,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIncompleteModal(false);
+                  submitAndScore();
+                }}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.primary}`,
+                  background: COLORS.primary,
+                  color: "#fff",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Submit Anyway
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 }
