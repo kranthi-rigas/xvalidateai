@@ -21,6 +21,8 @@ import {
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
 import AwsButton from "@/components/common/AwsButton";
+import { fetchUserProfile } from "@/apiIntegration/auth";
+import { useContextElement } from "@/context/Context";
 
 export default function AIListViewModern({
   projects,
@@ -41,6 +43,7 @@ export default function AIListViewModern({
   const actionsRef = useRef(null);
   const [page, setPage] = useState(1);
   const scoreCacheRef = useRef({});
+  const { setUserCredits } = useContextElement();
 
   const actionsBtnRef = useRef(null);
   const [showActionsTooltip, setShowActionsTooltip] = useState(false);
@@ -1181,7 +1184,7 @@ export default function AIListViewModern({
                 comment,
               });
 
-              // ✅ Optimistic UI update
+              // ✅ Optimistic UI update (existing code)
               setLiveProjects((prev) =>
                 prev.map((p) =>
                   p.project_id === activeProject.project_id
@@ -1192,7 +1195,6 @@ export default function AIListViewModern({
                           approvalAction === "scan_approve"
                             ? userInfo
                             : p.scan_approved_by,
-
                         __scan_approved_by:
                           approvalAction === "scan_approve"
                             ? userInfo
@@ -1201,6 +1203,21 @@ export default function AIListViewModern({
                     : p,
                 ),
               );
+
+              // ✅ ADD THIS — refresh credits immediately after scan approval
+              if (approvalAction === "scan_approve") {
+                try {
+                  const token = localStorage.getItem("access_token");
+                  if (token && setUserCredits) {
+                    const userData = await fetchUserProfile(token);
+                    if (userData?.plan?.credits_remaining !== undefined) {
+                      setUserCredits(userData.plan.credits_remaining);
+                    }
+                  }
+                } catch (creditsErr) {
+                  console.error("Failed to refresh credits:", creditsErr);
+                }
+              }
 
               setApprovalError(false);
               setShowApprovalModal(false);
