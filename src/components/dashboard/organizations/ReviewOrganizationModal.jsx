@@ -6,7 +6,8 @@ import useToast from "../../../hooks/useToast";
 import { reviewOrganization } from "../../../apiIntegration/organization";
 import { COLORS } from "../../../styles/colors";
 
-const REQUIRES_COMMENT = ["SUSPEND", "REJECT", "DELETE"];
+// ── DEACTIVATE added — API requires reason for it too ──
+const REQUIRES_COMMENT = ["SUSPEND", "REJECT", "DELETE", "DEACTIVATE"];
 
 export default function ReviewOrganizationModal({
   organization,
@@ -79,10 +80,8 @@ export default function ReviewOrganizationModal({
         err?.message ||
         "Action failed. Please try again.";
 
-      // 🔔 Toast
       show(message, { type: "error", duration: 5000 });
 
-      // 🔴 Modal error state
       setModalError(true);
       setTimeout(() => setModalError(false), 5000);
     } finally {
@@ -112,16 +111,12 @@ export default function ReviewOrganizationModal({
   /* ---------- ACTION LABEL ---------- */
   const getActionLabel = () => {
     switch (action) {
-      case "APPROVE":
-        return "Approve";
-      case "REJECT":
-        return "Reject";
-      case "SUSPEND":
-        return "Suspend";
-      case "DELETE":
-        return "Delete";
-      default:
-        return action;
+      case "APPROVE":    return "Approve";
+      case "REJECT":     return "Reject";
+      case "SUSPEND":    return "Suspend";
+      case "DELETE":     return "Delete";
+      case "DEACTIVATE": return "Deactivate";
+      default:           return action;
     }
   };
 
@@ -168,7 +163,7 @@ export default function ReviewOrganizationModal({
         </div>
       </div>
 
-      {/* Comment Field */}
+      {/* Comment Field — required prop now driven by requiresComment */}
       <FormField
         label="Review Comment"
         name="comment"
@@ -177,7 +172,7 @@ export default function ReviewOrganizationModal({
         onBlur={handleBlur}
         error={error}
         touched={touched || submitted}
-        required={requiresComment}
+        required={requiresComment}  
         placeholder="Explain the reason for this action clearly…"
         type="textarea"
         rows={4}
@@ -189,8 +184,8 @@ export default function ReviewOrganizationModal({
         }
       />
 
-      {/* Warning for destructive actions */}
-      {(action === "DELETE" || action === "SUSPEND" || action === "REJECT") && (
+      {/* Warning for destructive / restrictive actions */}
+      {["DELETE", "SUSPEND", "REJECT", "DEACTIVATE"].includes(action) && (
         <div
           style={{
             display: "flex",
@@ -225,8 +220,10 @@ export default function ReviewOrganizationModal({
             {action === "DELETE"
               ? "This action cannot be undone. The organization will be permanently deleted."
               : action === "SUSPEND"
-                ? "This will temporarily suspend the organization's access."
-                : "This will reject the organization request."}
+              ? "This will temporarily suspend the organization's access."
+              : action === "DEACTIVATE"
+              ? "This will deactivate the organization and restrict its access."
+              : "This will reject the organization request."}
           </span>
         </div>
       )}
