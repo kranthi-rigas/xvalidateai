@@ -203,12 +203,30 @@ export default function OrganizationListView() {
   /* ---------- Actions Menu Items ---------- */
   const actionItems = (() => {
     if (!isAdmin || selected.length === 0) return [];
-
-    // Multi-select: no actions
     if (selected.length > 1) return [];
 
-    // Single select: show all actions
-    return ORG_ACTIONS;
+    const orgId = selected[0];
+    const org = organizations?.find((o) => o.org_id === orgId);
+    const status = (org?.status || "").toUpperCase();
+
+    // Normalize status → action key mapping
+    // Handles both "DEACTIVATED"/"INACTIVE" → disables "DEACTIVATE"
+    const statusToActionKey = {
+      ACTIVE: "ACTIVATE",
+      ACTIVATED: "ACTIVATE",
+      INACTIVE: "DEACTIVATE", // ← your API returns "Inactive"
+      DEACTIVATED: "DEACTIVATE",
+      SUSPENDED: "SUSPEND",
+      REJECTED: "REJECT",
+      PENDING: null,
+    };
+
+    const disabledActionKey = statusToActionKey[status] ?? null;
+
+    return ORG_ACTIONS.map((action) => ({
+      ...action,
+      disabled: action.key === disabledActionKey,
+    }));
   })();
 
   /* ---------- TABLE COLUMNS ---------- */
