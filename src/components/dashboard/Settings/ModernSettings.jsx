@@ -7,6 +7,7 @@ import {
   fetchUserProfile,
   updateUserProfile,
 } from "@/apiIntegration/auth";
+import SubscriptionTab from "@/components/dashboard/Settings/SubscriptionTab";
 
 // ── Country flag helpers ───────────────────────────────────────────────────
 const CountryOption = ({ data, innerProps, innerRef, isFocused }) => (
@@ -382,10 +383,10 @@ export default function ModernSettings() {
   const TAB = (key, label, extra = "") => (
     <button
       onClick={() => setActiveTab(key)}
-      className={`py-4 px-1 text-sm font-medium transition-colors border-b-2 ${extra} ${
+      className={`py-3 px-3 text-sm font-medium transition-all duration-150 border-b-2 rounded-t-md ${extra} ${
         activeTab === key
-          ? "text-primary border-secondary"
-          : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300"
+          ? "text-white border-secondary bg-secondary shadow-sm"
+          : "border-transparent text-muted-foreground hover:text-primary hover:bg-muted/60 hover:border-gray-300"
       }`}
     >
       {label}
@@ -398,11 +399,16 @@ export default function ModernSettings() {
       <div className="mb-8 border-b border-border">
         <nav className="flex space-x-8" aria-label="Tabs">
           {TAB("edit", "Edit Profile")}
+          {TAB("subscription", "Subscription")}
           {TAB("password", "Password")}
           {TAB("preferences", "Preferences")}
           <button
             onClick={() => setActiveTab("close")}
-            className="border-transparent text-destructive hover:text-red-700 hover:border-red-300 py-4 px-1 text-sm font-medium border-b-2 transition-colors ml-auto"
+            className={`py-3 px-3 text-sm font-medium border-b-2 transition-all duration-150 rounded-t-md ml-auto ${
+              activeTab === "close"
+                ? "text-white border-red-500 bg-red-500 shadow-sm"
+                : "border-transparent text-destructive hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+            }`}
           >
             Close Account
           </button>
@@ -674,6 +680,9 @@ export default function ModernSettings() {
         </div>
       )}
 
+      {/* ── Subscription Tab ─────────────────────────────────────────── */}
+      {activeTab === "subscription" && <SubscriptionTab />}
+
       {/* ── Password Tab ──────────────────────────────────────────────────── */}
       {activeTab === "password" && (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
@@ -784,7 +793,7 @@ export default function ModernSettings() {
             </div>
 
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
-              <button
+              <AwsButton
                 type="button"
                 onClick={() => {
                   setPasswordForm({
@@ -798,7 +807,7 @@ export default function ModernSettings() {
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Clear Form
-              </button>
+              </AwsButton>
               <AwsButton
                 type="submit"
                 loading={passwordLoading}
