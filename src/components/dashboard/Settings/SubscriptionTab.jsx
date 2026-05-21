@@ -317,7 +317,7 @@ export default function SubscriptionTab() {
           </div>
 
           {/* Right side — price for paid plans, upgrade button for free/premium */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             {plan !== "free" && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary">
@@ -325,6 +325,10 @@ export default function SubscriptionTab() {
                 </p>
                 <p className="text-xs text-muted-foreground">per year</p>
               </div>
+            )}
+
+            {!isBusiness && plan !== "free" && (
+              <div className="w-px h-10 bg-border flex-shrink-0" />
             )}
 
             {!isBusiness && (

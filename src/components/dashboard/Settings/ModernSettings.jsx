@@ -436,42 +436,16 @@ export default function ModernSettings() {
                     {initials || "?"}
                   </div>
                 )}
-                <label
-                  htmlFor="avatarUpload"
-                  className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm border-2 border-white cursor-pointer"
-                  style={{ backgroundColor: COLORS.secondary }}
-                >
-                  <i className="fa-solid fa-camera text-xs" />
-                  <input
-                    id="avatarUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                </label>
+                
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-1">
-                  Your Avatar
+                  Profile
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  PNG or JPG no bigger than 800px wide and tall.
-                </p>
+                
                 <div className="flex gap-3">
-                  <label
-                    htmlFor="avatarUpload"
-                    className="px-4 py-2 text-xs font-medium bg-white border border-border rounded-lg text-foreground hover:bg-muted transition-colors shadow-sm cursor-pointer"
-                  >
-                    Upload New
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="px-4 py-2 text-xs font-medium text-destructive hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    Remove
-                  </button>
+                  
+                  
                 </div>
               </div>
             </div>
@@ -656,16 +630,8 @@ export default function ModernSettings() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-5 border-t border-border">
-                  <AwsButton
-                    type="button"
-                    label="Cancel"
-                    variant="secondary"
-                    onClick={() => {
-                      setProfileMessage(null);
-                      setProfileError(null);
-                    }}
-                  />
+                <div className="flex items-center justify-end pt-5 border-t border-border">
+                  
                   <AwsButton
                     type="submit"
                     label={profileSaving ? "Saving..." : "Update Profile"}
