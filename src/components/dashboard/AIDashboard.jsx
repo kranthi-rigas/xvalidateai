@@ -210,7 +210,6 @@ const renderToolCell = (navigate) => (tool, key) => {
         </span>
       );
 
-    // AFTER
     case "overall": {
       const score = tool.overall_score || 0;
       const recLower = (tool.recommendation || "").toLowerCase().trim();
@@ -270,7 +269,6 @@ const renderToolCell = (navigate) => (tool, key) => {
         "N/A"
       );
 
-    // AFTER
     case "recommendation": {
       const recMap = {
         approved: {
@@ -594,7 +592,7 @@ export default function AIDashboard() {
           colors: recDistribution.map((d) => recColors[d.name] || "#95a5a6"),
         },
         textinfo: "none",
-        domain: { x: [0.15, 0.85], y: [0.15, 0.85] }, // makes donut bigger
+        domain: { x: [0.15, 0.85], y: [0.15, 0.85] },
       },
     ];
 
@@ -606,9 +604,9 @@ export default function AIDashboard() {
       showlegend: true,
       legend: {
         orientation: "h",
-        x: 0.5, // center horizontally
+        x: 0.5,
         xanchor: "center",
-        y: -0.15, // position below chart
+        y: -0.15,
       },
       margin: { t: 80, b: 80, l: 40, r: 40 },
       height: 450,
@@ -639,6 +637,7 @@ export default function AIDashboard() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [dashboardAnalytics, initializeCharts]);
+
   const visibleRadarTools = React.useMemo(() => {
     if (!dashboardAnalytics?.tool_kpis) return [];
 
@@ -677,13 +676,13 @@ export default function AIDashboard() {
         id="stats-section"
         className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
       >
-        {/* Total Scanned Tools */}
+        {/* Total Scanned Tools — matched to StatisticsCards: search icon, indigo colors */}
         <SingleScore
           title="Total Scanned Tools"
           value={overview.total_projects || 0}
-          icon="fa-solid fa-database"
-          iconBg="bg-blue-500/10"
-          iconColor="text-blue-500"
+          icon="fa-solid fa-magnifying-glass"
+          iconBg="bg-[#EEF2FF]"
+          iconColor="text-[#0F3053]"
           highlightValue="true"
         />
         {/* High Risk Tools */}
@@ -719,10 +718,6 @@ export default function AIDashboard() {
         <div className="dashboard-card p-6">
           <ToolsCombinedChart tools={dashboardAnalytics?.tool_kpis || []} />
         </div>
-
-        {/*<div className="dashboard-card p-6">
-          <ToolsHeatmap tools={dashboardAnalytics?.tool_kpis || []} />
-        </div>*/}
       </div>
 
       {/* Recommendation & Intended Users Row */}
