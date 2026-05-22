@@ -195,13 +195,12 @@ export default function CreateProjectModal({
         onClick={saveProject}
         disabled={!isValid}
         loading={saving}
-      >
-        
-      </AwsButton>
+      ></AwsButton>
     </>
   );
 
   return (
+    // AFTER
     <ReusableModal
       isOpen={true}
       onClose={() => setShowCreateModal(false)}
@@ -209,7 +208,7 @@ export default function CreateProjectModal({
       footer={footer}
       size="md"
       error={creditError}
-      closeOnOverlayClick={!saving}
+      closeOnOverlayClick={false}
     >
       <FormField
         label="Tool Name"

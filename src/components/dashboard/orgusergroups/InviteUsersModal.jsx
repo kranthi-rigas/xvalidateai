@@ -262,6 +262,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   );
 
   return (
+    // AFTER
     <ReusableModal
       isOpen={true}
       onClose={onClose}
@@ -269,7 +270,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       footer={footer}
       size="md"
       error={modalError}
-      closeOnOverlayClick={!loading}
+      closeOnOverlayClick={false}
     >
       {/* ── EMAILS ── */}
       <div style={{ marginBottom: 20 }}>
