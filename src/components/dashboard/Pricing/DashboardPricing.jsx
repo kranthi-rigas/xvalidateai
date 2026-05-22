@@ -1,10 +1,10 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const pricingPlans = [
   {
@@ -82,27 +82,20 @@ const pricingPlans = [
   },
 ];
 
-/**
- * Converts a Unix timestamp (seconds) to a localized date string.
- * Falls back gracefully if the value is missing or invalid.
- */
 function formatExpiryDate(unixTimestamp) {
   if (!unixTimestamp) return null;
   try {
-    const date = new Date(unixTimestamp * 1000); // convert seconds → ms
+    const date = new Date(unixTimestamp * 1000);
     return date.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    }); // e.g. "10 Jun 2027"
+    });
   } catch {
     return null;
   }
 }
 
-/**
- * Returns true if the expiry date is within the next 30 days.
- */
 function isExpiringSoon(unixTimestamp) {
   if (!unixTimestamp) return false;
   const now = Date.now();
@@ -111,9 +104,6 @@ function isExpiringSoon(unixTimestamp) {
   return expiry - now > 0 && expiry - now <= thirtyDays;
 }
 
-/**
- * Returns true if the plan has already expired.
- */
 function isExpired(unixTimestamp) {
   if (!unixTimestamp) return false;
   return Date.now() > unixTimestamp * 1000;
@@ -121,24 +111,32 @@ function isExpired(unixTimestamp) {
 
 export default function DashboardPricing({ expiresAtOverride = null }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { refreshUserPlan } = useContextElement();
 
   const { userPlan, user, userData, userProfile, profile } =
     useContextElement();
   const currentPlan = userPlan || "free";
 
+  // ── Business card highlight state (set when Premium user clicks Upgrade) ──
+  const [highlightBusiness, setHighlightBusiness] = useState(
+    location.state?.highlightPlan === "business",
+  );
+
+  useEffect(() => {
+    if (!highlightBusiness) return;
+    const t = setTimeout(() => setHighlightBusiness(false), 3000);
+    return () => clearTimeout(t);
+  }, [highlightBusiness]);
+
   // ── Robustly find expires_at across all common storage/context patterns ──
-  // Try context fields first (user, userData, userProfile, profile),
-  // then fall back to every localStorage key that might hold the user object.
   function getExpiresAt() {
-    // 1. Try all context-provided user objects
     const contextCandidates = [user, userData, userProfile, profile];
     for (const candidate of contextCandidates) {
       const ts = candidate?.plan?.expires_at ?? candidate?.expires_at ?? null;
       if (ts) return ts;
     }
 
-    // 2. Try localStorage — "user_info" is confirmed key used by DashboardBilling
     const lsKeys = [
       "user_info",
       "user",
@@ -166,7 +164,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
       }
     }
 
-    // 3. Last resort: scan ALL localStorage keys for plan.expires_at
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       try {
@@ -239,6 +236,13 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
 
   return (
     <div className="spicy-y">
+      <style>{`
+        @keyframes pulse-business {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50%       { transform: translateY(-6px) scale(1.02); }
+        }
+      `}</style>
+
       <div className="col-auto"></div>
 
       <div className="row y-gap-30">
@@ -253,6 +257,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                 {pricingPlans.map((plan, index) => {
                   const isCurrent = isCurrentPlan(plan.id);
                   const isBelowCurrent = isPlanBelowCurrent(plan.id);
+                  const isHighlighted = highlightBusiness && plan.id === "business";
 
                   return (
                     <div
@@ -272,6 +277,14 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                           flexDirection: "column",
                           border: isCurrent
                             ? `2px solid ${COLORS.primary}`
+                            : isHighlighted
+                            ? `2px solid ${COLORS.success}`
+                            : undefined,
+                          boxShadow: isHighlighted
+                            ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
+                            : undefined,
+                          animation: isHighlighted
+                            ? "pulse-business 1s ease-in-out 3"
                             : undefined,
                         }}
                         onMouseEnter={(e) => {
@@ -281,7 +294,9 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "";
+                          e.currentTarget.style.boxShadow = isHighlighted
+                            ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
+                            : "";
                         }}
                       >
                         {/* Current Plan Badge */}
@@ -300,6 +315,25 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                             }}
                           >
                             Your Plan
+                          </div>
+                        )}
+
+                        {/* Recommended Badge for Business when Premium user */}
+                        {isHighlighted && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "12px",
+                              right: "12px",
+                              backgroundColor: COLORS.success,
+                              color: "#fff",
+                              padding: "4px 12px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Recommended
                           </div>
                         )}
 

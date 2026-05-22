@@ -46,13 +46,6 @@ function daysLeft(ts) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-/**
- * Mirrors DashboardPricing's getExpiresAt() pattern exactly.
- * Reads from context candidates first, then known localStorage keys,
- * then full localStorage scan — but targets the actual API shape:
- *   plan.plan_type / plan.credits_remaining / plan.credits_used /
- *   plan.credits / plan.expires_at / plan.status
- */
 function extractPlanFromObject(obj) {
   if (!obj?.plan) return null;
   const p = obj.plan;
@@ -79,7 +72,6 @@ function getPlanFromStorage() {
     "userData",
   ];
 
-  // 1. Try known keys
   for (const key of keys) {
     try {
       const raw = localStorage.getItem(key);
@@ -92,7 +84,6 @@ function getPlanFromStorage() {
     }
   }
 
-  // 2. Full scan (mirrors DashboardPricing fallback)
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     try {
@@ -113,16 +104,12 @@ function getPlanFromStorage() {
 export default function SubscriptionTab() {
   const navigate = useNavigate();
 
-  // Pull same context fields DashboardPricing uses
   const { userPlan, user, userData, userProfile, profile, refreshUserPlan } =
     useContextElement();
 
   const [planInfo, setPlanInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // AFTER
-  // AFTER
 
   // Always fetches fresh data from API — used on mount and on credits-updated
   const fetchFromAPI = async (showLoader = false) => {
@@ -288,7 +275,13 @@ export default function SubscriptionTab() {
 
             {!isBusiness && (
               <button
-                onClick={() => navigate("/dashboard/pricing")}
+                onClick={() =>
+                  navigate("/dashboard/pricing", {
+                    state: {
+                      highlightPlan: plan === "premium" ? "business" : null,
+                    },
+                  })
+                }
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm border"
                 style={{
                   backgroundColor: COLORS.primary,
@@ -434,7 +427,6 @@ export default function SubscriptionTab() {
               label: "Seats",
               val: plan === "business" ? "Multiple users" : "Single user",
             },
-            // Only show voucher if present
           ].map(({ icon, label, val }) => (
             <div
               key={label}
