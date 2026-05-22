@@ -262,6 +262,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
   );
 
   return (
+    // AFTER
     <ReusableModal
       isOpen={true}
       onClose={onClose}
@@ -269,7 +270,7 @@ export default function InviteUsersModal({ onClose, onInvite }) {
       footer={footer}
       size="md"
       error={modalError}
-      closeOnOverlayClick={!loading}
+      closeOnOverlayClick={false}
     >
       {/* ── EMAILS ── */}
       <div style={{ marginBottom: 20 }}>
@@ -447,8 +448,12 @@ export default function InviteUsersModal({ onClose, onInvite }) {
             <button
               type="button"
               onClick={() => {
+                // Remove only the emails that came from this bulk upload
+                const importedEmails = new Set(bulkEmails.map((e) => e.email));
+                setChipEmails((prev) =>
+                  prev.filter((email) => !importedEmails.has(email)),
+                );
                 clearBulkUpload();
-                // Remove imported emails from chips? Optional — keep them since user may want them
               }}
               style={{
                 background: "none",

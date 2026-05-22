@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import ListTable from "../../common/ListTable";
 import RefreshButton from "../../common/RefreshButton";
-import ActionsMenu from "../../common/ActionsMenu";
 import AwsButton from "../../common/AwsButton";
 import { useNavigate, Link } from "react-router-dom";
 import OrganizationDetails from "./OrganizationDetails";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 import { getOrganizations } from "../../../apiIntegration/organization";
-import ReviewOrganizationModal from "./ReviewOrganizationModal";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import CreateOrganizationModal from "./CreateOrganization";
@@ -22,9 +20,6 @@ export default function OrganizationListView() {
   const [selected, setSelected] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
 
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [selectedAction, setSelectedAction] = useState(null);
-  const [activeOrg, setActiveOrg] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
 
   const [showPreferences, setShowPreferences] = useState(false);
@@ -36,7 +31,6 @@ export default function OrganizationListView() {
   });
 
   const [page, setPage] = useState(1);
-  const actionsRef = useRef(null);
 
   /* ---------- Action Menu Items ---------- */
   const ORG_ACTIONS = [
@@ -453,28 +447,7 @@ export default function OrganizationListView() {
               <i className="fa-solid fa-rotate-right"></i>
             </button>
 
-            {/* Actions dropdown */}
-            <div ref={actionsRef} className="relative">
-              <ActionsMenu
-                disabled={!isAdmin || selected.length !== 1}
-                items={actionItems}
-                onSelect={(actionKey) => {
-                  if (!isAdmin) return;
-
-                  const orgId = selected[0];
-                  const org = organizations.find((o) => o.org_id === orgId);
-
-                  if (!org) {
-                    console.error("Selected organization not found");
-                    return;
-                  }
-
-                  setActiveOrg(org);
-                  setSelectedAction(actionKey);
-                  setShowReviewModal(true);
-                }}
-              />
-            </div>
+            
 
             {/* Preferences button – desktop only */}
             <button
@@ -538,19 +511,7 @@ export default function OrganizationListView() {
         </div>
       </section>
 
-      {/* MODALS */}
-      {showReviewModal && (
-        <ReviewOrganizationModal
-          organization={activeOrg}
-          action={selectedAction}
-          onClose={() => setShowReviewModal(false)}
-          onSuccess={() => {
-            setShowReviewModal(false);
-            setSelected([]);
-            loadOrganizations();
-          }}
-        />
-      )}
+    
 
       {showCreateOrgModal && (
         <CreateOrganizationModal

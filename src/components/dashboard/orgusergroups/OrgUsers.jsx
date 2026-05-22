@@ -19,7 +19,6 @@ import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import EditUserModal from "./EditUserModal";
 import DeleteUsersModal from "./DeleteUsersModal";
 
-
 export default function OrgUsers({ refreshProjects }) {
   const [users, setUsers] = useState(null);
   const [search, setSearch] = useState("");
@@ -95,7 +94,9 @@ export default function OrgUsers({ refreshProjects }) {
     };
   }, []);
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   async function loadUsers() {
     try {
@@ -122,7 +123,9 @@ export default function OrgUsers({ refreshProjects }) {
   const [stripedRows, setStripedRows] = useState(false);
 
   /* ---------- Column Visibility ---------- */
-  const [visibleColumns, setVisibleColumns] = useState(Object.keys(columnWidths));
+  const [visibleColumns, setVisibleColumns] = useState(
+    Object.keys(columnWidths),
+  );
 
   const toggleColumn = (key) => {
     setVisibleColumns((prev) =>
@@ -147,7 +150,10 @@ export default function OrgUsers({ refreshProjects }) {
     const email = user.email || "";
     const userRoles = (user.roles || []).join(" ");
     const status = user.status || "";
-    return [name, email, userRoles, status].filter(Boolean).join(" ").toLowerCase();
+    return [name, email, userRoles, status]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
   }
 
   /* ---------- Pagination ---------- */
@@ -161,7 +167,7 @@ export default function OrgUsers({ refreshProjects }) {
     );
 
   const toggleSelectAll = (checked) =>
-    setSelected(checked ? filtered.map((u) => u.user_id) : []);
+    setSelected(checked ? paginatedData.map((u) => u.user_id) : []);
 
   /* ---------- Helpers ---------- */
   const capitalize = (str) =>
@@ -171,34 +177,72 @@ export default function OrgUsers({ refreshProjects }) {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      invited: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-      active:  { bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
-      inactive:{ bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+      invited: {
+        bg: "bg-blue-50",
+        text: "text-blue-700",
+        border: "border-blue-200",
+      },
+      active: {
+        bg: "bg-green-50",
+        text: "text-green-700",
+        border: "border-green-200",
+      },
+      inactive: {
+        bg: "bg-red-50",
+        text: "text-red-700",
+        border: "border-red-200",
+      },
     };
-    return statusMap[(status || "").toLowerCase()] || {
-      bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200",
-    };
+    return (
+      statusMap[(status || "").toLowerCase()] || {
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+      }
+    );
   };
 
   const formatDate = (timestamp) => {
     if (!timestamp) return "-";
     return new Date(timestamp * 1000).toLocaleString("en-GB", {
-      day: "2-digit", month: "2-digit", year: "numeric",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [pageSize]);
+
+  useEffect(() => {
+    setSelected([]);
+  }, [page]);
 
   /* ---------- Columns ---------- */
   const columns = [
     {
-      key: "checkbox", label: "", width: 48, resizable: false,
-      allSelected: filtered.length > 0 && selected.length === filtered.length,
+      key: "checkbox",
+      label: "",
+      width: 48,
+      resizable: false,
+      allSelected:
+        paginatedData.length > 0 &&
+        paginatedData.every((u) => selected.includes(u.user_id)),
       onToggleAll: toggleSelectAll,
     },
     { key: "email", label: "Email", sortable: true, resizable: true },
     { key: "roles", label: "Roles", sortable: true, resizable: true },
     { key: "status", label: "Status", sortable: true, resizable: true },
-    { key: "created_at", label: "Creation Time", sortable: true, resizable: true },
+    {
+      key: "created_at",
+      label: "Creation Time",
+      sortable: true,
+      resizable: true,
+    },
   ];
 
   /* ---------- Render Cell ---------- */
@@ -215,16 +259,24 @@ export default function OrgUsers({ refreshProjects }) {
         );
 
       case "email":
-        return <span className="text-muted-foreground">{row.email || "-"}</span>;
+        return (
+          <span className="text-muted-foreground">{row.email || "-"}</span>
+        );
 
       case "roles": {
         const text = (row.roles || []).map(capitalize).join(", ") || "-";
-        return <span className="text-muted-foreground" title={text}>{text}</span>;
+        return (
+          <span className="text-muted-foreground" title={text}>
+            {text}
+          </span>
+        );
       }
       case "status": {
         const badge = getStatusBadge(row.status);
         return (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}>
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+          >
             {capitalize(row.status || "-")}
           </span>
         );
@@ -249,7 +301,9 @@ export default function OrgUsers({ refreshProjects }) {
   const isDeletable = (user) =>
     user.user_id !== loggedInUserId && user.user_id !== orgAdminId;
 
-  const selectedUsers = (users || []).filter((u) => selected.includes(u.user_id));
+  const selectedUsers = (users || []).filter((u) =>
+    selected.includes(u.user_id),
+  );
   const deletableUsers = selectedUsers.filter(isDeletable);
   const nonDeletableCount = selectedUsers.length - deletableUsers.length;
 
@@ -261,7 +315,10 @@ export default function OrgUsers({ refreshProjects }) {
 
   // Block delete entirely if the org admin is among the selected — never allow deleting the owner
   const deleteEnabled =
-    canManage && selected.length > 0 && deletableUsers.length > 0 && !orgAdminSelected;
+    canManage &&
+    selected.length > 0 &&
+    deletableUsers.length > 0 &&
+    !orgAdminSelected;
 
   const deleteTooltip = (() => {
     if (!canManage || selected.length === 0) return "";
@@ -303,8 +360,8 @@ export default function OrgUsers({ refreshProjects }) {
         tooltip: isSelf
           ? "You can't edit your own account. Ask another admin to make changes."
           : isOrgOwner
-          ? "This user is the organization owner. Please contact support@xvalidateai.com to make changes."
-          : "",
+            ? "This user is the organization owner. Please contact support@xvalidateai.com to make changes."
+            : "",
         onClick: () => {
           if (isSelf || isOrgOwner) return;
           setEditingUser(selectedUser);
@@ -316,7 +373,8 @@ export default function OrgUsers({ refreshProjects }) {
     // Delete — single or multi
     const deleteItem = {
       key: "delete",
-      label: selected.length > 1 ? `Delete (${deletableUsers.length})` : "Delete",
+      label:
+        selected.length > 1 ? `Delete (${deletableUsers.length})` : "Delete",
       danger: true,
       disabled: !deleteEnabled,
       tooltip: deleteTooltip,
@@ -370,7 +428,10 @@ export default function OrgUsers({ refreshProjects }) {
               onClick={() => setShowPreferences(true)}
               className="md:hidden flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
-              <AwsSettingsIconButton title="Preferences" onClick={() => setShowPreferences(true)} />
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
             </button>
           </div>
 
@@ -406,7 +467,10 @@ export default function OrgUsers({ refreshProjects }) {
               onClick={() => setShowPreferences(true)}
               className="hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition"
             >
-              <AwsSettingsIconButton title="Preferences" onClick={() => setShowPreferences(true)} />
+              <AwsSettingsIconButton
+                title="Preferences"
+                onClick={() => setShowPreferences(true)}
+              />
             </button>
 
             {/* Invite Users */}
@@ -420,7 +484,10 @@ export default function OrgUsers({ refreshProjects }) {
             >
               <AwsButton
                 disabled={!canManage}
-                onClick={() => { if (!canManage) return; setShowInviteModal(true); }}
+                onClick={() => {
+                  if (!canManage) return;
+                  setShowInviteModal(true);
+                }}
                 className="flex items-center px-5 py-2.5 shadow-md transition-all transform hover:scale-[1.02]"
               >
                 <SlUserFollow size={15} className="mr-2" />
@@ -467,12 +534,24 @@ export default function OrgUsers({ refreshProjects }) {
               const failed = res?.failed_invitations || [];
               const invited = res?.invited_users || [];
               if (failed.length > 0 && invited.length === 0) {
-                failed.forEach((f) => show(`${f.email}: ${f.reason}`, { type: "error", duration: 5000 }));
+                failed.forEach((f) =>
+                  show(`${f.email}: ${f.reason}`, {
+                    type: "error",
+                    duration: 5000,
+                  }),
+                );
                 return { success: false };
               }
               if (failed.length > 0 && invited.length > 0) {
-                show(`${invited.length} user(s) invited successfully.`, { type: "success" });
-                failed.forEach((f) => show(`${f.email}: ${f.reason}`, { type: "error", duration: 5000 }));
+                show(`${invited.length} user(s) invited successfully.`, {
+                  type: "success",
+                });
+                failed.forEach((f) =>
+                  show(`${f.email}: ${f.reason}`, {
+                    type: "error",
+                    duration: 5000,
+                  }),
+                );
                 loadUsers();
                 return { success: true };
               }
@@ -481,7 +560,10 @@ export default function OrgUsers({ refreshProjects }) {
               return { success: true };
             } catch (err) {
               let message = "Failed to invite users";
-              try { const parsed = JSON.parse(err.message); message = parsed.message || message; } catch {}
+              try {
+                const parsed = JSON.parse(err.message);
+                message = parsed.message || message;
+              } catch {}
               show(message, { type: "error" });
               return { success: false, error: message };
             }
@@ -492,16 +574,28 @@ export default function OrgUsers({ refreshProjects }) {
       {showEditModal && editingUser && (
         <EditUserModal
           user={editingUser}
-          onClose={() => { setShowEditModal(false); setEditingUser(null); }}
-          onSave={async () => { setSelected([]); await loadUsers(); }}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingUser(null);
+          }}
+          onSave={async () => {
+            setSelected([]);
+            await loadUsers();
+          }}
         />
       )}
 
       {showDeleteModal && usersToDelete.length > 0 && (
         <DeleteUsersModal
           users={usersToDelete}
-          onClose={() => { setShowDeleteModal(false); setUsersToDelete([]); }}
-          onDeleted={() => { setSelected([]); loadUsers(); }}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setUsersToDelete([]);
+          }}
+          onDeleted={() => {
+            setSelected([]);
+            loadUsers();
+          }}
         />
       )}
 
