@@ -25,40 +25,6 @@ const PLAN_TOTALS = {
   business: { credits: 300, scans: 30 },
 };
 
-const PLAN_FEATURES = {
-  free: [
-    { text: "2 scans (20 credits)", on: true },
-    { text: "Single user", on: true },
-    { text: "Basic report", on: true },
-    { text: "Downloadable report", on: false },
-    { text: "Priority support", on: false },
-    { text: "Create organisations", on: false },
-    { text: "AI Analytics", on: false },
-    { text: "Business workflow", on: false },
-    { text: "Audit Trail", on: false },
-  ],
-  premium: [
-    { text: "10 scans (100 credits)", on: true },
-    { text: "Single user", on: true },
-    { text: "Basic + downloadable report", on: true },
-    { text: "Priority support", on: true },
-    { text: "Create organisations", on: false },
-    { text: "AI Analytics", on: false },
-    { text: "Business workflow", on: false },
-    { text: "Audit Trail", on: false },
-  ],
-  business: [
-    { text: "30 scans (300 credits)", on: true },
-    { text: "Multiple users", on: true },
-    { text: "Basic + downloadable report", on: true },
-    { text: "Priority support", on: true },
-    { text: "Create organisations", on: true },
-    { text: "AI Analytics", on: true },
-    { text: "Business workflow", on: true },
-    { text: "Audit Trail", on: true },
-  ],
-};
-
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatExpiry(ts) {
   if (!ts) return null;
@@ -155,73 +121,63 @@ export default function SubscriptionTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+  // AFTER
+  // AFTER
 
-      // ── 1. Try context objects first (same candidates as DashboardPricing) ──
-      for (const candidate of [user, userData, userProfile, profile]) {
-        const result = extractPlanFromObject(candidate);
-        if (result) {
-          setPlanInfo(result);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // ── 2. Try localStorage ────────────────────────────────────────────────
-      const fromStorage = getPlanFromStorage();
-      if (fromStorage) {
-        setPlanInfo(fromStorage);
-        setLoading(false);
-        return;
-      }
-
-      // ── 3. Fetch from API (same endpoint as fetchUserProfile) ─────────────
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) throw new Error("No token");
-        const data = await fetchUserProfile(token);
-
-        // Persist into user_info so subsequent loads are instant
-        const existing = JSON.parse(localStorage.getItem("user_info") || "{}");
-        localStorage.setItem(
-          "user_info",
-          JSON.stringify({ ...existing, ...data }),
-        );
-
-        const result = extractPlanFromObject(data);
-        setPlanInfo(
-          result ?? {
-            plan: "free",
-            expiresAt: null,
-            creditsTotal: 20,
-            creditsLeft: null,
-            creditsUsed: null,
-            status: "ACTIVE",
-          },
-        );
-      } catch (err) {
-        console.error("SubscriptionTab: failed to load plan", err);
-        setError("Could not load subscription data. Please refresh.");
-        setPlanInfo({
+  // Always fetches fresh data from API — used on mount and on credits-updated
+  const fetchFromAPI = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No token");
+      const data = await fetchUserProfile(token);
+      // Keep localStorage in sync
+      const existing = JSON.parse(localStorage.getItem("user_info") || "{}");
+      localStorage.setItem(
+        "user_info",
+        JSON.stringify({ ...existing, ...data }),
+      );
+      const result = extractPlanFromObject(data);
+      setPlanInfo(
+        result ?? {
           plan: "free",
           expiresAt: null,
           creditsTotal: 20,
           creditsLeft: null,
           creditsUsed: null,
           status: "ACTIVE",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+        },
+      );
+      refreshUserPlan?.();
+    } catch (err) {
+      console.error("SubscriptionTab: failed to load plan", err);
+      setError("Could not load subscription data. Please refresh.");
+      setPlanInfo({
+        plan: "free",
+        expiresAt: null,
+        creditsTotal: 20,
+        creditsLeft: null,
+        creditsUsed: null,
+        status: "ACTIVE",
+      });
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  };
 
-    load();
-    // Also refresh the shared context plan so sidebar/header stays in sync
-    refreshUserPlan?.();
-  }, [user, userData, userProfile, profile]);
+  // Always go straight to API on mount — never use stale cache
+  useEffect(() => {
+    fetchFromAPI(true);
+  }, []);
+
+  // Re-fetch silently whenever a scan approval fires credits-updated
+  useEffect(() => {
+    const handleCreditsUpdated = () => fetchFromAPI(false);
+    window.addEventListener("credits-updated", handleCreditsUpdated);
+    return () =>
+      window.removeEventListener("credits-updated", handleCreditsUpdated);
+  }, []);
 
   // ── Derived values ─────────────────────────────────────────────────────
   const {
@@ -236,7 +192,6 @@ export default function SubscriptionTab() {
 
   const meta = PLAN_META[plan] || PLAN_META.free;
   const totals = PLAN_TOTALS[plan] || PLAN_TOTALS.free;
-  const features = PLAN_FEATURES[plan] || PLAN_FEATURES.free;
 
   const expiry = formatExpiry(expiresAt);
   const remaining = daysLeft(expiresAt);
