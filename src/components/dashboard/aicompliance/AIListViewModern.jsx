@@ -1224,14 +1224,25 @@ export default function AIListViewModern({
               );
 
               // ✅ ADD THIS — refresh credits immediately after scan approval
+              // AFTER
               if (approvalAction === "scan_approve") {
                 try {
                   const token = localStorage.getItem("access_token");
-                  if (token && setUserCredits) {
+                  if (token) {
                     const userData = await fetchUserProfile(token);
                     if (userData?.plan?.credits_remaining !== undefined) {
-                      setUserCredits(userData.plan.credits_remaining);
+                      setUserCredits?.(userData.plan.credits_remaining);
                     }
+                    // ✅ Persist fresh plan data so SubscriptionTab picks it up
+                    const existing = JSON.parse(
+                      localStorage.getItem("user_info") || "{}",
+                    );
+                    localStorage.setItem(
+                      "user_info",
+                      JSON.stringify({ ...existing, ...userData }),
+                    );
+                    // ✅ Dispatch storage event so SubscriptionTab reacts immediately
+                    window.dispatchEvent(new Event("credits-updated"));
                   }
                 } catch (creditsErr) {
                   console.error("Failed to refresh credits:", creditsErr);
