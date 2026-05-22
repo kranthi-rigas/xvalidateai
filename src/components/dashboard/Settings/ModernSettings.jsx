@@ -714,7 +714,7 @@ export default function ModernSettings() {
                 {isSameAsCurrent && (
                   <p className="text-xs text-red-600">
                     <i className="fa-solid fa-xmark mr-1" />
-                    Must be different from your current password
+                    New Password must be different from your current password
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
