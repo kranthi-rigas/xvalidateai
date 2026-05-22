@@ -210,13 +210,51 @@ const renderToolCell = (navigate) => (tool, key) => {
         </span>
       );
 
-    case "overall":
+    // AFTER
+    case "overall": {
+      const score = tool.overall_score || 0;
+      const recLower = (tool.recommendation || "").toLowerCase().trim();
+
+      const scoreStyle =
+        recLower === "approved with limitations"
+          ? {
+              bg: "bg-amber-50",
+              text: "text-amber-700",
+              border: "border-amber-200",
+              icon: "fa-circle-exclamation",
+            }
+          : recLower === "not recommended" ||
+              recLower === "do not use" ||
+              score < 40
+            ? {
+                bg: "bg-red-50",
+                text: "text-red-700",
+                border: "border-red-200",
+                icon: "fa-circle-xmark",
+              }
+            : score >= 60
+              ? {
+                  bg: "bg-emerald-50",
+                  text: "text-emerald-700",
+                  border: "border-emerald-200",
+                  icon: "fa-circle-check",
+                }
+              : {
+                  bg: "bg-amber-50",
+                  text: "text-amber-700",
+                  border: "border-amber-200",
+                  icon: "fa-circle-exclamation",
+                };
+
       return (
-        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
-          {tool.overall_score || 0}
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${scoreStyle.bg} ${scoreStyle.text} ${scoreStyle.border}`}
+        >
+          <i className={`fa-solid ${scoreStyle.icon} text-[11px]`}></i>
+          {score}
         </span>
       );
-
+    }
     case "url":
       return tool.url ? (
         <a
@@ -232,19 +270,64 @@ const renderToolCell = (navigate) => (tool, key) => {
         "N/A"
       );
 
-    case "recommendation":
+    // AFTER
+    case "recommendation": {
+      const recMap = {
+        approved: {
+          bg: "bg-green-50",
+          text: "text-green-700",
+          border: "border-green-200",
+          icon: "fa-check-circle",
+          label: "Approved",
+        },
+        "approved with limitations": {
+          bg: "bg-yellow-50",
+          text: "text-yellow-700",
+          border: "border-yellow-200",
+          icon: "fa-circle-exclamation",
+          label: "Approved with limitations",
+        },
+        "not recommended": {
+          bg: "bg-red-50",
+          text: "text-red-700",
+          border: "border-red-200",
+          icon: "fa-circle-xmark",
+          label: "Not Recommended",
+        },
+        "do not use": {
+          bg: "bg-red-50",
+          text: "text-red-700",
+          border: "border-red-200",
+          icon: "fa-circle-xmark",
+          label: "Do Not Use",
+        },
+        restricted: {
+          bg: "bg-amber-50",
+          text: "text-amber-700",
+          border: "border-amber-200",
+          icon: "fa-triangle-exclamation",
+          label: "Restricted",
+        },
+      };
+
+      const key = (tool.recommendation || "").toLowerCase().trim();
+      const badge = recMap[key] || {
+        bg: "bg-gray-50",
+        text: "text-gray-600",
+        border: "border-gray-200",
+        icon: "fa-clock",
+        label: tool.recommendation || "Pending Review",
+      };
+
       return (
         <span
-          className={`status-badge ${
-            tool.recommendation?.toLowerCase().includes("approved")
-              ? "status-approved"
-              : "status-warning"
-          }`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${badge.bg} ${badge.text} ${badge.border}`}
         >
-          {tool.recommendation}
+          <i className={`fa-solid ${badge.icon} text-[11px]`}></i>
+          {badge.label}
         </span>
       );
-
+    }
     case "usage":
       return (
         <span className="text-xs max-w-[200px]">

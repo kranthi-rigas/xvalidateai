@@ -7,6 +7,7 @@ import {
   fetchUserProfile,
   updateUserProfile,
 } from "@/apiIntegration/auth";
+import SubscriptionTab from "@/components/dashboard/Settings/SubscriptionTab";
 
 // ── Country flag helpers ───────────────────────────────────────────────────
 const CountryOption = ({ data, innerProps, innerRef, isFocused }) => (
@@ -382,10 +383,10 @@ export default function ModernSettings() {
   const TAB = (key, label, extra = "") => (
     <button
       onClick={() => setActiveTab(key)}
-      className={`py-4 px-1 text-sm font-medium transition-colors border-b-2 ${extra} ${
+      className={`py-3 px-3 text-sm font-medium transition-all duration-150 border-b-2 rounded-t-md ${extra} ${
         activeTab === key
-          ? "text-primary border-secondary"
-          : "border-transparent text-muted-foreground hover:text-primary hover:border-gray-300"
+          ? "text-white border-secondary bg-secondary shadow-sm"
+          : "border-transparent text-muted-foreground hover:text-primary hover:bg-muted/60 hover:border-gray-300"
       }`}
     >
       {label}
@@ -398,11 +399,16 @@ export default function ModernSettings() {
       <div className="mb-8 border-b border-border">
         <nav className="flex space-x-8" aria-label="Tabs">
           {TAB("edit", "Edit Profile")}
+          {TAB("subscription", "Subscription")}
           {TAB("password", "Password")}
           {TAB("preferences", "Preferences")}
           <button
             onClick={() => setActiveTab("close")}
-            className="border-transparent text-destructive hover:text-red-700 hover:border-red-300 py-4 px-1 text-sm font-medium border-b-2 transition-colors ml-auto"
+            className={`py-3 px-3 text-sm font-medium border-b-2 transition-all duration-150 rounded-t-md ml-auto ${
+              activeTab === "close"
+                ? "text-white border-red-500 bg-red-500 shadow-sm"
+                : "border-transparent text-destructive hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+            }`}
           >
             Close Account
           </button>
@@ -430,42 +436,16 @@ export default function ModernSettings() {
                     {initials || "?"}
                   </div>
                 )}
-                <label
-                  htmlFor="avatarUpload"
-                  className="absolute bottom-0 right-0 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-sm border-2 border-white cursor-pointer"
-                  style={{ backgroundColor: COLORS.secondary }}
-                >
-                  <i className="fa-solid fa-camera text-xs" />
-                  <input
-                    id="avatarUpload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                </label>
+                
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-1">
-                  Your Avatar
+                  Profile
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  PNG or JPG no bigger than 800px wide and tall.
-                </p>
+                
                 <div className="flex gap-3">
-                  <label
-                    htmlFor="avatarUpload"
-                    className="px-4 py-2 text-xs font-medium bg-white border border-border rounded-lg text-foreground hover:bg-muted transition-colors shadow-sm cursor-pointer"
-                  >
-                    Upload New
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleRemoveImage}
-                    className="px-4 py-2 text-xs font-medium text-destructive hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    Remove
-                  </button>
+                  
+                  
                 </div>
               </div>
             </div>
@@ -650,16 +630,8 @@ export default function ModernSettings() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-5 border-t border-border">
-                  <AwsButton
-                    type="button"
-                    label="Cancel"
-                    variant="secondary"
-                    onClick={() => {
-                      setProfileMessage(null);
-                      setProfileError(null);
-                    }}
-                  />
+                <div className="flex items-center justify-end pt-5 border-t border-border">
+                  
                   <AwsButton
                     type="submit"
                     label={profileSaving ? "Saving..." : "Update Profile"}
@@ -673,6 +645,9 @@ export default function ModernSettings() {
           </div>
         </div>
       )}
+
+      {/* ── Subscription Tab ─────────────────────────────────────────── */}
+      {activeTab === "subscription" && <SubscriptionTab />}
 
       {/* ── Password Tab ──────────────────────────────────────────────────── */}
       {activeTab === "password" && (
@@ -739,7 +714,7 @@ export default function ModernSettings() {
                 {isSameAsCurrent && (
                   <p className="text-xs text-red-600">
                     <i className="fa-solid fa-xmark mr-1" />
-                    Must be different from your current password
+                    New Password must be different from your current password
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
@@ -784,7 +759,7 @@ export default function ModernSettings() {
             </div>
 
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
-              <button
+              <AwsButton
                 type="button"
                 onClick={() => {
                   setPasswordForm({
@@ -798,7 +773,7 @@ export default function ModernSettings() {
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Clear Form
-              </button>
+              </AwsButton>
               <AwsButton
                 type="submit"
                 loading={passwordLoading}

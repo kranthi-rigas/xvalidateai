@@ -269,19 +269,38 @@ export default function AIListViewModern({
   }, [selected]);
 
   // ✅ DEFINE THIS FIRST
+  // AFTER
   const getScoreDisplay = (project) => {
-    const { project_id, score, assessment_status } = project;
+    const { project_id, score, assessment_status, recommendation } = project;
+
+    const getStyleFromRecommendationAndScore = (s, rec) => {
+      const recLower = (rec || "").toLowerCase().trim();
+
+      if (recLower === "approved with limitations") {
+        return {
+          icon: "fa-circle-exclamation",
+          color: "text-amber-600",
+          value: s,
+        };
+      }
+      if (
+        recLower === "not recommended" ||
+        recLower === "do not use" ||
+        recLower === "rejected" ||
+        s < 40
+      ) {
+        return { icon: "fa-circle-xmark", color: "text-red-600", value: s };
+      }
+      if (s >= 60) {
+        return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
+      }
+      // 40–59 fallback
+      return { icon: "warning", color: "text-amber-700", value: s };
+    };
 
     if (scoreCacheRef.current[project_id] != null) {
       const s = scoreCacheRef.current[project_id];
-
-      if (s >= 60)
-        return { icon: "fa-circle-check", color: "text-emerald-600", value: s };
-
-      if (s >= 40)
-        return { icon: "warning", color: "text-amber-700", value: s };
-
-      return { icon: "fa-circle-xmark", color: "text-red-600", value: s };
+      return getStyleFromRecommendationAndScore(s, recommendation);
     }
 
     if (assessment_status === "queued" || assessment_status === "in_progress") {

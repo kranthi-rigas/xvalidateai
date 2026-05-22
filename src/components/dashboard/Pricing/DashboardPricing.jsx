@@ -123,7 +123,8 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   const navigate = useNavigate();
   const { refreshUserPlan } = useContextElement();
 
-  const { userPlan, user, userData, userProfile, profile } = useContextElement();
+  const { userPlan, user, userData, userProfile, profile } =
+    useContextElement();
   const currentPlan = userPlan || "free";
 
   // ── Robustly find expires_at across all common storage/context patterns ──
@@ -154,7 +155,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
         const parsed = JSON.parse(raw);
         const ts = parsed?.plan?.expires_at ?? parsed?.expires_at ?? null;
         if (ts) {
-          console.log(`🔍 DashboardPricing: expires_at found in localStorage["${key}"]`, ts);
+          console.log(
+            `🔍 DashboardPricing: expires_at found in localStorage["${key}"]`,
+            ts,
+          );
           return ts;
         }
       } catch {
@@ -171,7 +175,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
         const parsed = JSON.parse(raw);
         const ts = parsed?.plan?.expires_at ?? null;
         if (ts) {
-          console.log(`🔍 DashboardPricing: expires_at found via full scan in ["${key}"]`, ts);
+          console.log(
+            `🔍 DashboardPricing: expires_at found via full scan in ["${key}"]`,
+            ts,
+          );
           return ts;
         }
       } catch {
@@ -190,7 +197,12 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   console.log("🔍 DashboardPricing: userPlan from context:", userPlan);
   console.log("🔍 DashboardPricing: currentPlan resolved to:", currentPlan);
   console.log("🔍 DashboardPricing: context user object:", user);
-  console.log("🔍 DashboardPricing: expires_at found:", expiresAt, "→", formattedExpiry);
+  console.log(
+    "🔍 DashboardPricing: expires_at found:",
+    expiresAt,
+    "→",
+    formattedExpiry,
+  );
 
   const isPlanBelowCurrent = (planId) => {
     const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
@@ -324,7 +336,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               <div className="text-14 mt-5 text-light-1">
                                 {plan.description}
                               </div>
-
                             </div>
                           </div>
 
@@ -380,31 +391,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               </div>
                             )}
                           </div>
-
-                          {/* ── Validity: plain text, no box ── */}
-                          {isCurrent && formattedExpiry && (
-                            <div
-                              style={{
-                                marginTop: "12px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "5px",
-                                fontSize: "12px",
-                                color: expired ? "#dc2626" : expiringSoon ? "#d97706" : "#94a3b8",
-                              }}
-                            >
-                              <i
-                                className={`fa-solid ${expired ? "fa-circle-xmark" : expiringSoon ? "fa-triangle-exclamation" : "fa-rotate-right"}`}
-                                style={{ fontSize: "11px" }}
-                              />
-                              <span>
-                                {expired ? "Expired on " : expiringSoon ? "Expires " : "Expires · "}
-                                <span style={{ fontWeight: 600, color: expired ? "#dc2626" : expiringSoon ? "#d97706" : "#475569" }}>
-                                  {formattedExpiry}
-                                </span>
-                              </span>
-                            </div>
-                          )}
 
                           {/* CTA Button */}
                           <div className="mt-25">
