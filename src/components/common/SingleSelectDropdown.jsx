@@ -20,7 +20,7 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
           marginBottom: 6,
           fontWeight: 600,
           fontSize: 14,
-          color: "#334155",
+          color: COLORS.textPrimary, // #001d6c — was hardcoded #334155
         }}
       >
         {label}
@@ -30,6 +30,7 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
       </label>
 
       {/* Native select */}
+      {/* Native select */}
       <select
         ref={selectRef}
         value={selected || ""}
@@ -37,25 +38,32 @@ const SingleSelectDropdown = forwardRef(function SingleSelectDropdown(
         style={{
           width: "100%",
           borderRadius: 12,
-          border: error ? "1.5px solid #DC2626" : "1px solid #D1D5DB",
-          background: "#F9FAFB",
-          padding: "10px 12px",
-          minHeight: 42,
+          border: error
+            ? `1.5px solid ${COLORS.error}`
+            : `1.5px solid ${COLORS.borderLight}`,
+          background: COLORS.primaryLighter, // #e3edfd — light Trust Blue tint
+          padding: "10px 14px",
+          minHeight: 44,
           fontSize: 14,
-          color: selected ? "#0f172a" : "#94A3B8",
+          fontWeight: 500,
+          color: selected ? COLORS.primary : COLORS.primary, // #0F3357 selected, gray placeholder
           cursor: "pointer",
           outline: "none",
-          appearance: "auto", // keeps native OS dropdown arrow
+          appearance: "auto",
         }}
         onFocus={(e) => {
-          e.target.style.borderColor = error ? "#DC2626" : "#2563EB";
+          e.target.style.borderColor = error ? COLORS.error : COLORS.primary;
           e.target.style.boxShadow = error
-            ? "0 0 0 3px rgba(220,38,38,0.1)"
-            : "0 0 0 3px rgba(37,99,235,0.1)";
+            ? `0 0 0 3px rgba(218,30,40,0.12)`
+            : `0 0 0 3px rgba(15,51,87,0.12)`; // Trust Blue glow
+          e.target.style.background = "#ffffff";
         }}
         onBlur={(e) => {
-          e.target.style.borderColor = error ? "#DC2626" : "#D1D5DB";
+          e.target.style.borderColor = error
+            ? COLORS.error
+            : COLORS.borderLight;
           e.target.style.boxShadow = "none";
+          e.target.style.background = COLORS.primaryLighter;
         }}
       >
         <option value="" disabled>
