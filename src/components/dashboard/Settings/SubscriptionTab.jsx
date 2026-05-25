@@ -380,16 +380,20 @@ export default function SubscriptionTab() {
           </p>
           <button
             onClick={() =>
-              navigate("/dashboard/pricing/billing", {
-                state: { plan: { id: plan } },
+              navigate("/dashboard/pricing/", {
+                state: { highlightPlan: "business", plan: { id: plan } },
               })
             }
-            className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border transition-colors hover:bg-muted"
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm border"
             style={{
-              borderColor: isExpired ? "#fca5a5" : "#fcd34d",
-              color: isExpired ? "#b91c1c" : "#92400e",
+              backgroundColor: isExpired ? "#ef4444" : COLORS.primary,
+              borderColor: isExpired ? "#ef4444" : COLORS.primary,
+              color: "#ffffff",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
+            <i className="fa-solid fa-bolt text-xs" />
             Renew now
           </button>
         </div>
