@@ -43,7 +43,7 @@ function daysLeft(ts) {
   if (!ts) return null;
   const diff = ts * 1000 - Date.now();
   if (diff <= 0) return 0;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
 function extractPlanFromObject(obj) {
@@ -393,7 +393,7 @@ export default function SubscriptionTab() {
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            <i className="fa-solid fa-bolt text-xs" />
+            <i className="fa-solid fa-rotate text-xs" />
             Renew now
           </button>
         </div>
