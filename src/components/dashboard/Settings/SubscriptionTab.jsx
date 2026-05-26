@@ -43,7 +43,7 @@ function daysLeft(ts) {
   if (!ts) return null;
   const diff = ts * 1000 - Date.now();
   if (diff <= 0) return 0;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
 function extractPlanFromObject(obj) {
