@@ -393,7 +393,7 @@ export default function SubscriptionTab() {
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            <i className="fa-solid fa-bolt text-xs" />
+            <i className="fa-solid fa-rotate text-xs" />
             Renew now
           </button>
         </div>
