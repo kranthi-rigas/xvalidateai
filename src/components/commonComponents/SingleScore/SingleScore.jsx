@@ -28,7 +28,11 @@ export default function SingleScore({
 
         {icon && (
           <div className={`card-icon ${iconBg} ${iconColor}`}>
-            <i className={icon}></i>
+            {typeof icon === "string" ? (
+              <i className={icon}></i>
+            ) : (
+              <span className="flex items-center justify-center">{icon}</span>
+            )}
           </div>
         )}
       </div>

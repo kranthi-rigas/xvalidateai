@@ -680,7 +680,51 @@ export default function AIDashboard() {
         <SingleScore
           title="Total Scanned Tools"
           value={overview.total_projects || 0}
-          icon="fa-solid fa-magnifying-glass"
+          icon={
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Shield */}
+              <path
+                d="M22 4 L6 12 V22 C6 32 13 40 22 44 C31 40 38 32 38 22 V12 Z"
+                stroke="#0F3053"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinejoin="round"
+              />
+              {/* Search circle */}
+              <circle
+                cx="32"
+                cy="34"
+                r="8"
+                stroke="#0F3053"
+                strokeWidth="2.2"
+                fill="white"
+              />
+              <circle
+                cx="32"
+                cy="34"
+                r="8"
+                stroke="#0F3053"
+                strokeWidth="2.2"
+                fill="none"
+              />
+              {/* Search handle */}
+              <line
+                x1="38"
+                y1="40"
+                x2="43"
+                y2="45"
+                stroke="#0F3053"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          }
           iconBg="bg-[#EEF2FF]"
           iconColor="text-[#0F3053]"
           highlightValue="true"
