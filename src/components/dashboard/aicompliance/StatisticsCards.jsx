@@ -15,18 +15,46 @@ export default function StatisticsCards({
       textColor: "#0F3053",
       icon: (
         <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          viewBox="0 0 44 44"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
+          {/* Shield */}
           <path
-            d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+            d="M22 4 L6 12 V22 C6 32 13 40 22 44 C31 40 38 32 38 22 V12 Z"
             stroke="#0F3053"
-            strokeWidth="2"
-            strokeLinecap="round"
+            strokeWidth="2.5"
+            fill="none"
             strokeLinejoin="round"
+          />
+          {/* Search circle overlapping bottom right */}
+          <circle
+            cx="32"
+            cy="34"
+            r="8"
+            stroke="#0F3053"
+            strokeWidth="2.2"
+            fill="white"
+          />
+          <circle
+            cx="32"
+            cy="34"
+            r="8"
+            stroke="#0F3053"
+            strokeWidth="2.2"
+            fill="none"
+          />
+          {/* Search handle */}
+          <line
+            x1="38"
+            y1="40"
+            x2="43"
+            y2="45"
+            stroke="#0F3053"
+            strokeWidth="2.5"
+            strokeLinecap="round"
           />
         </svg>
       ),
