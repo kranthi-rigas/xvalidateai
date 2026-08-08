@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLoader from "@/components/common/PageLoader";
+import { API_BASE_URL, fetchWithAuth } from "@/apiIntegration/auth";
 
 export default function InstructorsReviewPage() {
   const [instructors, setInstructors] = useState([]);
@@ -14,7 +15,7 @@ export default function InstructorsReviewPage() {
 
   const fetchInstructors = async () => {
     try {
-      const res = await fetch("https://dev-api.academy51.com/instructors");
+      const res = await fetch(`${API_BASE_URL}/instructors`);
       const json = await res.json();
       setInstructors(json.instructors || []);
     } catch {
@@ -25,12 +26,8 @@ export default function InstructorsReviewPage() {
   };
 
   const updateStatus = async (id, actionType) => {
-    await fetch(`https://dev-api.academy51.com/instructors/${id}/status`, {
+    await fetchWithAuth(`${API_BASE_URL}/instructors/${id}/status`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-      },
       body: JSON.stringify({
         comments: comment,
         action: actionType, // "approve" or "reject"
