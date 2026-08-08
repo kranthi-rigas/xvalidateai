@@ -10,7 +10,7 @@ import "./ModernDashboardLayout.css";
 import { useContextElement } from "@/context/Context";
 import { sidebarItems } from "@/data/dashBoardSidebar";
 import Header from "./Header";
-import { logoutUser } from "@/apiIntegration/auth";
+import { logoutUser, fetchUserProfile } from "@/apiIntegration/auth";
 import AwsButton from "@/components/common/AwsButton";
 
 export default function ModernDashboardLayout() {
@@ -93,19 +93,7 @@ export default function ModernDashboardLayout() {
         const token = localStorage.getItem("access_token");
         if (!token) return;
 
-        const response = await fetch(
-          "https://dev-api.xvalidateai.com/profile",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (!response.ok) return;
-
-        const data = await response.json();
+        const data = await fetchUserProfile(token);
 
         // ✅ Update staff flags from fresh API response
         setIsStaffAdmin(data?.is_staff_admin === true);

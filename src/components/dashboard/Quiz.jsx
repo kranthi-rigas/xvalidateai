@@ -5,6 +5,7 @@ import {
   fetchExamDetails,
   fetchExamQuestions,
 } from "../../apiIntegration/quiz";
+import { API_BASE_URL } from "@/apiIntegration/auth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { createAttempt } from "@/apiIntegration/attempts";
@@ -339,7 +340,7 @@ export default function Quiz() {
                       (img, idx) => (
                         <img
                           key={idx}
-                          src={`https://dev-api.academy51.com/${img}`}
+                          src={`${API_BASE_URL}/${img}`}
                           alt="question"
                           style={{ width: "100%", marginTop: 15 }}
                         />
