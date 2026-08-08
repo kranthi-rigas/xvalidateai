@@ -58,12 +58,18 @@ const CountrySingleValue = ({ data }) => (
   </div>
 );
 
-export default function CountrySelect({ countries, value, onChange }) {
+export default function CountrySelect({
+  countries,
+  value,
+  onChange,
+  height = 48,
+  ...rest
+}) {
   const customStyles = {
     control: (base) => ({
       ...base,
-      height: 48,
-      minHeight: 48,
+      height,
+      minHeight: height,
       borderRadius: 8,
       backgroundColor: "transparent",
       border: "1px solid #DDDDDD",
@@ -73,7 +79,7 @@ export default function CountrySelect({ countries, value, onChange }) {
 
     valueContainer: (base) => ({
       ...base,
-      height: 48,
+      height,
       padding: "0 12px",
       display: "flex",
       alignItems: "center",
@@ -97,7 +103,7 @@ export default function CountrySelect({ countries, value, onChange }) {
 
     indicatorsContainer: (base) => ({
       ...base,
-      height: 48,
+      height,
       alignItems: "center",
     }),
 
@@ -133,6 +139,7 @@ export default function CountrySelect({ countries, value, onChange }) {
         ValueContainer: CenteredValueContainer,
       }}
       styles={customStyles}
+      {...rest}
     />
   );
 }

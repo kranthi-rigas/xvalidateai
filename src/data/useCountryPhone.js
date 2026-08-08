@@ -29,6 +29,22 @@ export function useCountryPhone() {
     setPhone("");
   };
 
+  // Prefill from a saved profile: match the country by name and strip its
+  // dial code off the stored phone number (phone is saved as code + number).
+  const prefill = ({ country, phone: savedPhone }) => {
+    const match = FORMATTED_COUNTRIES.find((c) => c.value === country) || null;
+    setCountryValue(match?.value || "");
+    setPhoneCode(match?.code || "");
+
+    const digits = (savedPhone || "").replace(/\D/g, "");
+    const codeDigits = (match?.code || "").replace(/\D/g, "");
+    setPhone(
+      codeDigits && digits.startsWith(codeDigits)
+        ? digits.slice(codeDigits.length)
+        : digits,
+    );
+  };
+
   const validatePhone = () => {
     if (!selectedCountry) return "Please select a country";
     if (selectedCountry.label === "India") {
@@ -47,6 +63,7 @@ export function useCountryPhone() {
     phoneCode,
     setPhone,
     onCountryChange,
+    prefill,
     validatePhone,
   };
 }
