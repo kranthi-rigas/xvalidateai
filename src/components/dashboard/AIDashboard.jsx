@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useContextElement } from "@/context/Context";
 import ComplianceToolsModal from "@/components/common/ComplianceToolsModal";
 import ToolUserHeatmap from "@/components/Charts/ToolUserHeatmap";
+import { recommendationLabel } from "@/utils/recommendationLabel";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { createPortal } from "react-dom";
@@ -276,14 +277,14 @@ const renderToolCell = (navigate) => (tool, key) => {
           text: "text-green-700",
           border: "border-green-200",
           icon: "fa-check-circle",
-          label: "Approved",
+          label: "Recommended",
         },
         "approved with limitations": {
           bg: "bg-yellow-50",
           text: "text-yellow-700",
           border: "border-yellow-200",
           icon: "fa-circle-exclamation",
-          label: "Approved with limitations",
+          label: "Recommended with limitations",
         },
         "not recommended": {
           bg: "bg-red-50",
@@ -396,7 +397,7 @@ export default function AIDashboard() {
       "Tool Name": tool.tool_name,
       URL: tool.url,
       "AI Governance Readiness Index (AGRI) Score": tool.overall_score,
-      Recommendation: tool.recommendation,
+      Recommendation: recommendationLabel(tool.recommendation),
       "Allowed Usage": tool.allowed_usage,
       "Restricted Usage": tool.restricted_usage,
       "Intended Users": tool.intended_users,
@@ -585,7 +586,7 @@ export default function AIDashboard() {
     const recommendationPlotData = [
       {
         values: recDistribution.map((d) => d.value),
-        labels: recDistribution.map((d) => d.name),
+        labels: recDistribution.map((d) => recommendationLabel(d.name)),
         type: "pie",
         hole: 0.55,
         marker: {

@@ -21,6 +21,7 @@ import {
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
 import AwsButton from "@/components/common/AwsButton";
+import { recommendationLabel } from "@/utils/recommendationLabel";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { useContextElement } from "@/context/Context";
 
@@ -442,7 +443,7 @@ export default function AIListViewModern({
         class: "badge-success",
         text: "text-green-700",
         border: "border-green-200",
-        label: "Approved",
+        label: "Recommended",
       },
       "approved with limitations": {
         bg: "bg-yellow-50",
@@ -450,7 +451,7 @@ export default function AIListViewModern({
         class: "badge-warning",
         text: "text-yellow-700",
         border: "border-yellow-200",
-        label: "Approved with limitations",
+        label: "Recommended with limitations",
       },
       "not recommended": {
         bg: "bg-red-50",
@@ -494,7 +495,10 @@ export default function AIListViewModern({
       formatStatus(project.status),
       formatStatus(project.assessment_status),
       scoreDisplay?.value !== "" ? scoreDisplay.value : null,
+      // both the raw API value and the relabelled one, so "approved" and
+      // "recommended" each match the rows the user expects
       project.recommendation,
+      recommendationLabel(project.recommendation),
       project.requested_by?.first_name,
       project.requested_by?.last_name,
       project.requested_by?.email,

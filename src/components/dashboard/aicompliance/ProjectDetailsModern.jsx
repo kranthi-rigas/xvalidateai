@@ -530,13 +530,13 @@ export default function ProjectDetailsModern({ project, onBack }) {
     if (rec.includes("approved") && !rec.includes("limitation")) {
       return {
         icon: "fa-check-circle",
-        text: "Approved",
+        text: "Recommended",
         class: "badge-success",
       };
     } else if (rec.includes("limitation")) {
       return {
         icon: "fa-circle-exclamation",
-        text: "Approved with Limitations",
+        text: "Recommended with Limitations",
         class: "badge-warning",
       };
     } else if (rec.includes("restricted")) {

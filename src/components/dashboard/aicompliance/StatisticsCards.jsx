@@ -84,7 +84,7 @@ export default function StatisticsCards({
       ),
     },
     {
-      label: "Approved with Limits",
+      label: "Recommended with Limits",
       value: approvedWithLimits,
       color: "amber",
       bgColor: "#FEF3C7",
