@@ -41,6 +41,14 @@ export const sidebarItems = [
         ],
     },
     {
+        id: 10,
+        href: "/dashboard/calendar",
+        icon: "fa-regular fa-calendar fa-lg",
+        text: "Calendar",
+        permission: null,
+        requiredPlan: null,
+    },
+    {
         id: 5,
         href: "/dashboard/settings",
         icon: "fa-solid fa-cogs fa-lg",
