@@ -26,6 +26,10 @@ const headerContentMap = {
     title: "Organizations",
     description: "Manage your organization settings and members.",
   },
+  "/dashboard/calendar": {
+    title: "Calendar",
+    description: "Upcoming reviews, assessments and deadlines for your organization.",
+  },
   "/dashboard/settings": {
     title: "Settings",
     description: "Configure your account and preferences.",

@@ -4,6 +4,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import PageLoader from "@/components/common/PageLoader";
 import { getCalendarEvents, createCalendarEvent } from "@/apiIntegration/calendar";
 import { getUsers } from "@/apiIntegration/organization";
+import AwsButton from "@/components/common/AwsButton";
+import "./DashboardCalendar.css";
 import { DEMO_CALENDAR_EVENTS } from "@/data/calendarDemoEvents";
 
 // API event shape -> FullCalendar event shape. Anything the detail panel needs
@@ -323,20 +325,12 @@ function CreateEventModal({ onClose, onCreated }) {
         </div>
 
         <div className="flex justify-end gap-2 px-6 py-4 border-top-light">
-          <button
-            type="button"
-            onClick={onClose}
-            className="button py-10 px-20 rounded-8 -outline-dark-1 text-dark-1"
-          >
+          <AwsButton variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="button py-10 px-20 rounded-8 -dark-1 text-white"
-          >
+          </AwsButton>
+          <AwsButton type="submit" loading={submitting}>
             {submitting ? "Creating…" : "Create event"}
-          </button>
+          </AwsButton>
         </div>
       </form>
     </div>
@@ -392,18 +386,14 @@ export default function DashboardCalendar() {
   if (loading) return <PageLoader loading />;
 
   return (
-    <div className="space-y">
+    <div className="space-y dashboard-calendar">
       <div className="dashboard-card p-6">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h2 className="text-xl font-bold text-dark-1">Calendar</h2>
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="button py-10 px-20 rounded-8 -dark-1 text-white"
-          >
-            <i className="fa-solid fa-plus mr-2"></i>
+        {/* No heading here - the page header already says "Calendar". */}
+        <div className="flex items-center justify-end mb-4 flex-wrap gap-2">
+          <AwsButton onClick={() => setShowCreate(true)}>
+            <i className="fa-solid fa-plus"></i>
             New event
-          </button>
+          </AwsButton>
         </div>
 
         <FullCalendar
