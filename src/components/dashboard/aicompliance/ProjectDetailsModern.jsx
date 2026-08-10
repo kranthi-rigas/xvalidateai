@@ -7,6 +7,7 @@ import ApproveRejectModal from "./ApproveRejectModal";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
+import { recommendationLabel } from "@/utils/recommendationLabel";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -1117,7 +1118,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     <i className="fa-solid fa-circle-check"></i>
                     <div>
                       <h4>Final Recommendation</h4>
-                      <p>{project.recommendation}</p>
+                      <p>{recommendationLabel(project.recommendation)}</p>
                     </div>
                   </div>
 

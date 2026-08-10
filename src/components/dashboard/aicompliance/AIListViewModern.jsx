@@ -344,7 +344,13 @@ export default function AIListViewModern({
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
       const dir = sortConfig.direction === "asc" ? 1 : -1;
-      return (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * dir;
+      // sort the recommendation column by the label the row actually shows,
+      // otherwise "Recommended" rows order as though they still read "Approved"
+      const sortValue = (row) =>
+        sortConfig.key === "recommendation"
+          ? recommendationLabel(row.recommendation)
+          : row[sortConfig.key];
+      return (sortValue(a) > sortValue(b) ? 1 : -1) * dir;
     });
 
   /* ---------------- PAGINATION DATA ---------------- */

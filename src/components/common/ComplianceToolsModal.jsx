@@ -1,6 +1,7 @@
 import React from "react";
 import COLORS from "@/styles/colors";
 import { useNavigate } from "react-router-dom";
+import { recommendationLabel } from "@/utils/recommendationLabel";
 
 export default function ComplianceToolsModal({
   open,
@@ -51,7 +52,7 @@ export default function ComplianceToolsModal({
 
                 <div style={metaRow}>
                   <span>Score: {tool.score ?? 0}</span>
-                  <span>{tool.recommendation ?? "-"}</span>
+                  <span>{recommendationLabel(tool.recommendation) ?? "-"}</span>
                 </div>
               </div>
             ))

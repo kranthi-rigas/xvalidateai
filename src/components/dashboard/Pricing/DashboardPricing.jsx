@@ -209,8 +209,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
 
   const isCurrentPlan = (planId) => planId === currentPlan;
 
-  const getPrice = (price) => price;
-
   useEffect(() => {
     AOS.init({
       once: true,
@@ -373,33 +371,14 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                             </div>
                           </div>
 
-                          {/* Price */}
+                          {/* Price - paid plans show a dash instead of the
+                              amount; the period is hidden with it so the card
+                              doesn't read "- /yearly". The plan data still
+                              carries the real price for checkout. */}
                           <div className="mt-25" style={{ minHeight: "50px" }}>
-                            {plan.price === 0 ? (
-                              <span className="text-40 fw-700 lh-11 text-dark-1">
-                                Free
-                              </span>
-                            ) : plan.price === null ? (
-                              <>
-                                <span className="text-40 fw-700 lh-11 text-dark-1">
-                                  N/A
-                                </span>
-                                <span className="text-14 text-light-1">
-                                  {" "}
-                                  /{plan.period}
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-40 fw-700 lh-11 text-dark-1">
-                                  ${getPrice(plan.price)}
-                                </span>
-                                <span className="text-14 text-light-1">
-                                  {" "}
-                                  /{plan.period}
-                                </span>
-                              </>
-                            )}
+                            <span className="text-40 fw-700 lh-11 text-dark-1">
+                              {plan.price === 0 ? "Free" : "-"}
+                            </span>
                           </div>
 
                           {/* Credits Badge */}
