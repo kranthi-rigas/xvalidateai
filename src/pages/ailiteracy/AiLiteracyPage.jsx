@@ -451,6 +451,50 @@ export default function AiLiteracyPage() {
           </p>
         </div>
 
+        {/* Top-level tabs - only on the two browsable views. The playbook,
+            questionnaire, exercise and results views are steps in a flow, so a
+            tab bar there would invite people to navigate away mid-assessment. */}
+        {(view === "landing" || view === "pd") && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 28,
+            }}
+          >
+            {[
+              { id: "landing", label: "Overview", icon: "fa-solid fa-graduation-cap" },
+              { id: "pd", label: "My Documents", icon: "fa-regular fa-folder-open" },
+            ].map((tab) => {
+              const active = view === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setView(tab.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 20px",
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
+                    background: active ? COLORS.primary : COLORS.bgPrimary,
+                    color: active ? "#fff" : COLORS.textMuted,
+                  }}
+                >
+                  <i className={tab.icon} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* LANDING */}
         {view === "landing" && (
           <PageTransition>
@@ -1000,26 +1044,7 @@ export default function AiLiteracyPage() {
         {/* PROFESSIONAL DEVELOPMENT */}
         {view === "pd" && (
           <PageTransition>
-            <div style={{ marginBottom: 20 }}>
-              <button
-                onClick={() => setView("landing")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: COLORS.primary,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <i className="fa-solid fa-arrow-left" /> Back
-              </button>
-            </div>
-
+            {/* The "Back" link that used to sit here is now the Overview tab. */}
             <div
               style={{
                 maxWidth: 900,
