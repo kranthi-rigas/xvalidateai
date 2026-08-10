@@ -28,3 +28,25 @@ export async function getCalendarEvents(filters = {}) {
 
   return res.json();
 }
+
+/**
+ * POST /calendar-events - create an event for the caller's organization.
+ * assigned_to takes [{ user_id }]; the backend resolves names and rejects
+ * anyone outside the caller's org.
+ */
+export async function createCalendarEvent(payload) {
+  const res = await fetchWithAuth(ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(
+      error?.error || error?.message || "Failed to create calendar event",
+    );
+  }
+
+  return res.json();
+}
