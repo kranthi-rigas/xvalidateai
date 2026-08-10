@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
 import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
+import MyDocuments from "./MyDocuments";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
 import {
@@ -415,6 +416,10 @@ export default function AiLiteracyPage() {
       subtitle:
         "A visual overview of the end-to-end AI incident response process.",
     },
+    documents: {
+      title: "My Documents",
+      subtitle: "Documents you have uploaded. Only you can see them.",
+    },
     pd: {
       title: "Professional Development Modules",
       subtitle:
@@ -454,7 +459,7 @@ export default function AiLiteracyPage() {
         {/* Top-level tabs - only on the two browsable views. The playbook,
             questionnaire, exercise and results views are steps in a flow, so a
             tab bar there would invite people to navigate away mid-assessment. */}
-        {(view === "landing" || view === "pd") && (
+        {(view === "landing" || view === "pd" || view === "documents") && (
           <div
             style={{
               display: "flex",
@@ -465,9 +470,12 @@ export default function AiLiteracyPage() {
           >
             {[
               { id: "landing", label: "Overview", icon: "fa-solid fa-graduation-cap" },
-              { id: "pd", label: "My Documents", icon: "fa-regular fa-folder-open" },
+              { id: "documents", label: "My Documents", icon: "fa-regular fa-folder-open" },
             ].map((tab) => {
-              const active = view === tab.id;
+              // The curated PD resources keep their own "pd" view, reached from
+              // the Overview card - "My Documents" is the user's own uploads.
+              const active =
+                view === tab.id || (tab.id === "landing" && view === "pd");
               return (
                 <button
                   key={tab.id}
@@ -1042,6 +1050,13 @@ export default function AiLiteracyPage() {
         )}
 
         {/* PROFESSIONAL DEVELOPMENT */}
+        {/* MY DOCUMENTS */}
+        {view === "documents" && (
+          <PageTransition>
+            <MyDocuments />
+          </PageTransition>
+        )}
+
         {view === "pd" && (
           <PageTransition>
             {/* The "Back" link that used to sit here is now the Overview tab. */}
