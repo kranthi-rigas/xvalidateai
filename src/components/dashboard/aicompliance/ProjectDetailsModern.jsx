@@ -8,6 +8,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
 import { recommendationLabel } from "@/utils/recommendationLabel";
+import { getFindings } from "@/apiIntegration/verification";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -510,6 +511,53 @@ export default function ProjectDetailsModern({ project, onBack }) {
     project.assessment_status === "completed";
 
   const showAdminActions = showScanActions || showUsageActions;
+
+  /* ---------- CONTINUOUS MONITORING ----------
+     What has happened to this tool since it was assessed. The assessment is a
+     point in time; this is the part that makes the report a current statement
+     rather than a historical one. */
+  const [monitoring, setMonitoring] = useState([]);
+  const [monitoringState, setMonitoringState] = useState("loading");
+
+  const monitoredDomain = React.useMemo(() => {
+    const raw = (project?.url || "").trim();
+    if (!raw) return "";
+    try {
+      const withScheme = raw.includes("://") ? raw : `https://${raw}`;
+      const host = new URL(withScheme).hostname.toLowerCase();
+      return host.startsWith("www.") ? host.slice(4) : host;
+    } catch {
+      return "";
+    }
+  }, [project?.url]);
+
+  useEffect(() => {
+    if (!monitoredDomain) {
+      setMonitoringState("unavailable");
+      return;
+    }
+    let cancelled = false;
+    setMonitoringState("loading");
+    getFindings({ subject_type: "VENDOR", subject_id: monitoredDomain, limit: 100 })
+      .then((data) => {
+        if (cancelled) return;
+        // Findings judged to be our own detection error are excluded. A report
+        // handed to a customer should not carry items we already decided were
+        // wrong.
+        const relevant = (data?.findings || []).filter(
+          (f) => f.status !== "FALSE_POSITIVE",
+        );
+        setMonitoring(relevant);
+        setMonitoringState("ready");
+      })
+      .catch((err) => {
+        console.warn("Monitoring findings unavailable:", err);
+        if (!cancelled) setMonitoringState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [monitoredDomain]);
 
   // Get recommendation badge
   const getRecommendationBadge = () => {
@@ -1163,6 +1211,84 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </div>
           </div>
         )}
+
+        {/* Continuous Monitoring */}
+        <div
+          className="glass-card animate-fade-in"
+          style={{ animationDelay: "0.9s" }}
+        >
+          <div className="section-header">
+            <div className="section-icon">
+              <i className="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3>Since This Assessment</h3>
+          </div>
+
+          <div className="recommendation-content">
+            {monitoringState === "loading" && (
+              <p className="summary-text">Checking monitoring history…</p>
+            )}
+
+            {monitoringState === "unavailable" && (
+              <p className="summary-text">
+                No tool URL is recorded, so this tool is not being monitored.
+              </p>
+            )}
+
+            {/* An error must not read as "nothing found" - that is the same
+                false all-clear the checks themselves guard against. */}
+            {monitoringState === "error" && (
+              <p className="summary-text">
+                Monitoring history could not be loaded. This is not a statement
+                that nothing has been found.
+              </p>
+            )}
+
+            {monitoringState === "ready" && monitoring.length === 0 && (
+              <div className="recommendation-box success">
+                <i className="fa-solid fa-circle-check"></i>
+                <div>
+                  <h4>No incidents or policy changes detected</h4>
+                  <p>
+                    {monitoredDomain} is checked daily against known breach
+                    records and published vulnerabilities, and its policy
+                    documents are compared against the last captured version.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {monitoringState === "ready" &&
+              monitoring.map((f) => (
+                <div
+                  key={f.finding_id}
+                  className={`recommendation-box ${
+                    f.severity === "CRITICAL" || f.severity === "HIGH"
+                      ? "warning"
+                      : "success"
+                  }`}
+                >
+                  <i className="fa-solid fa-triangle-exclamation"></i>
+                  <div>
+                    <h4>
+                      {f.severity} — {f.title}
+                    </h4>
+                    <p style={{ whiteSpace: "pre-wrap" }}>{f.detail}</p>
+                    <p className="text-14 text-light-1">
+                      First seen{" "}
+                      {f.first_seen_at
+                        ? new Date(f.first_seen_at).toLocaleDateString()
+                        : "--"}
+                      {f.occurrence_count > 1
+                        ? ` · confirmed on ${f.occurrence_count} checks`
+                        : " · observed once"}
+                      {f.status && f.status !== "OPEN" ? ` · ${f.status}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
       </div>
 
       {/* Detailed Evaluation Tables */}
