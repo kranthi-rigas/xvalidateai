@@ -35,6 +35,7 @@ import GoogleLoginPage from "./pages/others/googleLogin";
 import DashboardNotFoundPage from "./pages/dashboard/dshb-notfound";
 //import PricingPage from "./pages/others/pricing";
 import DshbPricingPage from "./pages/dashboard/dshb-pricing";
+import DshbFindingsPage from "./pages/dashboard/dshb-findings";
 import DshbBillingPage from "./pages/dashboard/dshb-billing";
 import ScrollTopBehaviour from "./components/common/ScrollTopBehaviour";
 import { useEffect } from "react";
@@ -107,6 +108,7 @@ function App() {
 
                 <Route path="faqs" element={<FaqsPage />} />
                 <Route path="audittrail" element={<AuditLogsPage />} />
+                <Route path="findings" element={<DshbFindingsPage />} />
                 <Route path="administration" element={<AdministrationPage />} />
                 <Route path="forums" element={<DshbForumsPage />} />
                 <Route path="grades" element={<DshbGradesPage />} />
