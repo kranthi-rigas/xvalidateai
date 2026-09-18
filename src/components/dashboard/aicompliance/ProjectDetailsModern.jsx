@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
 import { recommendationLabel } from "@/utils/recommendationLabel";
 import { getFindings } from "@/apiIntegration/verification";
+import FindingDetail from "@/components/dashboard/verification/FindingDetail";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -531,33 +532,36 @@ export default function ProjectDetailsModern({ project, onBack }) {
     }
   }, [project?.url]);
 
-  useEffect(() => {
+  const [selectedFinding, setSelectedFinding] = useState(null);
+
+  const loadMonitoring = React.useCallback(async () => {
     if (!monitoredDomain) {
       setMonitoringState("unavailable");
       return;
     }
-    let cancelled = false;
     setMonitoringState("loading");
-    getFindings({ subject_type: "VENDOR", subject_id: monitoredDomain, limit: 100 })
-      .then((data) => {
-        if (cancelled) return;
-        // Findings judged to be our own detection error are excluded. A report
-        // handed to a customer should not carry items we already decided were
-        // wrong.
-        const relevant = (data?.findings || []).filter(
-          (f) => f.status !== "FALSE_POSITIVE",
-        );
-        setMonitoring(relevant);
-        setMonitoringState("ready");
-      })
-      .catch((err) => {
-        console.warn("Monitoring findings unavailable:", err);
-        if (!cancelled) setMonitoringState("error");
+    try {
+      const data = await getFindings({
+        subject_type: "VENDOR",
+        subject_id: monitoredDomain,
+        limit: 100,
       });
-    return () => {
-      cancelled = true;
-    };
+      // Findings judged to be our own detection error are excluded. A report
+      // handed to a customer should not carry items we already decided were
+      // wrong.
+      setMonitoring(
+        (data?.findings || []).filter((f) => f.status !== "FALSE_POSITIVE"),
+      );
+      setMonitoringState("ready");
+    } catch (err) {
+      console.warn("Monitoring findings unavailable:", err);
+      setMonitoringState("error");
+    }
   }, [monitoredDomain]);
+
+  useEffect(() => {
+    loadMonitoring();
+  }, [loadMonitoring]);
 
   // Get recommendation badge
   const getRecommendationBadge = () => {
@@ -1269,7 +1273,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                   }`}
                 >
                   <i className="fa-solid fa-triangle-exclamation"></i>
-                  <div>
+                  <div style={{ width: "100%" }}>
                     <h4>
                       {f.severity} — {f.title}
                     </h4>
@@ -1284,12 +1288,37 @@ export default function ProjectDetailsModern({ project, onBack }) {
                         : " · observed once"}
                       {f.status && f.status !== "OPEN" ? ` · ${f.status}` : ""}
                     </p>
+                    {/* admin-actions is stripped from the PDF export, so the
+                        printed report carries the finding without the controls. */}
+                    <div className="admin-actions">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFinding(f)}
+                        className="text-14"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          color: COLORS.primary,
+                          fontWeight: 600,
+                        }}
+                      >
+                        Review evidence and triage →
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
           </div>
         </div>
       </div>
+
+      <FindingDetail
+        finding={selectedFinding}
+        onClose={() => setSelectedFinding(null)}
+        onChanged={loadMonitoring}
+      />
 
       {/* Detailed Evaluation Tables */}
       <div className="relative">

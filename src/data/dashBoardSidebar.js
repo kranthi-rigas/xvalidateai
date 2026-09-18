@@ -65,14 +65,6 @@ export const sidebarItems = [
         requiredPlan: null,
     }, 
     {
-        id: 11,
-        href: "/dashboard/findings",
-        icon: "fa-solid fa-shield-halved fa-lg",
-        text: "Findings",
-        permission: null,
-        requiredPlan: null,
-    },
-    {
         id: 7,
         href: "/dashboard/audittrail",
         icon: "fa-solid fa-user-shield text-lg",

@@ -1,21 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
-import PageLoader from "@/components/common/PageLoader";
+import React, { useEffect, useState } from "react";
 import AwsButton from "@/components/common/AwsButton";
 import {
-  getFindings,
   updateFindingStatus,
   getObservationArtifact,
 } from "@/apiIntegration/verification";
 
-const STATUS_TABS = [
-  { id: "OPEN", label: "Open" },
-  { id: "ACKNOWLEDGED", label: "Acknowledged" },
-  { id: "RESOLVED", label: "Resolved" },
-  { id: "FALSE_POSITIVE", label: "False positive" },
-  { id: "DISPUTED", label: "Disputed" },
-];
-
-const SEVERITY_STYLE = {
+export const SEVERITY_STYLE = {
   CRITICAL: "bg-red-50 text-red-700 border-red-200",
   HIGH: "bg-orange-50 text-orange-700 border-orange-200",
   MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
@@ -23,29 +13,33 @@ const SEVERITY_STYLE = {
   INFO: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
-// Confidence is shown next to severity rather than folded into it. "Seen once"
-// and "seen on twelve consecutive days" are different claims, and a reviewer
-// deciding what to act on needs both.
-const CONFIDENCE_LABEL = {
+// Confidence sits beside severity rather than folded into it. "Observed once"
+// and "confirmed on twelve checks" are different claims, and someone deciding
+// what to act on needs both.
+export const CONFIDENCE_LABEL = {
   OBSERVED_ONCE: "Observed once",
   REPRODUCED: "Reproduced",
   CONFIRMED: "Confirmed",
 };
 
-const severityClass = (s) => SEVERITY_STYLE[s] || SEVERITY_STYLE.INFO;
-
-const formatDate = (iso) => {
+export const formatDate = (iso) => {
   if (!iso) return "--";
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? "--"
-    : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 };
 
-function SeverityBadge({ severity }) {
+export function SeverityBadge({ severity }) {
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${severityClass(severity)}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+        SEVERITY_STYLE[severity] || SEVERITY_STYLE.INFO
+      }`}
     >
       {severity || "INFO"}
     </span>
@@ -65,8 +59,8 @@ function EvidenceLinks({ observationIds }) {
     setError("");
     try {
       const data = await getObservationArtifact(id);
-      // The presigned URL is short-lived, so it is fetched on click rather
-      // than rendered as an href that would be stale by the time anyone uses it.
+      // Presigned and short-lived, so fetched on click rather than rendered as
+      // an href that would be expired by the time anyone used it.
       window.open(data.artifact_url, "_blank", "noopener");
     } catch (e) {
       setError(e?.message || "Could not open the evidence artifact.");
@@ -104,8 +98,8 @@ function StatusTimeline({ history }) {
       <ul className="space-y-1">
         {history.map((h, i) => (
           <li key={i} className="text-sm text-dark-1">
-            <span className="text-light-1">{formatDate(h.at)}</span>{" "}
-            {h.from} → <strong>{h.to}</strong>
+            <span className="text-light-1">{formatDate(h.at)}</span> {h.from} →{" "}
+            <strong>{h.to}</strong>
             {h.by === "SYSTEM" ? " (automatic)" : ""}
             {h.note ? <span className="text-light-1"> — {h.note}</span> : null}
           </li>
@@ -115,7 +109,14 @@ function StatusTimeline({ history }) {
   );
 }
 
-function FindingDetail({ finding, onClose, onChanged }) {
+/**
+ * Detail and triage for one finding.
+ *
+ * Lives on the assessment report rather than a page of its own - a finding is
+ * a statement about a specific tool, and the report is where someone is already
+ * looking at that tool.
+ */
+export default function FindingDetail({ finding, onClose, onChanged }) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(null);
   const [error, setError] = useState("");
@@ -161,7 +162,9 @@ function FindingDetail({ finding, onClose, onChanged }) {
               <SeverityBadge severity={finding.severity} />
               <span className="text-xs text-light-1">
                 {CONFIDENCE_LABEL[finding.confidence] || finding.confidence}
-                {finding.occurrence_count > 1 ? ` · seen ${finding.occurrence_count}×` : ""}
+                {finding.occurrence_count > 1
+                  ? ` · confirmed on ${finding.occurrence_count} checks`
+                  : ""}
               </span>
             </div>
             <h3 className="text-lg font-bold text-dark-1">{finding.title}</h3>
@@ -256,7 +259,7 @@ function FindingDetail({ finding, onClose, onChanged }) {
               />
             </div>
             {/* The difference decides whether this returns tomorrow, so it is
-                stated here rather than left for someone to discover. */}
+                stated rather than left to be discovered. */}
             <p className="text-xs text-light-1 mt-3">
               <strong>Resolve</strong> if the issue was dealt with — it reopens
               automatically if the next check still detects it.{" "}
@@ -267,143 +270,6 @@ function FindingDetail({ finding, onClose, onChanged }) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-export default function FindingsPage() {
-  const [status, setStatus] = useState("OPEN");
-  const [findings, setFindings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selected, setSelected] = useState(null);
-
-  const load = useCallback(async (nextStatus) => {
-    setError("");
-    try {
-      const data = await getFindings({ status: nextStatus, limit: 250 });
-      setFindings(data?.findings || []);
-    } catch (e) {
-      // An empty table and a failed request must not look the same - one means
-      // nothing is wrong, the other means we do not know.
-      setFindings([]);
-      setError(e?.message || "Could not load findings.");
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    load(status).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [status, load]);
-
-  return (
-    <div className="space-y">
-      <div className="dashboard-card p-6">
-        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-dark-1">Findings</h2>
-            <p className="text-sm text-light-1 mt-1">
-              What continuous monitoring has turned up about your approved tools,
-              with the evidence behind each one.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {STATUS_TABS.map((tab) => {
-            const active = status === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setStatus(tab.id)}
-                className={`px-4 py-2 rounded-8 text-sm font-medium border ${
-                  active
-                    ? "bg-dark-1 text-white border-dark-1"
-                    : "bg-white text-light-1 border-light"
-                }`}
-                style={{ cursor: "pointer" }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {loading ? (
-          <PageLoader loading />
-        ) : error ? (
-          <div className="py-10 text-center">
-            <p className="text-sm text-red-600">{error}</p>
-            <button
-              type="button"
-              onClick={() => load(status)}
-              className="text-sm text-blue-600 hover:underline mt-2"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              Try again
-            </button>
-          </div>
-        ) : !findings.length ? (
-          <div className="py-12 text-center">
-            <i className="fa-regular fa-circle-check text-3xl text-light-1 mb-3 block"></i>
-            <p className="text-sm text-light-1">
-              {status === "OPEN"
-                ? "No open findings. Monitoring runs daily."
-                : "Nothing in this state."}
-            </p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase text-light-1">
-                  <th className="py-2 pr-4">Severity</th>
-                  <th className="py-2 pr-4">Finding</th>
-                  <th className="py-2 pr-4">Vendor</th>
-                  <th className="py-2 pr-4">Confidence</th>
-                  <th className="py-2 pr-4">Last seen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {findings.map((f) => (
-                  <tr
-                    key={f.finding_id}
-                    onClick={() => setSelected(f)}
-                    className="border-top-light"
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td className="py-3 pr-4">
-                      <SeverityBadge severity={f.severity} />
-                    </td>
-                    <td className="py-3 pr-4 text-dark-1">{f.title}</td>
-                    <td className="py-3 pr-4 text-light-1">{f.subject_id}</td>
-                    <td className="py-3 pr-4 text-light-1">
-                      {CONFIDENCE_LABEL[f.confidence] || f.confidence}
-                      {f.occurrence_count > 1 ? ` · ${f.occurrence_count}×` : ""}
-                    </td>
-                    <td className="py-3 pr-4 text-light-1">
-                      {formatDate(f.last_seen_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <FindingDetail
-        finding={selected}
-        onClose={() => setSelected(null)}
-        onChanged={() => load(status)}
-      />
     </div>
   );
 }
