@@ -8,7 +8,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
 import { recommendationLabel } from "@/utils/recommendationLabel";
-import { getFindings } from "@/apiIntegration/verification";
+import { getFindings, getObservations, getObservationArtifact } from "@/apiIntegration/verification";
 import FindingDetail from "@/components/dashboard/verification/FindingDetail";
 
 function formatStatus(value) {
@@ -47,6 +47,36 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
+const CHECK_LABELS = {
+  SECURITY_INCIDENT: "Breaches and published vulnerabilities",
+  PRIVACY_POLICY: "Privacy policy",
+  TERMS_OF_SERVICE: "Terms of service",
+  DPA: "Data processing addendum",
+  SUBPROCESSOR_LIST: "Subprocessor list",
+  SECURITY_PAGE: "Security page",
+  STUDENT_DATA_ADDENDUM: "Student data addendum",
+};
+
+// A one-line result per check, so the trail reads as evidence rather than as
+// a list of timestamps. A check that could not reach a source says so - a
+// partial check is not a clean result.
+function describeObservation(o) {
+  const s = o.summary || {};
+  if (s.partial) {
+    const failed = Object.keys(s.source_errors || {}).join(", ");
+    return `Incomplete${failed ? ` - ${failed} unavailable` : ""}`;
+  }
+  if (o.check_type === "SECURITY_INCIDENT") {
+    const b = (s.breaches || []).length;
+    const v = (s.vulnerabilities || []).length;
+    return b || v
+      ? `${b} breach${b === 1 ? "" : "es"}, ${v} vulnerabilit${v === 1 ? "y" : "ies"}`
+      : "Nothing reported";
+  }
+  if (s.text_sha256) return "Document captured";
+  return "Recorded";
+}
+
 export default function ProjectDetailsModern({ project, onBack }) {
   const summaryRef = useRef(null);
   const usageTableRef = useRef(null);
@@ -533,6 +563,17 @@ export default function ProjectDetailsModern({ project, onBack }) {
   }, [project?.url]);
 
   const [selectedFinding, setSelectedFinding] = useState(null);
+  const [evidence, setEvidence] = useState([]);
+
+  const openArtifact = async (observationId) => {
+    try {
+      const data = await getObservationArtifact(observationId);
+      // Presigned and short-lived, so fetched on click rather than rendered.
+      window.open(data.artifact_url, "_blank", "noopener");
+    } catch (err) {
+      console.warn("Could not open evidence artifact:", err);
+    }
+  };
 
   const loadMonitoring = React.useCallback(async () => {
     if (!monitoredDomain) {
@@ -541,6 +582,20 @@ export default function ProjectDetailsModern({ project, onBack }) {
     }
     setMonitoringState("loading");
     try {
+      // The evidence trail is fetched alongside the findings, not instead of
+      // them. Most vendors have no findings, and "we checked and found
+      // nothing" is only worth anything if the reader can see that we checked.
+      getObservations({
+        subject_type: "VENDOR",
+        subject_id: monitoredDomain,
+        limit: 10,
+      })
+        .then((obs) => setEvidence(obs?.observations || []))
+        .catch((err) => {
+          console.warn("Evidence trail unavailable:", err);
+          setEvidence([]);
+        });
+
       const data = await getFindings({
         subject_type: "VENDOR",
         subject_id: monitoredDomain,
@@ -1310,6 +1365,63 @@ export default function ProjectDetailsModern({ project, onBack }) {
                   </div>
                 </div>
               ))}
+
+            {monitoringState === "ready" && evidence.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <h4 style={{ marginBottom: 8 }}>Checks performed</h4>
+                <p className="text-14 text-light-1" style={{ marginBottom: 12 }}>
+                  Every check is recorded with the raw response it was based on,
+                  so any statement above can be traced back to what was actually
+                  seen.
+                </p>
+                <table className="w-full text-14">
+                  <thead>
+                    <tr className="text-left text-light-1">
+                      <th style={{ padding: "6px 12px 6px 0" }}>Date</th>
+                      <th style={{ padding: "6px 12px 6px 0" }}>Check</th>
+                      <th style={{ padding: "6px 12px 6px 0" }}>Result</th>
+                      <th className="admin-actions" style={{ padding: "6px 0" }}>
+                        Evidence
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evidence.map((o) => (
+                      <tr key={o.observation_id}>
+                        <td style={{ padding: "6px 12px 6px 0" }}>
+                          {o.captured_at
+                            ? new Date(o.captured_at).toLocaleDateString()
+                            : "--"}
+                        </td>
+                        <td style={{ padding: "6px 12px 6px 0" }}>
+                          {CHECK_LABELS[o.check_type] || o.check_type}
+                        </td>
+                        <td style={{ padding: "6px 12px 6px 0" }}>
+                          {describeObservation(o)}
+                        </td>
+                        {/* Stripped from the PDF: the dates and results are the
+                            evidence, the link is only useful on screen. */}
+                        <td className="admin-actions" style={{ padding: "6px 0" }}>
+                          <button
+                            type="button"
+                            onClick={() => openArtifact(o.observation_id)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              color: COLORS.primary,
+                            }}
+                          >
+                            Open raw capture
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
