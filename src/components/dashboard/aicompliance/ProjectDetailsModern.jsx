@@ -8,8 +8,9 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
 import { recommendationLabel } from "@/utils/recommendationLabel";
-import { getFindings, getObservations, getObservationArtifact } from "@/apiIntegration/verification";
+import { getFindings, getObservations } from "@/apiIntegration/verification";
 import FindingDetail from "@/components/dashboard/verification/FindingDetail";
+import EvidenceDetail from "@/components/dashboard/verification/EvidenceDetail";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -564,16 +565,8 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   const [selectedFinding, setSelectedFinding] = useState(null);
   const [evidence, setEvidence] = useState([]);
+  const [selectedObservation, setSelectedObservation] = useState(null);
 
-  const openArtifact = async (observationId) => {
-    try {
-      const data = await getObservationArtifact(observationId);
-      // Presigned and short-lived, so fetched on click rather than rendered.
-      window.open(data.artifact_url, "_blank", "noopener");
-    } catch (err) {
-      console.warn("Could not open evidence artifact:", err);
-    }
-  };
 
   const loadMonitoring = React.useCallback(async () => {
     if (!monitoredDomain) {
@@ -1404,7 +1397,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                         <td className="admin-actions" style={{ padding: "6px 0" }}>
                           <button
                             type="button"
-                            onClick={() => openArtifact(o.observation_id)}
+                            onClick={() => setSelectedObservation(o)}
                             style={{
                               background: "none",
                               border: "none",
@@ -1413,7 +1406,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                               color: COLORS.primary,
                             }}
                           >
-                            Open raw capture
+                            View details
                           </button>
                         </td>
                       </tr>
@@ -1425,6 +1418,11 @@ export default function ProjectDetailsModern({ project, onBack }) {
           </div>
         </div>
       </div>
+
+      <EvidenceDetail
+        observation={selectedObservation}
+        onClose={() => setSelectedObservation(null)}
+      />
 
       <FindingDetail
         finding={selectedFinding}
