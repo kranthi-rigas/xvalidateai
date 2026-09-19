@@ -49,6 +49,24 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
+// Findings carry their source appended to the detail text as "Source: <url>".
+// Rendered inline that dumps a raw URL mid-paragraph; it belongs as a link.
+function splitSource(detail) {
+  if (!detail) return { body: "", sourceUrl: null };
+  const m = detail.match(/\s*Source:\s*(https?:\/\/\S+)\s*$/);
+  if (!m) return { body: detail.trim(), sourceUrl: null };
+  return { body: detail.slice(0, m.index).trim(), sourceUrl: m[1] };
+}
+
+// occurred_at was added after these findings were created and is backfilled on
+// the next sweep. Until then the real date is only inside the detail text, and
+// showing "Detected today" alone makes a 2019 breach look new.
+function occurredDate(f) {
+  if (f.occurred_at) return new Date(f.occurred_at).toLocaleDateString();
+  const m = (f.detail || "").match(/breach dated (\d{4}-\d{2}-\d{2})/);
+  return m ? new Date(m[1]).toLocaleDateString() : null;
+}
+
 const CHECK_LABELS = {
   SECURITY_INCIDENT: "Breaches and published vulnerabilities",
   PRIVACY_POLICY: "Privacy policy",
@@ -1327,58 +1345,81 @@ export default function ProjectDetailsModern({ project, onBack }) {
               monitoring.map((f) => (
                 <div
                   key={f.finding_id}
-                  className={`recommendation-box ${
-                    f.severity === "CRITICAL" || f.severity === "HIGH"
-                      ? "warning"
-                      : "success"
-                  }`}
+                  className="recommendation-box warning"
+                  style={
+                    // Only warning and success variants exist in the
+                    // stylesheet, so CRITICAL and HIGH rendered identically.
+                    // Critical is lifted to the error token from the project's
+                    // own palette rather than a new colour.
+                    f.severity === "CRITICAL"
+                      ? { background: `${COLORS.error}14`,
+                          border: `1px solid ${COLORS.error}33` }
+                      : undefined
+                  }
                 >
-                  <i className="fa-solid fa-triangle-exclamation"></i>
+                  <i
+                    className="fa-solid fa-triangle-exclamation"
+                    style={{ color: f.severity === "CRITICAL" ? COLORS.error : undefined }}
+                  ></i>
                   <div style={{ width: "100%", minWidth: 0 }}>
-                    <h4 style={{ marginBottom: 6 }}>
-                      {f.severity} — {f.title}
-                    </h4>
-                    <p style={{ whiteSpace: "pre-wrap", margin: "0 0 8px" }}>{f.detail}</p>
-                    <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
-                      {/* occurred_at is when the breach or CVE actually
-                          happened; first_seen_at is only when monitoring
-                          noticed. Leading with our date made a 2019 breach
-                          read as a new one. */}
-                      {f.occurred_at
-                        ? `Occurred ${new Date(f.occurred_at).toLocaleDateString()} · detected ${
-                            f.first_seen_at
-                              ? new Date(f.first_seen_at).toLocaleDateString()
-                              : "--"
-                          }`
-                        : `Detected ${
-                            f.first_seen_at
-                              ? new Date(f.first_seen_at).toLocaleDateString()
-                              : "--"
-                          }`}
-                      {f.occurrence_count > 1
-                        ? ` · confirmed on ${f.occurrence_count} checks`
-                        : " · observed once"}
-                      {f.status && f.status !== "OPEN" ? ` · ${f.status}` : ""}
-                    </p>
-                    {/* admin-actions is stripped from the PDF export, so the
-                        printed report carries the finding without the controls. */}
-                    <div className="admin-actions" style={{ marginTop: 10 }}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFinding(f)}
-                        className="text-14"
-                        style={{
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                          cursor: "pointer",
-                          color: COLORS.primary,
-                          fontWeight: 600,
-                        }}
-                      >
-                        Review evidence and triage →
-                      </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10,
+                                  flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{ display: "inline-flex", padding: "3px 10px",
+                                     borderRadius: 999, fontSize: 11, fontWeight: 700,
+                                     letterSpacing: "0.04em", whiteSpace: "nowrap",
+                                     color: "#fff",
+                                     background: f.severity === "CRITICAL"
+                                       ? COLORS.error : COLORS.warning }}>
+                        {f.severity}
+                      </span>
+                      <h4 style={{ margin: 0 }}>{f.title}</h4>
                     </div>
+                    {(() => {
+                      const { body, sourceUrl } = splitSource(f.detail);
+                      const occurred = occurredDate(f);
+                      return (
+                        <>
+                          <p style={{ whiteSpace: "pre-wrap", margin: "0 0 8px" }}>{body}</p>
+                          <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
+                            {occurred ? `Occurred ${occurred} · ` : ""}
+                            Detected{" "}
+                            {f.first_seen_at
+                              ? new Date(f.first_seen_at).toLocaleDateString()
+                              : "--"}
+                            {f.occurrence_count > 1
+                              ? ` · confirmed on ${f.occurrence_count} checks`
+                              : " · observed once"}
+                            {f.status && f.status !== "OPEN" ? ` · ${f.status}` : ""}
+                          </p>
+                          {/* admin-actions is stripped from the PDF export, so
+                              the printed report carries the finding without
+                              the controls. */}
+                          <div className="admin-actions"
+                               style={{ display: "flex", alignItems: "center", gap: 16,
+                                        flexWrap: "wrap", marginTop: 12 }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedFinding(f)}
+                              className="text-14"
+                              style={{ background: "none", border: "none", padding: 0,
+                                       cursor: "pointer", color: COLORS.primary,
+                                       fontWeight: 600 }}
+                            >
+                              Review evidence and triage →
+                            </button>
+                            {sourceUrl && (
+                              <a href={sourceUrl} target="_blank" rel="noopener noreferrer"
+                                 className="text-14"
+                                 style={{ color: COLORS.primary, fontWeight: 600 }}>
+                                View the source record{" "}
+                                <i className="fa-solid fa-arrow-up-right-from-square"
+                                   style={{ fontSize: 10 }} />
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -1407,7 +1448,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                       <tr key={o.observation_id}>
                         <td style={ES.td}>
                           {o.captured_at
-                            ? new Date(o.captured_at).toLocaleDateString()
+                            ? new Date(o.captured_at).toLocaleString(undefined, {
+                                year: "numeric", month: "short", day: "numeric",
+                                hour: "2-digit", minute: "2-digit",
+                              })
                             : "--"}
                         </td>
                         <td style={ES.td}>
