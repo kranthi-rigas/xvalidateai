@@ -21,7 +21,9 @@ export const S = {
     background: "rgba(0,0,0,0.45)",
   },
   modal: {
-    width: "100%", maxWidth: 760, maxHeight: "88vh",
+    // Wider than before: these views carry four-column tables, and at 760 the
+    // summary column wrapped after three or four words.
+    width: "100%", maxWidth: 880, maxHeight: "88vh",
     display: "flex", flexDirection: "column",
   },
   header: {
@@ -38,7 +40,13 @@ export const S = {
     padding: 4, lineHeight: 1, flexShrink: 0,
   },
 
-  section: { marginBottom: 24 },
+  // Sections were running into each other; a rule plus real space makes the
+  // boundary readable without adding colour.
+  section: { marginBottom: 28, paddingBottom: 4 },
+  sectionDivider: {
+    borderTop: `1px solid ${COLORS.borderLight}`,
+    marginTop: 24, paddingTop: 24,
+  },
   sectionTitle: {
     fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
     textTransform: "uppercase", marginBottom: 10,
@@ -50,8 +58,15 @@ export const S = {
     border: `1px solid ${COLORS.borderLight}`, borderRadius: 10,
     padding: "12px 14px",
   },
-  cardTitle: { fontSize: 14, fontWeight: 600, marginBottom: 2 },
-  cardLine: { fontSize: 13, marginBottom: 2 },
+  cardTitle: { fontSize: 15, fontWeight: 700, marginBottom: 6 },
+  cardLine: { fontSize: 13, marginBottom: 4, lineHeight: 1.5 },
+  // The number that actually conveys scale should not sit inside a sentence
+  // at the same weight as everything else.
+  cardMetric: { fontSize: 13, fontWeight: 700 },
+  sourceLink: {
+    display: "inline-flex", alignItems: "center", gap: 4,
+    fontSize: 12, fontWeight: 600, marginTop: 6, textDecoration: "none",
+  },
 
   chipRow: { display: "flex", flexWrap: "wrap", gap: 8 },
   chip: {
@@ -69,12 +84,12 @@ export const S = {
     borderBottom: `1px solid ${COLORS.borderLight}`,
   },
   td: {
-    padding: "10px 14px 10px 0", verticalAlign: "top",
+    padding: "12px 16px 12px 0", verticalAlign: "top", lineHeight: 1.5,
     borderBottom: `1px solid ${COLORS.borderLight}`,
   },
   tdNoWrap: {
-    padding: "10px 14px 10px 0", verticalAlign: "top", whiteSpace: "nowrap",
-    borderBottom: `1px solid ${COLORS.borderLight}`,
+    padding: "12px 16px 12px 0", verticalAlign: "top", whiteSpace: "nowrap",
+    lineHeight: 1.5, borderBottom: `1px solid ${COLORS.borderLight}`,
   },
 
   notice: {
@@ -94,7 +109,15 @@ export const S = {
           flexDirection: "column", gap: 6, fontSize: 14 },
 };
 
-// Colour comes from the stylesheet's existing badge classes, not from here.
+// A severity rendered as plain text in a table cell carries no weight at all,
+// which defeats the purpose of having one. Shape and emphasis are set here;
+// colour still comes from the stylesheet's existing badge classes.
+export const severityPill = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700,
+  letterSpacing: "0.04em", whiteSpace: "nowrap",
+};
+
 export const severityClass = (severity) => {
   if (severity === "CRITICAL" || severity === "HIGH") return "badge-error";
   if (severity === "MEDIUM") return "badge-warning";

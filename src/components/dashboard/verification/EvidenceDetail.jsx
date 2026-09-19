@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getObservationArtifact } from "@/apiIntegration/verification";
-import { S } from "./evidenceStyles";
+import { S, severityPill, severityClass } from "./evidenceStyles";
 
 /**
  * Readable view of one recorded check.
@@ -61,8 +61,12 @@ function Breaches({ items }) {
         <div key={b.id || i} style={S.card}>
           <div className="text-dark-1" style={S.cardTitle}>{b.title || b.id}</div>
           <div className="text-light-1" style={S.cardLine}>
-            Breach dated {fmtDate(b.breach_date)} · {num(b.pwn_count)} accounts
+            Breach dated {fmtDate(b.breach_date)} ·{" "}
+            <span className="text-dark-1" style={S.cardMetric}>
+              {num(b.pwn_count)} accounts
+            </span>
             {b.is_verified === false ? " · unverified" : ""}
+            {b.source ? ` · via ${b.source}` : ""}
           </div>
           {b.data_classes?.length ? (
             <div className="text-dark-1" style={S.cardLine}>
@@ -74,9 +78,9 @@ function Breaches({ items }) {
               href={b.description_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600" style={{ fontSize: 12 }}
+              className="text-blue-600" style={S.sourceLink}
             >
-              Source
+              View the source record <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10 }} />
             </a>
           ) : null}
         </div>
@@ -115,7 +119,11 @@ function Vulnerabilities({ items }) {
                   </a>
                 ) : (v.cve_id || v.id)}
               </td>
-              <td style={S.td}>{v.severity || "unrated"}</td>
+              <td style={S.td}>
+                <span className={severityClass(v.severity)} style={severityPill}>
+                  {v.severity || "UNRATED"}
+                </span>
+              </td>
               <td style={S.tdNoWrap}>
                 {fmtDate(v.published)}
               </td>
