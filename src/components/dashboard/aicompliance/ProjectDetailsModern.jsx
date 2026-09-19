@@ -11,6 +11,7 @@ import { recommendationLabel } from "@/utils/recommendationLabel";
 import { getFindings, getObservations } from "@/apiIntegration/verification";
 import FindingDetail from "@/components/dashboard/verification/FindingDetail";
 import EvidenceDetail from "@/components/dashboard/verification/EvidenceDetail";
+import { S as ES } from "@/components/dashboard/verification/evidenceStyles";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -1321,12 +1322,12 @@ export default function ProjectDetailsModern({ project, onBack }) {
                   }`}
                 >
                   <i className="fa-solid fa-triangle-exclamation"></i>
-                  <div style={{ width: "100%" }}>
-                    <h4>
+                  <div style={{ width: "100%", minWidth: 0 }}>
+                    <h4 style={{ marginBottom: 6 }}>
                       {f.severity} — {f.title}
                     </h4>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{f.detail}</p>
-                    <p className="text-14 text-light-1">
+                    <p style={{ whiteSpace: "pre-wrap", margin: "0 0 8px" }}>{f.detail}</p>
+                    <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
                       First seen{" "}
                       {f.first_seen_at
                         ? new Date(f.first_seen_at).toLocaleDateString()
@@ -1338,7 +1339,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </p>
                     {/* admin-actions is stripped from the PDF export, so the
                         printed report carries the finding without the controls. */}
-                    <div className="admin-actions">
+                    <div className="admin-actions" style={{ marginTop: 10 }}>
                       <button
                         type="button"
                         onClick={() => setSelectedFinding(f)}
@@ -1360,20 +1361,20 @@ export default function ProjectDetailsModern({ project, onBack }) {
               ))}
 
             {monitoringState === "ready" && evidence.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <h4 style={{ marginBottom: 8 }}>Checks performed</h4>
-                <p className="text-14 text-light-1" style={{ marginBottom: 12 }}>
+              <div style={{ marginTop: 28 }}>
+                <h4 style={{ marginBottom: 6 }}>Checks performed</h4>
+                <p className="text-light-1" style={{ marginBottom: 14, fontSize: 13 }}>
                   Every check is recorded with the raw response it was based on,
                   so any statement above can be traced back to what was actually
                   seen.
                 </p>
-                <table className="w-full text-14">
+                <table style={ES.table}>
                   <thead>
-                    <tr className="text-left text-light-1">
-                      <th style={{ padding: "6px 12px 6px 0" }}>Date</th>
-                      <th style={{ padding: "6px 12px 6px 0" }}>Check</th>
-                      <th style={{ padding: "6px 12px 6px 0" }}>Result</th>
-                      <th className="admin-actions" style={{ padding: "6px 0" }}>
+                    <tr className="text-light-1">
+                      <th style={ES.th}>Date</th>
+                      <th style={ES.th}>Check</th>
+                      <th style={ES.th}>Result</th>
+                      <th className="admin-actions" style={ES.th}>
                         Evidence
                       </th>
                     </tr>
@@ -1381,30 +1382,24 @@ export default function ProjectDetailsModern({ project, onBack }) {
                   <tbody>
                     {evidence.map((o) => (
                       <tr key={o.observation_id}>
-                        <td style={{ padding: "6px 12px 6px 0" }}>
+                        <td style={ES.td}>
                           {o.captured_at
                             ? new Date(o.captured_at).toLocaleDateString()
                             : "--"}
                         </td>
-                        <td style={{ padding: "6px 12px 6px 0" }}>
+                        <td style={ES.td}>
                           {CHECK_LABELS[o.check_type] || o.check_type}
                         </td>
-                        <td style={{ padding: "6px 12px 6px 0" }}>
+                        <td style={ES.td}>
                           {describeObservation(o)}
                         </td>
                         {/* Stripped from the PDF: the dates and results are the
                             evidence, the link is only useful on screen. */}
-                        <td className="admin-actions" style={{ padding: "6px 0" }}>
+                        <td className="admin-actions" style={ES.td}>
                           <button
                             type="button"
                             onClick={() => setSelectedObservation(o)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              cursor: "pointer",
-                              color: COLORS.primary,
-                            }}
+                            style={{ ...ES.linkButton, color: COLORS.primary }}
                           >
                             View details
                           </button>

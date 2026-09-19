@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AwsButton from "@/components/common/AwsButton";
+import { S } from "./evidenceStyles";
 import {
   updateFindingStatus,
   getObservationArtifact,
@@ -51,7 +52,7 @@ function EvidenceLinks({ observationIds }) {
   const [error, setError] = useState("");
 
   if (!observationIds?.length) {
-    return <p className="text-sm text-light-1">No evidence recorded.</p>;
+    return <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>No evidence recorded.</p>;
   }
 
   const open = async (id) => {
@@ -70,16 +71,15 @@ function EvidenceLinks({ observationIds }) {
   };
 
   return (
-    <div className="space-y-2">
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {observationIds.map((id) => (
-        <div key={id} className="flex items-center gap-2">
-          <code className="text-xs text-light-1">{id.slice(0, 8)}…</code>
+        <div key={id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <code className="text-light-1" style={{ fontSize: 12 }}>{id.slice(0, 8)}…</code>
           <button
             type="button"
             onClick={() => open(id)}
             disabled={busy === id}
-            className="text-xs text-blue-600 hover:underline"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            className="text-blue-600" style={{ ...S.linkButton, fontSize: 12 }}
           >
             {busy === id ? "Opening…" : "Open raw evidence"}
           </button>
@@ -93,11 +93,11 @@ function EvidenceLinks({ observationIds }) {
 function StatusTimeline({ history }) {
   if (!history?.length) return null;
   return (
-    <div>
-      <div className="text-xs font-semibold uppercase text-light-1 mb-2">History</div>
-      <ul className="space-y-1">
+    <div style={S.section}>
+      <div className="text-light-1" style={S.sectionTitle}>History</div>
+      <ul style={{ ...S.list, paddingLeft: 0, listStyle: "none" }}>
         {history.map((h, i) => (
-          <li key={i} className="text-sm text-dark-1">
+          <li key={i} className="text-dark-1" style={{ fontSize: 13 }}>
             <span className="text-light-1">{formatDate(h.at)}</span> {h.from} →{" "}
             <strong>{h.to}</strong>
             {h.by === "SYSTEM" ? " (automatic)" : ""}
@@ -144,31 +144,27 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.45)" }}
-      onClick={onClose}
-    >
+    <div style={S.overlay} onClick={onClose}>
       <div
-        className="bg-white rounded-16 shadow-4 w-full"
-        style={{ maxWidth: 680, maxHeight: "88vh", overflowY: "auto" }}
+        className="bg-white rounded-16 shadow-4"
+        style={{ ...S.modal, maxWidth: 680 }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-start justify-between gap-4 px-6 py-5 border-bottom-light">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+        <div style={S.header}>
+          <div style={S.headerText}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
               <SeverityBadge severity={finding.severity} />
-              <span className="text-xs text-light-1">
+              <span className="text-light-1" style={{ fontSize: 12 }}>
                 {CONFIDENCE_LABEL[finding.confidence] || finding.confidence}
                 {finding.occurrence_count > 1
                   ? ` · confirmed on ${finding.occurrence_count} checks`
                   : ""}
               </span>
             </div>
-            <h3 className="text-lg font-bold text-dark-1">{finding.title}</h3>
-            <div className="text-sm text-light-1 mt-1">
+            <h3 className="text-dark-1" style={S.title}>{finding.title}</h3>
+            <div className="text-light-1" style={S.subtitle}>
               {finding.subject_id} · first seen {formatDate(finding.first_seen_at)} ·
               last seen {formatDate(finding.last_seen_at)}
             </div>
@@ -176,22 +172,19 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-light-1 hover:text-dark-1"
-            style={{ background: "none", border: "none", cursor: "pointer" }}
+            className="text-light-1" style={S.close}
           >
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        <div style={S.body}>
           {finding.detail && (
-            <div>
-              <div className="text-xs font-semibold uppercase text-light-1 mb-2">
-                What was found
-              </div>
+            <div style={S.section}>
+              <div className="text-light-1" style={S.sectionTitle}>What was found</div>
               <pre
-                className="text-sm text-dark-1"
-                style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}
+                className="text-dark-1"
+                style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: 14 }}
               >
                 {finding.detail}
               </pre>
@@ -199,36 +192,30 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
           )}
 
           {finding.remediation && (
-            <div>
-              <div className="text-xs font-semibold uppercase text-light-1 mb-2">
-                What to ask the vendor
-              </div>
-              <p className="text-sm text-dark-1">{finding.remediation}</p>
+            <div style={S.section}>
+              <div className="text-light-1" style={S.sectionTitle}>What to ask the vendor</div>
+              <p className="text-dark-1" style={{ fontSize: 14, margin: 0 }}>{finding.remediation}</p>
             </div>
           )}
 
-          <div>
-            <div className="text-xs font-semibold uppercase text-light-1 mb-2">
-              Evidence
-            </div>
+          <div style={S.section}>
+            <div className="text-light-1" style={S.sectionTitle}>Evidence</div>
             <EvidenceLinks observationIds={finding.evidence_observation_ids} />
           </div>
 
           <StatusTimeline history={finding.status_history} />
 
-          <div className="border-top-light pt-4">
-            <div className="text-xs font-semibold uppercase text-light-1 mb-2">
-              Triage
-            </div>
+          <div style={S.footer}>
+            <div className="text-light-1" style={S.sectionTitle}>Triage</div>
             <textarea
-              className="form-control w-full mb-3"
+              className="form-control" style={{ width: "100%", marginBottom: 12 }}
               rows={2}
               placeholder="Optional note explaining the decision"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={2000}
             />
-            <div className="flex flex-wrap gap-2">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <AwsButton
                 label={saving === "ACKNOWLEDGED" ? "Saving…" : "Acknowledge"}
                 size="sm"
@@ -260,13 +247,13 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
             </div>
             {/* The difference decides whether this returns tomorrow, so it is
                 stated rather than left to be discovered. */}
-            <p className="text-xs text-light-1 mt-3">
+            <p className="text-light-1" style={{ fontSize: 12, marginTop: 12 }}>
               <strong>Resolve</strong> if the issue was dealt with — it reopens
               automatically if the next check still detects it.{" "}
               <strong>False positive</strong> if the detection itself is wrong —
               it stays closed.
             </p>
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            {error && <p className="text-red-600" style={{ fontSize: 13, marginTop: 8 }}>{error}</p>}
           </div>
         </div>
       </div>

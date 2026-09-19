@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getObservationArtifact } from "@/apiIntegration/verification";
+import { S } from "./evidenceStyles";
 
 /**
  * Readable view of one recorded check.
@@ -32,8 +33,8 @@ const num = (v) => (typeof v === "number" ? v.toLocaleString() : v || "--");
 
 function Section({ title, count, children }) {
   return (
-    <div style={{ marginBottom: 22 }}>
-      <div className="text-xs font-semibold uppercase text-light-1 mb-2">
+    <div style={S.section}>
+      <div className="text-light-1" style={S.sectionTitle}>
         {title}
         {count != null ? ` (${count})` : ""}
       </div>
@@ -43,24 +44,22 @@ function Section({ title, count, children }) {
 }
 
 function Empty({ children }) {
-  return <p className="text-sm text-light-1">{children}</p>;
+  return <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>{children}</p>;
 }
 
 function Breaches({ items }) {
   if (!items?.length) return <Empty>No known breaches reported for this vendor.</Empty>;
   return (
-    <div className="space-y-3">
+    <div style={S.stack}>
       {items.map((b, i) => (
-        <div key={b.id || i} className="border-light rounded-8 p-3">
-          <div className="text-sm font-semibold text-dark-1">
-            {b.title || b.id}
-          </div>
-          <div className="text-sm text-light-1">
+        <div key={b.id || i} style={S.card}>
+          <div className="text-dark-1" style={S.cardTitle}>{b.title || b.id}</div>
+          <div className="text-light-1" style={S.cardLine}>
             Breach dated {fmtDate(b.breach_date)} · {num(b.pwn_count)} accounts
             {b.is_verified === false ? " · unverified" : ""}
           </div>
           {b.data_classes?.length ? (
-            <div className="text-sm text-dark-1 mt-1">
+            <div className="text-dark-1" style={S.cardLine}>
               Exposed: {b.data_classes.join(", ")}
             </div>
           ) : null}
@@ -69,7 +68,7 @@ function Breaches({ items }) {
               href={b.description_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline"
+              className="text-blue-600" style={{ fontSize: 12 }}
             >
               Source
             </a>
@@ -83,32 +82,32 @@ function Breaches({ items }) {
 function Vulnerabilities({ items }) {
   if (!items?.length) return <Empty>No vulnerabilities published in the window checked.</Empty>;
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="w-full text-sm">
+    <div style={S.tableWrap}>
+      <table style={S.table}>
         <thead>
-          <tr className="text-left text-xs uppercase text-light-1">
-            <th style={{ padding: "6px 12px 6px 0" }}>CVE</th>
-            <th style={{ padding: "6px 12px 6px 0" }}>Severity</th>
-            <th style={{ padding: "6px 12px 6px 0" }}>Published</th>
-            <th style={{ padding: "6px 0" }}>Summary</th>
+          <tr className="text-light-1">
+            <th style={S.th}>CVE</th>
+            <th style={S.th}>Severity</th>
+            <th style={S.th}>Published</th>
+            <th style={S.th}>Summary</th>
           </tr>
         </thead>
         <tbody>
           {items.map((v, i) => (
-            <tr key={v.cve_id || v.id || i} className="border-top-light">
-              <td style={{ padding: "8px 12px 8px 0", whiteSpace: "nowrap" }}>
+            <tr key={v.cve_id || v.id || i}>
+              <td style={S.tdNoWrap}>
                 {v.url ? (
                   <a href={v.url} target="_blank" rel="noopener noreferrer"
-                     className="text-blue-600 hover:underline">
+                     className="text-blue-600">
                     {v.cve_id || v.id}
                   </a>
                 ) : (v.cve_id || v.id)}
               </td>
-              <td style={{ padding: "8px 12px 8px 0" }}>{v.severity || "unrated"}</td>
-              <td style={{ padding: "8px 12px 8px 0", whiteSpace: "nowrap" }}>
+              <td style={S.td}>{v.severity || "unrated"}</td>
+              <td style={S.tdNoWrap}>
                 {fmtDate(v.published)}
               </td>
-              <td style={{ padding: "8px 0" }} className="text-light-1">
+              <td style={S.td} className="text-light-1">
                 {(v.summary || "").slice(0, 220)}
                 {(v.summary || "").length > 220 ? "…" : ""}
               </td>
@@ -123,11 +122,11 @@ function Vulnerabilities({ items }) {
 function HostList({ items, emptyText }) {
   if (!items?.length) return <Empty>{emptyText}</Empty>;
   return (
-    <div className="flex flex-wrap gap-2">
+    <div style={S.chipRow}>
       {items.map((t, i) => (
         <span
           key={t.host || t.id || i}
-          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs border bg-gray-50 text-gray-700 border-gray-200"
+          className="text-light-1" style={S.chip}
         >
           {t.host || t.key || t.id}
           {t.category ? ` · ${t.category.toLowerCase().replace("_", " ")}` : ""}
@@ -165,40 +164,35 @@ export default function EvidenceDetail({ observation, onClose }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.45)" }}
-      onClick={onClose}
-    >
+    <div style={S.overlay} onClick={onClose}>
       <div
-        className="bg-white rounded-16 shadow-4 w-full"
-        style={{ maxWidth: 760, maxHeight: "88vh", overflowY: "auto" }}
+        className="bg-white rounded-16 shadow-4"
+        style={S.modal}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-start justify-between gap-4 px-6 py-5 border-bottom-light">
-          <div>
-            <h3 className="text-lg font-bold text-dark-1">
+        <div style={S.header}>
+          <div style={S.headerText}>
+            <h3 className="text-dark-1" style={S.title}>
               {CHECK_LABELS[type] || type}
             </h3>
-            <div className="text-sm text-light-1 mt-1">
+            <div className="text-light-1" style={S.subtitle}>
               {observation.subject_id} · checked {fmtDate(observation.captured_at)}
               {s.capture_method ? ` · ${s.capture_method === "BROWSER"
                 ? "full browser session" : "HTTP request only"}` : ""}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-light-1"
-                  style={{ background: "none", border: "none", cursor: "pointer" }}>
+          <button onClick={onClose} aria-label="Close" className="text-light-1" style={S.close}>
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        <div style={S.body}>
           {/* A partial check is not a clean result and must never read as one. */}
           {s.partial && (
-            <div className="rounded-8 p-3 mb-4 border bg-amber-50 border-amber-200">
-              <p className="text-sm text-amber-800">
+            <div className="badge-warning" style={S.notice}>
+              <p style={{ margin: 0 }}>
                 This check was incomplete — {Object.keys(s.source_errors || {}).join(", ")}{" "}
                 could not be reached. Nothing here rules out what those sources
                 would have reported.
@@ -207,8 +201,8 @@ export default function EvidenceDetail({ observation, onClose }) {
           )}
 
           {s.capture_method === "HTTP_STATIC" && (
-            <div className="rounded-8 p-3 mb-4 border bg-gray-50 border-gray-200">
-              <p className="text-sm text-light-1">
+            <div style={S.notice}>
+              <p className="text-light-1" style={{ margin: 0 }}>
                 Captured without a browser, so anything loaded by JavaScript is
                 not represented here.
               </p>
@@ -259,7 +253,7 @@ export default function EvidenceDetail({ observation, onClose }) {
           {type === "EXTENSION_LISTING" && (
             <>
               <Section title="Store declarations">
-                <ul className="text-sm text-dark-1 space-y-1">
+                <ul className="text-dark-1" style={S.list}>
                   <li>Data not sold to third parties: {s.declares_not_sold ? "declared" : "NOT declared"}</li>
                   <li>Limited use of data: {s.declares_limited_use ? "declared" : "NOT declared"}</li>
                   <li>Not used for creditworthiness: {s.declares_no_creditworthiness ? "declared" : "NOT declared"}</li>
@@ -270,7 +264,7 @@ export default function EvidenceDetail({ observation, onClose }) {
                           emptyText="No data categories declared." />
               </Section>
               <Section title="Version">
-                <p className="text-sm text-dark-1">{s.version || "unknown"}</p>
+                <p className="text-dark-1" style={{ fontSize: 14, margin: 0 }}>{s.version || "unknown"}</p>
               </Section>
             </>
           )}
@@ -278,12 +272,12 @@ export default function EvidenceDetail({ observation, onClose }) {
           {["PRIVACY_POLICY", "TERMS_OF_SERVICE", "DPA", "SUBPROCESSOR_LIST",
             "SECURITY_PAGE", "STUDENT_DATA_ADDENDUM"].includes(type) && (
             <Section title="Document captured">
-              <p className="text-sm text-dark-1">{s.title || s.url}</p>
-              <p className="text-sm text-light-1">
+              <p className="text-dark-1" style={{ fontSize: 14, margin: 0 }}>{s.title || s.url}</p>
+              <p className="text-light-1" style={{ fontSize: 13, marginTop: 6 }}>
                 {num(s.text_length)} characters of text.{" "}
                 {s.archive_url ? (
                   <a href={s.archive_url} target="_blank" rel="noopener noreferrer"
-                     className="text-blue-600 hover:underline">
+                     className="text-blue-600">
                     Independent archive copy
                   </a>
                 ) : "No independent archive copy was taken."}
@@ -291,21 +285,20 @@ export default function EvidenceDetail({ observation, onClose }) {
             </Section>
           )}
 
-          <div className="border-top-light pt-4 admin-actions">
+          <div className="admin-actions" style={S.footer}>
             <button
               type="button"
               onClick={openRaw}
               disabled={rawBusy}
-              className="text-sm text-blue-600 hover:underline"
-              style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+              className="text-blue-600" style={S.linkButton}
             >
               {rawBusy ? "Opening…" : "Download the raw capture (JSON)"}
             </button>
-            <p className="text-xs text-light-1 mt-1">
+            <p className="text-light-1" style={{ fontSize: 12, marginTop: 6 }}>
               The exact response this check was based on, for anyone auditing
               the capture itself.
             </p>
-            {rawError && <p className="text-sm text-red-600 mt-2">{rawError}</p>}
+            {rawError && <p className="text-red-600" style={{ fontSize: 13, marginTop: 8 }}>{rawError}</p>}
           </div>
         </div>
       </div>
