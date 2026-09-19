@@ -1233,13 +1233,44 @@ export default function ProjectDetailsModern({ project, onBack }) {
             <div className="recommendation-content">
               {!isFreePlan ? (
                 <>
-                  <div className="recommendation-box success">
-                    <i className="fa-solid fa-circle-check"></i>
-                    <div>
-                      <h4>Final Recommendation</h4>
-                      <p>{recommendationLabel(project.recommendation)}</p>
-                    </div>
-                  </div>
+                  {/* The variant was hardcoded to success with a tick, so
+                      "Not Recommended" was presented as a pass. The box has to
+                      follow the verdict it is displaying. */}
+                  {(() => {
+                    const rec = (project.recommendation || "").toLowerCase();
+                    const negative =
+                      rec.includes("not recommended") ||
+                      rec.includes("do not use") ||
+                      rec.includes("rejected");
+                    const qualified =
+                      rec.includes("limitation") || rec.includes("restricted");
+                    return (
+                      <div
+                        className={`recommendation-box ${negative || qualified ? "warning" : "success"}`}
+                        style={
+                          negative
+                            ? { background: `${COLORS.error}14`,
+                                border: `1px solid ${COLORS.error}33` }
+                            : undefined
+                        }
+                      >
+                        <i
+                          className={
+                            negative
+                              ? "fa-solid fa-circle-xmark"
+                              : qualified
+                                ? "fa-solid fa-circle-exclamation"
+                                : "fa-solid fa-circle-check"
+                          }
+                          style={{ color: negative ? COLORS.error : undefined }}
+                        ></i>
+                        <div>
+                          <h4>Final Recommendation</h4>
+                          <p>{recommendationLabel(project.recommendation)}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {project.assessment?.summary?.implementation_guidelines && (
                     <div className="recommendation-box warning">
@@ -1361,7 +1392,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     className="fa-solid fa-triangle-exclamation"
                     style={{ color: f.severity === "CRITICAL" ? COLORS.error : undefined }}
                   ></i>
-                  <div style={{ width: "100%", minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: "100%", minWidth: 0,
+                      // The card is tinted by severity but the text was still
+                      // inheriting amber from the warning class, so a critical
+                      // card read red-and-orange at once.
+                      color: f.severity === "CRITICAL" ? COLORS.textPrimary : undefined,
+                    }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 10,
                                   flexWrap: "wrap", marginBottom: 8 }}>
                       <span style={{ display: "inline-flex", padding: "3px 10px",
@@ -1372,7 +1411,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                                        ? COLORS.error : COLORS.warning }}>
                         {f.severity}
                       </span>
-                      <h4 style={{ margin: 0 }}>{f.title}</h4>
+                      <h4 style={{ margin: 0, color: f.severity === "CRITICAL"
+                                     ? COLORS.error : undefined }}>
+                        {f.title}
+                      </h4>
                     </div>
                     {(() => {
                       const { body, sourceUrl } = splitSource(f.detail);
