@@ -48,7 +48,13 @@ function Empty({ children }) {
 }
 
 function Breaches({ items }) {
-  if (!items?.length) return <Empty>No known breaches reported for this vendor.</Empty>;
+  if (!items?.length) return (
+    <Empty>
+      No breach for this vendor in Have I Been Pwned. That database is
+      curated rather than exhaustive and regional coverage varies, so
+      this does not establish that none has occurred.
+    </Empty>
+  );
   return (
     <div style={S.stack}>
       {items.map((b, i) => (
@@ -80,7 +86,13 @@ function Breaches({ items }) {
 }
 
 function Vulnerabilities({ items }) {
-  if (!items?.length) return <Empty>No vulnerabilities published in the window checked.</Empty>;
+  if (!items?.length) return (
+    <Empty>
+      No CVEs published in the window checked. The search matches the
+      vendor name in NVD, so a vulnerability recorded under a product or
+      parent-company name may not appear.
+    </Empty>
+  );
   return (
     <div style={S.tableWrap}>
       <table style={S.table}>

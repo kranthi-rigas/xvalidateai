@@ -1301,11 +1301,23 @@ export default function ProjectDetailsModern({ project, onBack }) {
               <div className="recommendation-box success">
                 <i className="fa-solid fa-circle-check"></i>
                 <div>
-                  <h4>No incidents or policy changes detected</h4>
+                  <h4>Nothing found in the sources we check</h4>
                   <p>
-                    {monitoredDomain} is checked daily against known breach
-                    records and published vulnerabilities, and its policy
-                    documents are compared against the last captured version.
+                    {monitoredDomain} is checked daily against Have I Been
+                    Pwned for known breaches, the National Vulnerability
+                    Database for published CVEs, and its own policy documents
+                    and TLS certificate.
+                  </p>
+                  {/* Stating the limit rather than implying completeness.
+                      HIBP is curated, not exhaustive - it holds around a
+                      thousand breaches and only single figures for some
+                      regions - so a clean result here is not the same as a
+                      vendor never having been breached. */}
+                  <p className="text-light-1" style={{ fontSize: 13, marginTop: 8 }}>
+                    These sources are not exhaustive. Breach databases only
+                    contain incidents that have been reported to and curated by
+                    them, and regional coverage varies widely. This is not a
+                    statement that no breach has occurred.
                   </p>
                 </div>
               </div>
