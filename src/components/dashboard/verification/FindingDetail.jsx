@@ -165,8 +165,14 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
             </div>
             <h3 className="text-dark-1" style={S.title}>{finding.title}</h3>
             <div className="text-light-1" style={S.subtitle}>
-              {finding.subject_id} · first seen {formatDate(finding.first_seen_at)} ·
-              last seen {formatDate(finding.last_seen_at)}
+              {finding.subject_id}
+              {finding.occurred_at
+                ? ` · occurred ${formatDate(finding.occurred_at)}`
+                : ""}
+              {" · detected "}
+              {formatDate(finding.first_seen_at)}
+              {" · last confirmed "}
+              {formatDate(finding.last_seen_at)}
             </div>
           </div>
           <button

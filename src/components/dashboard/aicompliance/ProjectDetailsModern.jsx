@@ -1328,10 +1328,21 @@ export default function ProjectDetailsModern({ project, onBack }) {
                     </h4>
                     <p style={{ whiteSpace: "pre-wrap", margin: "0 0 8px" }}>{f.detail}</p>
                     <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
-                      First seen{" "}
-                      {f.first_seen_at
-                        ? new Date(f.first_seen_at).toLocaleDateString()
-                        : "--"}
+                      {/* occurred_at is when the breach or CVE actually
+                          happened; first_seen_at is only when monitoring
+                          noticed. Leading with our date made a 2019 breach
+                          read as a new one. */}
+                      {f.occurred_at
+                        ? `Occurred ${new Date(f.occurred_at).toLocaleDateString()} · detected ${
+                            f.first_seen_at
+                              ? new Date(f.first_seen_at).toLocaleDateString()
+                              : "--"
+                          }`
+                        : `Detected ${
+                            f.first_seen_at
+                              ? new Date(f.first_seen_at).toLocaleDateString()
+                              : "--"
+                          }`}
                       {f.occurrence_count > 1
                         ? ` · confirmed on ${f.occurrence_count} checks`
                         : " · observed once"}
