@@ -38,6 +38,34 @@ const creditsFor = (price) => Math.round(price / 10);
 // they are meant to differ, that needs a new entitlement level rather than a
 // pricing change.
 
+// Feature groups, composed cumulatively below. Higher plans list everything
+// the plans beneath them include and then their own additions, so a buyer sees
+// the full picture instead of an "Everything in X" shorthand. Every card shows
+// the same set of rows - a plan either includes a row (ticked) or does not
+// (greyed) - which keeps the differences between plans legible and the cards
+// the same height.
+const inc = (text) => ({ text, included: true });
+const exc = (text) => ({ text, included: false });
+
+const PLATFORM_FEATURES = [
+  "AI tool compliance assessments",
+  "Evidence & verification reports",
+  "Downloadable reports",
+  "Continuous monitoring",
+  "Create organizations",
+  "Audit Trail",
+];
+const CAIO_FEATURES = [
+  "Chief AI Officer (CAIO) programme",
+  "AI Analytics",
+  "Priority support",
+];
+const TEACHER_FEATURES = [
+  "AI-Ready Teacher enablement programme",
+  "Business workflow",
+  "Customizability",
+];
+
 const pricingPlans = [
   {
     id: "platform",
@@ -51,13 +79,9 @@ const pricingPlans = [
     buttonText: "Choose Platform",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "AI tool compliance assessments", included: true },
-      { text: "Downloadable reports", included: true },
-      { text: "Continuous monitoring", included: true },
-      { text: "Create organizations", included: true },
-      { text: "Audit Trail", included: true },
-      { text: "Chief AI Officer (CAIO) programme", included: false },
-      { text: "Teacher enablement", included: false },
+      ...PLATFORM_FEATURES.map(inc),
+      ...CAIO_FEATURES.map(exc),
+      ...TEACHER_FEATURES.map(exc),
     ],
   },
   {
@@ -72,11 +96,9 @@ const pricingPlans = [
     buttonText: "Choose Platform + CAIO",
     buttonStyle: "-purple-1 text-white",
     features: [
-      { text: "Everything in Platform", included: true },
-      { text: "Chief AI Officer (CAIO) programme", included: true },
-      { text: "AI Analytics", included: true },
-      { text: "Priority support", included: true },
-      { text: "Teacher enablement", included: false },
+      ...PLATFORM_FEATURES.map(inc),
+      ...CAIO_FEATURES.map(inc),
+      ...TEACHER_FEATURES.map(exc),
     ],
   },
   {
@@ -91,13 +113,12 @@ const pricingPlans = [
     buttonText: "Choose this plan",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "Everything in Platform + CAIO", included: true },
-      { text: "Teacher enablement", included: true },
-      { text: "Business workflow", included: true },
-      { text: "Customizability", included: true },
+      ...PLATFORM_FEATURES.map(inc),
+      ...CAIO_FEATURES.map(inc),
+      ...TEACHER_FEATURES.map(inc),
     ],
   },
-];
+]
 
 function formatExpiryDate(unixTimestamp) {
   if (!unixTimestamp) return null;
