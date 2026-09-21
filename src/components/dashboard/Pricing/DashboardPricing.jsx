@@ -82,13 +82,13 @@ const pricingPlans = [
   {
     id: "caio_teacher",
     planId: "business",
-    name: "Complete Program",
+    name: "Platform + CAIO + AI-Ready Teacher",
     description: "The full bundle: CAIO programme plus teacher enablement",
     icon: "fa-solid fa-building",
     iconColor: COLORS.success,
     period: "Annually",
     popular: false,
-    buttonText: "Choose Complete Program",
+    buttonText: "Choose this plan",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
       { text: "Everything in Platform + CAIO", included: true },
@@ -339,7 +339,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
 
                   return (
                     <div
-                      className="col-12 col-sm-12 col-md-6 col-lg-3"
+                      className="col-12 col-sm-12 col-md-6 col-lg-4"
                       key={plan.id}
                       data-aos="fade-up"
                       data-aos-delay={index * 100}
