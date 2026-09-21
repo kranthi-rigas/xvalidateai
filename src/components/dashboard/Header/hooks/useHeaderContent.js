@@ -13,6 +13,10 @@ const headerContentMap = {
     title: "AI Literacy",
     description: "Educational resources and training materials.",
   },
+  "/dashboard/documents": {
+    title: "My Documents",
+    description: "Documents you have uploaded. Only you can see them.",
+  },
   "/dashboard/orgusergroups": {
     title: "User Groups",
     description: "Create and manage user groups to organize users and control access across your organization.",

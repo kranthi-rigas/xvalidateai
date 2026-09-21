@@ -24,6 +24,14 @@ export const sidebarItems = [
         requiredPlan: null,
     },
     {
+        id: 11,
+        href: "/dashboard/documents",
+        icon: "fa-regular fa-folder-open fa-lg",
+        text: "My Documents",
+        permission: null,
+        requiredPlan: null,
+    },
+    {
         id: "section-management",
         type: "section",
         text: "Management",
