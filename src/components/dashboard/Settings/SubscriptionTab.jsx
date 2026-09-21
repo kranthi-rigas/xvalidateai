@@ -13,12 +13,12 @@ const PLAN_META = {
   // here - the exact bundle would need the subscription-status endpoint.
   premium: {
     label: "Platform",
-    icon: "fa-solid fa-microchip",
+    icon: "fa-solid fa-star",
     color: COLORS.primary,
   },
   business: {
     label: "Platform + CAIO",
-    icon: "fa-solid fa-star",
+    icon: "fa-solid fa-building",
     color: COLORS.success,
   },
 };
@@ -195,7 +195,7 @@ export default function SubscriptionTab() {
   const leftCredits = creditsLeft ?? "—";
   const usedCredits = creditsUsed ?? "—";
   const usedScans = creditsUsed !== null ? Math.floor(creditsUsed / 10) : "—";
-  const totalScans = totalCredits ? Math.round(totalCredits / 10) : totals.scans;
+  const totalScans = totals.scans;
 
   // Credit usage percentage for progress bar
   const usagePct =
@@ -267,7 +267,7 @@ export default function SubscriptionTab() {
             {plan !== "free" && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary">
-                  ${(totalCredits * 10).toLocaleString()}
+                  ${{ premium: "1,000", business: "3,000" }[plan] ?? "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">per year</p>
               </div>
