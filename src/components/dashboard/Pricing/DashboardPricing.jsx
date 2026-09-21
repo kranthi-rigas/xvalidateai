@@ -100,25 +100,6 @@ const pricingPlans = [
   },
 ];
 
-// The profile's plan object carries which bundle the school actually bought
-// ("component") and which enrollment band they bought it at ("tier"). Both are
-// needed here: planId alone cannot distinguish Platform + CAIO from Complete
-// Program, since the two share the "business" entitlement level.
-function readActivePlan() {
-  try {
-    const raw = localStorage.getItem("user_info");
-    const plan = raw ? JSON.parse(raw)?.plan : null;
-    if (!plan) return { tier: null, planCardId: null };
-
-    return {
-      tier: normalizeTier(plan.tier),
-      planCardId: normalizeComponent(plan.component),
-    };
-  } catch {
-    return { tier: null, planCardId: null };
-  }
-}
-
 function formatExpiryDate(unixTimestamp) {
   if (!unixTimestamp) return null;
   try {
@@ -155,13 +136,35 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     useContextElement();
   const currentPlan = userPlan || "free";
 
+  // The profile arrives on whichever context or storage shape happens to carry
+  // it, so look through all of them once and read both the bundle and the
+  // enrollment band off the same record.
+  const findPlanRecord = () => {
+    for (const c of [user, userData, userProfile, profile]) {
+      if (c?.plan) return c.plan;
+    }
+    try {
+      return (
+        JSON.parse(localStorage.getItem("user_info") || "{}")?.plan || null
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  // The subscriber's exact bundle (platform / caio / caio_teacher). Two bundles
+  // share the "business" entitlement, so this is what distinguishes them.
+  // normalizeComponent also tolerates the other spellings the backend has used
+  // (CAIO_TEACHER / TEACHER / COMPLETE) rather than only an exact match.
+  const getCurrentComponent = () =>
+    normalizeComponent(findPlanRecord()?.component);
+
   // A subscriber's own enrollment band is the only correct starting point -
   // showing a Large school Medium prices misstates what they pay. Medium stays
   // the default only for visitors with no subscription, where it anchors the
   // range better than either extreme.
-  const activePlan = readActivePlan();
   const [selectedTier, setSelectedTier] = useState(
-    () => readActivePlan().tier || "medium",
+    () => normalizeTier(findPlanRecord()?.tier) || "medium",
   );
   // Set once the profile arrives, unless the visitor has already chosen a band
   // themselves - their click must not be overwritten by a later profile load.
@@ -169,9 +172,9 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
 
   useEffect(() => {
     if (tierTouched) return;
-    const tier = readActivePlan().tier;
+    const tier = normalizeTier(findPlanRecord()?.tier);
     if (tier && tier !== selectedTier) setSelectedTier(tier);
-  }, [userPlan, tierTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userPlan, user, userData, userProfile, profile, tierTouched]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A card's price and credits depend on the chosen enrollment band. Free has
   // neither, so it passes through untouched.
@@ -266,24 +269,31 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     formattedExpiry,
   );
 
-  // Takes the entitlement key (planId), not the card id. PLAN_HIERARCHY is
-  // keyed on free/premium/business, so passing a card id ("caio") looked up
-  // undefined, scored every paid card 0 and disabled all of them for anyone
-  // already on a paid plan.
-  const isPlanBelowCurrent = (planId) => {
-    const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
-    const planLevel = PLAN_HIERARCHY[planId] || 0;
-    return planLevel < currentLevel;
-  };
+  // Rank the three component bundles so a plan can be seen as below, equal to,
+  // or above the user's current plan. The entitlement hierarchy cannot do this:
+  // caio and caio_teacher are both "business", so it could not tell them apart
+  // and marked both as the current plan.
+  const COMPONENT_ORDER = { free: 0, platform: 1, caio: 2, caio_teacher: 3 };
 
-  // Platform + CAIO and Complete Program both carry planId "business", so
-  // comparing entitlement alone marks both as the current plan. The profile's
-  // component says which bundle was actually bought; fall back to entitlement
-  // only when it is absent.
-  const isCurrentPlan = (plan) => {
-    if (activePlan.planCardId) return plan.id === activePlan.planCardId;
-    return plan.planId === currentPlan;
-  };
+  // The exact bundle the user is on. The profile now carries the component the
+  // subscriber bought; when it is present it identifies the plan unambiguously.
+  // If it is absent (a subscription created before the component was stored, or
+  // a free user), fall back to the entitlement: premium -> platform, business
+  // -> caio, so at most one card is ever marked current.
+  const currentComponent =
+    getCurrentComponent() ||
+    (currentPlan === "premium"
+      ? "platform"
+      : currentPlan === "business"
+        ? "caio"
+        : currentPlan === "free"
+          ? "free"
+          : null);
+
+  const currentLevel = COMPONENT_ORDER[currentComponent] ?? 0;
+
+  const isCurrentPlan = (id) => id === currentComponent;
+  const isPlanBelowCurrent = (id) => (COMPONENT_ORDER[id] ?? 0) < currentLevel;
 
   useEffect(() => {
     AOS.init({
@@ -389,9 +399,8 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
               <div className="row y-gap-30">
                 {pricingPlans.map((rawPlan, index) => {
                   const plan = resolvePlan(rawPlan);
-                  const isCurrent = isCurrentPlan(plan);
-                  const isBelowCurrent =
-                    !isCurrent && isPlanBelowCurrent(plan.planId);
+                  const isCurrent = isCurrentPlan(plan.id);
+                  const isBelowCurrent = isPlanBelowCurrent(plan.id);
                   // plan.id is never "business" - the ids are platform / caio /
                   // caio_teacher - so this condition never fired. The business
                   // upgrade target is the CAIO bundle.
