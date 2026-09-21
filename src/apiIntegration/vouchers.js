@@ -85,7 +85,7 @@ export async function redeemVoucher(voucherCode, planId = null) {
  * Create a PayPal subscription.
  *
  * planType is the entitlement key (FREE | PREMIUM | BUSINESS), not the card's
- * display name - the name is now "Platform Only" or "+ Chief AI Officer" and
+ * display name - the name is now "Platform" or "Platform + CAIO" and
  * maps to nothing on the backend.
  *
  * tier is the enrollment band (small | medium | large). Without it the backend
