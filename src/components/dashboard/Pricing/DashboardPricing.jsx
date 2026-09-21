@@ -6,9 +6,42 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
 
+// Pricing is modular and tiered by enrollment: a school picks its enrollment
+// band, then one of three component bundles.
+//
+// Credits follow price / 10. That is not an invented rule - it is what the
+// previous plans already were (Premium $1,000 -> 100 credits, Business $3,000
+// -> 300), so the matrix extends the existing relationship rather than
+// introducing a new one.
+const ENROLLMENT_TIERS = [
+  { id: "small", label: "Small", detail: "Under 300 students" },
+  { id: "medium", label: "Medium", detail: "300 – 750 students" },
+  { id: "large", label: "Large", detail: "750+ students" },
+];
+
+const TIER_PRICING = {
+  platform: { small: 1200, medium: 2000, large: 3000 },
+  caio: { small: 2000, medium: 3500, large: 5000 },
+  caio_teacher: { small: 3000, medium: 5200, large: 7500 },
+};
+
+const creditsFor = (price) => Math.round(price / 10);
+
+// planId is the ENTITLEMENT key and is deliberately unchanged. "premium" and
+// "business" drive PLAN_HIERARCHY, the sidebar's requiredPlan gating,
+// PlanStatusBadge and the backend subscription record. Renaming them to match
+// the new commercial packaging would silently drop paying customers to level 0
+// and remove features they are entitled to.
+//
+// Note for review: + CAIO and + CAIO + Teacher both map to "business" today,
+// so the full bundle currently unlocks nothing the CAIO bundle does not. If
+// they are meant to differ, that needs a new entitlement level rather than a
+// pricing change.
+
 const pricingPlans = [
   {
     id: "free",
+    planId: "free",
     name: "Free",
     description: "Perfect for getting started",
     icon: "fa-solid fa-rocket",
@@ -31,53 +64,61 @@ const pricingPlans = [
     ],
   },
   {
-    id: "premium",
-    name: "Premium",
-    description: "Best for growing learners",
-    icon: "fa-solid fa-star",
+    id: "platform",
+    planId: "premium",
+    name: "Platform Only",
+    description: "The compliance platform on its own",
+    icon: "fa-solid fa-microchip",
     iconColor: COLORS.primary,
-    price: 1000,
     period: "Annually",
-    credits: 100,
-    popular: true,
-    buttonText: "Get Premium",
+    popular: false,
+    buttonText: "Choose Platform",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "10 Scans included(100 Credits)", included: true },
-      { text: "Single User", included: true },
-      { text: "Downloadable Report", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Priority support", included: true },
-      { text: "Create organizations", included: false },
-      { text: "AI Analytics", included: false },
-      { text: "Business workflow", included: false },
-      { text: "Customizability", included: false },
-      { text: "Audit Trail", included: false },
+      { text: "AI tool compliance assessments", included: true },
+      { text: "Downloadable reports", included: true },
+      { text: "Continuous monitoring", included: true },
+      { text: "Create organizations", included: true },
+      { text: "Audit Trail", included: true },
+      { text: "CAIO programme", included: false },
+      { text: "Teacher enablement", included: false },
     ],
   },
   {
-    id: "business",
-    name: "Business",
-    description: "For organizations",
+    id: "caio",
+    planId: "business",
+    name: "+ CAIO Program",
+    description: "Platform plus the Chief AI Officer programme",
+    icon: "fa-solid fa-star",
+    iconColor: COLORS.primary,
+    period: "Annually",
+    popular: true,
+    buttonText: "Choose CAIO",
+    buttonStyle: "-purple-1 text-white",
+    features: [
+      { text: "Everything in Platform Only", included: true },
+      { text: "CAIO programme", included: true },
+      { text: "AI Analytics", included: true },
+      { text: "Priority support", included: true },
+      { text: "Teacher enablement", included: false },
+    ],
+  },
+  {
+    id: "caio_teacher",
+    planId: "business",
+    name: "+ CAIO + Teacher",
+    description: "The full bundle, including teacher enablement",
     icon: "fa-solid fa-building",
     iconColor: COLORS.success,
-    price: 3000,
     period: "Annually",
-    credits: 300,
     popular: false,
-    buttonText: "Get Business",
+    buttonText: "Choose Full Bundle",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "30 Scans included(300 Credits)", included: true },
-      { text: "Multiple Users", included: true },
-      { text: "Downloadable Report", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Priority support", included: true },
-      { text: "Create organizations", included: true },
-      { text: "AI Analytics", included: true },
+      { text: "Everything in + CAIO Program", included: true },
+      { text: "Teacher enablement", included: true },
       { text: "Business workflow", included: true },
       { text: "Customizability", included: true },
-      { text: "Audit Trail", included: true },
     ],
   },
 ];
@@ -117,6 +158,18 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   const { userPlan, user, userData, userProfile, profile } =
     useContextElement();
   const currentPlan = userPlan || "free";
+
+  // Default to Medium: the middle band is the most common school size and
+  // anchors the range better than either extreme.
+  const [selectedTier, setSelectedTier] = useState("medium");
+
+  // A card's price and credits depend on the chosen enrollment band. Free has
+  // neither, so it passes through untouched.
+  const resolvePlan = (plan) => {
+    const price = TIER_PRICING[plan.id]?.[selectedTier];
+    if (price === undefined) return plan;
+    return { ...plan, price, credits: creditsFor(price) };
+  };
 
   // ── Business card highlight state (set when Premium user clicks Upgrade) ──
   const [highlightBusiness, setHighlightBusiness] = useState(
@@ -250,16 +303,65 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
             style={{ padding: "1rem" }}
           >
             <div className="py-20 px-15 md:py-30 md:px-30">
+              {/* Enrollment tier selector. Pricing is tiered by school
+                  enrollment, so the band has to be chosen before any price on
+                  this page means anything. */}
+              <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <p className="text-light-1" style={{ fontSize: 14, marginBottom: 12 }}>
+                  Pricing is tiered by school enrollment. Select your band to see
+                  your prices.
+                </p>
+                <div
+                  style={{
+                    display: "inline-flex", flexWrap: "wrap", gap: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  {ENROLLMENT_TIERS.map((tier) => {
+                    const active = selectedTier === tier.id;
+                    return (
+                      <button
+                        key={tier.id}
+                        type="button"
+                        onClick={() => setSelectedTier(tier.id)}
+                        style={{
+                          display: "flex", flexDirection: "column",
+                          alignItems: "center", gap: 2,
+                          padding: "10px 22px", borderRadius: 10,
+                          cursor: "pointer", minWidth: 160,
+                          border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
+                          background: active ? COLORS.primary : COLORS.bgPrimary,
+                          color: active ? "#fff" : COLORS.textPrimary,
+                        }}
+                      >
+                        <span style={{ fontSize: 15, fontWeight: 700 }}>
+                          {tier.label}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: active ? "rgba(255,255,255,0.85)" : COLORS.textMuted,
+                          }}
+                        >
+                          {tier.detail}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Pricing Cards */}
               <div className="row y-gap-30">
-                {pricingPlans.map((plan, index) => {
-                  const isCurrent = isCurrentPlan(plan.id);
+                {pricingPlans.map((rawPlan, index) => {
+                  const plan = resolvePlan(rawPlan);
+                  const isCurrent = isCurrentPlan(plan.planId);
                   const isBelowCurrent = isPlanBelowCurrent(plan.id);
                   const isHighlighted = highlightBusiness && plan.id === "business";
 
                   return (
                     <div
-                      className="col-12 col-sm-12 col-md-6 col-lg-4"
+                      className="col-12 col-sm-12 col-md-6 col-lg-3"
                       key={plan.id}
                       data-aos="fade-up"
                       data-aos-delay={index * 100}
@@ -377,8 +479,16 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               carries the real price for checkout. */}
                           <div className="mt-25" style={{ minHeight: "50px" }}>
                             <span className="text-40 fw-700 lh-11 text-dark-1">
-                              {plan.price === 0 ? "Free" : "-"}
+                              {plan.price === 0
+                                ? "Free"
+                                : `$${plan.price.toLocaleString()}`}
                             </span>
+                            {plan.price > 0 && plan.period && (
+                              <span className="text-14 text-light-1">
+                                {" "}
+                                /{plan.period.toLowerCase()}
+                              </span>
+                            )}
                           </div>
 
                           {/* Credits Badge */}
