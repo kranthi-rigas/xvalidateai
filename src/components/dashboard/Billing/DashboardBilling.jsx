@@ -39,10 +39,18 @@ export default function DashboardBilling() {
     }
 
     setIsPaying(true);
-    console.log(plan);
 
     try {
-      const response = await createPaypalSubscription(plan.name);
+      // plan.id is the component (platform / caio / caio_teacher) and is what
+      // sets the price; plan.tier is the enrollment band. Both are needed to
+      // reach the right PayPal plan. planId is the entitlement and is sent for
+      // the legacy path only. plan.name is a display label and resolves to
+      // nothing on the backend.
+      const response = await createPaypalSubscription(
+        (plan.planId || "").toUpperCase(),
+        plan.tier || null,
+        plan.id || null,
+      );
 
       if (response && response.approval_url) {
         window.location.href = response.approval_url;

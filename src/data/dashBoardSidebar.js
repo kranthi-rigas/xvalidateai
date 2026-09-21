@@ -25,10 +25,10 @@ export const sidebarItems = [
     },
     {
         id: 11,
-        href: "/dashboard/mydocuments",
+        href: "/dashboard/documents",
         icon: "fa-regular fa-folder-open fa-lg",
         text: "My Documents",
-        permission: "ai_literacy",
+        permission: null,
         requiredPlan: null,
     },
     {

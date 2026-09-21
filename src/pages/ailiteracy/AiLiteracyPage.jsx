@@ -415,10 +415,6 @@ export default function AiLiteracyPage() {
       subtitle:
         "A visual overview of the end-to-end AI incident response process.",
     },
-    documents: {
-      title: "My Documents",
-      subtitle: "Documents you have uploaded. Only you can see them.",
-    },
     pd: {
       title: "Professional Development Modules",
       subtitle:

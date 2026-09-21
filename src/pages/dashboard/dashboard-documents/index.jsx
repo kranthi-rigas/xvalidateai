@@ -6,7 +6,7 @@ const metadata = {
   description: "Documents you have uploaded",
 };
 
-export default function MyDocumentsPageWrapper() {
+export default function DocumentsPageWrapper() {
   return (
     <>
       <MetaComponent meta={metadata} />

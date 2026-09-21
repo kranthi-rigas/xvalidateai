@@ -13,7 +13,7 @@ const headerContentMap = {
     title: "Programs",
     description: "Programs, educational resources and training materials.",
   },
-  "/dashboard/mydocuments": {
+  "/dashboard/documents": {
     title: "My Documents",
     description: "Documents you have uploaded. Only you can see them.",
   },
