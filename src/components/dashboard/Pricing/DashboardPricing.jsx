@@ -40,12 +40,10 @@ const creditsFor = (price) => Math.round(price / 10);
 
 // Feature groups, composed cumulatively below. Higher plans list everything
 // the plans beneath them include and then their own additions, so a buyer sees
-// the full picture instead of an "Everything in X" shorthand. Every card shows
-// the same set of rows - a plan either includes a row (ticked) or does not
-// (greyed) - which keeps the differences between plans legible and the cards
-// the same height.
+// the full picture instead of an "Everything in X" shorthand. Cards list only
+// what a plan includes - no crossed-out rows - so every line is something the
+// buyer gets.
 const inc = (text) => ({ text, included: true });
-const exc = (text) => ({ text, included: false });
 
 const PLATFORM_FEATURES = [
   "AI tool compliance assessments",
@@ -62,8 +60,6 @@ const CAIO_FEATURES = [
 ];
 const TEACHER_FEATURES = [
   "AI-Ready Teacher enablement programme",
-  "Business workflow",
-  "Customizability",
 ];
 
 const pricingPlans = [
@@ -78,11 +74,7 @@ const pricingPlans = [
     popular: false,
     buttonText: "Choose Platform",
     buttonStyle: "-outline-purple-1 text-purple-1",
-    features: [
-      ...PLATFORM_FEATURES.map(inc),
-      ...CAIO_FEATURES.map(exc),
-      ...TEACHER_FEATURES.map(exc),
-    ],
+    features: [...PLATFORM_FEATURES.map(inc)],
   },
   {
     id: "caio",
@@ -95,11 +87,7 @@ const pricingPlans = [
     popular: true,
     buttonText: "Choose Platform + CAIO",
     buttonStyle: "-purple-1 text-white",
-    features: [
-      ...PLATFORM_FEATURES.map(inc),
-      ...CAIO_FEATURES.map(inc),
-      ...TEACHER_FEATURES.map(exc),
-    ],
+    features: [...PLATFORM_FEATURES.map(inc), ...CAIO_FEATURES.map(inc)],
   },
   {
     id: "caio_teacher",
