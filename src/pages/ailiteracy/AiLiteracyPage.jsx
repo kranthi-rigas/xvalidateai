@@ -571,7 +571,7 @@ export default function AiLiteracyPage() {
                     fontWeight: 700,
                     letterSpacing: "0.08em",
                     color: "#fff",
-                    background: "#007d79",
+                    background: "#0F3357",
                     padding: "3px 9px",
                     borderRadius: 20,
                     textTransform: "uppercase",
@@ -586,7 +586,7 @@ export default function AiLiteracyPage() {
                     width: 56,
                     height: 56,
                     borderRadius: "50%",
-                    background: "#d7f3f1",
+                    background: "#e3edfd",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -594,7 +594,7 @@ export default function AiLiteracyPage() {
                 >
                   <i
                     className="fa-solid fa-chalkboard-user"
-                    style={{ fontSize: 22, color: "#007d79" }}
+                    style={{ fontSize: 22, color: "#0F3357" }}
                   />
                 </div>
 
