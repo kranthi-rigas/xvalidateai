@@ -7,14 +7,18 @@ import { fetchUserProfile } from "@/apiIntegration/auth";
 // ── Plan config ────────────────────────────────────────────────────────────
 const PLAN_META = {
   free: { label: "Free", icon: "fa-solid fa-rocket", color: COLORS.secondary },
+  // Labels are the entitlement's headline product. The credit record only
+  // stores the entitlement (premium/business), not the specific component, so
+  // a "business" subscriber on the full bundle still shows as Platform + CAIO
+  // here - the exact bundle would need the subscription-status endpoint.
   premium: {
-    label: "Premium",
-    icon: "fa-solid fa-star",
+    label: "Platform",
+    icon: "fa-solid fa-microchip",
     color: COLORS.primary,
   },
   business: {
-    label: "Business",
-    icon: "fa-solid fa-building",
+    label: "Platform + CAIO",
+    icon: "fa-solid fa-star",
     color: COLORS.success,
   },
 };
@@ -191,7 +195,7 @@ export default function SubscriptionTab() {
   const leftCredits = creditsLeft ?? "—";
   const usedCredits = creditsUsed ?? "—";
   const usedScans = creditsUsed !== null ? Math.floor(creditsUsed / 10) : "—";
-  const totalScans = totals.scans;
+  const totalScans = totalCredits ? Math.round(totalCredits / 10) : totals.scans;
 
   // Credit usage percentage for progress bar
   const usagePct =
@@ -263,7 +267,7 @@ export default function SubscriptionTab() {
             {plan !== "free" && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary">
-                  ${{ premium: "1,000", business: "3,000" }[plan] ?? "—"}
+                  ${(totalCredits * 10).toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground">per year</p>
               </div>

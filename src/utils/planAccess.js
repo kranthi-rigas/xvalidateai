@@ -9,8 +9,8 @@ export const PLAN_HIERARCHY = {
 // Plan display names for badges
 export const PLAN_DISPLAY_NAMES = {
   free: "Free",
-  premium: "Premium",
-  business: "Upgrade to Business",
+  premium: "Platform",
+  business: "Platform + CAIO",
   enterprise: "Enterprise",
 };
 
