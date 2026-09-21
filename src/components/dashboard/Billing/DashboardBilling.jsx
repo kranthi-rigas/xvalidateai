@@ -42,7 +42,12 @@ export default function DashboardBilling() {
     console.log(plan);
 
     try {
-      const response = await createPaypalSubscription(plan.name);
+      // planId is the entitlement key; plan.name is a display label and does
+      // not resolve to a plan on the backend.
+      const response = await createPaypalSubscription(
+        (plan.planId || plan.name || "").toUpperCase(),
+        plan.tier || null,
+      );
 
       if (response && response.approval_url) {
         window.location.href = response.approval_url;

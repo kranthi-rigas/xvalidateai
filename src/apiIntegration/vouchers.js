@@ -81,11 +81,23 @@ export async function redeemVoucher(voucherCode, planId = null) {
 }
 
 //PayPal Integration API Function
-export async function createPaypalSubscription(payload) {
+/**
+ * Create a PayPal subscription.
+ *
+ * planType is the entitlement key (FREE | PREMIUM | BUSINESS), not the card's
+ * display name - the name is now "Platform Only" or "+ Chief AI Officer" and
+ * maps to nothing on the backend.
+ *
+ * tier is the enrollment band (small | medium | large). Without it the backend
+ * cannot tell a $1,200 Platform subscription from a $3,000 one and falls back
+ * to the legacy single-price plan.
+ */
+export async function createPaypalSubscription(planType, tier = null) {
   const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/paypal`, {
     method: "POST",
     body: JSON.stringify({
-      plan_type: payload, // FREE | PREMIUM | BUSINESS
+      plan_type: planType,
+      ...(tier ? { tier } : {}),
     }),
   });
 

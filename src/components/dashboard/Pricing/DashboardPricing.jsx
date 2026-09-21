@@ -168,7 +168,9 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   const resolvePlan = (plan) => {
     const price = TIER_PRICING[plan.id]?.[selectedTier];
     if (price === undefined) return plan;
-    return { ...plan, price, credits: creditsFor(price) };
+    // tier travels with the plan: without it checkout cannot tell a $1,200
+    // Platform subscription from a $3,000 one.
+    return { ...plan, price, credits: creditsFor(price), tier: selectedTier };
   };
 
   // ── Business card highlight state (set when Premium user clicks Upgrade) ──
