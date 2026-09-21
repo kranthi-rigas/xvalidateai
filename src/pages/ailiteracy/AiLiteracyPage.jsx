@@ -11,7 +11,6 @@ import { useLocation } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
 import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
-import MyDocuments from "./MyDocuments";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
 import {
@@ -387,9 +386,9 @@ export default function AiLiteracyPage() {
 
   const headings = {
     landing: {
-      title: "AI Literacy",
+      title: "Programs",
       subtitle:
-        "Access assessments, playbooks, and professional development resources for your organisation.",
+        "Programs, assessments, playbooks, and professional development resources for your organisation.",
     },
     questionnaire: {
       title: "AI Literacy Assessment",
@@ -456,63 +455,20 @@ export default function AiLiteracyPage() {
           </p>
         </div>
 
-        {/* Top-level tabs - only on the two browsable views. The playbook,
-            questionnaire, exercise and results views are steps in a flow, so a
-            tab bar there would invite people to navigate away mid-assessment. */}
-        {(view === "landing" || view === "pd" || view === "documents") && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 8,
-              marginBottom: 28,
-            }}
-          >
-            {[
-              { id: "landing", label: "Overview", icon: "fa-solid fa-graduation-cap" },
-              { id: "documents", label: "My Documents", icon: "fa-regular fa-folder-open" },
-            ].map((tab) => {
-              // The curated PD resources keep their own "pd" view, reached from
-              // the Overview card - "My Documents" is the user's own uploads.
-              const active =
-                view === tab.id || (tab.id === "landing" && view === "pd");
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setView(tab.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "10px 20px",
-                    borderRadius: 10,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                    border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
-                    background: active ? COLORS.primary : COLORS.bgPrimary,
-                    color: active ? "#fff" : COLORS.textMuted,
-                  }}
-                >
-                  <i className={tab.icon} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* LANDING */}
         {view === "landing" && (
           <PageTransition>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                // 340px min gives a 2x2 grid inside the 900px container, so the
+                // four cards balance instead of leaving one orphaned on row two.
+                // Collapses to a single column on narrow screens.
+                gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
                 gap: 24,
                 maxWidth: 900,
                 margin: "0 auto",
+                alignItems: "stretch",
               }}
             >
               {/* ── Chief AI Officer Program Card ── */}
@@ -573,7 +529,7 @@ export default function AiLiteracyPage() {
                       marginBottom: 8,
                     }}
                   >
-                    Chief AI Officer Program
+                    Chief AI Officer (CAIO) Program
                   </div>
                   <p
                     style={{
@@ -584,6 +540,89 @@ export default function AiLiteracyPage() {
                     }}
                   >
                     Be the first to know when our Chief AI Officer Program
+                    launches. We'll notify you as soon as it's available.
+                  </p>
+                </div>
+
+                {/* Spacer to push button to bottom like other cards */}
+                <div style={{ flex: 1 }} />
+
+                <NotifyButton
+                  showToast={showToast}
+                  enrolled={newsletterStatus === true}
+                  setEnrolled={(val) => setNewsletterStatus(val)}
+                />
+              </div>
+
+              {/* ── AI-Ready Teacher Program Card ── */}
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 14,
+                  padding: 32,
+                  background: COLORS.bgPrimary,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                {/* Coming Soon badge */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                    background: "#007d79",
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Coming Soon
+                </span>
+
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "#d7f3f1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-chalkboard-user"
+                    style={{ fontSize: 22, color: "#007d79" }}
+                  />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
+                    AI-Ready Teacher Program
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Be the first to know when our AI-Ready Teacher Program
                     launches. We'll notify you as soon as it's available.
                   </p>
                 </div>
@@ -1050,16 +1089,28 @@ export default function AiLiteracyPage() {
         )}
 
         {/* PROFESSIONAL DEVELOPMENT */}
-        {/* MY DOCUMENTS */}
-        {view === "documents" && (
-          <PageTransition>
-            <MyDocuments />
-          </PageTransition>
-        )}
-
         {view === "pd" && (
           <PageTransition>
-            {/* The "Back" link that used to sit here is now the Overview tab. */}
+            <button
+              onClick={() => setView("landing")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                margin: "0 auto 24px",
+                padding: "10px 20px",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                border: `1px solid ${COLORS.borderLight}`,
+                background: COLORS.bgPrimary,
+                color: COLORS.textMuted,
+              }}
+            >
+              <i className="fa-solid fa-arrow-left" />
+              Back to Overview
+            </button>
             <div
               style={{
                 maxWidth: 900,
