@@ -5,6 +5,13 @@ import { COLORS } from "@/styles/colors";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
+import {
+  ENROLLMENT_TIERS,
+  TIER_PRICING,
+  creditsFor,
+  normalizeComponent,
+  normalizeTier,
+} from "@/data/planPricing";
 
 // Pricing is modular and tiered by enrollment: a school picks its enrollment
 // band, then one of three component bundles.
@@ -13,19 +20,6 @@ import { useEffect, useState } from "react";
 // previous plans already were (Premium $1,000 -> 100 credits, Business $3,000
 // -> 300), so the matrix extends the existing relationship rather than
 // introducing a new one.
-const ENROLLMENT_TIERS = [
-  { id: "small", label: "Small", detail: "Under 300 students" },
-  { id: "medium", label: "Medium", detail: "300 – 750 students" },
-  { id: "large", label: "Large", detail: "750+ students" },
-];
-
-const TIER_PRICING = {
-  platform: { small: 1200, medium: 2000, large: 3000 },
-  caio: { small: 2000, medium: 3500, large: 5000 },
-  caio_teacher: { small: 3000, medium: 5200, large: 7500 },
-};
-
-const creditsFor = (price) => Math.round(price / 10);
 
 // planId is the ENTITLEMENT key and is deliberately unchanged. "premium" and
 // "business" drive PLAN_HIERARCHY, the sidebar's requiredPlan gating,
@@ -58,9 +52,7 @@ const CAIO_FEATURES = [
   "AI Analytics",
   "Priority support",
 ];
-const TEACHER_FEATURES = [
-  "AI-Ready Teacher enablement programme",
-];
+const TEACHER_FEATURES = ["AI-Ready Teacher enablement programme"];
 
 const pricingPlans = [
   {
@@ -106,7 +98,26 @@ const pricingPlans = [
       ...TEACHER_FEATURES.map(inc),
     ],
   },
-]
+];
+
+// The profile's plan object carries which bundle the school actually bought
+// ("component") and which enrollment band they bought it at ("tier"). Both are
+// needed here: planId alone cannot distinguish Platform + CAIO from Complete
+// Program, since the two share the "business" entitlement level.
+function readActivePlan() {
+  try {
+    const raw = localStorage.getItem("user_info");
+    const plan = raw ? JSON.parse(raw)?.plan : null;
+    if (!plan) return { tier: null, planCardId: null };
+
+    return {
+      tier: normalizeTier(plan.tier),
+      planCardId: normalizeComponent(plan.component),
+    };
+  } catch {
+    return { tier: null, planCardId: null };
+  }
+}
 
 function formatExpiryDate(unixTimestamp) {
   if (!unixTimestamp) return null;
@@ -144,9 +155,23 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     useContextElement();
   const currentPlan = userPlan || "free";
 
-  // Default to Medium: the middle band is the most common school size and
-  // anchors the range better than either extreme.
-  const [selectedTier, setSelectedTier] = useState("medium");
+  // A subscriber's own enrollment band is the only correct starting point -
+  // showing a Large school Medium prices misstates what they pay. Medium stays
+  // the default only for visitors with no subscription, where it anchors the
+  // range better than either extreme.
+  const activePlan = readActivePlan();
+  const [selectedTier, setSelectedTier] = useState(
+    () => readActivePlan().tier || "medium",
+  );
+  // Set once the profile arrives, unless the visitor has already chosen a band
+  // themselves - their click must not be overwritten by a later profile load.
+  const [tierTouched, setTierTouched] = useState(false);
+
+  useEffect(() => {
+    if (tierTouched) return;
+    const tier = readActivePlan().tier;
+    if (tier && tier !== selectedTier) setSelectedTier(tier);
+  }, [userPlan, tierTouched]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A card's price and credits depend on the chosen enrollment band. Free has
   // neither, so it passes through untouched.
@@ -241,13 +266,24 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     formattedExpiry,
   );
 
+  // Takes the entitlement key (planId), not the card id. PLAN_HIERARCHY is
+  // keyed on free/premium/business, so passing a card id ("caio") looked up
+  // undefined, scored every paid card 0 and disabled all of them for anyone
+  // already on a paid plan.
   const isPlanBelowCurrent = (planId) => {
     const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
     const planLevel = PLAN_HIERARCHY[planId] || 0;
     return planLevel < currentLevel;
   };
 
-  const isCurrentPlan = (planId) => planId === currentPlan;
+  // Platform + CAIO and Complete Program both carry planId "business", so
+  // comparing entitlement alone marks both as the current plan. The profile's
+  // component says which bundle was actually bought; fall back to entitlement
+  // only when it is absent.
+  const isCurrentPlan = (plan) => {
+    if (activePlan.planCardId) return plan.id === activePlan.planCardId;
+    return plan.planId === currentPlan;
+  };
 
   useEffect(() => {
     AOS.init({
@@ -281,26 +317,26 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
         }
       `}</style>
 
-      <div className="col-auto"></div>
-
       <div className="row y-gap-30">
         <div className="col-12">
-          <div
-            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
-            style={{ padding: "1rem" }}
-          >
+          <div className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100">
             <div className="py-20 px-15 md:py-30 md:px-30">
               {/* Enrollment tier selector. Pricing is tiered by school
                   enrollment, so the band has to be chosen before any price on
                   this page means anything. */}
               <div style={{ textAlign: "center", marginBottom: 28 }}>
-                <p className="text-light-1" style={{ fontSize: 14, marginBottom: 12 }}>
-                  Pricing is tiered by school enrollment. Select your band to see
-                  your prices.
+                <p
+                  className="text-light-1"
+                  style={{ fontSize: 14, marginBottom: 12 }}
+                >
+                  Pricing is tiered by school enrollment. Select your band to
+                  see your prices.
                 </p>
                 <div
                   style={{
-                    display: "inline-flex", flexWrap: "wrap", gap: 8,
+                    display: "inline-flex",
+                    flexWrap: "wrap",
+                    gap: 8,
                     justifyContent: "center",
                   }}
                 >
@@ -310,14 +346,23 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                       <button
                         key={tier.id}
                         type="button"
-                        onClick={() => setSelectedTier(tier.id)}
+                        onClick={() => {
+                          setTierTouched(true);
+                          setSelectedTier(tier.id);
+                        }}
                         style={{
-                          display: "flex", flexDirection: "column",
-                          alignItems: "center", gap: 2,
-                          padding: "10px 22px", borderRadius: 10,
-                          cursor: "pointer", minWidth: 160,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 2,
+                          padding: "10px 22px",
+                          borderRadius: 10,
+                          cursor: "pointer",
+                          minWidth: 160,
                           border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
-                          background: active ? COLORS.primary : COLORS.bgPrimary,
+                          background: active
+                            ? COLORS.primary
+                            : COLORS.bgPrimary,
                           color: active ? "#fff" : COLORS.textPrimary,
                         }}
                       >
@@ -327,7 +372,9 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                         <span
                           style={{
                             fontSize: 12,
-                            color: active ? "rgba(255,255,255,0.85)" : COLORS.textMuted,
+                            color: active
+                              ? "rgba(255,255,255,0.85)"
+                              : COLORS.textMuted,
                           }}
                         >
                           {tier.detail}
@@ -342,9 +389,13 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
               <div className="row y-gap-30">
                 {pricingPlans.map((rawPlan, index) => {
                   const plan = resolvePlan(rawPlan);
-                  const isCurrent = isCurrentPlan(plan.planId);
-                  const isBelowCurrent = isPlanBelowCurrent(plan.id);
-                  const isHighlighted = highlightBusiness && plan.id === "business";
+                  const isCurrent = isCurrentPlan(plan);
+                  const isBelowCurrent =
+                    !isCurrent && isPlanBelowCurrent(plan.planId);
+                  // plan.id is never "business" - the ids are platform / caio /
+                  // caio_teacher - so this condition never fired. The business
+                  // upgrade target is the CAIO bundle.
+                  const isHighlighted = highlightBusiness && plan.id === "caio";
 
                   return (
                     <div
@@ -365,8 +416,8 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                           border: isCurrent
                             ? `2px solid ${COLORS.primary}`
                             : isHighlighted
-                            ? `2px solid ${COLORS.success}`
-                            : undefined,
+                              ? `2px solid ${COLORS.success}`
+                              : undefined,
                           boxShadow: isHighlighted
                             ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
                             : undefined,
