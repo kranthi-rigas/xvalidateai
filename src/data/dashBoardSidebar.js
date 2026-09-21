@@ -19,7 +19,7 @@ export const sidebarItems = [
         id: 3,
         href: "/dashboard/ailiteracy",
         icon: "fa-solid fa-graduation-cap fa-lg",
-        text: "AI Literacy",
+        text: "Programs",
         permission: "ai_literacy",
         requiredPlan: null,
     },

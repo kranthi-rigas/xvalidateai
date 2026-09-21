@@ -386,9 +386,9 @@ export default function AiLiteracyPage() {
 
   const headings = {
     landing: {
-      title: "AI Literacy",
+      title: "Programs",
       subtitle:
-        "Access assessments, playbooks, and professional development resources for your organisation.",
+        "Programs, assessments, playbooks, and professional development resources for your organisation.",
     },
     questionnaire: {
       title: "AI Literacy Assessment",
@@ -457,10 +457,14 @@ export default function AiLiteracyPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                // 340px min gives a 2x2 grid inside the 900px container, so the
+                // four cards balance instead of leaving one orphaned on row two.
+                // Collapses to a single column on narrow screens.
+                gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
                 gap: 24,
                 maxWidth: 900,
                 margin: "0 auto",
+                alignItems: "stretch",
               }}
             >
               {/* ── Chief AI Officer Program Card ── */}
@@ -521,7 +525,7 @@ export default function AiLiteracyPage() {
                       marginBottom: 8,
                     }}
                   >
-                    Chief AI Officer Program
+                    Chief AI Officer (CAIO) Program
                   </div>
                   <p
                     style={{
@@ -532,6 +536,89 @@ export default function AiLiteracyPage() {
                     }}
                   >
                     Be the first to know when our Chief AI Officer Program
+                    launches. We'll notify you as soon as it's available.
+                  </p>
+                </div>
+
+                {/* Spacer to push button to bottom like other cards */}
+                <div style={{ flex: 1 }} />
+
+                <NotifyButton
+                  showToast={showToast}
+                  enrolled={newsletterStatus === true}
+                  setEnrolled={(val) => setNewsletterStatus(val)}
+                />
+              </div>
+
+              {/* ── AI-Ready Teacher Program Card ── */}
+              <div
+                style={{
+                  border: `1px solid ${COLORS.borderLight}`,
+                  borderRadius: 14,
+                  padding: 32,
+                  background: COLORS.bgPrimary,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                {/* Coming Soon badge */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                    background: "#007d79",
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Coming Soon
+                </span>
+
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "#d7f3f1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-chalkboard-user"
+                    style={{ fontSize: 22, color: "#007d79" }}
+                  />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 17,
+                      color: COLORS.textPrimary,
+                      marginBottom: 8,
+                    }}
+                  >
+                    AI-Ready Teacher Program
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: COLORS.textMuted,
+                      lineHeight: 1.6,
+                      margin: 0,
+                    }}
+                  >
+                    Be the first to know when our AI-Ready Teacher Program
                     launches. We'll notify you as soon as it's available.
                   </p>
                 </div>
@@ -1000,7 +1087,26 @@ export default function AiLiteracyPage() {
         {/* PROFESSIONAL DEVELOPMENT */}
         {view === "pd" && (
           <PageTransition>
-            {/* The "Back" link that used to sit here is now the Overview tab. */}
+            <button
+              onClick={() => setView("landing")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                margin: "0 auto 24px",
+                padding: "10px 20px",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                border: `1px solid ${COLORS.borderLight}`,
+                background: COLORS.bgPrimary,
+                color: COLORS.textMuted,
+              }}
+            >
+              <i className="fa-solid fa-arrow-left" />
+              Back to Overview
+            </button>
             <div
               style={{
                 maxWidth: 900,

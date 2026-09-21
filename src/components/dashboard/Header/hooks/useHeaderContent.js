@@ -10,8 +10,8 @@ const headerContentMap = {
     description: "Manage and monitor AI tool compliance assessments.",
   },
   "/dashboard/ailiteracy": {
-    title: "AI Literacy",
-    description: "Educational resources and training materials.",
+    title: "Programs",
+    description: "Programs, educational resources and training materials.",
   },
   "/dashboard/documents": {
     title: "My Documents",
