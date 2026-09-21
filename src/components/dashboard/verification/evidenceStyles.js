@@ -43,6 +43,15 @@ export const S = {
   // Sections were running into each other; a rule plus real space makes the
   // boundary readable without adding colour.
   section: { marginBottom: 28, paddingBottom: 4 },
+  // Opt-in rule between stacked sections. Applied per-caller rather than on
+  // .section itself, which is shared with EvidenceDetail.
+  sectionRuled: {
+    marginBottom: 24, paddingBottom: 24,
+    borderBottom: `1px solid ${COLORS.borderLight}`,
+  },
+  // The final section sits directly above a bordered footer, so it drops its
+  // own rule to avoid a double line.
+  sectionLast: { marginBottom: 0, paddingBottom: 0, borderBottom: "none" },
   sectionDivider: {
     borderTop: `1px solid ${COLORS.borderLight}`,
     marginTop: 24, paddingTop: 24,
@@ -97,10 +106,36 @@ export const S = {
     border: `1px solid ${COLORS.borderLight}`,
   },
 
+  // Pinned below the scrolling body, so the triage actions stay reachable on a
+  // finding with a long detail or history instead of scrolling out of reach.
   footer: {
     borderTop: `1px solid ${COLORS.borderLight}`, padding: "16px 24px",
-    marginTop: 8,
+    background: COLORS.bgPrimary, flexShrink: 0,
+    borderBottomLeftRadius: 16, borderBottomRightRadius: 16,
   },
+
+  // form-control is not defined anywhere in this project, so the note field
+  // rendered with no border, padding or radius at all.
+  textarea: {
+    width: "100%", boxSizing: "border-box", padding: "10px 12px",
+    border: `1px solid ${COLORS.border}`, borderRadius: 8,
+    fontSize: 14, fontFamily: "inherit", lineHeight: 1.5,
+    color: COLORS.textSecondary, background: COLORS.bgPrimary,
+    resize: "vertical", minHeight: 68, outline: "none",
+  },
+
+  // One evidence artifact per row, boxed so the id and its action read as a
+  // pair rather than two loose runs of text.
+  evidenceRow: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    gap: 12, padding: "10px 12px",
+    border: `1px solid ${COLORS.borderLight}`, borderRadius: 8,
+  },
+  evidenceId: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: 12, letterSpacing: "0.02em",
+  },
+  errorText: { fontSize: 13, marginTop: 8, marginBottom: 0, color: COLORS.error },
   linkButton: {
     background: "none", border: "none", padding: 0, cursor: "pointer",
     fontWeight: 600, fontSize: 14,

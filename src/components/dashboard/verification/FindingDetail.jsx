@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from "react";
 import AwsButton from "@/components/common/AwsButton";
-import { S } from "./evidenceStyles";
+import { COLORS } from "@/styles/colors";
+import { S, severityClass, severityPill } from "./evidenceStyles";
 import {
   updateFindingStatus,
   getObservationArtifact,
 } from "@/apiIntegration/verification";
 
+// Kept for callers that still import it. The colour itself now comes from
+// severityClass() below, which maps onto badge classes this project actually
+// defines - the bg-*/text-* names here are Tailwind, which this project does
+// not load, so they rendered every severity identically.
 export const SEVERITY_STYLE = {
-  CRITICAL: "bg-red-50 text-red-700 border-red-200",
-  HIGH: "bg-orange-50 text-orange-700 border-orange-200",
-  MEDIUM: "bg-amber-50 text-amber-700 border-amber-200",
-  LOW: "bg-sky-50 text-sky-700 border-sky-200",
-  INFO: "bg-gray-50 text-gray-600 border-gray-200",
+  CRITICAL: "badge-error",
+  HIGH: "badge-error",
+  MEDIUM: "badge-warning",
+  LOW: "badge-success",
+  INFO: "badge-success",
 };
 
 // Confidence sits beside severity rather than folded into it. "Observed once"
@@ -37,11 +42,7 @@ export const formatDate = (iso) => {
 
 export function SeverityBadge({ severity }) {
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
-        SEVERITY_STYLE[severity] || SEVERITY_STYLE.INFO
-      }`}
-    >
+    <span className={severityClass(severity)} style={severityPill}>
       {severity || "INFO"}
     </span>
   );
@@ -52,7 +53,11 @@ function EvidenceLinks({ observationIds }) {
   const [error, setError] = useState("");
 
   if (!observationIds?.length) {
-    return <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>No evidence recorded.</p>;
+    return (
+      <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
+        No evidence recorded.
+      </p>
+    );
   }
 
   const open = async (id) => {
@@ -73,19 +78,27 @@ function EvidenceLinks({ observationIds }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {observationIds.map((id) => (
-        <div key={id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <code className="text-light-1" style={{ fontSize: 12 }}>{id.slice(0, 8)}…</code>
+        <div key={id} style={S.evidenceRow}>
+          <code className="text-light-1" style={S.evidenceId}>
+            {id.slice(0, 8)}…
+          </code>
           <button
             type="button"
             onClick={() => open(id)}
             disabled={busy === id}
-            className="text-blue-600" style={{ ...S.linkButton, fontSize: 12 }}
+            style={{
+              ...S.linkButton,
+              fontSize: 13,
+              color: COLORS.info,
+              opacity: busy === id ? 0.6 : 1,
+              whiteSpace: "nowrap",
+            }}
           >
-            {busy === id ? "Opening…" : "Open raw evidence"}
+            {busy === id ? "Opening…" : "Open raw evidence →"}
           </button>
         </div>
       ))}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p style={S.errorText}>{error}</p>}
     </div>
   );
 }
@@ -93,8 +106,10 @@ function EvidenceLinks({ observationIds }) {
 function StatusTimeline({ history }) {
   if (!history?.length) return null;
   return (
-    <div style={S.section}>
-      <div className="text-light-1" style={S.sectionTitle}>History</div>
+    <div style={{ ...S.sectionRuled, ...S.sectionLast }}>
+      <div className="text-light-1" style={S.sectionTitle}>
+        History
+      </div>
       <ul style={{ ...S.list, paddingLeft: 0, listStyle: "none" }}>
         {history.map((h, i) => (
           <li key={i} className="text-dark-1" style={{ fontSize: 13 }}>
@@ -154,7 +169,15 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
       >
         <div style={S.header}>
           <div style={S.headerText}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
+                flexWrap: "wrap",
+              }}
+            >
               <SeverityBadge severity={finding.severity} />
               <span className="text-light-1" style={{ fontSize: 12 }}>
                 {CONFIDENCE_LABEL[finding.confidence] || finding.confidence}
@@ -163,7 +186,9 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
                   : ""}
               </span>
             </div>
-            <h3 className="text-dark-1" style={S.title}>{finding.title}</h3>
+            <h3 className="text-dark-1" style={S.title}>
+              {finding.title}
+            </h3>
             <div className="text-light-1" style={S.subtitle}>
               {finding.subject_id}
               {finding.occurred_at
@@ -178,7 +203,8 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-light-1" style={S.close}
+            className="text-light-1"
+            style={S.close}
           >
             <i className="fa-solid fa-xmark text-lg"></i>
           </button>
@@ -186,11 +212,18 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
 
         <div style={S.body}>
           {finding.detail && (
-            <div style={S.section}>
-              <div className="text-light-1" style={S.sectionTitle}>What was found</div>
+            <div style={S.sectionRuled}>
+              <div className="text-light-1" style={S.sectionTitle}>
+                What was found
+              </div>
               <pre
                 className="text-dark-1"
-                style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0, fontSize: 14 }}
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "inherit",
+                  margin: 0,
+                  fontSize: 14,
+                }}
               >
                 {finding.detail}
               </pre>
@@ -198,69 +231,83 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
           )}
 
           {finding.remediation && (
-            <div style={S.section}>
-              <div className="text-light-1" style={S.sectionTitle}>What to ask the vendor</div>
-              <p className="text-dark-1" style={{ fontSize: 14, margin: 0 }}>{finding.remediation}</p>
+            <div style={S.sectionRuled}>
+              <div className="text-light-1" style={S.sectionTitle}>
+                What to ask the vendor
+              </div>
+              <p className="text-dark-1" style={{ fontSize: 14, margin: 0 }}>
+                {finding.remediation}
+              </p>
             </div>
           )}
 
-          <div style={S.section}>
-            <div className="text-light-1" style={S.sectionTitle}>Evidence</div>
+          <div
+            style={
+              finding.status_history?.length
+                ? S.sectionRuled
+                : { ...S.sectionRuled, ...S.sectionLast }
+            }
+          >
+            <div className="text-light-1" style={S.sectionTitle}>
+              Evidence
+            </div>
             <EvidenceLinks observationIds={finding.evidence_observation_ids} />
           </div>
 
           <StatusTimeline history={finding.status_history} />
+        </div>
 
-          <div style={S.footer}>
-            <div className="text-light-1" style={S.sectionTitle}>Triage</div>
-            <textarea
-              className="form-control" style={{ width: "100%", marginBottom: 12 }}
-              rows={2}
-              placeholder="Optional note explaining the decision"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={2000}
-            />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              <AwsButton
-                label={saving === "ACKNOWLEDGED" ? "Saving…" : "Acknowledge"}
-                size="sm"
-                variant="secondary"
-                disabled={!!saving}
-                onClick={() => apply("ACKNOWLEDGED")}
-              />
-              <AwsButton
-                label={saving === "RESOLVED" ? "Saving…" : "Resolve"}
-                size="sm"
-                variant="success"
-                disabled={!!saving}
-                onClick={() => apply("RESOLVED")}
-              />
-              <AwsButton
-                label={saving === "FALSE_POSITIVE" ? "Saving…" : "False positive"}
-                size="sm"
-                variant="secondary"
-                disabled={!!saving}
-                onClick={() => apply("FALSE_POSITIVE")}
-              />
-              <AwsButton
-                label={saving === "DISPUTED" ? "Saving…" : "Vendor disputes"}
-                size="sm"
-                variant="secondary"
-                disabled={!!saving}
-                onClick={() => apply("DISPUTED")}
-              />
-            </div>
-            {/* The difference decides whether this returns tomorrow, so it is
-                stated rather than left to be discovered. */}
-            <p className="text-light-1" style={{ fontSize: 12, marginTop: 12 }}>
-              <strong>Resolve</strong> if the issue was dealt with — it reopens
-              automatically if the next check still detects it.{" "}
-              <strong>False positive</strong> if the detection itself is wrong —
-              it stays closed.
-            </p>
-            {error && <p className="text-red-600" style={{ fontSize: 13, marginTop: 8 }}>{error}</p>}
+        <div style={S.footer}>
+          <div className="text-light-1" style={S.sectionTitle}>
+            Triage
           </div>
+          <textarea
+            style={{ ...S.textarea, marginBottom: 12 }}
+            rows={2}
+            placeholder="Optional note explaining the decision"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={2000}
+          />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <AwsButton
+              label={saving === "ACKNOWLEDGED" ? "Saving…" : "Acknowledge"}
+              size="sm"
+              variant="secondary"
+              disabled={!!saving}
+              onClick={() => apply("ACKNOWLEDGED")}
+            />
+            <AwsButton
+              label={saving === "RESOLVED" ? "Saving…" : "Resolve"}
+              size="sm"
+              variant="success"
+              disabled={!!saving}
+              onClick={() => apply("RESOLVED")}
+            />
+            <AwsButton
+              label={saving === "FALSE_POSITIVE" ? "Saving…" : "False positive"}
+              size="sm"
+              variant="secondary"
+              disabled={!!saving}
+              onClick={() => apply("FALSE_POSITIVE")}
+            />
+            <AwsButton
+              label={saving === "DISPUTED" ? "Saving…" : "Vendor disputes"}
+              size="sm"
+              variant="secondary"
+              disabled={!!saving}
+              onClick={() => apply("DISPUTED")}
+            />
+          </div>
+          {/* The difference decides whether this returns tomorrow, so it is
+                stated rather than left to be discovered. */}
+          <p className="text-light-1" style={{ fontSize: 12, marginTop: 12 }}>
+            <strong>Resolve</strong> if the issue was dealt with — it reopens
+            automatically if the next check still detects it.{" "}
+            <strong>False positive</strong> if the detection itself is wrong —
+            it stays closed.
+          </p>
+          {error && <p style={S.errorText}>{error}</p>}
         </div>
       </div>
     </div>
