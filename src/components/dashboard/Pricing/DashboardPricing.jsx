@@ -144,6 +144,23 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     useContextElement();
   const currentPlan = userPlan || "free";
 
+  // The subscriber's exact bundle (platform / caio / caio_teacher), read from
+  // whichever context or storage shape carries the profile. Two bundles share
+  // the "business" entitlement, so this is what distinguishes them.
+  const getCurrentComponent = () => {
+    for (const c of [user, userData, userProfile, profile]) {
+      const comp = c?.plan?.component;
+      if (comp) return String(comp).toLowerCase();
+    }
+    try {
+      const parsed = JSON.parse(localStorage.getItem("user_info") || "{}");
+      if (parsed?.plan?.component) return String(parsed.plan.component).toLowerCase();
+    } catch {
+      /* ignore */
+    }
+    return null;
+  };
+
   // Default to Medium: the middle band is the most common school size and
   // anchors the range better than either extreme.
   const [selectedTier, setSelectedTier] = useState("medium");
@@ -241,13 +258,31 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     formattedExpiry,
   );
 
-  const isPlanBelowCurrent = (planId) => {
-    const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
-    const planLevel = PLAN_HIERARCHY[planId] || 0;
-    return planLevel < currentLevel;
-  };
+  // Rank the three component bundles so a plan can be seen as below, equal to,
+  // or above the user's current plan. The entitlement hierarchy cannot do this:
+  // caio and caio_teacher are both "business", so it could not tell them apart
+  // and marked both as the current plan.
+  const COMPONENT_ORDER = { free: 0, platform: 1, caio: 2, caio_teacher: 3 };
 
-  const isCurrentPlan = (planId) => planId === currentPlan;
+  // The exact bundle the user is on. The profile now carries the component the
+  // subscriber bought; when it is present it identifies the plan unambiguously.
+  // If it is absent (a subscription created before the component was stored, or
+  // a free user), fall back to the entitlement: premium -> platform, business
+  // -> caio, so at most one card is ever marked current.
+  const currentComponent =
+    getCurrentComponent() ||
+    (currentPlan === "premium"
+      ? "platform"
+      : currentPlan === "business"
+        ? "caio"
+        : currentPlan === "free"
+          ? "free"
+          : null);
+
+  const currentLevel = COMPONENT_ORDER[currentComponent] ?? 0;
+
+  const isCurrentPlan = (id) => id === currentComponent;
+  const isPlanBelowCurrent = (id) => (COMPONENT_ORDER[id] ?? 0) < currentLevel;
 
   useEffect(() => {
     AOS.init({
@@ -342,7 +377,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
               <div className="row y-gap-30">
                 {pricingPlans.map((rawPlan, index) => {
                   const plan = resolvePlan(rawPlan);
-                  const isCurrent = isCurrentPlan(plan.planId);
+                  const isCurrent = isCurrentPlan(plan.id);
                   const isBelowCurrent = isPlanBelowCurrent(plan.id);
                   const isHighlighted = highlightBusiness && plan.id === "business";
 
