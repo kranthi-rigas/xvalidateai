@@ -1472,7 +1472,24 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
             {monitoringState === "ready" && evidence.length > 0 && (
               <div style={{ marginTop: 28 }}>
-                <h4 style={{ marginBottom: 6 }}>Checks performed</h4>
+                {/* Styled explicitly rather than relying on the global h1-h6
+                    rule. Tailwind's Play CDN (loaded in index.html) ships
+                    Preflight, which resets heading size and weight to inherit.
+                    Its <style> is injected at runtime, so it lands after the
+                    bundled stylesheet in a production build but before Vite's
+                    runtime-injected CSS in dev - the same markup rendered
+                    styled locally and unstyled on the server. */}
+                <h4
+                  style={{
+                    marginBottom: 6,
+                    fontSize: 18,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    color: COLORS.textPrimary,
+                  }}
+                >
+                  Checks performed
+                </h4>
                 <p className="text-light-1" style={{ marginBottom: 14, fontSize: 13 }}>
                   Every check is recorded with the raw response it was based on,
                   so any statement above can be traced back to what was actually
