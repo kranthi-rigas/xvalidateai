@@ -1314,9 +1314,13 @@ export default function ProjectDetailsModern({ project, onBack }) {
           </div>
         )}
 
-        {/* Continuous Monitoring */}
+        {/* Continuous Monitoring - shares the Recommendations layout, so it
+            carries the same .recommendations padding rather than sitting
+            flush against the card edges. The icon stays neutral: this
+            section's state varies from all-clear to critical, so a fixed
+            amber "warning" tint would contradict a green result. */}
         <div
-          className="glass-card animate-fade-in"
+          className="glass-card recommendations animate-fade-in"
           style={{ animationDelay: "0.9s" }}
         >
           <div className="section-header">
