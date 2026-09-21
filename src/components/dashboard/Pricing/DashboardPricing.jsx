@@ -40,30 +40,6 @@ const creditsFor = (price) => Math.round(price / 10);
 
 const pricingPlans = [
   {
-    id: "free",
-    planId: "free",
-    name: "Free",
-    description: "Perfect for getting started",
-    icon: "fa-solid fa-rocket",
-    iconColor: COLORS.secondary,
-    price: 0,
-    period: "yearly",
-    credits: 20,
-    popular: false,
-    features: [
-      { text: "2 Scans included(20 Credits)", included: true },
-      { text: "Single User", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Downloadable Report", included: false },
-      { text: "Priority support", included: false },
-      { text: "Create organizations", included: false },
-      { text: "AI Analytics", included: false },
-      { text: "Business workflow", included: false },
-      { text: "Customizability", included: false },
-      { text: "Audit Trail", included: false },
-    ],
-  },
-  {
     id: "platform",
     planId: "premium",
     name: "Platform",
