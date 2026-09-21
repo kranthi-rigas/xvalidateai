@@ -77,6 +77,30 @@ const CHECK_LABELS = {
   STUDENT_DATA_ADDENDUM: "Student data addendum",
 };
 
+// Every severity below CRITICAL used to fall through to the same amber
+// "warning" box, so a LOW certificate notice looked exactly as urgent as a
+// HIGH breach report. Each level now gets its own tone, taken from the design
+// system's existing ramp rather than new colours: red -> deep orange -> amber
+// -> blue -> grey, descending.
+const SEVERITY_TONE = {
+  CRITICAL: { accent: "#da1e28", label: "#da1e28" }, // error
+  HIGH: { accent: "#e66a0f", label: "#e66a0f" }, // warning-dark
+  MEDIUM: { accent: "#ff832b", label: "#b45309" }, // warning
+  LOW: { accent: "#4780aa", label: "#33617f" }, // info
+  INFO: { accent: "#8d8d8d", label: "#6b7280" }, // neutral
+};
+
+// 14 and 33 are the alpha suffixes already used for the critical tint, kept so
+// every card sits at the same weight as the surrounding boxes.
+function severityTone(severity) {
+  const tone = SEVERITY_TONE[severity] || SEVERITY_TONE.INFO;
+  return {
+    ...tone,
+    background: `${tone.accent}14`,
+    border: `1px solid ${tone.accent}33`,
+  };
+}
+
 // A one-line result per check, so the trail reads as evidence rather than as
 // a list of timestamps. A check that could not reach a source says so - a
 // partial check is not a clean result.
@@ -104,6 +128,19 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPdfRendering, setIsPdfRendering] = useState(false);
+
+  // Findings collapse to a one-line summary so a tool with many of them does
+  // not bury the rest of the report. Severity and title stay visible while
+  // collapsed - shortening the section must not hide what was found.
+  const [monitoringOpen, setMonitoringOpen] = useState(true);
+  const [openFindings, setOpenFindings] = useState(() => new Set());
+
+  const toggleFinding = (id) =>
+    setOpenFindings((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
@@ -570,6 +607,13 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const [monitoring, setMonitoring] = useState([]);
   const [monitoringState, setMonitoringState] = useState("loading");
 
+  // A single finding, or a clean result, is already short enough to read in
+  // place - collapsing it would add a control that saves nothing. Declared
+  // after the state it reads: const is not hoisted like var, so referencing it
+  // above these lines throws at render.
+  const monitoringCollapsible =
+    monitoringState === "ready" && monitoring.length > 1;
+
   const monitoredDomain = React.useMemo(() => {
     const raw = (project?.url || "").trim();
     if (!raw) return "";
@@ -585,7 +629,6 @@ export default function ProjectDetailsModern({ project, onBack }) {
   const [selectedFinding, setSelectedFinding] = useState(null);
   const [evidence, setEvidence] = useState([]);
   const [selectedObservation, setSelectedObservation] = useState(null);
-
 
   const loadMonitoring = React.useCallback(async () => {
     if (!monitoredDomain) {
@@ -1249,8 +1292,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                         className={`recommendation-box ${negative || qualified ? "warning" : "success"}`}
                         style={
                           negative
-                            ? { background: `${COLORS.error}14`,
-                                border: `1px solid ${COLORS.error}33` }
+                            ? {
+                                background: `${COLORS.error}14`,
+                                border: `1px solid ${COLORS.error}33`,
+                              }
                             : undefined
                         }
                       >
@@ -1323,14 +1368,112 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="glass-card recommendations animate-fade-in"
           style={{ animationDelay: "0.9s" }}
         >
-          <div className="section-header">
+          {/* Collapsing only earns its place once there are several findings.
+              With none or one the section is already short, so the chevron
+              would be a control that saves nothing. Everything is forced open
+              while the PDF renders - this section is inside usageTableRef, so
+              a collapsed card would export as a blank one. */}
+          <div
+            className="section-header"
+            onClick={
+              monitoringCollapsible
+                ? () => setMonitoringOpen((v) => !v)
+                : undefined
+            }
+            role={monitoringCollapsible ? "button" : undefined}
+            tabIndex={monitoringCollapsible ? 0 : undefined}
+            aria-expanded={monitoringCollapsible ? monitoringOpen : undefined}
+            onKeyDown={
+              monitoringCollapsible
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setMonitoringOpen((v) => !v);
+                    }
+                  }
+                : undefined
+            }
+            style={
+              monitoringCollapsible
+                ? { cursor: "pointer", userSelect: "none" }
+                : undefined
+            }
+          >
             <div className="section-icon">
               <i className="fa-solid fa-shield-halved"></i>
             </div>
             <h3>Since This Assessment</h3>
+
+            {monitoringState === "ready" && monitoring.length > 0 && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: COLORS.textSecondary,
+                  background: COLORS.bgSecondary,
+                  borderRadius: 999,
+                  padding: "3px 10px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {monitoring.length} finding
+                {monitoring.length === 1 ? "" : "s"}
+              </span>
+            )}
+
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+              }}
+            >
+              {monitoringOpen && monitoringCollapsible && (
+                <button
+                  type="button"
+                  className="admin-actions"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenFindings((prev) =>
+                      prev.size === monitoring.length
+                        ? new Set()
+                        : new Set(monitoring.map((f) => f.finding_id)),
+                    );
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: COLORS.info,
+                  }}
+                >
+                  {openFindings.size === monitoring.length
+                    ? "Collapse all"
+                    : "Expand all"}
+                </button>
+              )}
+              {monitoringCollapsible && (
+                <i
+                  className={`fa-solid ${monitoringOpen ? "fa-chevron-up" : "fa-chevron-down"}`}
+                  style={{ color: COLORS.textMuted, fontSize: 14 }}
+                />
+              )}
+            </div>
           </div>
 
-          <div className="recommendation-content">
+          <div
+            className="recommendation-content"
+            style={{
+              display:
+                !monitoringCollapsible || monitoringOpen || isPdfRendering
+                  ? undefined
+                  : "none",
+            }}
+          >
             {monitoringState === "loading" && (
               <p className="summary-text">Checking monitoring history…</p>
             )}
@@ -1356,17 +1499,20 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 <div>
                   <h4>Nothing found in the sources we check</h4>
                   <p>
-                    {monitoredDomain} is checked daily against Have I Been
-                    Pwned for known breaches, the National Vulnerability
-                    Database for published CVEs, and its own policy documents
-                    and TLS certificate.
+                    {monitoredDomain} is checked daily against Have I Been Pwned
+                    for known breaches, the National Vulnerability Database for
+                    published CVEs, and its own policy documents and TLS
+                    certificate.
                   </p>
                   {/* Stating the limit rather than implying completeness.
                       HIBP is curated, not exhaustive - it holds around a
                       thousand breaches and only single figures for some
                       regions - so a clean result here is not the same as a
                       vendor never having been breached. */}
-                  <p className="text-light-1" style={{ fontSize: 13, marginTop: 8 }}>
+                  <p
+                    className="text-light-1"
+                    style={{ fontSize: 13, marginTop: 8 }}
+                  >
                     These sources are not exhaustive. Breach databases only
                     contain incidents that have been reported to and curated by
                     them, and regional coverage varies widely. This is not a
@@ -1377,98 +1523,178 @@ export default function ProjectDetailsModern({ project, onBack }) {
             )}
 
             {monitoringState === "ready" &&
-              monitoring.map((f) => (
-                <div
-                  key={f.finding_id}
-                  className="recommendation-box warning"
-                  style={
-                    // Only warning and success variants exist in the
-                    // stylesheet, so CRITICAL and HIGH rendered identically.
-                    // Critical is lifted to the error token from the project's
-                    // own palette rather than a new colour.
-                    f.severity === "CRITICAL"
-                      ? { background: `${COLORS.error}14`,
-                          border: `1px solid ${COLORS.error}33` }
-                      : undefined
-                  }
-                >
-                  <i
-                    className="fa-solid fa-triangle-exclamation"
-                    style={{ color: f.severity === "CRITICAL" ? COLORS.error : undefined }}
-                  ></i>
+              monitoring.map((f) => {
+                const tone = severityTone(f.severity);
+                // Forced open for the PDF so the exported report carries the
+                // full finding regardless of what is collapsed on screen.
+                const open =
+                  isPdfRendering ||
+                  !monitoringCollapsible ||
+                  openFindings.has(f.finding_id);
+                return (
                   <div
-                    style={{
-                      width: "100%", minWidth: 0,
-                      // The card is tinted by severity but the text was still
-                      // inheriting amber from the warning class, so a critical
-                      // card read red-and-orange at once.
-                      color: f.severity === "CRITICAL" ? COLORS.textPrimary : undefined,
-                    }}
+                    key={f.finding_id}
+                    className="recommendation-box"
+                    style={{ background: tone.background, border: tone.border }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10,
-                                  flexWrap: "wrap", marginBottom: 8 }}>
-                      <span style={{ display: "inline-flex", padding: "3px 10px",
-                                     borderRadius: 999, fontSize: 11, fontWeight: 700,
-                                     letterSpacing: "0.04em", whiteSpace: "nowrap",
-                                     color: "#fff",
-                                     background: f.severity === "CRITICAL"
-                                       ? COLORS.error : COLORS.warning }}>
-                        {f.severity}
-                      </span>
-                      <h4 style={{ margin: 0, color: f.severity === "CRITICAL"
-                                     ? COLORS.error : undefined }}>
-                        {f.title}
-                      </h4>
-                    </div>
-                    {(() => {
-                      const { body, sourceUrl } = splitSource(f.detail);
-                      const occurred = occurredDate(f);
-                      return (
-                        <>
-                          <p style={{ whiteSpace: "pre-wrap", margin: "0 0 8px" }}>{body}</p>
-                          <p className="text-light-1" style={{ fontSize: 13, margin: 0 }}>
-                            {occurred ? `Occurred ${occurred} · ` : ""}
-                            Detected{" "}
-                            {f.first_seen_at
-                              ? new Date(f.first_seen_at).toLocaleDateString()
-                              : "--"}
-                            {f.occurrence_count > 1
-                              ? ` · confirmed on ${f.occurrence_count} checks`
-                              : " · observed once"}
-                            {f.status && f.status !== "OPEN" ? ` · ${f.status}` : ""}
-                          </p>
-                          {/* admin-actions is stripped from the PDF export, so
+                    <i
+                      className="fa-solid fa-triangle-exclamation"
+                      style={{ color: tone.accent }}
+                    ></i>
+                    <div
+                      style={{
+                        width: "100%",
+                        minWidth: 0,
+                        // The box class no longer carries a colour, so body text
+                        // takes the page's own text colour at every severity.
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      <div
+                        onClick={
+                          monitoringCollapsible
+                            ? () => toggleFinding(f.finding_id)
+                            : undefined
+                        }
+                        role={monitoringCollapsible ? "button" : undefined}
+                        tabIndex={monitoringCollapsible ? 0 : undefined}
+                        aria-expanded={monitoringCollapsible ? open : undefined}
+                        onKeyDown={
+                          monitoringCollapsible
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleFinding(f.finding_id);
+                                }
+                              }
+                            : undefined
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          flexWrap: "wrap",
+                          marginBottom: open ? 8 : 0,
+                          ...(monitoringCollapsible
+                            ? { cursor: "pointer", userSelect: "none" }
+                            : null),
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            padding: "3px 10px",
+                            borderRadius: 999,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.04em",
+                            whiteSpace: "nowrap",
+                            color: "#fff",
+                            background: tone.accent,
+                          }}
+                        >
+                          {f.severity}
+                        </span>
+                        <h4 style={{ margin: 0, color: tone.label }}>
+                          {f.title}
+                        </h4>
+                        {monitoringCollapsible && (
+                          <i
+                            className={`fa-solid ${open ? "fa-chevron-up" : "fa-chevron-down"}`}
+                            style={{
+                              marginLeft: "auto",
+                              color: COLORS.textMuted,
+                              fontSize: 12,
+                            }}
+                          />
+                        )}
+                      </div>
+                      {open &&
+                        (() => {
+                          const { body, sourceUrl } = splitSource(f.detail);
+                          const occurred = occurredDate(f);
+                          return (
+                            <>
+                              <p
+                                style={{
+                                  whiteSpace: "pre-wrap",
+                                  margin: "0 0 8px",
+                                }}
+                              >
+                                {body}
+                              </p>
+                              <p
+                                className="text-light-1"
+                                style={{ fontSize: 13, margin: 0 }}
+                              >
+                                {occurred ? `Occurred ${occurred} · ` : ""}
+                                Detected{" "}
+                                {f.first_seen_at
+                                  ? new Date(
+                                      f.first_seen_at,
+                                    ).toLocaleDateString()
+                                  : "--"}
+                                {f.occurrence_count > 1
+                                  ? ` · confirmed on ${f.occurrence_count} checks`
+                                  : " · observed once"}
+                                {f.status && f.status !== "OPEN"
+                                  ? ` · ${f.status}`
+                                  : ""}
+                              </p>
+                              {/* admin-actions is stripped from the PDF export, so
                               the printed report carries the finding without
                               the controls. */}
-                          <div className="admin-actions"
-                               style={{ display: "flex", alignItems: "center", gap: 16,
-                                        flexWrap: "wrap", marginTop: 12 }}>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedFinding(f)}
-                              className="text-14"
-                              style={{ background: "none", border: "none", padding: 0,
-                                       cursor: "pointer", color: COLORS.primary,
-                                       fontWeight: 600 }}
-                            >
-                              Review evidence and triage →
-                            </button>
-                            {sourceUrl && (
-                              <a href={sourceUrl} target="_blank" rel="noopener noreferrer"
-                                 className="text-14"
-                                 style={{ color: COLORS.primary, fontWeight: 600 }}>
-                                View the source record{" "}
-                                <i className="fa-solid fa-arrow-up-right-from-square"
-                                   style={{ fontSize: 10 }} />
-                              </a>
-                            )}
-                          </div>
-                        </>
-                      );
-                    })()}
+                              <div
+                                className="admin-actions"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 16,
+                                  flexWrap: "wrap",
+                                  marginTop: 12,
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedFinding(f)}
+                                  className="text-14"
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    padding: 0,
+                                    cursor: "pointer",
+                                    color: COLORS.primary,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Review evidence and triage →
+                                </button>
+                                {sourceUrl && (
+                                  <a
+                                    href={sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-14"
+                                    style={{
+                                      color: COLORS.primary,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    View the source record{" "}
+                                    <i
+                                      className="fa-solid fa-arrow-up-right-from-square"
+                                      style={{ fontSize: 10 }}
+                                    />
+                                  </a>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
             {monitoringState === "ready" && evidence.length > 0 && (
               <div style={{ marginTop: 28 }}>
@@ -1490,7 +1716,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 >
                   Checks performed
                 </h4>
-                <p className="text-light-1" style={{ marginBottom: 14, fontSize: 13 }}>
+                <p
+                  className="text-light-1"
+                  style={{ marginBottom: 14, fontSize: 13 }}
+                >
                   Every check is recorded with the raw response it was based on,
                   so any statement above can be traced back to what was actually
                   seen.
@@ -1511,18 +1740,22 @@ export default function ProjectDetailsModern({ project, onBack }) {
                       <tr key={o.observation_id}>
                         <td style={ES.td}>
                           {o.captured_at
-                            ? new Date(o.captured_at).toLocaleString(undefined, {
-                                year: "numeric", month: "short", day: "numeric",
-                                hour: "2-digit", minute: "2-digit",
-                              })
+                            ? new Date(o.captured_at).toLocaleString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
                             : "--"}
                         </td>
                         <td style={ES.td}>
                           {CHECK_LABELS[o.check_type] || o.check_type}
                         </td>
-                        <td style={ES.td}>
-                          {describeObservation(o)}
-                        </td>
+                        <td style={ES.td}>{describeObservation(o)}</td>
                         {/* Stripped from the PDF: the dates and results are the
                             evidence, the link is only useful on screen. */}
                         <td className="admin-actions" style={ES.td}>
@@ -1709,7 +1942,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          <strong>Disclaimer:</strong> Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.
+          <strong>Disclaimer:</strong> Scores are based solely on information
+          each company publicly discloses. XValidate AI is not liable for the
+          accuracy of these scores.
         </p>
         <p
           className="footer-subtext"
