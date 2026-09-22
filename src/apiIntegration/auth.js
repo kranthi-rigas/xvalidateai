@@ -1,6 +1,59 @@
 // src/api/auth.js
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// One shared refresh at a time. The API rotates the refresh token, so when
+// several requests hit a 401 together (a page that loads /profile and its own
+// data at once) the second call with the old token comes back "invalid refresh
+// token" and that request fails even though the session is fine. Everyone waits
+// on the same refresh instead and retries with the token it produced.
+let refreshPromise = null;
+
+async function refreshAccessToken() {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return null;
+
+    let userId = "";
+    try {
+      userId =
+        JSON.parse(localStorage.getItem("user_info") || "{}")?.user_id || "";
+    } catch {
+      userId = "";
+    }
+
+    const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+        user_id: userId,
+      }),
+    });
+
+    if (!refreshResponse.ok) return null; // Session is gone — caller sees the 401
+
+    const newToken = await refreshResponse.json().catch(() => null);
+    if (!newToken?.access_token) return null;
+
+    localStorage.setItem("access_token", newToken.access_token);
+    if (newToken.refresh_token) {
+      localStorage.setItem("refresh_token", newToken.refresh_token);
+    }
+    return newToken.access_token;
+  })()
+    .catch((err) => {
+      console.error("Token refresh failed:", err);
+      return null;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
+
 async function fetchWithAuth(url, options = {}) {
   const accessToken = localStorage.getItem("access_token");
 
@@ -17,31 +70,15 @@ async function fetchWithAuth(url, options = {}) {
 
   // If token is expired or invalid
   if (response.status === 403 || response.status === 401) {
-    const refreshToken = localStorage.getItem("refresh_token");
-    if (!refreshToken) return response; // No refresh token => cannot retry
-    const userInfo = JSON.parse(localStorage.getItem("user_info"));
+    const refreshed = await refreshAccessToken();
+    // A concurrent request may have refreshed while this one waited, so fall
+    // back to whatever token is in storage now.
+    const retryToken = refreshed || localStorage.getItem("access_token");
 
-    // Call refresh endpoint
-    const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        refresh_token: refreshToken,
-        user_id: userInfo.user_id,
-      }),
-    });
+    // Nothing new to try with — hand the original failure back.
+    if (!retryToken || retryToken === accessToken) return response;
 
-    if (!refreshResponse.ok) {
-      // Refresh failed, user must log in again
-      return response;
-    }
-
-    const newToken = await refreshResponse.json();
-    localStorage.setItem("access_token", newToken.access_token);
-    localStorage.setItem("refresh_token", newToken.refresh_token);
-
-    // retry original request with new token
-    finalOptions.headers.Authorization = `Bearer ${newToken.access_token}`;
+    finalOptions.headers.Authorization = `Bearer ${retryToken}`;
     response = await fetch(url, finalOptions);
   }
 

@@ -14,12 +14,14 @@ import usePageLoader from "@/data/usePageLoader";
 import useToast from "../../../hooks/useToast";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { hasOrganization } from "@/data/orgGuard";
+import { useContextElement } from "@/context/Context";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import EditUserModal from "./EditUserModal";
 import DeleteUsersModal from "./DeleteUsersModal";
 
 export default function OrgUsers({ refreshProjects }) {
+  const { userPlan } = useContextElement();
   const [users, setUsers] = useState(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState([]);
@@ -52,7 +54,19 @@ export default function OrgUsers({ refreshProjects }) {
   const orgNameRaw = userInfo?.organization?.name;
   const orgName = (orgNameRaw || "").toLowerCase();
   const isDefaultOrg = !orgName || DEFAULT_ORGS.includes(orgName);
-  const canManage = hasOrg && isAdmin && !isDefaultOrg;
+
+  // ✅ Plan comes from Context so an upgrade in this session enables Invite
+  //    Users right away, without a re-login
+  const planType = (
+    userPlan ||
+    userInfo?.plan?.plan_type ||
+    "FREE"
+  ).toUpperCase();
+  const isFreePlan = planType === "FREE";
+
+  // ✅ Admins on any paid plan can invite users; free-plan admins must create
+  //    their own organization first
+  const canManage = isAdmin && (!isFreePlan || (hasOrg && !isDefaultOrg));
 
   const [showPreferences, setShowPreferences] = useState(false);
 
@@ -477,9 +491,9 @@ export default function OrgUsers({ refreshProjects }) {
             <OrgRequiredWrapper
               disabled={!canManage}
               message={
-                !hasOrg || isDefaultOrg
-                  ? "Please create your organization before inviting users"
-                  : "Only admin users can invite users"
+                !isAdmin
+                  ? "Only admin users can invite users"
+                  : "Please create your organization before inviting users"
               }
             >
               <AwsButton
