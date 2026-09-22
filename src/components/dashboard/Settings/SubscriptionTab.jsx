@@ -4,6 +4,7 @@ import { COLORS } from "@/styles/colors";
 import { useContextElement } from "@/context/Context";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { describeSubscription } from "@/data/planPricing";
+import { SHOW_CREDITS } from "@/config/features";
 
 // ── Plan config ────────────────────────────────────────────────────────────
 const PLAN_META = {
@@ -319,24 +320,32 @@ export default function SubscriptionTab() {
       </div>
 
       {/* ── Stats row ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
+      <div
+        className={`grid ${SHOW_CREDITS ? "grid-cols-3" : "grid-cols-1"} divide-x divide-border border-b border-border`}
+      >
         {[
-          {
-            label: "Credits left",
-            value:
-              creditsLeft !== null
-                ? `${creditsLeft} / ${totalCredits}`
-                : `${totalCredits}`,
-            color:
-              creditsLeft !== null && creditsLeft < totalCredits * 0.2
-                ? "text-red-600"
-                : "text-green-600",
-          },
-          {
-            label: "Credits used",
-            value: usedCredits !== null ? `${usedCredits}` : "—",
-            color: "text-foreground",
-          },
+          // Credit tiles are hidden product-wide for now; the row narrows to
+          // what is left rather than leaving two empty cells.
+          ...(SHOW_CREDITS
+            ? [
+                {
+                  label: "Credits left",
+                  value:
+                    creditsLeft !== null
+                      ? `${creditsLeft} / ${totalCredits}`
+                      : `${totalCredits}`,
+                  color:
+                    creditsLeft !== null && creditsLeft < totalCredits * 0.2
+                      ? "text-red-600"
+                      : "text-green-600",
+                },
+                {
+                  label: "Credits used",
+                  value: usedCredits !== null ? `${usedCredits}` : "—",
+                  color: "text-foreground",
+                },
+              ]
+            : []),
           {
             label: "Expires",
             value: plan === "free" ? "-" : (expiry ?? "—"),
@@ -355,7 +364,7 @@ export default function SubscriptionTab() {
       </div>
 
       {/* ── Credit usage progress bar ─────────────────────────────────────── */}
-      {usagePct !== null && (
+      {SHOW_CREDITS && usagePct !== null && (
         <div className="px-6 sm:px-8 pt-5 pb-1">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">Credit usage</p>
@@ -465,14 +474,23 @@ export default function SubscriptionTab() {
                     ? `${expiry}${remaining !== null ? ` · ${remaining} day${remaining !== 1 ? "s" : ""} left` : ""}`
                     : "—",
             },
-            {
-              icon: "fa-solid fa-coins",
-              label: "Credits included",
-              val:
-                totalCredits != null
-                  ? `${totalCredits.toLocaleString("en-US")} per year`
-                  : "-",
-            },
+            ...(SHOW_CREDITS
+              ? [
+                  {
+                    icon: "fa-solid fa-coins",
+                    label: "Credits included",
+                    // The free plan isn't billed on a cycle ("Free forever",
+                    // no renewal date), so its credits are a flat allowance,
+                    // not yearly.
+                    val:
+                      totalCredits == null
+                        ? "-"
+                        : plan === "free"
+                          ? totalCredits.toLocaleString("en-US")
+                          : `${totalCredits.toLocaleString("en-US")} per year`,
+                  },
+                ]
+              : []),
             {
               icon: "fa-regular fa-circle-check",
               label: "Status",

@@ -1,6 +1,7 @@
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
+import { SHOW_CREDITS } from "@/config/features";
 import { COLORS } from "@/styles/colors";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -538,7 +539,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                             )}
                           </div>
 
-                          {/* Credits Badge */}
+                          {/* Credits Badge — hidden while credits are off, and
+                              the reserved strip goes with it so the cards do
+                              not keep an empty gap. */}
+                          {SHOW_CREDITS && (
                           <div
                             style={{
                               minHeight: "45px",
@@ -561,6 +565,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               </div>
                             )}
                           </div>
+                          )}
 
                           {/* CTA Button */}
                           <div className="mt-25">

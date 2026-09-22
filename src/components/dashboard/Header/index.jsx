@@ -7,6 +7,7 @@ import HeaderCredits from "./HeaderCredits";
 import { useHeaderContent } from "./hooks/useHeaderContent";
 import { useUpgradeNudge } from "../useUpgradeNudge";
 import { COLORS } from "@/styles/colors";
+import { SHOW_CREDITS } from "@/config/features";
 import "./Header.css";
 
 export default function Header({ onToggleMobileSidebar, showUpgradeCta }) {
@@ -60,8 +61,10 @@ export default function Header({ onToggleMobileSidebar, showUpgradeCta }) {
             onClick={() => navigate("/dashboard/pricing")}
             title="You're on the Free plan — see what the paid plans include"
             aria-label="Upgrade your plan"
-            className="flex items-center gap-2 h-9 px-3 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 cursor-pointer"
-            style={{ backgroundColor: COLORS.primary }}
+            className="flex items-center gap-2 h-9 px-3 text-white text-sm font-semibold transition-opacity hover:opacity-90 cursor-pointer"
+            // .rounded-full is border-radius:100% !important in the template
+            // stylesheet, which turns a wide button into an ellipse.
+            style={{ backgroundColor: COLORS.primary, borderRadius: 999 }}
           >
             <i className="fa-solid fa-crown text-xs" aria-hidden="true" />
             {/* On a narrow header the crown alone carries it — the title and
@@ -69,7 +72,7 @@ export default function Header({ onToggleMobileSidebar, showUpgradeCta }) {
             <span className="leading-none hidden sm:inline">Upgrade</span>
           </button>
         )}
-        <HeaderCredits />
+        {SHOW_CREDITS && <HeaderCredits />}
         {/* <HeaderSearch /> */}
         <HeaderNotifications hasUnread={true} />
       </div>

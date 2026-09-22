@@ -36,6 +36,23 @@ export async function getDocumentUrl(documentId) {
   return unwrap(res, "Failed to get document URL");
 }
 
+/** DELETE /documents/{id} - remove the caller's own document. */
+export async function deleteDocument(documentId) {
+  const res = await fetchWithAuth(
+    `${ENDPOINT}/${encodeURIComponent(documentId)}`,
+    { method: "DELETE" },
+  );
+
+  // A delete may answer 204 with no body, which res.json() would choke on.
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(
+      error?.error || error?.message || "Failed to delete document",
+    );
+  }
+  return res.status === 204 ? null : res.json().catch(() => null);
+}
+
 /**
  * Register the document, then PUT the file straight to S3 with the presigned
  * URL. The bytes never pass through the API, which is why this is two steps.

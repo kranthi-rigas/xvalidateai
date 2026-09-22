@@ -5,10 +5,28 @@ import {
   listDocuments,
   uploadDocument,
   getDocumentUrl,
+  deleteDocument,
 } from "@/apiIntegration/documents";
 import useToast from "@/hooks/useToast";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
+
+// The row is created before the bytes reach S3, so a fresh document arrives as
+// "pending". Poll until the server flips it to "uploaded" rather than making
+// the user reload the page.
+const POLL_INTERVAL_MS = 4000;
+// After this long a pending row is not "still uploading", it is a PUT that
+// never finished — stop polling and say so.
+const PENDING_TIMEOUT_MS = 2 * 60 * 1000;
+
+const isPending = (doc) => doc?.upload_status === "pending";
+
+const isStalledUpload = (doc) => {
+  if (!isPending(doc)) return false;
+  const started = Date.parse(doc.created_at);
+  return Number.isFinite(started) && Date.now() - started > PENDING_TIMEOUT_MS;
+};
 
 const formatSize = (bytes) => {
   if (!bytes && bytes !== 0) return "";
@@ -17,15 +35,17 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const formatDate = (iso) => {
+const formatDateTime = (iso) => {
   if (!iso) return "";
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? ""
-    : d.toLocaleDateString(undefined, {
+    : d.toLocaleString(undefined, {
         year: "numeric",
         month: "short",
         day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
       });
 };
 
@@ -36,14 +56,19 @@ export default function MyDocuments() {
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
   const show = useToast();
+  // The document awaiting confirmation, or null when the modal is closed.
+  const [docToDelete, setDocToDelete] = useState(null);
 
-  const load = useCallback(async () => {
+  // `silent` is for the upload poll: a hiccup there must not wipe the list the
+  // user is looking at or raise a banner for something they did not ask for.
+  const load = useCallback(async ({ silent = false } = {}) => {
     try {
       const data = await listDocuments();
       setDocuments(data?.documents || []);
       setError("");
     } catch (err) {
       console.warn("Could not load documents:", err);
+      if (silent) return;
       setDocuments([]);
       setError("Your documents could not be loaded.");
     }
@@ -52,6 +77,19 @@ export default function MyDocuments() {
   useEffect(() => {
     load().finally(() => setLoading(false));
   }, [load]);
+
+  // Keep the list in step with the upload while anything is still in flight.
+  // The flag is a boolean, so the interval is set up once per pending spell
+  // rather than being torn down and rebuilt on every poll.
+  const hasPendingUploads = documents.some(
+    (doc) => isPending(doc) && !isStalledUpload(doc),
+  );
+
+  useEffect(() => {
+    if (!hasPendingUploads) return undefined;
+    const timer = setInterval(() => load({ silent: true }), POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [hasPendingUploads, load]);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -81,6 +119,18 @@ export default function MyDocuments() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!docToDelete) return;
+    await deleteDocument(docToDelete.document_id);
+    // Drop it locally first so the row goes at once, then reconcile with the
+    // server. The modal reports failures itself, so nothing is swallowed here.
+    setDocuments((prev) =>
+      prev.filter((d) => d.document_id !== docToDelete.document_id),
+    );
+    setError("");
+    load();
+  };
+
   const handleOpen = async (doc) => {
     try {
       const { download_url } = await getDocumentUrl(doc.document_id);
@@ -100,6 +150,12 @@ export default function MyDocuments() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <style>{`
+        @keyframes doc-upload-progress {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(250%); }
+        }
+      `}</style>
       <div
         style={{
           display: "flex",
@@ -221,10 +277,41 @@ export default function MyDocuments() {
                 >
                   {doc.filename}
                 </div>
-                <div style={{ fontSize: 12, color: COLORS.textMuted }}>
-                  {formatDate(doc.created_at)}
-                  {doc.upload_status === "pending" && " · upload incomplete"}
-                </div>
+                {isPending(doc) && !isStalledUpload(doc) ? (
+                  <div style={{ marginTop: 6 }}>
+                    <div
+                      style={{
+                        height: 4,
+                        borderRadius: 999,
+                        background: "#e5e7eb",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* No byte-level progress is reported once the browser
+                          hands the file to S3, so the bar paces the wait
+                          instead of claiming a percentage. */}
+                      <div
+                        style={{
+                          width: "40%",
+                          height: "100%",
+                          borderRadius: 999,
+                          background: COLORS.primary,
+                          animation: "doc-upload-progress 1.2s ease-in-out infinite",
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}
+                    >
+                      Uploading… · {formatDateTime(doc.created_at)}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>
+                    {formatDateTime(doc.created_at)}
+                    {isStalledUpload(doc) && " · upload incomplete"}
+                  </div>
+                )}
               </div>
 
               <button
@@ -246,9 +333,40 @@ export default function MyDocuments() {
               >
                 <i className="fa-solid fa-arrow-up-right-from-square" />
               </button>
+
+              <button
+                onClick={() => setDocToDelete(doc)}
+                title="Delete document"
+                aria-label={`Delete ${doc.filename}`}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  border: `1px solid ${COLORS.borderLight}`,
+                  background: COLORS.bgPrimary,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: COLORS.error,
+                  flexShrink: 0,
+                }}
+              >
+                <i className="fa-regular fa-trash-can" />
+              </button>
             </div>
           ))}
         </div>
+      )}
+
+      {docToDelete && (
+        <DeleteConfirmModal
+          title="Delete document"
+          message={`"${docToDelete.filename}" will be removed from your documents.`}
+          successMessage="Document deleted."
+          onClose={() => setDocToDelete(null)}
+          onConfirm={handleDelete}
+        />
       )}
     </div>
   );

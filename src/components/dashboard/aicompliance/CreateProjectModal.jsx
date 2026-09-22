@@ -5,6 +5,7 @@ import useToast from "../../../hooks/useToast";
 import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/Formfield";
 import CreditInfoNote from "./CreditInfoNote";
+import { SHOW_CREDITS } from "@/config/features";
 
 export default function CreateProjectModal({
   setShowCreateModal,
@@ -17,7 +18,7 @@ export default function CreateProjectModal({
   const isAdmin = roles.includes("ADMIN");
   const isAuditor = roles.includes("MANAGER");
 
-  const showCreditsNote = isAdmin && !isAuditor;
+  const showCreditsNote = SHOW_CREDITS && isAdmin && !isAuditor;
 
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({

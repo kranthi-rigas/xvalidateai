@@ -116,7 +116,13 @@ export default function AwsButton({
 
       {/* ✅ Hide icon while loading */}
       {!loading && children && (
-        <span style={{ display: "flex" }}>{children}</span>
+        // Children share this wrapper, so the button's own gap can't separate
+        // them — an icon sat flush against its label. The gap belongs here.
+        <span
+          style={{ display: "flex", alignItems: "center", gap: 8 }}
+        >
+          {children}
+        </span>
       )}
 
       {label}
