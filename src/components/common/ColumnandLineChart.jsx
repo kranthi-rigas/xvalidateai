@@ -1,6 +1,43 @@
 import Chart from "react-apexcharts";
 import React, { useRef, useState, useEffect } from "react";
 
+// Tool names run long ("Perplexity (Education/Campus)"), and at full length the
+// axis labels collided — ApexCharts then silently dropped the ones that
+// overlapped, so several tools sat above a blank slot. Shorten them for the
+// axis and keep the full name in the tooltip.
+const MAX_LABEL_CHARS = 16;
+
+const truncateLabel = (name) => {
+  const text = String(name ?? "").trim();
+  if (text.length <= MAX_LABEL_CHARS) return text;
+  return `${text.slice(0, MAX_LABEL_CHARS - 1).trimEnd()}…`;
+};
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// ApexCharts draws axis labels as bare <text> nodes, so a shortened name has
+// nothing to hover. Hang a native SVG <title> off each one carrying the full
+// name — it survives re-renders because we run this again on every update.
+const attachFullNameTitles = (chartCtx, tools) => {
+  const root = chartCtx?.el || chartCtx?.w?.globals?.dom?.baseEl;
+  if (!root) return;
+
+  root
+    .querySelectorAll(".apexcharts-xaxis-texts-g text")
+    .forEach((node, index) => {
+      const fullName = tools[index]?.tool_name;
+      if (!fullName) return;
+
+      let title = node.querySelector("title");
+      if (!title) {
+        title = document.createElementNS(SVG_NS, "title");
+        node.appendChild(title);
+      }
+      title.textContent = fullName;
+      node.style.cursor = "help";
+    });
+};
+
 export default function ToolsCombinedChart({ tools = [] }) {
   const toolCount = tools.length;
 
@@ -62,6 +99,10 @@ export default function ToolsCombinedChart({ tools = [] }) {
       stacked: false,
       toolbar: { show: false },
       zoom: { enabled: false },
+      events: {
+        mounted: (chartCtx) => attachFullNameTitles(chartCtx, tools),
+        updated: (chartCtx) => attachFullNameTitles(chartCtx, tools),
+      },
       animations: {
         enabled: true,
         easing: "easeinout",
@@ -111,8 +152,16 @@ export default function ToolsCombinedChart({ tools = [] }) {
 
     xaxis: {
       categories: tools.map((t) => t.tool_name),
+      tickPlacement: "on",
       labels: {
-        rotate: toolCount > 8 ? -35 : 0,
+        // Angled once the axis is busy, and never hidden: every tool must carry
+        // its own name, even if it has to be shortened.
+        rotate: -40,
+        rotateAlways: toolCount > 4,
+        hideOverlappingLabels: false,
+        trim: false,
+        maxHeight: 140,
+        formatter: (value) => truncateLabel(value),
         style: {
           fontSize: "12px",
           fontWeight: 500,
@@ -145,6 +194,12 @@ export default function ToolsCombinedChart({ tools = [] }) {
     tooltip: {
       shared: true,
       intersect: false,
+      // The axis label may be shortened; the tooltip always names the tool in
+      // full.
+      x: {
+        formatter: (value, opts) =>
+          tools[opts?.dataPointIndex]?.tool_name ?? value,
+      },
       y: {
         formatter: (val) => `${val.toFixed(1)} / 100`,
       },
@@ -229,10 +284,10 @@ export default function ToolsCombinedChart({ tools = [] }) {
       <div className="relative">
         <div
           ref={scrollRef}
-          style={{ overflowX: toolCount > 10 ? "auto" : "hidden" }}
+          style={{ overflowX: toolCount > 8 ? "auto" : "hidden" }}
           className="pb-2"
         >
-          <div style={{ minWidth: toolCount > 10 ? toolCount * 90 : "100%" }}>
+          <div style={{ minWidth: toolCount > 8 ? toolCount * 120 : "100%" }}>
             <Chart
               options={{
                 ...options,
@@ -241,7 +296,7 @@ export default function ToolsCombinedChart({ tools = [] }) {
               }}
               series={series}
               type="line"
-              height={440}
+              height={480}
             />
           </div>
         </div>

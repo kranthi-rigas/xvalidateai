@@ -494,7 +494,8 @@ export default function SubscriptionTab() {
             {
               icon: "fa-regular fa-user",
               label: "Seats",
-              val: plan === "business" ? "Multiple users" : "Single user",
+              // Any paid plan can create an organization and invite users
+              val: plan === "free" ? "Single user" : "Multiple users",
             },
           ].map(({ icon, label, val }) => (
             <div

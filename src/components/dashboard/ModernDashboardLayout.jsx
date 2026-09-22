@@ -12,6 +12,8 @@ import { sidebarItems } from "@/data/dashBoardSidebar";
 import Header from "./Header";
 import { logoutUser, fetchUserProfile } from "@/apiIntegration/auth";
 import AwsButton from "@/components/common/AwsButton";
+import UpgradeBanner from "./UpgradeBanner";
+import { isUpgradeBannerDismissed } from "./useUpgradeNudge";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
@@ -22,6 +24,9 @@ export default function ModernDashboardLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(
+    isUpgradeBannerDismissed,
+  );
   const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("User");
@@ -99,18 +104,18 @@ export default function ModernDashboardLayout() {
         setIsStaffAdmin(data?.is_staff_admin === true);
         setIsStaffUser(data?.is_staff_user === true);
 
-        // ✅ Persist updated user_info back to localStorage
+        // ✅ Persist the whole fresh profile — the plan travels with it, so a
+        //    plan bought earlier in this session is picked up on arrival
         const existingInfo = JSON.parse(
           localStorage.getItem("user_info") || "{}",
         );
         localStorage.setItem(
           "user_info",
-          JSON.stringify({
-            ...existingInfo,
-            is_staff_admin: data?.is_staff_admin,
-            is_staff_user: data?.is_staff_user,
-          }),
+          JSON.stringify({ ...existingInfo, ...data }),
         );
+
+        // ✅ Tell Context (and anything reading user_info) the plan may have moved
+        window.dispatchEvent(new Event("plan-updated"));
 
         console.log("🔍 Profile API - is_staff_admin:", data?.is_staff_admin);
         console.log("🔍 Profile API - is_staff_user:", data?.is_staff_user);
@@ -459,8 +464,16 @@ export default function ModernDashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
+        {/* Free-plan upgrade nudge — the topmost strip, above the header, so it
+            reads as an account notice rather than part of the page. Self-hides
+            for paid plans and on the pricing page. */}
+        <UpgradeBanner
+          dismissed={upgradeDismissed}
+          onDismiss={() => setUpgradeDismissed(true)}
+        />
         <Header
           onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)}
+          showUpgradeCta={upgradeDismissed}
         />
         <div
           key={location.pathname}

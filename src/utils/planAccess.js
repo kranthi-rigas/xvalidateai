@@ -111,6 +111,19 @@ export function hasAccess(requiredPlan, userPlan = null) {
 }
 
 /**
+ * Is the user on any paid plan?
+ * Features that only the free plan is meant to be locked out of (creating an
+ * organization, inviting users) use this instead of hasAccess(), so a new or
+ * renamed paid tier is never accidentally treated as free.
+ * @param {string} userPlan - The user's current plan (defaults to stored plan)
+ * @returns {boolean}
+ */
+export function isPaidPlan(userPlan = null) {
+  const currentPlan = (userPlan || getUserPlan() || "free").toLowerCase();
+  return currentPlan !== "free";
+}
+
+/**
  * Get the minimum required plan to access a feature
  * @param {string} requiredPlan - The required plan
  * @returns {string} - Display name for the required plan

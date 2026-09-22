@@ -129,7 +129,7 @@ export default function MyDocuments() {
             loading={uploading}
           >
             <i className="fa-solid fa-upload" />
-            {uploading ? "Uploading…" : "Upload document"}
+            <span>{uploading ? "Uploading…" : "Upload document"}</span>
           </AwsButton>
         </div>
       </div>
