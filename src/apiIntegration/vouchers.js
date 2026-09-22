@@ -96,6 +96,28 @@ export async function redeemVoucher(voucherCode, planId = null) {
 // not, since Platform is $1,200 for a small school and $3,000 for a large one.
 // planType is the entitlement and is sent only so that pre-matrix callers, who
 // have no component, still resolve a legacy plan.
+// Create a Stripe Checkout session for a subscription and return
+// { checkout_url, ... }. Same inputs as the PayPal call - component + tier set
+// the price, plan_type is the legacy fallback. Stripe offers Link (one-click
+// saved-card checkout) on the hosted page automatically.
+export async function createStripeCheckout(planType, tier = null, component = null) {
+  const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/stripe`, {
+    method: "POST",
+    body: JSON.stringify({
+      plan_type: planType,
+      ...(tier ? { tier } : {}),
+      ...(component ? { component: component.toUpperCase() } : {}),
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Failed to start Stripe checkout");
+  }
+
+  return res.json();
+}
+
 export async function createPaypalSubscription(planType, tier = null, component = null) {
   const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/paypal`, {
     method: "POST",

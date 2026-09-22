@@ -4,6 +4,7 @@ import {
   verifyVoucher,
   redeemVoucher,
   createPaypalSubscription,
+  createStripeCheckout,
 } from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
 import { SHOW_CREDITS } from "@/config/features";
@@ -18,6 +19,7 @@ export default function DashboardBilling() {
   const show = useToast();
   const { refreshUserPlan, setUserPlan, setUserCredits } = useContextElement();
   const [isPaying, setIsPaying] = useState(false);
+  const [isStripePaying, setIsStripePaying] = useState(false);
 
   const [formData, setFormData] = useState({
     billingAddress: "",
@@ -62,6 +64,32 @@ export default function DashboardBilling() {
       show(error.message || "Subscription failed", { planType: "error" });
     } finally {
       setIsPaying(false);
+    }
+  };
+
+  // Stripe Checkout (card / Link)
+  const handleStripeCheckout = async () => {
+    if (!plan) return;
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setIsStripePaying(true);
+    try {
+      const response = await createStripeCheckout(
+        (plan.planId || "").toUpperCase(),
+        plan.tier || null,
+        plan.id || null,
+      );
+      if (response && response.checkout_url) {
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error("Failed to start Stripe checkout");
+      }
+    } catch (error) {
+      show(error.message || "Checkout failed", { planType: "error" });
+    } finally {
+      setIsStripePaying(false);
     }
   };
 
@@ -511,6 +539,29 @@ export default function DashboardBilling() {
                           className="h-5"
                         />
                         Checkout with PayPal
+                      </>
+                    )}
+                  </button>
+
+                  {/* Stripe (card / Link) Button */}
+                  <button
+                    type="button"
+                    onClick={handleStripeCheckout}
+                    disabled={isStripePaying || !plan}
+                    className="w-full h-14 mt-3 rounded-lg bg-[#635bff] text-white
+    font-semibold flex items-center justify-center gap-3
+    hover:bg-[#5249e0] transition
+    disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isStripePaying ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Redirecting to checkout...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-regular fa-credit-card"></i>
+                        Pay with card
                       </>
                     )}
                   </button>
