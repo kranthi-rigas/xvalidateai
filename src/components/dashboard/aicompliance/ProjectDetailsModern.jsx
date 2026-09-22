@@ -8,6 +8,10 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useContextElement } from "@/context/Context";
 import { recommendationLabel } from "@/utils/recommendationLabel";
+import { getFindings, getObservations } from "@/apiIntegration/verification";
+import FindingDetail from "@/components/dashboard/verification/FindingDetail";
+import EvidenceDetail from "@/components/dashboard/verification/EvidenceDetail";
+import { S as ES } from "@/components/dashboard/verification/evidenceStyles";
 
 function formatStatus(value) {
   if (!value || typeof value !== "string") return "-";
@@ -45,6 +49,78 @@ const formatToLocalDateTime = (utcString) => {
     hour12: true,
   });
 };
+// Findings carry their source appended to the detail text as "Source: <url>".
+// Rendered inline that dumps a raw URL mid-paragraph; it belongs as a link.
+function splitSource(detail) {
+  if (!detail) return { body: "", sourceUrl: null };
+  const m = detail.match(/\s*Source:\s*(https?:\/\/\S+)\s*$/);
+  if (!m) return { body: detail.trim(), sourceUrl: null };
+  return { body: detail.slice(0, m.index).trim(), sourceUrl: m[1] };
+}
+
+// occurred_at was added after these findings were created and is backfilled on
+// the next sweep. Until then the real date is only inside the detail text, and
+// showing "Detected today" alone makes a 2019 breach look new.
+function occurredDate(f) {
+  if (f.occurred_at) return new Date(f.occurred_at).toLocaleDateString();
+  const m = (f.detail || "").match(/breach dated (\d{4}-\d{2}-\d{2})/);
+  return m ? new Date(m[1]).toLocaleDateString() : null;
+}
+
+const CHECK_LABELS = {
+  SECURITY_INCIDENT: "Breaches and published vulnerabilities",
+  PRIVACY_POLICY: "Privacy policy",
+  TERMS_OF_SERVICE: "Terms of service",
+  DPA: "Data processing addendum",
+  SUBPROCESSOR_LIST: "Subprocessor list",
+  SECURITY_PAGE: "Security page",
+  STUDENT_DATA_ADDENDUM: "Student data addendum",
+};
+
+// Every severity below CRITICAL used to fall through to the same amber
+// "warning" box, so a LOW certificate notice looked exactly as urgent as a
+// HIGH breach report. Each level now gets its own tone, taken from the design
+// system's existing ramp rather than new colours: red -> deep orange -> amber
+// -> blue -> grey, descending.
+const SEVERITY_TONE = {
+  CRITICAL: { accent: "#da1e28", label: "#da1e28" }, // error
+  HIGH: { accent: "#e66a0f", label: "#e66a0f" }, // warning-dark
+  MEDIUM: { accent: "#ff832b", label: "#b45309" }, // warning
+  LOW: { accent: "#4780aa", label: "#33617f" }, // info
+  INFO: { accent: "#8d8d8d", label: "#6b7280" }, // neutral
+};
+
+// 14 and 33 are the alpha suffixes already used for the critical tint, kept so
+// every card sits at the same weight as the surrounding boxes.
+function severityTone(severity) {
+  const tone = SEVERITY_TONE[severity] || SEVERITY_TONE.INFO;
+  return {
+    ...tone,
+    background: `${tone.accent}14`,
+    border: `1px solid ${tone.accent}33`,
+  };
+}
+
+// A one-line result per check, so the trail reads as evidence rather than as
+// a list of timestamps. A check that could not reach a source says so - a
+// partial check is not a clean result.
+function describeObservation(o) {
+  const s = o.summary || {};
+  if (s.partial) {
+    const failed = Object.keys(s.source_errors || {}).join(", ");
+    return `Incomplete${failed ? ` - ${failed} unavailable` : ""}`;
+  }
+  if (o.check_type === "SECURITY_INCIDENT") {
+    const b = (s.breaches || []).length;
+    const v = (s.vulnerabilities || []).length;
+    return b || v
+      ? `${b} breach${b === 1 ? "" : "es"}, ${v} vulnerabilit${v === 1 ? "y" : "ies"}`
+      : "Nothing reported";
+  }
+  if (s.text_sha256) return "Document captured";
+  return "Recorded";
+}
+
 export default function ProjectDetailsModern({ project, onBack }) {
   const summaryRef = useRef(null);
   const usageTableRef = useRef(null);
@@ -52,6 +128,19 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPdfRendering, setIsPdfRendering] = useState(false);
+
+  // Findings collapse to a one-line summary so a tool with many of them does
+  // not bury the rest of the report. Severity and title stay visible while
+  // collapsed - shortening the section must not hide what was found.
+  const [monitoringOpen, setMonitoringOpen] = useState(true);
+  const [openFindings, setOpenFindings] = useState(() => new Set());
+
+  const toggleFinding = (id) =>
+    setOpenFindings((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
@@ -510,6 +599,79 @@ export default function ProjectDetailsModern({ project, onBack }) {
     project.assessment_status === "completed";
 
   const showAdminActions = showScanActions || showUsageActions;
+
+  /* ---------- CONTINUOUS MONITORING ----------
+     What has happened to this tool since it was assessed. The assessment is a
+     point in time; this is the part that makes the report a current statement
+     rather than a historical one. */
+  const [monitoring, setMonitoring] = useState([]);
+  const [monitoringState, setMonitoringState] = useState("loading");
+
+  // A single finding, or a clean result, is already short enough to read in
+  // place - collapsing it would add a control that saves nothing. Declared
+  // after the state it reads: const is not hoisted like var, so referencing it
+  // above these lines throws at render.
+  const monitoringCollapsible =
+    monitoringState === "ready" && monitoring.length > 1;
+
+  const monitoredDomain = React.useMemo(() => {
+    const raw = (project?.url || "").trim();
+    if (!raw) return "";
+    try {
+      const withScheme = raw.includes("://") ? raw : `https://${raw}`;
+      const host = new URL(withScheme).hostname.toLowerCase();
+      return host.startsWith("www.") ? host.slice(4) : host;
+    } catch {
+      return "";
+    }
+  }, [project?.url]);
+
+  const [selectedFinding, setSelectedFinding] = useState(null);
+  const [evidence, setEvidence] = useState([]);
+  const [selectedObservation, setSelectedObservation] = useState(null);
+
+  const loadMonitoring = React.useCallback(async () => {
+    if (!monitoredDomain) {
+      setMonitoringState("unavailable");
+      return;
+    }
+    setMonitoringState("loading");
+    try {
+      // The evidence trail is fetched alongside the findings, not instead of
+      // them. Most vendors have no findings, and "we checked and found
+      // nothing" is only worth anything if the reader can see that we checked.
+      getObservations({
+        subject_type: "VENDOR",
+        subject_id: monitoredDomain,
+        limit: 10,
+      })
+        .then((obs) => setEvidence(obs?.observations || []))
+        .catch((err) => {
+          console.warn("Evidence trail unavailable:", err);
+          setEvidence([]);
+        });
+
+      const data = await getFindings({
+        subject_type: "VENDOR",
+        subject_id: monitoredDomain,
+        limit: 100,
+      });
+      // Findings judged to be our own detection error are excluded. A report
+      // handed to a customer should not carry items we already decided were
+      // wrong.
+      setMonitoring(
+        (data?.findings || []).filter((f) => f.status !== "FALSE_POSITIVE"),
+      );
+      setMonitoringState("ready");
+    } catch (err) {
+      console.warn("Monitoring findings unavailable:", err);
+      setMonitoringState("error");
+    }
+  }, [monitoredDomain]);
+
+  useEffect(() => {
+    loadMonitoring();
+  }, [loadMonitoring]);
 
   // Get recommendation badge
   const getRecommendationBadge = () => {
@@ -1114,13 +1276,46 @@ export default function ProjectDetailsModern({ project, onBack }) {
             <div className="recommendation-content">
               {!isFreePlan ? (
                 <>
-                  <div className="recommendation-box success">
-                    <i className="fa-solid fa-circle-check"></i>
-                    <div>
-                      <h4>Final Recommendation</h4>
-                      <p>{recommendationLabel(project.recommendation)}</p>
-                    </div>
-                  </div>
+                  {/* The variant was hardcoded to success with a tick, so
+                      "Not Recommended" was presented as a pass. The box has to
+                      follow the verdict it is displaying. */}
+                  {(() => {
+                    const rec = (project.recommendation || "").toLowerCase();
+                    const negative =
+                      rec.includes("not recommended") ||
+                      rec.includes("do not use") ||
+                      rec.includes("rejected");
+                    const qualified =
+                      rec.includes("limitation") || rec.includes("restricted");
+                    return (
+                      <div
+                        className={`recommendation-box ${negative || qualified ? "warning" : "success"}`}
+                        style={
+                          negative
+                            ? {
+                                background: `${COLORS.error}14`,
+                                border: `1px solid ${COLORS.error}33`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <i
+                          className={
+                            negative
+                              ? "fa-solid fa-circle-xmark"
+                              : qualified
+                                ? "fa-solid fa-circle-exclamation"
+                                : "fa-solid fa-circle-check"
+                          }
+                          style={{ color: negative ? COLORS.error : undefined }}
+                        ></i>
+                        <div>
+                          <h4>Final Recommendation</h4>
+                          <p>{recommendationLabel(project.recommendation)}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {project.assessment?.summary?.implementation_guidelines && (
                     <div className="recommendation-box warning">
@@ -1163,7 +1358,435 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </div>
           </div>
         )}
+
+        {/* Continuous Monitoring - shares the Recommendations layout, so it
+            carries the same .recommendations padding rather than sitting
+            flush against the card edges. The icon stays neutral: this
+            section's state varies from all-clear to critical, so a fixed
+            amber "warning" tint would contradict a green result. */}
+        <div
+          className="glass-card recommendations animate-fade-in"
+          style={{ animationDelay: "0.9s" }}
+        >
+          {/* Collapsing only earns its place once there are several findings.
+              With none or one the section is already short, so the chevron
+              would be a control that saves nothing. Everything is forced open
+              while the PDF renders - this section is inside usageTableRef, so
+              a collapsed card would export as a blank one. */}
+          <div
+            className="section-header"
+            onClick={
+              monitoringCollapsible
+                ? () => setMonitoringOpen((v) => !v)
+                : undefined
+            }
+            role={monitoringCollapsible ? "button" : undefined}
+            tabIndex={monitoringCollapsible ? 0 : undefined}
+            aria-expanded={monitoringCollapsible ? monitoringOpen : undefined}
+            onKeyDown={
+              monitoringCollapsible
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setMonitoringOpen((v) => !v);
+                    }
+                  }
+                : undefined
+            }
+            style={
+              monitoringCollapsible
+                ? { cursor: "pointer", userSelect: "none" }
+                : undefined
+            }
+          >
+            <div className="section-icon">
+              <i className="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3>Since This Assessment</h3>
+
+            {monitoringState === "ready" && monitoring.length > 0 && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: COLORS.textSecondary,
+                  background: COLORS.bgSecondary,
+                  borderRadius: 999,
+                  padding: "3px 10px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {monitoring.length} finding
+                {monitoring.length === 1 ? "" : "s"}
+              </span>
+            )}
+
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+              }}
+            >
+              {monitoringOpen && monitoringCollapsible && (
+                <button
+                  type="button"
+                  className="admin-actions"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenFindings((prev) =>
+                      prev.size === monitoring.length
+                        ? new Set()
+                        : new Set(monitoring.map((f) => f.finding_id)),
+                    );
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: COLORS.info,
+                  }}
+                >
+                  {openFindings.size === monitoring.length
+                    ? "Collapse all"
+                    : "Expand all"}
+                </button>
+              )}
+              {monitoringCollapsible && (
+                <i
+                  className={`fa-solid ${monitoringOpen ? "fa-chevron-up" : "fa-chevron-down"}`}
+                  style={{ color: COLORS.textMuted, fontSize: 14 }}
+                />
+              )}
+            </div>
+          </div>
+
+          <div
+            className="recommendation-content"
+            style={{
+              display:
+                !monitoringCollapsible || monitoringOpen || isPdfRendering
+                  ? undefined
+                  : "none",
+            }}
+          >
+            {monitoringState === "loading" && (
+              <p className="summary-text">Checking monitoring history…</p>
+            )}
+
+            {monitoringState === "unavailable" && (
+              <p className="summary-text">
+                No tool URL is recorded, so this tool is not being monitored.
+              </p>
+            )}
+
+            {/* An error must not read as "nothing found" - that is the same
+                false all-clear the checks themselves guard against. */}
+            {monitoringState === "error" && (
+              <p className="summary-text">
+                Monitoring history could not be loaded. This is not a statement
+                that nothing has been found.
+              </p>
+            )}
+
+            {monitoringState === "ready" && monitoring.length === 0 && (
+              <div className="recommendation-box success">
+                <i className="fa-solid fa-circle-check"></i>
+                <div>
+                  <h4>Nothing found in the sources we check</h4>
+                  <p>
+                    {monitoredDomain} is checked daily against Have I Been Pwned
+                    for known breaches, the National Vulnerability Database for
+                    published CVEs, and its own policy documents and TLS
+                    certificate.
+                  </p>
+                  {/* Stating the limit rather than implying completeness.
+                      HIBP is curated, not exhaustive - it holds around a
+                      thousand breaches and only single figures for some
+                      regions - so a clean result here is not the same as a
+                      vendor never having been breached. */}
+                  <p
+                    className="text-light-1"
+                    style={{ fontSize: 13, marginTop: 8 }}
+                  >
+                    These sources are not exhaustive. Breach databases only
+                    contain incidents that have been reported to and curated by
+                    them, and regional coverage varies widely. This is not a
+                    statement that no breach has occurred.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {monitoringState === "ready" &&
+              monitoring.map((f) => {
+                const tone = severityTone(f.severity);
+                // Forced open for the PDF so the exported report carries the
+                // full finding regardless of what is collapsed on screen.
+                const open =
+                  isPdfRendering ||
+                  !monitoringCollapsible ||
+                  openFindings.has(f.finding_id);
+                return (
+                  <div
+                    key={f.finding_id}
+                    className="recommendation-box"
+                    style={{ background: tone.background, border: tone.border }}
+                  >
+                    <i
+                      className="fa-solid fa-triangle-exclamation"
+                      style={{ color: tone.accent }}
+                    ></i>
+                    <div
+                      style={{
+                        width: "100%",
+                        minWidth: 0,
+                        // The box class no longer carries a colour, so body text
+                        // takes the page's own text colour at every severity.
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      <div
+                        onClick={
+                          monitoringCollapsible
+                            ? () => toggleFinding(f.finding_id)
+                            : undefined
+                        }
+                        role={monitoringCollapsible ? "button" : undefined}
+                        tabIndex={monitoringCollapsible ? 0 : undefined}
+                        aria-expanded={monitoringCollapsible ? open : undefined}
+                        onKeyDown={
+                          monitoringCollapsible
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleFinding(f.finding_id);
+                                }
+                              }
+                            : undefined
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          flexWrap: "wrap",
+                          marginBottom: open ? 8 : 0,
+                          ...(monitoringCollapsible
+                            ? { cursor: "pointer", userSelect: "none" }
+                            : null),
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            padding: "3px 10px",
+                            borderRadius: 999,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.04em",
+                            whiteSpace: "nowrap",
+                            color: "#fff",
+                            background: tone.accent,
+                          }}
+                        >
+                          {f.severity}
+                        </span>
+                        <h4 style={{ margin: 0, color: tone.label }}>
+                          {f.title}
+                        </h4>
+                        {monitoringCollapsible && (
+                          <i
+                            className={`fa-solid ${open ? "fa-chevron-up" : "fa-chevron-down"}`}
+                            style={{
+                              marginLeft: "auto",
+                              color: COLORS.textMuted,
+                              fontSize: 12,
+                            }}
+                          />
+                        )}
+                      </div>
+                      {open &&
+                        (() => {
+                          const { body, sourceUrl } = splitSource(f.detail);
+                          const occurred = occurredDate(f);
+                          return (
+                            <>
+                              <p
+                                style={{
+                                  whiteSpace: "pre-wrap",
+                                  margin: "0 0 8px",
+                                }}
+                              >
+                                {body}
+                              </p>
+                              <p
+                                className="text-light-1"
+                                style={{ fontSize: 13, margin: 0 }}
+                              >
+                                {occurred ? `Occurred ${occurred} · ` : ""}
+                                Detected{" "}
+                                {f.first_seen_at
+                                  ? new Date(
+                                      f.first_seen_at,
+                                    ).toLocaleDateString()
+                                  : "--"}
+                                {f.occurrence_count > 1
+                                  ? ` · confirmed on ${f.occurrence_count} checks`
+                                  : " · observed once"}
+                                {f.status && f.status !== "OPEN"
+                                  ? ` · ${f.status}`
+                                  : ""}
+                              </p>
+                              {/* admin-actions is stripped from the PDF export, so
+                              the printed report carries the finding without
+                              the controls. */}
+                              <div
+                                className="admin-actions"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 16,
+                                  flexWrap: "wrap",
+                                  marginTop: 12,
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedFinding(f)}
+                                  className="text-14"
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    padding: 0,
+                                    cursor: "pointer",
+                                    color: COLORS.primary,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  Review evidence and triage →
+                                </button>
+                                {sourceUrl && (
+                                  <a
+                                    href={sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-14"
+                                    style={{
+                                      color: COLORS.primary,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    View the source record{" "}
+                                    <i
+                                      className="fa-solid fa-arrow-up-right-from-square"
+                                      style={{ fontSize: 10 }}
+                                    />
+                                  </a>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {monitoringState === "ready" && evidence.length > 0 && (
+              <div style={{ marginTop: 28 }}>
+                {/* Styled explicitly rather than relying on the global h1-h6
+                    rule. Tailwind's Play CDN (loaded in index.html) ships
+                    Preflight, which resets heading size and weight to inherit.
+                    Its <style> is injected at runtime, so it lands after the
+                    bundled stylesheet in a production build but before Vite's
+                    runtime-injected CSS in dev - the same markup rendered
+                    styled locally and unstyled on the server. */}
+                <h4
+                  style={{
+                    marginBottom: 6,
+                    fontSize: 18,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    color: COLORS.textPrimary,
+                  }}
+                >
+                  Checks performed
+                </h4>
+                <p
+                  className="text-light-1"
+                  style={{ marginBottom: 14, fontSize: 13 }}
+                >
+                  Every check is recorded with the raw response it was based on,
+                  so any statement above can be traced back to what was actually
+                  seen.
+                </p>
+                <table style={ES.table}>
+                  <thead>
+                    <tr className="text-light-1">
+                      <th style={ES.th}>Date</th>
+                      <th style={ES.th}>Check</th>
+                      <th style={ES.th}>Result</th>
+                      <th className="admin-actions" style={ES.th}>
+                        Evidence
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evidence.map((o) => (
+                      <tr key={o.observation_id}>
+                        <td style={ES.td}>
+                          {o.captured_at
+                            ? new Date(o.captured_at).toLocaleString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
+                            : "--"}
+                        </td>
+                        <td style={ES.td}>
+                          {CHECK_LABELS[o.check_type] || o.check_type}
+                        </td>
+                        <td style={ES.td}>{describeObservation(o)}</td>
+                        {/* Stripped from the PDF: the dates and results are the
+                            evidence, the link is only useful on screen. */}
+                        <td className="admin-actions" style={ES.td}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedObservation(o)}
+                            style={{ ...ES.linkButton, color: COLORS.primary }}
+                          >
+                            View details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      <EvidenceDetail
+        observation={selectedObservation}
+        onClose={() => setSelectedObservation(null)}
+      />
+
+      <FindingDetail
+        finding={selectedFinding}
+        onClose={() => setSelectedFinding(null)}
+        onChanged={loadMonitoring}
+      />
 
       {/* Detailed Evaluation Tables */}
       <div className="relative">
@@ -1319,7 +1942,9 @@ export default function ProjectDetailsModern({ project, onBack }) {
           className="footer-subtext"
           style={{ marginTop: "8px", fontStyle: "italic" }}
         >
-          <strong>Disclaimer:</strong> Scores are based solely on information each company publicly discloses. XValidate AI is not liable for the accuracy of these scores.
+          <strong>Disclaimer:</strong> Scores are based solely on information
+          each company publicly discloses. XValidate AI is not liable for the
+          accuracy of these scores.
         </p>
         <p
           className="footer-subtext"

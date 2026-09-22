@@ -7,11 +7,19 @@ import PhoneInput from "../common/PhoneInput";
 import AuthButton from "@/components/common/AuthButton";
 import { GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import { getPasswordChecks, describeMissingRules } from "@/utils/password";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useRef } from "react";
 
 export default function SignUpForm() {
   const [searchParams] = useSearchParams();
+  const program = searchParams.get("program") || null;
+  const PROGRAM_LABELS = {
+    caio: "Chief AI Officer (CAIO) Program",
+    teacher: "AI-Ready Teacher Program",
+  };
+  const programLabel = program ? PROGRAM_LABELS[program] || null : null;
   const invitedEmail = searchParams.get("email");
 
   console.log("✅ invitedEmail:", invitedEmail);
@@ -64,6 +72,8 @@ export default function SignUpForm() {
 
     setPhone(value);
   };
+
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   // Check if passwords match
   const passwordsMatch =
@@ -194,9 +204,9 @@ export default function SignUpForm() {
       return;
     }
 
-    // ❌ Password length
-    if (formData.password.length < 8) {
-      show("Password must be at least 8 characters long", { type: "error" });
+    // ❌ Password strength — same rule set the checklist below the field shows
+    if (!getPasswordChecks(formData.password).requiredMet) {
+      show(describeMissingRules(formData.password), { type: "error" });
       return;
     }
 
@@ -210,6 +220,9 @@ export default function SignUpForm() {
         password: formData.password,
         phone: `${phoneCode}${phone}`,
         country: selectedCountry?.label,
+        // Which program the visitor came from (marketing Programs CTAs). The
+        // backend records it and notifies the team to follow up on enrollment.
+        ...(program ? { program } : {}),
       });
 
       show("Account created! Check your email.", { type: "success" });
@@ -229,6 +242,24 @@ export default function SignUpForm() {
           <div className="col-xl-8 col-lg-9 px-20 py-20">
             <div className="sign-up auth-card px-50 py-50 md:px-25 md:py-25 bg-white shadow-1 rounded-16">
               <h2 className="signup-text lh-13 text-center">Sign Up</h2>
+
+              {programLabel && (
+                <div
+                  className="text-center"
+                  style={{
+                    marginTop: 12,
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    background: "#eef2f7",
+                    color: "#0f3357",
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  Enrolling in the {programLabel} — create your account and our
+                  team will be in touch.
+                </div>
+              )}
 
               {/* Regular Signup Form */}
               <form
@@ -294,6 +325,8 @@ export default function SignUpForm() {
                       placeholder="Password"
                       value={formData.password}
                       onChange={handleChange}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
                     />
                     <button
                       type="button"
@@ -305,6 +338,10 @@ export default function SignUpForm() {
                       {showPassword ? "👁️" : "👁️‍🗨️"}
                     </button>
                   </div>
+                  <PasswordStrength
+                    password={formData.password}
+                    show={passwordFocused}
+                  />
                 </div>
 
                 <div className="col-lg-6">

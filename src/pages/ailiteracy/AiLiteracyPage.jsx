@@ -386,9 +386,9 @@ export default function AiLiteracyPage() {
 
   const headings = {
     landing: {
-      title: "AI Literacy",
+      title: "Programs",
       subtitle:
-        "Access assessments, playbooks, and professional development resources for your organisation.",
+        "Programs, assessments, playbooks, and professional development resources for your organisation.",
     },
     questionnaire: {
       title: "AI Literacy Assessment",
@@ -432,8 +432,15 @@ export default function AiLiteracyPage() {
   if (pageLoading) return <PageLoader loading={true} />;
 
   return (
-    <div ref={topRef} className="spicy-y">
-      <div className="dashboard-body">
+    <div ref={topRef} className="spicy-y" style={{ height: "100%" }}>
+      {/* minHeight keeps the white panel filling the viewport now that the
+          landing holds only two cards - without it the card sized to its
+          content and the page read as half-rendered. Set here rather than on
+          .dashboard-body, which eight other dashboard pages share. */}
+      <div
+        className="dashboard-body"
+        style={{ minHeight: "100%", boxSizing: "border-box" }}
+      >
         {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>
           <h2
@@ -457,10 +464,14 @@ export default function AiLiteracyPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                // 340px min gives a 2x2 grid inside the 900px container, so the
+                // four cards balance instead of leaving one orphaned on row two.
+                // Collapses to a single column on narrow screens.
+                gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
                 gap: 24,
                 maxWidth: 900,
                 margin: "0 auto",
+                alignItems: "stretch",
               }}
             >
               {/* ── Chief AI Officer Program Card ── */}
@@ -521,7 +532,7 @@ export default function AiLiteracyPage() {
                       marginBottom: 8,
                     }}
                   >
-                    Chief AI Officer Program
+                    Chief AI Officer (CAIO) Program
                   </div>
                   <p
                     style={{
@@ -546,7 +557,7 @@ export default function AiLiteracyPage() {
                 />
               </div>
 
-              {/* ── AI Literacy Playbook Card ── */}
+              {/* ── AI-Ready Teacher Program Card ── */}
               <div
                 style={{
                   border: `1px solid ${COLORS.borderLight}`,
@@ -558,26 +569,43 @@ export default function AiLiteracyPage() {
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 16,
-                  cursor: "pointer",
                 }}
-                onClick={() => setView("playbook")}
               >
+                {/* Coming Soon badge */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                    background: "#0F3357",
+                    padding: "3px 9px",
+                    borderRadius: 20,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Coming Soon
+                </span>
+
+                {/* Icon */}
                 <div
                   style={{
                     width: 56,
                     height: 56,
                     borderRadius: "50%",
-                    background: COLORS.primaryLighter,
+                    background: "#e3edfd",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
                   <i
-                    className="fa-solid fa-folder-open"
-                    style={{ fontSize: 22, color: COLORS.primary }}
+                    className="fa-solid fa-chalkboard-user"
+                    style={{ fontSize: 22, color: "#0F3357" }}
                   />
                 </div>
+
+                {/* Text */}
                 <div>
                   <div
                     style={{
@@ -587,7 +615,7 @@ export default function AiLiteracyPage() {
                       marginBottom: 8,
                     }}
                   >
-                    AI Literacy Playbook
+                    AI-Ready Teacher Program
                   </div>
                   <p
                     style={{
@@ -597,135 +625,19 @@ export default function AiLiteracyPage() {
                       margin: 0,
                     }}
                   >
-                    Assessments, incident response playbooks, flowcharts, and
-                    exercises for your organisation.
+                    Be the first to know when our AI-Ready Teacher Program
+                    launches. We'll notify you as soon as it's available.
                   </p>
                 </div>
 
+                {/* Spacer to push button to bottom like other cards */}
                 <div style={{ flex: 1 }} />
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setView("playbook");
-                  }}
-                  style={{
-                    marginTop: 4,
-                    padding: "11px 32px",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#fff",
-                    background: "#0F3357",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    transition: "background 0.2s ease",
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.background = "#1a5276")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background = "#0F3357")
-                  }
-                >
-                  Open Folder
-                </button>
-              </div>
-
-              {/* ── Professional Development Modules Card ── */}
-              <div
-                style={{
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 14,
-                  padding: 32,
-                  background: COLORS.bgPrimary,
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 16,
-                  cursor: "pointer",
-                }}
-                onClick={handleViewPD}
-              >
-                <div
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: "50%",
-                    background: "#eef2ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <i
-                    className="fa-solid fa-folder"
-                    style={{ fontSize: 22, color: COLORS.primary }}
-                  />
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 17,
-                      color: COLORS.textPrimary,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Professional Development Modules
-                  </div>
-                  <p
-                    style={{
-                      fontSize: 14,
-                      color: COLORS.textMuted,
-                      lineHeight: 1.6,
-                      margin: 0,
-                    }}
-                  >
-                    Curated modules and resources for educator professional
-                    development.
-                  </p>
-                </div>
-
-                <div style={{ flex: 1 }} />
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewPD();
-                  }}
-                  style={{
-                    marginTop: 4,
-                    padding: "11px 32px",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "#fff",
-                    background: "#0F3357",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    transition: "background 0.2s ease",
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.background = "#1a5276")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background = "#0F3357")
-                  }
-                >
-                  Open Folder
-                </button>
+                <NotifyButton
+                  showToast={showToast}
+                  enrolled={newsletterStatus === true}
+                  setEnrolled={(val) => setNewsletterStatus(val)}
+                />
               </div>
             </div>
           </PageTransition>
@@ -1000,26 +912,26 @@ export default function AiLiteracyPage() {
         {/* PROFESSIONAL DEVELOPMENT */}
         {view === "pd" && (
           <PageTransition>
-            <div style={{ marginBottom: 20 }}>
-              <button
-                onClick={() => setView("landing")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: COLORS.primary,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <i className="fa-solid fa-arrow-left" /> Back
-              </button>
-            </div>
-
+            <button
+              onClick={() => setView("landing")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                margin: "0 auto 24px",
+                padding: "10px 20px",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                border: `1px solid ${COLORS.borderLight}`,
+                background: COLORS.bgPrimary,
+                color: COLORS.textMuted,
+              }}
+            >
+              <i className="fa-solid fa-arrow-left" />
+              Back to Overview
+            </button>
             <div
               style={{
                 maxWidth: 900,

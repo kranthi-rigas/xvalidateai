@@ -5,6 +5,12 @@ import AuthButton from "../common/AuthButton";
 import { resetPassword } from "../../apiIntegration/auth";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import AuthFooter from "../../components/others/AuthFooter";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import {
+  getPasswordChecks,
+  describeMissingRules,
+  confirmationClass,
+} from "@/utils/password";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -18,34 +24,24 @@ export default function ResetPassword() {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
-  /* 🔐 Real-time validation */
-  const validatePasswords = (pwd, confirmPwd) => {
-    if (!pwd || !confirmPwd) {
-      setPasswordError("");
-      return false;
-    }
-
-    if (pwd !== confirmPwd) {
-      setPasswordError("Passwords do not match");
-      return false;
-    }
-
-    setPasswordError("");
-    return true;
-  };
+  // The two fields colour themselves while typing (see confirmClass) and the
+  // checklist lists the unmet rules, so live typing needs no error text — it is
+  // kept for the submit attempt, same as sign up.
+  const validatePasswords = () => setPasswordError("");
 
   const handlePasswordChange = (e) => {
-    const value = e.target.value;
-    setPassword(value);
-    validatePasswords(value, confirm);
+    setPassword(e.target.value);
+    validatePasswords();
   };
 
   const handleConfirmChange = (e) => {
-    const value = e.target.value;
-    setConfirm(value);
-    validatePasswords(password, value);
+    setConfirm(e.target.value);
+    validatePasswords();
   };
+
+  const confirmClass = confirmationClass(password, confirm);
 
   const submit = async () => {
     if (!password || !confirm) {
@@ -55,6 +51,11 @@ export default function ResetPassword() {
 
     if (password !== confirm) {
       setPasswordError("Passwords do not match");
+      return;
+    }
+
+    if (!getPasswordChecks(password).requiredMet) {
+      setPasswordError(describeMissingRules(password));
       return;
     }
 
@@ -90,10 +91,12 @@ export default function ResetPassword() {
                 <div style={{ position: "relative" }}>
                   <input
                     type={showPassword ? "text" : "password"}
-                    className="email-input"
+                    className={`email-input ${confirmClass}`}
                     placeholder="Enter new password"
                     value={password}
                     onChange={handlePasswordChange}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
                   />
 
                   <span
@@ -114,6 +117,10 @@ export default function ResetPassword() {
                     )}
                   </span>
                 </div>
+                <PasswordStrength
+                  password={password}
+                  show={passwordFocused}
+                />
               </div>
 
               {/* Confirm Password */}
@@ -123,7 +130,7 @@ export default function ResetPassword() {
                 <div style={{ position: "relative" }}>
                   <input
                     type={showConfirm ? "text" : "password"}
-                    className="email-input"
+                    className={`email-input ${confirmClass}`}
                     placeholder="Re-enter new password"
                     value={confirm}
                     onChange={handleConfirmChange}

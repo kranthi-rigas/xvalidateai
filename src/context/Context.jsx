@@ -9,6 +9,25 @@ import { useContext, useState, useCallback, useEffect, useRef } from "react";
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const IDLE_CHECK_INTERVAL_MS = 180 * 1000;
 const AUTH_REDIRECT_URL = "/auth?mode=login";
+// Don't re-hit /profile more than once per minute when the tab regains focus.
+const PLAN_RECHECK_MS = 60 * 1000;
+
+// Has a plan actually been read for this user, or is "free" just the default we
+// start with? Anything that sells an upgrade has to wait for the real answer.
+function readStoredPlanType() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("user_info") || "{}");
+    return (
+      parsed?.plan?.plan_type ||
+      parsed?.plan?.name ||
+      parsed?.subscription?.plan_type ||
+      parsed?.plan_type ||
+      null
+    );
+  } catch {
+    return null;
+  }
+}
 
 const dataContext = React.createContext();
 export const useContextElement = () => {
@@ -23,6 +42,8 @@ export default function Context({ children }) {
 
   // User plan state: "free", "premium", or "enterprise"
   const [userPlan, setUserPlan] = useState("free");
+  // false until a plan has really been read — "free" is also the initial value
+  const [planKnown, setPlanKnown] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
   const lastActivityRef = useRef(Date.now());
@@ -40,6 +61,7 @@ export default function Context({ children }) {
         currentPlan,
       );
       setUserPlan(currentPlan);
+      setPlanKnown(!!readStoredPlanType());
 
       // Get credits from localStorage
       try {
@@ -62,6 +84,7 @@ export default function Context({ children }) {
     } else {
       setIsLoggedIn(false);
       setUserPlan("free");
+      setPlanKnown(false);
       setUserCredits(0);
     }
   }, []);
@@ -82,6 +105,7 @@ export default function Context({ children }) {
         const credits = userData?.plan?.credits_remaining ?? 0;
 
         setUserPlan(userPlanType.toLowerCase());
+        setPlanKnown(true);
         setUserCredits(credits);
         setIsLoggedIn(true);
 
@@ -92,6 +116,9 @@ export default function Context({ children }) {
           credits,
           "credits",
         );
+
+        // Let components that read user_info directly re-read it
+        window.dispatchEvent(new Event("plan-updated"));
       }
     } catch (error) {
       console.error("Error refreshing user plan:", error);
@@ -102,6 +129,7 @@ export default function Context({ children }) {
   const resetUserState = useCallback(() => {
     console.log("🔄 resetUserState: Resetting all user state to defaults");
     setUserPlan("free");
+    setPlanKnown(false);
     setUserCredits(0);
     setIsLoggedIn(false);
     setCartProducts([]);
@@ -175,6 +203,7 @@ export default function Context({ children }) {
       const currentPlan = getUserPlan();
       console.log("🔄 loadUserPlanFromStorage: Loading plan:", currentPlan);
       setUserPlan(currentPlan);
+      setPlanKnown(!!readStoredPlanType());
 
       try {
         const userInfo = localStorage.getItem("user_info");
@@ -192,6 +221,39 @@ export default function Context({ children }) {
       }
     }
   }, []);
+
+  // Keep the plan in sync when it changes outside this provider: a voucher
+  // redeem that patches user_info, another tab, or an activation webhook that
+  // lands after checkout. Without this the sidebar and the org/user pages keep
+  // the plan they were mounted with until the user logs out and back in.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const syncFromStorage = () => loadUserPlanFromStorage();
+    const onStorage = (e) => {
+      if (!e.key || e.key === "user_info") loadUserPlanFromStorage();
+    };
+
+    let lastServerCheck = Date.now();
+    const refreshIfStale = () => {
+      if (document.visibilityState === "hidden") return;
+      if (Date.now() - lastServerCheck < PLAN_RECHECK_MS) return;
+      lastServerCheck = Date.now();
+      refreshUserPlan();
+    };
+
+    window.addEventListener("plan-updated", syncFromStorage);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refreshIfStale);
+    document.addEventListener("visibilitychange", refreshIfStale);
+
+    return () => {
+      window.removeEventListener("plan-updated", syncFromStorage);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refreshIfStale);
+      document.removeEventListener("visibilitychange", refreshIfStale);
+    };
+  }, [isLoggedIn, loadUserPlanFromStorage, refreshUserPlan]);
 
   const addCourseToCart = (id) => {
     if (!cartCourses.filter((elm) => elm.id == id)[0]) {
@@ -255,6 +317,7 @@ export default function Context({ children }) {
     // User plan and authentication
     userPlan,
     setUserPlan,
+    planKnown,
     isLoggedIn,
     setIsLoggedIn,
     userCredits,

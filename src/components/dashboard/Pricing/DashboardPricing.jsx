@@ -1,83 +1,102 @@
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
+import { SHOW_CREDITS } from "@/config/features";
 import { COLORS } from "@/styles/colors";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
+import {
+  ENROLLMENT_TIERS,
+  TIER_PRICING,
+  creditsFor,
+  normalizeComponent,
+  normalizeTier,
+} from "@/data/planPricing";
+
+// Pricing is modular and tiered by enrollment: a school picks its enrollment
+// band, then one of three component bundles.
+//
+// Credits follow price / 10. That is not an invented rule - it is what the
+// previous plans already were (Premium $1,000 -> 100 credits, Business $3,000
+// -> 300), so the matrix extends the existing relationship rather than
+// introducing a new one.
+
+// planId is the ENTITLEMENT key and is deliberately unchanged. "premium" and
+// "business" drive PLAN_HIERARCHY, the sidebar's requiredPlan gating,
+// PlanStatusBadge and the backend subscription record. Renaming them to match
+// the new commercial packaging would silently drop paying customers to level 0
+// and remove features they are entitled to.
+//
+// Note for review: + CAIO and + CAIO + Teacher both map to "business" today,
+// so the full bundle currently unlocks nothing the CAIO bundle does not. If
+// they are meant to differ, that needs a new entitlement level rather than a
+// pricing change.
+
+// Feature groups, composed cumulatively below. Higher plans list everything
+// the plans beneath them include and then their own additions, so a buyer sees
+// the full picture instead of an "Everything in X" shorthand. Cards list only
+// what a plan includes - no crossed-out rows - so every line is something the
+// buyer gets.
+const inc = (text) => ({ text, included: true });
+
+const PLATFORM_FEATURES = [
+  "AI tool compliance assessments",
+  "Evidence & verification reports",
+  "Downloadable reports",
+  "Continuous monitoring",
+  "Create organizations",
+  "Audit Trail",
+];
+const CAIO_FEATURES = [
+  "Chief AI Officer (CAIO) programme",
+  "AI Analytics",
+  "Priority support",
+];
+const TEACHER_FEATURES = ["AI-Ready Teacher enablement programme"];
 
 const pricingPlans = [
   {
-    id: "free",
-    name: "Free",
-    description: "Perfect for getting started",
-    icon: "fa-solid fa-rocket",
-    iconColor: COLORS.secondary,
-    price: 0,
-    period: "yearly",
-    credits: 20,
+    id: "platform",
+    planId: "premium",
+    name: "Platform",
+    description: "The compliance platform on its own",
+    icon: "fa-solid fa-microchip",
+    iconColor: COLORS.primary,
+    period: "Annually",
     popular: false,
-    features: [
-      { text: "2 Scans included(20 Credits)", included: true },
-      { text: "Single User", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Downloadable Report", included: false },
-      { text: "Priority support", included: false },
-      { text: "Create organizations", included: false },
-      { text: "AI Analytics", included: false },
-      { text: "Business workflow", included: false },
-      { text: "Customizability", included: false },
-      { text: "Audit Trail", included: false },
-    ],
+    buttonText: "Choose Platform",
+    buttonStyle: "-outline-purple-1 text-purple-1",
+    features: [...PLATFORM_FEATURES.map(inc)],
   },
   {
-    id: "premium",
-    name: "Premium",
-    description: "Best for growing learners",
+    id: "caio",
+    planId: "business",
+    name: "Platform + CAIO",
+    description: "Platform plus the Chief AI Officer programme",
     icon: "fa-solid fa-star",
     iconColor: COLORS.primary,
-    price: 1000,
     period: "Annually",
-    credits: 100,
     popular: true,
-    buttonText: "Get Premium",
-    buttonStyle: "-outline-purple-1 text-purple-1",
-    features: [
-      { text: "10 Scans included(100 Credits)", included: true },
-      { text: "Single User", included: true },
-      { text: "Downloadable Report", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Priority support", included: true },
-      { text: "Create organizations", included: false },
-      { text: "AI Analytics", included: false },
-      { text: "Business workflow", included: false },
-      { text: "Customizability", included: false },
-      { text: "Audit Trail", included: false },
-    ],
+    buttonText: "Choose Platform + CAIO",
+    buttonStyle: "-purple-1 text-white",
+    features: [...PLATFORM_FEATURES.map(inc), ...CAIO_FEATURES.map(inc)],
   },
   {
-    id: "business",
-    name: "Business",
-    description: "For organizations",
+    id: "caio_teacher",
+    planId: "business",
+    name: "Platform + CAIO + AI-Ready Teacher",
+    description: "The full bundle: CAIO programme plus teacher enablement",
     icon: "fa-solid fa-building",
     iconColor: COLORS.success,
-    price: 3000,
     period: "Annually",
-    credits: 300,
     popular: false,
-    buttonText: "Get Business",
+    buttonText: "Choose this plan",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [
-      { text: "30 Scans included(300 Credits)", included: true },
-      { text: "Multiple Users", included: true },
-      { text: "Downloadable Report", included: true },
-      { text: "Basic Report", included: true },
-      { text: "Priority support", included: true },
-      { text: "Create organizations", included: true },
-      { text: "AI Analytics", included: true },
-      { text: "Business workflow", included: true },
-      { text: "Customizability", included: true },
-      { text: "Audit Trail", included: true },
+      ...PLATFORM_FEATURES.map(inc),
+      ...CAIO_FEATURES.map(inc),
+      ...TEACHER_FEATURES.map(inc),
     ],
   },
 ];
@@ -117,6 +136,56 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   const { userPlan, user, userData, userProfile, profile } =
     useContextElement();
   const currentPlan = userPlan || "free";
+
+  // The profile arrives on whichever context or storage shape happens to carry
+  // it, so look through all of them once and read both the bundle and the
+  // enrollment band off the same record.
+  const findPlanRecord = () => {
+    for (const c of [user, userData, userProfile, profile]) {
+      if (c?.plan) return c.plan;
+    }
+    try {
+      return (
+        JSON.parse(localStorage.getItem("user_info") || "{}")?.plan || null
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  // The subscriber's exact bundle (platform / caio / caio_teacher). Two bundles
+  // share the "business" entitlement, so this is what distinguishes them.
+  // normalizeComponent also tolerates the other spellings the backend has used
+  // (CAIO_TEACHER / TEACHER / COMPLETE) rather than only an exact match.
+  const getCurrentComponent = () =>
+    normalizeComponent(findPlanRecord()?.component);
+
+  // A subscriber's own enrollment band is the only correct starting point -
+  // showing a Large school Medium prices misstates what they pay. Medium stays
+  // the default only for visitors with no subscription, where it anchors the
+  // range better than either extreme.
+  const [selectedTier, setSelectedTier] = useState(
+    () => normalizeTier(findPlanRecord()?.tier) || "medium",
+  );
+  // Set once the profile arrives, unless the visitor has already chosen a band
+  // themselves - their click must not be overwritten by a later profile load.
+  const [tierTouched, setTierTouched] = useState(false);
+
+  useEffect(() => {
+    if (tierTouched) return;
+    const tier = normalizeTier(findPlanRecord()?.tier);
+    if (tier && tier !== selectedTier) setSelectedTier(tier);
+  }, [userPlan, user, userData, userProfile, profile, tierTouched]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A card's price and credits depend on the chosen enrollment band. Free has
+  // neither, so it passes through untouched.
+  const resolvePlan = (plan) => {
+    const price = TIER_PRICING[plan.id]?.[selectedTier];
+    if (price === undefined) return plan;
+    // tier travels with the plan: without it checkout cannot tell a $1,200
+    // Platform subscription from a $3,000 one.
+    return { ...plan, price, credits: creditsFor(price), tier: selectedTier };
+  };
 
   // ── Business card highlight state (set when Premium user clicks Upgrade) ──
   const [highlightBusiness, setHighlightBusiness] = useState(
@@ -201,13 +270,31 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     formattedExpiry,
   );
 
-  const isPlanBelowCurrent = (planId) => {
-    const currentLevel = PLAN_HIERARCHY[currentPlan] || 0;
-    const planLevel = PLAN_HIERARCHY[planId] || 0;
-    return planLevel < currentLevel;
-  };
+  // Rank the three component bundles so a plan can be seen as below, equal to,
+  // or above the user's current plan. The entitlement hierarchy cannot do this:
+  // caio and caio_teacher are both "business", so it could not tell them apart
+  // and marked both as the current plan.
+  const COMPONENT_ORDER = { free: 0, platform: 1, caio: 2, caio_teacher: 3 };
 
-  const isCurrentPlan = (planId) => planId === currentPlan;
+  // The exact bundle the user is on. The profile now carries the component the
+  // subscriber bought; when it is present it identifies the plan unambiguously.
+  // If it is absent (a subscription created before the component was stored, or
+  // a free user), fall back to the entitlement: premium -> platform, business
+  // -> caio, so at most one card is ever marked current.
+  const currentComponent =
+    getCurrentComponent() ||
+    (currentPlan === "premium"
+      ? "platform"
+      : currentPlan === "business"
+        ? "caio"
+        : currentPlan === "free"
+          ? "free"
+          : null);
+
+  const currentLevel = COMPONENT_ORDER[currentComponent] ?? 0;
+
+  const isCurrentPlan = (id) => id === currentComponent;
+  const isPlanBelowCurrent = (id) => (COMPONENT_ORDER[id] ?? 0) < currentLevel;
 
   useEffect(() => {
     AOS.init({
@@ -241,21 +328,84 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
         }
       `}</style>
 
-      <div className="col-auto"></div>
-
       <div className="row y-gap-30">
         <div className="col-12">
-          <div
-            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
-            style={{ padding: "1rem" }}
-          >
+          <div className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100">
             <div className="py-20 px-15 md:py-30 md:px-30">
+              {/* Enrollment tier selector. Pricing is tiered by school
+                  enrollment, so the band has to be chosen before any price on
+                  this page means anything. */}
+              <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <p
+                  className="text-light-1"
+                  style={{ fontSize: 14, marginBottom: 12 }}
+                >
+                  Pricing is tiered by school enrollment. Select your band to
+                  see your prices.
+                </p>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  {ENROLLMENT_TIERS.map((tier) => {
+                    const active = selectedTier === tier.id;
+                    return (
+                      <button
+                        key={tier.id}
+                        type="button"
+                        onClick={() => {
+                          setTierTouched(true);
+                          setSelectedTier(tier.id);
+                        }}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 2,
+                          padding: "10px 22px",
+                          borderRadius: 10,
+                          cursor: "pointer",
+                          minWidth: 160,
+                          border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
+                          background: active
+                            ? COLORS.primary
+                            : COLORS.bgPrimary,
+                          color: active ? "#fff" : COLORS.textPrimary,
+                        }}
+                      >
+                        <span style={{ fontSize: 15, fontWeight: 700 }}>
+                          {tier.label}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: active
+                              ? "rgba(255,255,255,0.85)"
+                              : COLORS.textMuted,
+                          }}
+                        >
+                          {tier.detail}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Pricing Cards */}
               <div className="row y-gap-30">
-                {pricingPlans.map((plan, index) => {
+                {pricingPlans.map((rawPlan, index) => {
+                  const plan = resolvePlan(rawPlan);
                   const isCurrent = isCurrentPlan(plan.id);
                   const isBelowCurrent = isPlanBelowCurrent(plan.id);
-                  const isHighlighted = highlightBusiness && plan.id === "business";
+                  // plan.id is never "business" - the ids are platform / caio /
+                  // caio_teacher - so this condition never fired. The business
+                  // upgrade target is the CAIO bundle.
+                  const isHighlighted = highlightBusiness && plan.id === "caio";
 
                   return (
                     <div
@@ -276,8 +426,8 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                           border: isCurrent
                             ? `2px solid ${COLORS.primary}`
                             : isHighlighted
-                            ? `2px solid ${COLORS.success}`
-                            : undefined,
+                              ? `2px solid ${COLORS.success}`
+                              : undefined,
                           boxShadow: isHighlighted
                             ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
                             : undefined,
@@ -377,11 +527,22 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               carries the real price for checkout. */}
                           <div className="mt-25" style={{ minHeight: "50px" }}>
                             <span className="text-40 fw-700 lh-11 text-dark-1">
-                              {plan.price === 0 ? "Free" : "-"}
+                              {plan.price === 0
+                                ? "Free"
+                                : `$${plan.price.toLocaleString()}`}
                             </span>
+                            {plan.price > 0 && plan.period && (
+                              <span className="text-14 text-light-1">
+                                {" "}
+                                /{plan.period.toLowerCase()}
+                              </span>
+                            )}
                           </div>
 
-                          {/* Credits Badge */}
+                          {/* Credits Badge — hidden while credits are off, and
+                              the reserved strip goes with it so the cards do
+                              not keep an empty gap. */}
+                          {SHOW_CREDITS && (
                           <div
                             style={{
                               minHeight: "45px",
@@ -404,6 +565,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               </div>
                             )}
                           </div>
+                          )}
 
                           {/* CTA Button */}
                           <div className="mt-25">

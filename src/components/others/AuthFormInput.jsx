@@ -21,9 +21,15 @@ export default function AuthFormInput({
   placeholder,
   value,
   onChange,
+  onFocus,
+  onBlur,
   icon = "fa-user",
   required = true,
   showToggle = true,
+  // Extra class for the input itself — used to paint the confirmation state
+  // instead of spelling it out in a line of text underneath.
+  className = "",
+  children,
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordField = type === "password";
@@ -45,8 +51,10 @@ export default function AuthFormInput({
           placeholder={placeholder}
           value={value}
           onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
           required={required}
-          className="auth-input"
+          className={`auth-input${className ? ` ${className}` : ""}`}
           style={isPasswordField && showToggle ? { paddingRight: "3rem" } : {}}
         />
         {isPasswordField && showToggle && (
@@ -64,6 +72,7 @@ export default function AuthFormInput({
           </button>
         )}
       </div>
+      {children}
     </div>
   );
 }

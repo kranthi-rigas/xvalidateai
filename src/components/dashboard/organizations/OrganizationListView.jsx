@@ -11,9 +11,11 @@ import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import CreateOrganizationModal from "./CreateOrganization";
 import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
+import { useContextElement } from "@/context/Context";
 
 export default function OrganizationListView() {
   const navigate = useNavigate();
+  const { userPlan } = useContextElement();
   const [viewOrg, setViewOrg] = useState(null);
   const [organizations, setOrganizations] = useState(null);
   const [search, setSearch] = useState("");
@@ -125,11 +127,15 @@ export default function OrganizationListView() {
 
   const isAdmin = roles.map((r) => r.toUpperCase()).includes("ADMIN");
 
-  const planType =
-    userInfo?.plan?.plan_type?.toUpperCase() || "FREE" || "PREMIUM";
+  // ✅ Read the plan from Context so an upgrade made in this session unlocks the
+  //    button immediately, instead of only after a re-login
+  const planType = (
+    userPlan ||
+    userInfo?.plan?.plan_type ||
+    "FREE"
+  ).toUpperCase();
   const isEnterprisePlan = planType === "ENTERPRISE";
   const isFreePlan = planType === "FREE";
-  const isPremiumPlan = planType === "PREMIUM";
 
   const DEFAULT_ORGS = ["academy51", "myacademy51", "xvalidateai"];
 
@@ -140,13 +146,13 @@ export default function OrganizationListView() {
   ).length;
 
   const hasReachedOrgLimit = !isEnterprisePlan && nonDefaultOrgCount >= 1;
-  const canCreateOrg =
-    isAdmin && !hasReachedOrgLimit && !isFreePlan && !isPremiumPlan;
+  // ✅ Any paid plan can create organizations — only the free plan is gated
+  const canCreateOrg = isAdmin && !hasReachedOrgLimit && !isFreePlan;
 
   const createOrgTooltip = !isAdmin
     ? "Only admin users can create an organization"
-    : isFreePlan || isPremiumPlan
-      ? "As per your plan, creating organizations is not available. Please upgrade to the Business plan to avail this feature."
+    : isFreePlan
+      ? "As per your plan, creating organizations is not available. Please upgrade to a paid plan to avail this feature."
       : hasReachedOrgLimit
         ? "Your current plan allows only one organization. Please upgrade to the Enterprise plan to create more."
         : "";

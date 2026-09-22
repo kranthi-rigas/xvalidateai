@@ -7,6 +7,12 @@ import { useCountryPhone } from "@/data/useCountryPhone";
 import MetaComponent from "@/components/common/MetaComponent";
 import CountrySelect from "@/components/common/CountrySelect";
 import AwsButton from "@/components/common/AwsButton";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import {
+  getPasswordChecks,
+  describeMissingRules,
+  confirmationClass,
+} from "@/utils/password";
 import { useContextElement } from "@/context/Context";
 
 // Auth Components
@@ -23,7 +29,17 @@ export default function AuthPage() {
   const [searchParams] = useSearchParams();
   const invitedEmail = searchParams.get("email");
   const mode = searchParams.get("mode") || "login";
+  // Program the visitor came from (marketing Programs CTAs). Sent with signup
+  // so the backend records it and notifies the team about the enrolment.
+  const program = searchParams.get("program") || null;
+  const PROGRAM_LABELS = {
+    caio: "Chief AI Officer (CAIO) Program",
+    teacher: "AI-Ready Teacher Program",
+  };
+  const programLabel = program ? PROGRAM_LABELS[program] || null : null;
   const [loading, setLoading] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -36,6 +52,13 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const show = useToast();
   const { loadUserPlanFromStorage } = useContextElement();
+
+  // Live confirmation feedback — waiting until submit to say "they don't match"
+  // makes people retype both fields. Same helper on all three password forms.
+  const confirmClass = confirmationClass(
+    formData.password,
+    formData.confirm_password,
+  );
 
   // Country and phone hook for signup
   const {
@@ -204,9 +227,10 @@ export default function AuthPage() {
           return;
         }
 
-        // Validate password strength
-        if (formData.password.length < 8) {
-          show("Password must be at least 8 characters long", {
+        // Validate password strength — the same rules the checklist under the
+        // field shows while typing.
+        if (!getPasswordChecks(formData.password).requiredMet) {
+          show(describeMissingRules(formData.password), {
             type: "error",
             duration: 4000,
           });
@@ -230,6 +254,7 @@ export default function AuthPage() {
           last_name: formData.last_name,
           country: selectedCountry?.label || "",
           phone: phone,
+          ...(program ? { program } : {}),
         };
 
         await signup(signupData);
@@ -328,6 +353,22 @@ export default function AuthPage() {
                       ? "Sign up to start your compliance journey"
                       : "Secure access to your compliance dashboard"}
                   </p>
+                  {mode === "signup" && programLabel && (
+                    <p
+                      style={{
+                        marginTop: 10,
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "#eef2f7",
+                        color: "#0f3357",
+                        fontSize: 14,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Enrolling in the {programLabel} — create your account and
+                      our team will be in touch.
+                    </p>
+                  )}
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
@@ -387,8 +428,16 @@ export default function AuthPage() {
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
+                        onFocus={() => setPasswordFocused(true)}
+                        onBlur={() => setPasswordFocused(false)}
                         icon="fa-key"
-                      />
+                        className={confirmClass}
+                      >
+                        <PasswordStrength
+                          password={formData.password}
+                          show={passwordFocused}
+                        />
+                      </AuthFormInput>
                       <AuthFormInput
                         id="confirm_password"
                         name="confirm_password"
@@ -398,7 +447,7 @@ export default function AuthPage() {
                         value={formData.confirm_password}
                         onChange={handleChange}
                         icon="fa-lock"
-                        showToggle={false}
+                        className={confirmClass}
                       />
                     </div>
                   ) : (

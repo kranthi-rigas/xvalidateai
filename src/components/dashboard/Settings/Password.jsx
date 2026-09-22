@@ -1,12 +1,25 @@
 import React, { useState, memo } from "react";
 import { updatePassword } from "../../../apiIntegration/auth";
 import AwsButton from "@/components/common/AwsButton";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import { getPasswordChecks, describeMissingRules } from "@/utils/password";
 
 /* ===========================
    PASSWORD FIELD (MEMOIZED)
 =========================== */
 const PasswordField = memo(
-  ({ label, name, value, type, onChange, onToggle, placeholder }) => {
+  ({
+    label,
+    name,
+    value,
+    type,
+    onChange,
+    onToggle,
+    onFocus,
+    onBlur,
+    placeholder,
+    children,
+  }) => {
     return (
       <div className="col-md-7">
         <label className="text-16 fw-500 mb-10">{label}</label>
@@ -18,6 +31,8 @@ const PasswordField = memo(
             name={name}
             value={value}
             onChange={onChange}
+            onFocus={onFocus}
+            onBlur={onBlur}
             placeholder={placeholder}
           />
 
@@ -25,6 +40,8 @@ const PasswordField = memo(
             {type === "password" ? "Show" : "Hide"}
           </button>
         </div>
+
+        {children}
       </div>
     );
   }
@@ -48,6 +65,9 @@ export default function Password({ activeTab }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [newPasswordFocused, setNewPasswordFocused] = useState(false);
+
+  const { requiredMet } = getPasswordChecks(form.new_password);
 
   const passwordsMatch =
     form.new_password &&
@@ -72,6 +92,12 @@ export default function Password({ activeTab }) {
 
     if (!passwordsMatch) {
       setError("New password and confirm password do not match");
+      return;
+    }
+
+    // Same rules the checklist under the field lists.
+    if (!requiredMet) {
+      setError(describeMissingRules(form.new_password));
       return;
     }
 
@@ -130,8 +156,15 @@ export default function Password({ activeTab }) {
           type={show.new ? "text" : "password"}
           onChange={handleChange}
           onToggle={() => toggleShow("new")}
+          onFocus={() => setNewPasswordFocused(true)}
+          onBlur={() => setNewPasswordFocused(false)}
           placeholder="New password"
-        />
+        >
+          <PasswordStrength
+            password={form.new_password}
+            show={newPasswordFocused}
+          />
+        </PasswordField>
 
         <PasswordField
           label="Confirm New Password"
@@ -156,7 +189,7 @@ export default function Password({ activeTab }) {
           <AwsButton
             label={loading ? "Saving..." : "Save Password"}
             variant="primary"
-            disabled={loading || !passwordsMatch}
+            disabled={loading || !passwordsMatch || !requiredMet}
             onClick={() => { }}
           />
         </div>

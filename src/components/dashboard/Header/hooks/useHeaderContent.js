@@ -10,8 +10,12 @@ const headerContentMap = {
     description: "Manage and monitor AI tool compliance assessments.",
   },
   "/dashboard/ailiteracy": {
-    title: "AI Literacy",
-    description: "Educational resources and training materials.",
+    title: "Programs",
+    description: "Programs, educational resources and training materials.",
+  },
+  "/dashboard/documents": {
+    title: "My Documents",
+    description: "Documents you have uploaded. Only you can see them.",
   },
   "/dashboard/orgusergroups": {
     title: "User Groups",
@@ -25,6 +29,10 @@ const headerContentMap = {
   "/dashboard/organizations": {
     title: "Organizations",
     description: "Manage your organization settings and members.",
+  },
+  "/dashboard/calendar": {
+    title: "Calendar",
+    description: "Upcoming reviews, assessments and deadlines for your organization.",
   },
   "/dashboard/settings": {
     title: "Settings",

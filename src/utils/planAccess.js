@@ -9,8 +9,8 @@ export const PLAN_HIERARCHY = {
 // Plan display names for badges
 export const PLAN_DISPLAY_NAMES = {
   free: "Free",
-  premium: "Premium",
-  business: "Upgrade to Business",
+  premium: "Platform",
+  business: "Platform + CAIO",
   enterprise: "Enterprise",
 };
 
@@ -108,6 +108,19 @@ export function hasAccess(requiredPlan, userPlan = null) {
   console.log(`🔍 hasAccess: Required="${requiredPlan}" (level ${requiredLevel}), Current="${currentPlan}" (level ${userLevel}), Access=${userLevel >= requiredLevel}`);
   
   return userLevel >= requiredLevel;
+}
+
+/**
+ * Is the user on any paid plan?
+ * Features that only the free plan is meant to be locked out of (creating an
+ * organization, inviting users) use this instead of hasAccess(), so a new or
+ * renamed paid tier is never accidentally treated as free.
+ * @param {string} userPlan - The user's current plan (defaults to stored plan)
+ * @returns {boolean}
+ */
+export function isPaidPlan(userPlan = null) {
+  const currentPlan = (userPlan || getUserPlan() || "free").toLowerCase();
+  return currentPlan !== "free";
 }
 
 /**

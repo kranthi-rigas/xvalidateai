@@ -9,6 +9,12 @@ import {
   updateUserProfile,
 } from "@/apiIntegration/auth";
 import SubscriptionTab from "@/components/dashboard/Settings/SubscriptionTab";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import {
+  getPasswordChecks,
+  describeMissingRules,
+  confirmationClass,
+} from "@/utils/password";
 
 // ── Reusable password input ────────────────────────────────────────────────
 function PasswordInput({
@@ -19,6 +25,9 @@ function PasswordInput({
   placeholder,
   show,
   onToggle,
+  onFocus,
+  onBlur,
+  className = "",
 }) {
   return (
     <div className="relative flex items-center">
@@ -31,9 +40,13 @@ function PasswordInput({
         name={name}
         value={value}
         onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
         required
         placeholder={placeholder}
-        className="block w-full pl-11 pr-10 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground"
+        className={`block w-full pl-11 pr-10 py-2.5 bg-muted/50 border border-border rounded-lg focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all outline-none text-sm text-foreground placeholder-muted-foreground${
+          className ? ` ${className}` : ""
+        }`}
       />
       <button
         type="button"
@@ -60,6 +73,15 @@ export default function ModernSettings() {
     lastName: "",
     email: "",
   });
+  // What the server last confirmed. The form is "dirty" — and Update Profile
+  // enabled — only when the fields differ from this.
+  const [savedProfile, setSavedProfile] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    country: "",
+    avatar: "",
+  });
   const [previewImage, setPreviewImage] = useState("");
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -72,6 +94,7 @@ export default function ModernSettings() {
     new_password: "",
     confirm_password: "",
   });
+  const [newPasswordFocused, setNewPasswordFocused] = useState(false);
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -112,6 +135,16 @@ export default function ModernSettings() {
         prefill({ country: data.country, phone: data.phone });
 
         if (data.avatar_url) setPreviewImage(data.avatar_url);
+
+        // prefill() normalises the phone into code + number, so compare against
+        // the same shape the form will produce rather than the raw field.
+        setSavedProfile({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          phone: data.phone || "",
+          country: data.country || "",
+          avatar: data.avatar_url || "",
+        });
       } catch (err) {
         setProfileError("Failed to load profile. Please try again later.");
         console.error("Error fetching user profile:", err);
@@ -121,6 +154,25 @@ export default function ModernSettings() {
     };
     loadProfile();
   }, []);
+
+  // The banners report the outcome of one action; they should not still be on
+  // screen minutes later or greet the user again when they come back to the tab.
+  useEffect(() => {
+    if (!profileMessage && !profileError) return undefined;
+    const timer = setTimeout(() => {
+      setProfileMessage(null);
+      setProfileError(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [profileMessage, profileError]);
+
+  // Leaving the tab clears whatever it was reporting, on every tab's messages.
+  useEffect(() => {
+    setProfileMessage(null);
+    setProfileError(null);
+    setPasswordError("");
+    setPasswordSuccess("");
+  }, [activeTab]);
 
   const handlePhoneChange = (e) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -180,6 +232,13 @@ export default function ModernSettings() {
         }),
       );
 
+      setSavedProfile({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: `${phoneCode}${phone}`,
+        country: selectedCountry?.label || "",
+        avatar: previewImage || "",
+      });
       setProfileMessage("Profile updated successfully!");
     } catch (err) {
       setProfileError("Failed to update profile. Please try again later.");
@@ -195,7 +254,16 @@ export default function ModernSettings() {
     (profile.lastName?.[0] || "").toUpperCase();
 
   const phoneValidationError = validatePhone();
-  const isProfileFormInvalid = !!phoneValidationError || profileSaving;
+
+  const isProfileDirty =
+    profile.firstName !== savedProfile.firstName ||
+    profile.lastName !== savedProfile.lastName ||
+    `${phoneCode}${phone}` !== savedProfile.phone ||
+    (selectedCountry?.label || "") !== savedProfile.country ||
+    (previewImage || "") !== savedProfile.avatar;
+
+  const isProfileFormInvalid =
+    !!phoneValidationError || profileSaving || !isProfileDirty;
 
   // ── Password handlers ──────────────────────────────────────────────────
   const passwordsMatch =
@@ -207,6 +275,16 @@ export default function ModernSettings() {
     passwordForm.new_password &&
     passwordForm.current_password &&
     passwordForm.new_password === passwordForm.current_password;
+
+  const { requiredMet: newPasswordStrongEnough } = getPasswordChecks(
+    passwordForm.new_password,
+  );
+
+  // The fields carry the answer, the same way the sign-up form does.
+  const confirmClass = confirmationClass(
+    passwordForm.new_password,
+    passwordForm.confirm_password,
+  );
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -229,8 +307,8 @@ export default function ModernSettings() {
       );
       return;
     }
-    if (passwordForm.new_password.length < 8) {
-      setPasswordError("New password must be at least 8 characters long");
+    if (!newPasswordStrongEnough) {
+      setPasswordError(describeMissingRules(passwordForm.new_password));
       return;
     }
     if (!passwordsMatch) {
@@ -297,17 +375,6 @@ export default function ModernSettings() {
           {TAB("edit", "Edit Profile")}
           {TAB("subscription", "Subscription")}
           {TAB("password", "Password")}
-          {TAB("preferences", "Preferences")}
-          <button
-            onClick={() => setActiveTab("close")}
-            className={`py-3 px-3 text-sm font-medium border-b-2 transition-all duration-150 rounded-t-md ml-auto ${
-              activeTab === "close"
-                ? "text-white border-red-500 bg-red-500 shadow-sm"
-                : "border-transparent text-destructive hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-            }`}
-          >
-            Close Account
-          </button>
         </nav>
       </div>
 
@@ -583,9 +650,12 @@ export default function ModernSettings() {
                   name="new_password"
                   value={passwordForm.new_password}
                   onChange={handlePasswordChange}
-                  placeholder="Min 8 characters"
+                  placeholder="Create a strong password"
                   show={showPasswords.new}
                   onToggle={() => togglePasswordVisibility("new")}
+                  onFocus={() => setNewPasswordFocused(true)}
+                  onBlur={() => setNewPasswordFocused(false)}
+                  className={confirmClass}
                 />
                 {isSameAsCurrent && (
                   <p className="text-xs text-red-600">
@@ -593,9 +663,12 @@ export default function ModernSettings() {
                     New Password must be different from your current password
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Must be at least 8 characters long
-                </p>
+                {/* The checklist states the rules, so the old static
+                    "at least 8 characters" line would only repeat one of them. */}
+                <PasswordStrength
+                  password={passwordForm.new_password}
+                  show={newPasswordFocused}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -613,24 +686,8 @@ export default function ModernSettings() {
                   placeholder="Confirm new password"
                   show={showPasswords.confirm}
                   onToggle={() => togglePasswordVisibility("confirm")}
+                  className={confirmClass}
                 />
-                {passwordForm.confirm_password && (
-                  <p
-                    className={`text-xs ${passwordsMatch ? "text-green-600" : "text-red-600"}`}
-                  >
-                    {passwordsMatch ? (
-                      <span>
-                        <i className="fa-solid fa-check mr-1" />
-                        Passwords match
-                      </span>
-                    ) : (
-                      <span>
-                        <i className="fa-solid fa-xmark mr-1" />
-                        Passwords do not match
-                      </span>
-                    )}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -656,7 +713,10 @@ export default function ModernSettings() {
                 label={passwordLoading ? "Updating..." : "Change Password"}
                 variant="primary"
                 disabled={
-                  passwordLoading || !passwordsMatch || !!isSameAsCurrent
+                  passwordLoading ||
+                  !passwordsMatch ||
+                  !!isSameAsCurrent ||
+                  !newPasswordStrongEnough
                 }
                 onClick={() => {}}
               />
@@ -680,36 +740,6 @@ export default function ModernSettings() {
         </div>
       )}
 
-      {/* ── Preferences Tab ───────────────────────────────────────────────── */}
-      {activeTab === "preferences" && (
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          <h2 className="text-xl font-semibold text-primary mb-6">
-            Preferences
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Customize your experience and notification settings.
-          </p>
-        </div>
-      )}
-
-      {/* ── Close Account Tab ─────────────────────────────────────────────── */}
-      {activeTab === "close" && (
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-          <h2
-            className="text-xl font-semibold mb-6"
-            style={{ color: COLORS.error }}
-          >
-            Close Account
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Permanently delete your account and all associated data.
-          </p>
-        </div>
-      )}
-
-      <div className="mt-8 text-center text-xs text-muted-foreground">
-        <p>Last login: Today at 10:42 AM from IP 192.168.1.1</p>
-      </div>
     </div>
   );
 }

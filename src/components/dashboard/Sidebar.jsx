@@ -9,6 +9,11 @@ import {
   PLAN_BADGE_COLORS,
 } from "@/utils/planAccess";
 
+// Shown on hover for any item the current plan does not unlock. Deliberately
+// names no specific tier: several tiers unlock these items, so naming one was
+// both wrong and more detail than the hover needs.
+const LOCKED_TOOLTIP = "Upgrade to paid plan";
+
 // Plan badge component for locked items
 const PlanBadge = ({ requiredPlan, collapsed }) => {
   if (collapsed) return null;
@@ -283,13 +288,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     fontWeight: 500,
                     color: isParentActive ? "#0F3053" : "#64748B",
                   }}
-                  title={
-                    isParentLocked
-                      ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan,
-                        )} plan`
-                      : ""
-                  }
+                  title={isParentLocked ? LOCKED_TOOLTIP : ""}
                 >
                   <img
                     src={isParentActive ? `${item.active_src}` : `${item.src}`}
@@ -337,13 +336,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     color: isParentActive ? "#0F3053" : "#64748B",
                     textDecoration: "none",
                   }}
-                  title={
-                    isParentLocked
-                      ? `Requires ${getRequiredPlanName(
-                          item.requiredPlan,
-                        )} plan`
-                      : ""
-                  }
+                  title={isParentLocked ? LOCKED_TOOLTIP : ""}
                 >
                   <img
                     src={isParentActive ? `${item.active_src}` : `${item.src}`}
@@ -402,13 +395,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                           color: isActiveChild ? "#0F3053" : "#64748B",
                           textDecoration: "none",
                         }}
-                        title={
-                          isChildLocked
-                            ? `Requires ${getRequiredPlanName(
-                                child.requiredPlan,
-                              )} plan`
-                            : ""
-                        }
+                        title={isChildLocked ? LOCKED_TOOLTIP : ""}
                       >
                         {child.iconClass && (
                           <i

@@ -19,8 +19,16 @@ export const sidebarItems = [
         id: 3,
         href: "/dashboard/ailiteracy",
         icon: "fa-solid fa-graduation-cap fa-lg",
-        text: "AI Literacy",
+        text: "Programs",
         permission: "ai_literacy",
+        requiredPlan: null,
+    },
+    {
+        id: 11,
+        href: "/dashboard/documents",
+        icon: "fa-regular fa-folder-open fa-lg",
+        text: "My Documents",
+        permission: null,
         requiredPlan: null,
     },
     {
@@ -39,6 +47,14 @@ export const sidebarItems = [
             { id: "users", icon: "fa fa-users fa-lg", text: "Users", permission: "organization", href: "/dashboard/orgusers", requiredPlan: null },
             { id: "organizations", icon: "fa fa-sitemap fa-lg", text: "Organizations", permission: "organization", href: "/dashboard/organizations", requiredPlan: "business" },
         ],
+    },
+    {
+        id: 10,
+        href: "/dashboard/calendar",
+        icon: "fa-regular fa-calendar fa-lg",
+        text: "Calendar",
+        permission: null,
+        requiredPlan: null,
     },
     {
         id: 5,

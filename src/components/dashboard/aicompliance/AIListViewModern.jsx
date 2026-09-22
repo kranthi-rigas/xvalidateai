@@ -776,6 +776,19 @@ export default function AIListViewModern({
     (col) => col.key === "checkbox" || visibleColumns.includes(col.key),
   );
 
+  // A scan is running while the tool is queued for one or the assessment itself
+  // is under way. Both fields matter: `status` tracks the request, while
+  // `assessment_status` tracks the scan (queued / in_progress / completed) —
+  // "scan_in_progress" never appears in the latter, so checking it there alone
+  // left Edit and Delete live for the whole scan.
+  const isScanRunning = (project) =>
+    project?.status === "approved_for_scan" ||
+    project?.status === "scan_in_progress" ||
+    project?.assessment_status === "queued" ||
+    project?.assessment_status === "in_progress";
+
+  const SCAN_RUNNING_TOOLTIP = "Not available while a scan is in progress";
+
   const actionItems = (() => {
     if (selected.length === 0) return [];
 
@@ -791,10 +804,9 @@ export default function AIListViewModern({
     if (selected.length > 1) {
       if (!isAdmin) return [];
 
-      const anyScanInProgress = selected.some((id) => {
-        const p = liveProjects.find((x) => x.project_id === id);
-        return p?.assessment_status === "scan_in_progress";
-      });
+      const anyScanInProgress = selected.some((id) =>
+        isScanRunning(liveProjects.find((x) => x.project_id === id)),
+      );
 
       return [
         {
@@ -802,11 +814,14 @@ export default function AIListViewModern({
           label: "Delete",
           danger: true,
           disabled: anyScanInProgress,
+          tooltip: anyScanInProgress ? SCAN_RUNNING_TOOLTIP : undefined,
         },
       ];
     }
 
-    const deleteDisabled = project.assessment_status === "scan_in_progress";
+    // Editing a tool mid-scan would change what the running scan is reporting
+    // on, so both Edit and Delete stand down until it finishes.
+    const scanRunning = isScanRunning(project);
 
     // ================= ADMIN =================
     if (isAdmin) {
@@ -836,12 +851,18 @@ export default function AIListViewModern({
 
       // ⚙️ Always available
       actions.push(
-        { key: "edit", label: "Edit" },
+        {
+          key: "edit",
+          label: "Edit",
+          disabled: scanRunning,
+          tooltip: scanRunning ? SCAN_RUNNING_TOOLTIP : undefined,
+        },
         {
           key: "delete",
           label: "Delete",
           danger: true,
-          disabled: deleteDisabled,
+          disabled: scanRunning,
+          tooltip: scanRunning ? SCAN_RUNNING_TOOLTIP : undefined,
         },
       );
 
@@ -859,7 +880,12 @@ export default function AIListViewModern({
         });
       }
 
-      actions.push({ key: "edit", label: "Edit" });
+      actions.push({
+        key: "edit",
+        label: "Edit",
+        disabled: scanRunning,
+        tooltip: scanRunning ? SCAN_RUNNING_TOOLTIP : undefined,
+      });
 
       return actions;
     }
@@ -989,13 +1015,18 @@ export default function AIListViewModern({
                     }
 
                     if (key === "edit") {
+                      if (isScanRunning(project)) return;
                       setEditProjectData(project);
                       setShowEditModal(true);
                     }
 
                     if (key === "delete") {
-                      if (project.assessment_status === "scan_in_progress")
-                        return;
+                      const anyRunning = selected.some((id) =>
+                        isScanRunning(
+                          liveProjects.find((p) => p.project_id === id),
+                        ),
+                      );
+                      if (anyRunning) return;
                       setPendingDeleteIds(selected);
                       setShowDeleteModal(true);
                     }

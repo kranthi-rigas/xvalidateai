@@ -690,10 +690,6 @@ div:focus-within .password-view {
   }
   .auth-terms-agreement a{
     margin-top: 0.75rem;
-    font-size: 1rem;
-  }
-  .auth-terms-agreement p{
-    font-size: 1rem !important;
   }
 }
 
@@ -735,6 +731,19 @@ div:focus-within .password-view {
   outline: none;
   transition: all 0.3s;
   box-sizing: border-box;
+  /* Without these an input falls back to the browser's own control font, and a
+     password field renders its text and bullets larger than the text fields
+     beside it. Stating them keeps every auth field identical. */
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+.auth-input::placeholder {
+  font-family: inherit;
+  font-size: 0.875rem;
+  letter-spacing: normal;
 }
 
 .auth-input:focus {
@@ -1570,8 +1579,14 @@ div:focus-within .password-view {
 .auth-terms-agreement {
   margin-top: 1rem;
   text-align: center;
-  font-size: 1rem;
+  /* Matches .auth-switch-mode p and the field labels — at 1rem this block read
+     a size larger than everything else in the card. */
+  font-size: 0.875rem;
   color: var(--auth-muted-foreground, #64748B);
+}
+
+.auth-terms-agreement a {
+  font-size: inherit;
 }
 
 .auth-terms-agreement p {

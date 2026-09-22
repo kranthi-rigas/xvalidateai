@@ -7,7 +7,8 @@ import { useOutsideClick } from "../../../data/useOutsideClick";
 import CartToggle from "../component/CartToggle";
 import PlanStatusBadge from "../component/PlanStatusBadge";
 import { useContextElement } from "@/context/Context";
-import { hasAccess } from "@/utils/planAccess";
+import { isPaidPlan } from "@/utils/planAccess";
+import { SHOW_CREDITS } from "@/config/features";
 import DashboardBreadcrumb from "@/components/dashboard/DashboardBreadcrumb";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
@@ -578,22 +579,24 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                                 )}
 
                                 {/* Credits */}
-                                <div
-                                  style={{
-                                    fontSize: 12,
-                                    color: "#059669",
-                                    fontWeight: 500,
-                                    padding: "2px 8px",
-                                    backgroundColor: "#ECFDF5",
-                                    borderRadius: "4px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 4,
-                                  }}
-                                >
-                                  <span>$</span>
-                                  <span>{credits} </span>
-                                </div>
+                                {SHOW_CREDITS && (
+                                  <div
+                                    style={{
+                                      fontSize: 12,
+                                      color: "#059669",
+                                      fontWeight: 500,
+                                      padding: "2px 8px",
+                                      backgroundColor: "#ECFDF5",
+                                      borderRadius: "4px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 4,
+                                    }}
+                                  >
+                                    <span>$</span>
+                                    <span>{credits} </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -610,9 +613,9 @@ export default function HeaderDashboard({ collapsed, setCollapsed }) {
                             {/* ================= AWS STYLE ACTIONS ================= */}
 
                             {/* Create Organization */}
-                            {/* Create Organization (permission-based + plan-based: business/enterprise only) */}
+                            {/* Create Organization (permission-based + plan-based: any paid plan) */}
                             {userPermissions.includes("organization") &&
-                              hasAccess("business") && (
+                              isPaidPlan(planType) && (
                                 <>
                                   <Link
                                     to="/dashboard/createorganization"

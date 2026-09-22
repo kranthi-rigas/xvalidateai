@@ -3,17 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { COLORS } from "@/styles/colors";
 import { useContextElement } from "@/context/Context";
 import { fetchUserProfile } from "@/apiIntegration/auth";
+import { describeSubscription } from "@/data/planPricing";
+import { SHOW_CREDITS } from "@/config/features";
 
 // ── Plan config ────────────────────────────────────────────────────────────
 const PLAN_META = {
   free: { label: "Free", icon: "fa-solid fa-rocket", color: COLORS.secondary },
+  // Labels are the entitlement's headline product. The credit record only
+  // stores the entitlement (premium/business), not the specific component, so
+  // a "business" subscriber on the full bundle still shows as Platform + CAIO
+  // here - the exact bundle would need the subscription-status endpoint.
   premium: {
-    label: "Premium",
+    label: "Platform",
     icon: "fa-solid fa-star",
     color: COLORS.primary,
   },
   business: {
-    label: "Business",
+    label: "Platform + CAIO",
     icon: "fa-solid fa-building",
     color: COLORS.success,
   },
@@ -58,6 +64,13 @@ function extractPlanFromObject(obj) {
     status: p.status ?? "ACTIVE",
     voucherCode: p.voucher_code ?? null,
     isSubscription: p.is_subscription_based ?? false,
+    // component + tier identify the exact bundle and band, which is what the
+    // price and the plan name depend on.
+    component: p.component ?? null,
+    tier: p.tier ?? null,
+    planName: p.plan_name ?? null,
+    // describeSubscription reads the raw field names, so keep the shape it wants.
+    subscription: describeSubscription(p),
   };
 }
 
@@ -175,6 +188,7 @@ export default function SubscriptionTab() {
     creditsUsed = null,
     status = "ACTIVE",
     voucherCode = null,
+    subscription = null,
   } = planInfo ?? {};
 
   const meta = PLAN_META[plan] || PLAN_META.free;
@@ -238,7 +252,7 @@ export default function SubscriptionTab() {
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="text-lg font-semibold text-primary">
-                  {meta.label} Plan
+                  {subscription?.name || `${meta.label} Plan`}
                 </span>
                 {isExpired ? (
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-red-100 text-red-700">
@@ -253,17 +267,23 @@ export default function SubscriptionTab() {
               <p className="text-sm text-muted-foreground">
                 {plan === "free"
                   ? "Free forever · No credit card needed"
-                  : "Billed annually"}
+                  : subscription?.tierLabel
+                    ? `Billed annually · ${subscription.tierLabel} band (${subscription.tierDetail})`
+                    : "Billed annually"}
               </p>
             </div>
           </div>
 
           {/* Right side — price for paid plans, upgrade button for free/premium */}
           <div className="flex items-center gap-6">
+            {/* Priced from the bundle and enrollment band on the subscription.
+                The previous map was keyed on entitlement alone, so every
+                "business" subscriber saw $3,000 whichever band they bought.
+                An unknown combination shows no figure rather than a wrong one. */}
             {plan !== "free" && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-primary">
-                  ${{ premium: "1,000", business: "3,000" }[plan] ?? "—"}
+                  {subscription?.priceLabel ?? "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">per year</p>
               </div>
@@ -300,24 +320,32 @@ export default function SubscriptionTab() {
       </div>
 
       {/* ── Stats row ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
+      <div
+        className={`grid ${SHOW_CREDITS ? "grid-cols-3" : "grid-cols-1"} divide-x divide-border border-b border-border`}
+      >
         {[
-          {
-            label: "Credits left",
-            value:
-              creditsLeft !== null
-                ? `${creditsLeft} / ${totalCredits}`
-                : `${totalCredits}`,
-            color:
-              creditsLeft !== null && creditsLeft < totalCredits * 0.2
-                ? "text-red-600"
-                : "text-green-600",
-          },
-          {
-            label: "Credits used",
-            value: usedCredits !== null ? `${usedCredits}` : "—",
-            color: "text-foreground",
-          },
+          // Credit tiles are hidden product-wide for now; the row narrows to
+          // what is left rather than leaving two empty cells.
+          ...(SHOW_CREDITS
+            ? [
+                {
+                  label: "Credits left",
+                  value:
+                    creditsLeft !== null
+                      ? `${creditsLeft} / ${totalCredits}`
+                      : `${totalCredits}`,
+                  color:
+                    creditsLeft !== null && creditsLeft < totalCredits * 0.2
+                      ? "text-red-600"
+                      : "text-green-600",
+                },
+                {
+                  label: "Credits used",
+                  value: usedCredits !== null ? `${usedCredits}` : "—",
+                  color: "text-foreground",
+                },
+              ]
+            : []),
           {
             label: "Expires",
             value: plan === "free" ? "-" : (expiry ?? "—"),
@@ -336,7 +364,7 @@ export default function SubscriptionTab() {
       </div>
 
       {/* ── Credit usage progress bar ─────────────────────────────────────── */}
-      {usagePct !== null && (
+      {SHOW_CREDITS && usagePct !== null && (
         <div className="px-6 sm:px-8 pt-5 pb-1">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">Credit usage</p>
@@ -409,13 +437,33 @@ export default function SubscriptionTab() {
             {
               icon: "fa-regular fa-credit-card",
               label: "Plan type",
-              val: meta.label,
+              val: subscription?.bundleLabel || meta.label,
             },
+            // The band is what sets the price, so a billing screen that omits
+            // it cannot explain the amount above.
+            ...(subscription?.tierLabel
+              ? [
+                  {
+                    icon: "fa-solid fa-school",
+                    label: "Enrollment band",
+                    val: `${subscription.tierLabel} · ${subscription.tierDetail}`,
+                  },
+                ]
+              : []),
             {
               icon: "fa-regular fa-calendar",
               label: "Billing cycle",
               val: plan === "free" ? "-" : "Annually",
             },
+            ...(plan !== "free" && subscription?.priceLabel
+              ? [
+                  {
+                    icon: "fa-solid fa-receipt",
+                    label: "Annual amount",
+                    val: `${subscription.priceLabel} per year`,
+                  },
+                ]
+              : []),
             {
               icon: "fa-regular fa-clock",
               label: "Renewal date",
@@ -426,10 +474,46 @@ export default function SubscriptionTab() {
                     ? `${expiry}${remaining !== null ? ` · ${remaining} day${remaining !== 1 ? "s" : ""} left` : ""}`
                     : "—",
             },
+            ...(SHOW_CREDITS
+              ? [
+                  {
+                    icon: "fa-solid fa-coins",
+                    label: "Credits included",
+                    // The free plan isn't billed on a cycle ("Free forever",
+                    // no renewal date), so its credits are a flat allowance,
+                    // not yearly.
+                    val:
+                      totalCredits == null
+                        ? "-"
+                        : plan === "free"
+                          ? totalCredits.toLocaleString("en-US")
+                          : `${totalCredits.toLocaleString("en-US")} per year`,
+                  },
+                ]
+              : []),
+            {
+              icon: "fa-regular fa-circle-check",
+              label: "Status",
+              val: isExpired
+                ? "Expired"
+                : status === "ACTIVE"
+                  ? "Active"
+                  : status,
+            },
+            ...(voucherCode
+              ? [
+                  {
+                    icon: "fa-solid fa-ticket",
+                    label: "Voucher code",
+                    val: voucherCode,
+                  },
+                ]
+              : []),
             {
               icon: "fa-regular fa-user",
               label: "Seats",
-              val: plan === "business" ? "Multiple users" : "Single user",
+              // Any paid plan can create an organization and invite users
+              val: plan === "free" ? "Single user" : "Multiple users",
             },
           ].map(({ icon, label, val }) => (
             <div
