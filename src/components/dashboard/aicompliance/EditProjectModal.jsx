@@ -5,6 +5,7 @@ import useToast from "../../../hooks/useToast";
 import ReusableModal from "../../common/Reusablemodal";
 import FormField from "../../common/Formfield";
 import CreditInfoNote from "./CreditInfoNote";
+import { SHOW_CREDITS } from "@/config/features";
 import { useContextElement } from "@/context/Context";
 
 export default function EditProjectModal({
@@ -20,7 +21,7 @@ export default function EditProjectModal({
   const { refreshUserPlan } = useContextElement();
 
   // Show credit note only for Admin evaluation
-  const showCreditsNote = isAdmin && !isAuditor;
+  const showCreditsNote = SHOW_CREDITS && isAdmin && !isAuditor;
 
   /* ---------- STATE ---------- */
   const [form, setForm] = useState({

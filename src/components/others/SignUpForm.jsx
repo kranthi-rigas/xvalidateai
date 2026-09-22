@@ -7,6 +7,8 @@ import PhoneInput from "../common/PhoneInput";
 import AuthButton from "@/components/common/AuthButton";
 import { GoogleLoginButton } from "../commonComponents";
 import useToast from "../../hooks/useToast";
+import PasswordStrength from "@/components/common/PasswordStrength";
+import { getPasswordChecks, describeMissingRules } from "@/utils/password";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useRef } from "react";
 
@@ -64,6 +66,8 @@ export default function SignUpForm() {
 
     setPhone(value);
   };
+
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   // Check if passwords match
   const passwordsMatch =
@@ -194,9 +198,9 @@ export default function SignUpForm() {
       return;
     }
 
-    // ❌ Password length
-    if (formData.password.length < 8) {
-      show("Password must be at least 8 characters long", { type: "error" });
+    // ❌ Password strength — same rule set the checklist below the field shows
+    if (!getPasswordChecks(formData.password).requiredMet) {
+      show(describeMissingRules(formData.password), { type: "error" });
       return;
     }
 
@@ -294,6 +298,8 @@ export default function SignUpForm() {
                       placeholder="Password"
                       value={formData.password}
                       onChange={handleChange}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
                     />
                     <button
                       type="button"
@@ -305,6 +311,10 @@ export default function SignUpForm() {
                       {showPassword ? "👁️" : "👁️‍🗨️"}
                     </button>
                   </div>
+                  <PasswordStrength
+                    password={formData.password}
+                    show={passwordFocused}
+                  />
                 </div>
 
                 <div className="col-lg-6">

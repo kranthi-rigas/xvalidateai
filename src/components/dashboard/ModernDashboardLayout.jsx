@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Link,
   Outlet,
@@ -11,9 +11,10 @@ import { useContextElement } from "@/context/Context";
 import { sidebarItems } from "@/data/dashBoardSidebar";
 import Header from "./Header";
 import { logoutUser, fetchUserProfile } from "@/apiIntegration/auth";
-import AwsButton from "@/components/common/AwsButton";
 import UpgradeBanner from "./UpgradeBanner";
 import { isUpgradeBannerDismissed } from "./useUpgradeNudge";
+import { PLAN_DISPLAY_NAMES } from "@/utils/planAccess";
+import { COLORS } from "@/styles/colors";
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
@@ -30,6 +31,10 @@ export default function ModernDashboardLayout() {
   const [roleBadgeClass, setRoleBadgeClass] = useState("");
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("User");
+  const [userEmail, setUserEmail] = useState("");
+  // The account menu that opens upward out of the sidebar footer.
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef(null);
 
   // ✅ Staff flags — controls Administration visibility
   const [isStaffAdmin, setIsStaffAdmin] = useState(false);
@@ -74,6 +79,7 @@ export default function ModernDashboardLayout() {
           }
 
           setUserName(fullName);
+          setUserEmail(userData?.email || "");
           setUserRole(formattedRole);
           setRoleBadgeClass(badgeClass);
 
@@ -175,6 +181,34 @@ export default function ModernDashboardLayout() {
       document.body.style.overflow = "";
     };
   }, [mobileSidebarOpen]);
+
+  const planLabel =
+    PLAN_DISPLAY_NAMES[userPlan] ||
+    (userPlan ? userPlan.charAt(0).toUpperCase() + userPlan.slice(1) : "Free");
+  // Enterprise is the top tier, so there is nothing to sell it.
+  const canUpgrade = userPlan !== "enterprise";
+
+  useEffect(() => {
+    if (!accountMenuOpen) return undefined;
+    const onPointerDown = (e) => {
+      if (!accountMenuRef.current?.contains(e.target))
+        setAccountMenuOpen(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setAccountMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [accountMenuOpen]);
+
+  // A route change should not leave the menu hanging open.
+  useEffect(() => {
+    setAccountMenuOpen(false);
+  }, [location.pathname]);
 
   const effectiveCollapsed = sidebarCollapsed && !mobileSidebarOpen;
 
@@ -424,41 +458,93 @@ export default function ModernDashboardLayout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
-          <div
-            className={`flex items-center ${effectiveCollapsed ? "justify-center" : ""} p-2 bg-muted/50 rounded-lg border border-border`}
-          >
-            {effectiveCollapsed ? (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                {userName
-                  .split(" ")
-                  .map((n) => n.charAt(0).toUpperCase())
-                  .join("") || "RP"}
-              </div>
-            ) : (
-              <>
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs mr-3">
-                  {userName
-                    .split(" ")
-                    .map((n) => n.charAt(0).toUpperCase())
-                    .join("") || "RP"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {userName || "User"}
+        {/* Account — the trigger shows who is signed in and their plan; the
+            panel it opens carries the details and the account actions, the way
+            a sidebar footer account menu usually does. */}
+        <div
+          className="p-4 border-t border-sidebar-border relative"
+          ref={accountMenuRef}
+        >
+          {accountMenuOpen && (
+            <div
+              className="absolute bottom-full left-4 right-4 mb-2 rounded-xl border border-border bg-card shadow-lg overflow-hidden z-50"
+              role="menu"
+            >
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {userName || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {planLabel} plan
+                </p>
+                {userEmail && (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {userEmail}
                   </p>
-                  <span className={roleBadgeClass}>{userRole}</span>
-                </div>
+                )}
+              </div>
+
+              <div className="py-1">
+                {canUpgrade && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      navigate("/dashboard/pricing");
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <i className="fa-solid fa-arrow-up-right-dots w-4 text-center text-muted-foreground" />
+                    Upgrade plan
+                  </button>
+                )}
                 <button
-                  onClick={handleLogoutClick}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  title="Logout"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    handleLogoutClick();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                 >
-                  <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  <i className="fa-solid fa-arrow-right-from-bracket w-4 text-center text-muted-foreground" />
+                  Log out
                 </button>
-              </>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setAccountMenuOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={accountMenuOpen}
+            title={effectiveCollapsed ? `${userName} · ${userRole}` : "Account"}
+            className={`w-full flex items-center ${
+              effectiveCollapsed ? "justify-center" : ""
+            } p-2 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors text-left`}
+          >
+            <div
+              className={`w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 ${
+                effectiveCollapsed ? "" : "mr-3"
+              }`}
+            >
+              {userName
+                .split(" ")
+                .map((n) => n.charAt(0).toUpperCase())
+                .join("") || "RP"}
+            </div>
+
+            {!effectiveCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {userName || "User"}
+                </p>
+                <span className={roleBadgeClass}>{userRole}</span>
+              </div>
             )}
-          </div>
+          </button>
         </div>
       </aside>
 
@@ -483,96 +569,82 @@ export default function ModernDashboardLayout() {
         </div>
       </main>
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Confirmation Modal — headline question, the account it applies
+          to, then the two actions stacked with the destructive one first. */}
       {showLogoutModal && (
         <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={() => setShowLogoutModal(false)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
+          onClick={() => !isLoggingOut && setShowLogoutModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm log out"
         >
           <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "24px",
-              maxWidth: "400px",
-              width: "90%",
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            }}
+            className="bg-white w-full shadow-xl"
+            style={{ maxWidth: 460, padding: 32, borderRadius: 20 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ marginBottom: "16px", textAlign: "center" }}>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "50%",
-                  backgroundColor: "#fee2e2",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px auto",
-                }}
-              >
-                <i
-                  className="fa-solid fa-power-off"
-                  style={{ fontSize: "24px", color: "#ef4444" }}
-                ></i>
-              </div>
-              <h3
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "600",
-                  color: "#1f2937",
-                  marginBottom: "8px",
-                }}
-              >
-                Confirm Logout
-              </h3>
-              <p
-                style={{
-                  fontSize: "16px",
-                  color: "#6b7280",
-                  lineHeight: "1.5",
-                }}
-              >
-                Are you sure you want to logout?
-              </p>
-            </div>
+            <h3 className="text-2xl font-bold text-center text-foreground leading-snug">
+              Are you sure you
+              <br />
+              want to log out?
+            </h3>
+
+            {/* Which account is being signed out — worth stating when someone
+                keeps more than one. */}
             <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                justifyContent: "center",
-                marginTop: "24px",
-              }}
+              className="flex items-center gap-3 mt-6 p-4 border border-border"
+              style={{ borderRadius: 14 }}
             >
-              <AwsButton
-                label="Cancel"
-                variant="secondary"
-                onClick={() => setShowLogoutModal(false)}
-                disabled={isLoggingOut}
-                size="lg"
-              />
-              <AwsButton
-                loading={isLoggingOut}
-                label={isLoggingOut ? "Logging out..." : "Logout"}
-                variant="danger"
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                {userName
+                  .split(" ")
+                  .map((n) => n.charAt(0).toUpperCase())
+                  .join("") || "RP"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {userName || "User"}
+                </p>
+                {userEmail && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {userEmail}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Same colours as AwsButton's primary and secondary variants, so
+                the dialog's actions match every other button in the app. */}
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                size="lg"
-              />
+                className="w-full py-3.5 text-white text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: COLORS.primary,
+                  border: `1px solid ${COLORS.primary}`,
+                  borderRadius: 999,
+                }}
+              >
+                {isLoggingOut ? "Logging out…" : "Log out"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+                className="w-full py-3.5 text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: "#fff",
+                  color: COLORS.primary,
+                  border: `1px solid ${COLORS.primary}`,
+                  borderRadius: 999,
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

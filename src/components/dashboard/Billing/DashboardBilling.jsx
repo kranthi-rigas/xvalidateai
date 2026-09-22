@@ -6,6 +6,7 @@ import {
   createPaypalSubscription,
 } from "@/apiIntegration/vouchers";
 import useToast from "../../../hooks/useToast";
+import { SHOW_CREDITS } from "@/config/features";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
@@ -610,7 +611,7 @@ export default function DashboardBilling() {
                     </span>
                   </div>
 
-                  {(voucherData?.credits || plan.credits) && (
+                  {SHOW_CREDITS && (voucherData?.credits || plan.credits) && (
                     <div className="mt-20 px-15 py-10 rounded-8 bg-purple-3">
                       <div className="text-13 text-purple-1 text-center">
                         <i className="fa-solid fa-coins mr-1"></i>

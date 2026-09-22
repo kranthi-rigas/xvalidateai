@@ -1,8 +1,12 @@
 import React from "react";
+import { SHOW_CREDITS } from "@/config/features";
 
 export default function CreditInfoNote({
   text = "Each assessment consumes 10 credits",
 }) {
+  // Credits are hidden product-wide for now; this note is only about them.
+  if (!SHOW_CREDITS) return null;
+
   return (
     <div
       style={{
