@@ -184,12 +184,15 @@ export default function ModernDashboardLayout() {
     return location.pathname.startsWith(href);
   };
 
-  // ✅ Lock any item whose requiredPlan isn't met by the current user's plan
+  // ✅ Plan-gated items (Organization, Audit Trail, …) are locked for free users
+  //    only — any paid plan type unlocks them
   const isAuditTrailLocked = (item) => {
     if (!item.requiredPlan) return false;
-    if (userPlan === "enterprise") return false; // enterprise >= business
-    return userPlan !== item.requiredPlan.toLowerCase();
+    return !userPlan || userPlan === "free";
   };
+
+  // ✅ Message shown on locked items
+  const getLockMessage = () => "Upgrade to paid plan";
 
   // ✅ Filter sidebar — hide Administration unless is_staff_admin or is_staff_user
   const canSeeAdministration = isStaffAdmin || isStaffUser;
@@ -306,7 +309,7 @@ export default function ModernDashboardLayout() {
                   <div className="relative group">
                     <button
                       onClick={() => navigate("/dashboard/pricing")}
-                      title={effectiveCollapsed ? "Business Plan Required" : ""}
+                      title={effectiveCollapsed ? getLockMessage() : ""}
                       className={`nav-item flex items-center justify-between w-full ${
                         effectiveCollapsed ? "px-2" : "px-4"
                       } py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer`}
@@ -342,7 +345,7 @@ export default function ModernDashboardLayout() {
                           className="text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap"
                           style={{ backgroundColor: "#0F3053" }}
                         >
-                          🔒 Business Plan Required
+                          🔒 {getLockMessage()}
                         </div>
                       </div>
                     )}

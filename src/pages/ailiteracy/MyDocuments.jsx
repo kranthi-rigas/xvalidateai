@@ -6,6 +6,7 @@ import {
   uploadDocument,
   getDocumentUrl,
 } from "@/apiIntegration/documents";
+import useToast from "@/hooks/useToast";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -34,6 +35,7 @@ export default function MyDocuments() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
+  const show = useToast();
 
   const load = useCallback(async () => {
     try {
@@ -58,7 +60,12 @@ export default function MyDocuments() {
     if (!file) return;
 
     if (file.size > MAX_FILE_BYTES) {
-      setError(`"${file.name}" is larger than the ${formatSize(MAX_FILE_BYTES)} limit.`);
+      show(
+        `"${file.name}" is ${formatSize(file.size)} — larger than the ${formatSize(
+          MAX_FILE_BYTES,
+        )} limit.`,
+        { type: "error" },
+      );
       return;
     }
 
