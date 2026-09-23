@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import Preloader from "@/components/common/Preloader.jsx";
 import MetaComponent from "@/components/common/MetaComponent.jsx";
 import HeaderAuth from "@/components/layout/headers/HeaderAuth.jsx";
-import { googleLogin, updateUserProfile } from "@/apiIntegration/auth.js";
+import {
+  googleLogin,
+  updateUserProfile,
+  fetchUserProfile,
+} from "@/apiIntegration/auth.js";
 import { useNavigate } from "react-router-dom";
 import useToast from "@/hooks/useToast";
 import { useContextElement } from "@/context/Context";
@@ -64,7 +68,27 @@ export default function GoogleLoginPage() {
         localStorage.setItem("user_info", JSON.stringify(res.user));
         await refreshUserPlan();
 
-        const account = res.user || {};
+        // Only a first Google signup is asked for these. The login response
+        // does not always carry them, so a returning user is confirmed against
+        // the saved profile before putting the form in their way.
+        let account = res.user || {};
+        if (!account.phone || !account.country) {
+          try {
+            const profile = await fetchUserProfile(res.access_token);
+            if (profile) {
+              account = { ...account, ...profile };
+              localStorage.setItem("user_info", JSON.stringify(account));
+            }
+          } catch (profileErr) {
+            // The profile call is only a second opinion — if it fails, fall
+            // through and ask, which is recoverable either way.
+            console.warn(
+              "Could not load profile after Google login",
+              profileErr,
+            );
+          }
+        }
+
         if (!account.phone || !account.country) {
           setUser(account);
           setStatus("details");
@@ -142,83 +166,88 @@ export default function GoogleLoginPage() {
         {status === "verifying" ? (
           <div className="text-center py-60">Redirecting...</div>
         ) : (
-          <div className="form-page__content">
-            <div className="container">
-              <div className="row justify-center py-60">
-                <div className="col-xl-5 col-lg-7 col-md-9">
-                  <div
-                    className="bg-white shadow-4"
-                    style={{ borderRadius: 16, padding: "32px 28px" }}
-                  >
-                    <h3
-                      className="text-24 fw-700"
-                      style={{ color: COLORS.textPrimary, marginBottom: 6 }}
-                    >
-                      One last step
-                    </h3>
-                    <p
-                      className="text-14"
-                      style={{
-                        color: COLORS.textMuted,
-                        lineHeight: 1.6,
-                        marginBottom: 24,
-                      }}
-                    >
-                      Google does not share a phone number or country. Add them
-                      so we can reach you about your account
-                      {user?.email ? ` (${user.email})` : ""}.
-                    </p>
+          /* Centred on the page, and without the template's .row/.col — their
+             negative margins pushed the fields past the card's padding. */
+          <div
+            style={{
+              minHeight: "calc(100vh - 160px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "40px 20px",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 440,
+                background: "#fff",
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: 16,
+                padding: "32px 28px",
+                boxShadow: "0 6px 28px rgba(15, 48, 83, 0.08)",
+              }}
+            >
+              <h3
+                className="text-24 fw-700"
+                style={{ color: COLORS.textPrimary, marginBottom: 8 }}
+              >
+                One last step
+              </h3>
+              <p
+                className="text-14"
+                style={{
+                  color: COLORS.textMuted,
+                  lineHeight: 1.6,
+                  marginBottom: 24,
+                }}
+              >
+                Google does not share a phone number or country. Add them so we
+                can reach you about your account
+                {user?.email ? ` (${user.email})` : ""}.
+              </p>
 
-                    <form onSubmit={handleSubmit}>
-                      <div className="row y-gap-20">
-                        <div className="col-12">
-                          <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
-                            Country *
-                          </label>
-                          <CountrySelect
-                            countries={countries}
-                            value={selectedCountry}
-                            onChange={(option) => {
-                              setError("");
-                              onCountryChange(option);
-                            }}
-                          />
-                        </div>
-
-                        <div className="col-12">
-                          <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
-                            Phone Number *
-                          </label>
-                          <PhoneInput
-                            phone={phone}
-                            phoneCode={phoneCode}
-                            onChange={onPhoneChange}
-                          />
-                        </div>
-
-                        {error && (
-                          <div className="col-12">
-                            <div
-                              className="text-14"
-                              style={{ color: COLORS.error }}
-                            >
-                              {error}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="col-12">
-                          <AuthButton
-                            type="submit"
-                            label={saving ? "Saving…" : "Continue"}
-                            disabled={saving}
-                          />
-                        </div>
-                      </div>
-                    </form>
-                  </div>
+              <form onSubmit={handleSubmit}>
+                <div style={{ marginBottom: 20 }}>
+                  <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
+                    Country *
+                  </label>
+                  <CountrySelect
+                    countries={countries}
+                    value={selectedCountry}
+                    onChange={(option) => {
+                      setError("");
+                      onCountryChange(option);
+                    }}
+                  />
                 </div>
-              </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
+                    Phone Number *
+                  </label>
+                  <PhoneInput
+                    phone={phone}
+                    phoneCode={phoneCode}
+                    onChange={onPhoneChange}
+                  />
+                </div>
+
+                {error && (
+                  <div
+                    className="text-14"
+                    style={{ color: COLORS.error, marginBottom: 16 }}
+                  >
+                    {error}
+                  </div>
+                )}
+
+                <AuthButton
+                  type="submit"
+                  label={saving ? "Saving…" : "Continue"}
+                  disabled={saving}
+                />
+              </form>
             </div>
           </div>
         )}
