@@ -438,7 +438,7 @@ export default function DashboardBilling() {
                 {/* Billing Address — laid out for whichever country is
                     chosen, in three rows so the form stays short. */}
                 <div className="mb-20 d-flex gap-10 flex-wrap">
-                  <div style={{ flex: "1 1 240px" }}>
+                  <div style={{ flex: "1 1 260px" }}>
                     <label htmlFor="country" className={labelClass}>
                       Country <span className="text-red-1">*</span>
                     </label>
@@ -453,7 +453,7 @@ export default function DashboardBilling() {
                     />
                   </div>
 
-                  <div style={{ flex: "2 1 300px" }}>
+                  <div style={{ flex: "1 1 260px" }}>
                     <label htmlFor="addressLine1" className={labelClass}>
                       Street Address <span className="text-red-1">*</span>
                     </label>
@@ -477,7 +477,7 @@ export default function DashboardBilling() {
                 </div>
 
                 <div className="mb-20 d-flex gap-10 flex-wrap">
-                  <div style={{ flex: "1 1 200px" }}>
+                  <div style={{ flex: "1 1 260px" }}>
                     <label htmlFor="addressLine2" className={labelClass}>
                       Apt, Suite, Unit{" "}
                       <span style={{ color: "#6b7280" }}>(optional)</span>
@@ -495,7 +495,7 @@ export default function DashboardBilling() {
                     />
                   </div>
 
-                  <div style={{ flex: "2 1 260px" }}>
+                  <div style={{ flex: "1 1 260px" }}>
                     <label htmlFor="city" className={labelClass}>
                       {addressFormat.cityLabel}{" "}
                       <span className="text-red-1">*</span>
@@ -518,7 +518,7 @@ export default function DashboardBilling() {
                 </div>
 
                 <div className="mb-20 d-flex gap-10 flex-wrap">
-                  <div style={{ flex: "2 1 220px" }}>
+                  <div style={{ flex: "1 1 260px" }}>
                     <label htmlFor="region" className={labelClass}>
                       {addressFormat.regionLabel}{" "}
                       {addressFormat.regionRequired ? (
@@ -561,7 +561,7 @@ export default function DashboardBilling() {
 
                   {/* Countries without postal codes get no dead field. */}
                   {addressFormat.hasPostalCode && (
-                    <div style={{ flex: "1 1 160px" }}>
+                    <div style={{ flex: "1 1 260px" }}>
                       <label htmlFor="postalCode" className={labelClass}>
                         {addressFormat.postalLabel}{" "}
                         <span className="text-red-1">*</span>
