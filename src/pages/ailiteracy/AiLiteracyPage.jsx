@@ -14,8 +14,10 @@ import PdfViewerModal from "./PdfViewerModal";
 import { useContextElement } from "@/context/Context";
 import { hasAccess } from "@/utils/planAccess";
 import {
-  subscribeToNewsletter,
+  subscribeToProgram,
   getNewsletterStatus,
+  NEWSLETTER_PROGRAMS,
+  EMPTY_NEWSLETTER_STATUS,
 } from "../../apiIntegration/newsletter";
 import PageLoader from "@/components/common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
@@ -171,28 +173,23 @@ const PLAYBOOK_MODULES = [
     ],
   },
 ];
-function NotifyButton({ showToast, enrolled, setEnrolled }) {
+function NotifyButton({ showToast, programId, enrolled, setEnrolled }) {
   const [submitting, setSubmitting] = React.useState(false);
 
   const handleNotify = async () => {
-    const userInfo = JSON.parse(localStorage.getItem("user_info") || "{}");
-    const email = userInfo?.email || "";
-
-    if (!email) {
-      showToast("Could not find your email. Please log in again.", "error");
-      return;
-    }
-
     setSubmitting(true);
     try {
-      await subscribeToNewsletter(email, true);
-      setEnrolled(true);
-      showToast("You're on the list! We'll notify you at launch.", "success");
+      // The programme is what identifies the sign-up; the account comes from
+      // the auth token.
+      await subscribeToProgram(programId, true);
+      setEnrolled(programId);
+      showToast("You're on the list! We'll notify you at launch.", {
+        type: "success",
+      });
     } catch (err) {
-      showToast(
-        err?.message || "Something went wrong. Please try again.",
-        "error",
-      );
+      showToast(err?.message || "Something went wrong. Please try again.", {
+        type: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -284,13 +281,27 @@ export default function AiLiteracyPage() {
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [pdfViewerDoc, setPdfViewerDoc] = useState(null);
   const [newsletterStatus, setNewsletterStatus] = useState(null); // null = not yet fetched
+  // Which programmes this user has asked to be notified about, per the API.
+  const notifiedPrograms = newsletterStatus?.subscribedPrograms ?? [];
   const pageLoading = usePageLoader([newsletterStatus]);
 
   useEffect(() => {
     getNewsletterStatus()
-      .then((isEnrolled) => setNewsletterStatus(isEnrolled))
-      .catch(() => setNewsletterStatus(false)); // unblock loader on error
+      .then(setNewsletterStatus)
+      .catch(() => setNewsletterStatus(EMPTY_NEWSLETTER_STATUS)); // unblock loader on error
   }, []);
+
+  // Reflect a fresh sign-up straight away rather than refetching the status.
+  const markProgramNotified = (program) =>
+    setNewsletterStatus((prev) => {
+      const base = prev ?? EMPTY_NEWSLETTER_STATUS;
+      if (base.subscribedPrograms.includes(program)) return base;
+      return {
+        ...base,
+        optedIn: true,
+        subscribedPrograms: [...base.subscribedPrograms, program],
+      };
+    });
 
   const scrollToTop = () => {
     if (topRef.current) {
@@ -380,7 +391,9 @@ export default function AiLiteracyPage() {
         organizationName,
       );
     } catch (err) {
-      showToast("Failed to download document. Please try again.", "error");
+      showToast("Failed to download document. Please try again.", {
+        type: "error",
+      });
     }
   };
 
@@ -552,8 +565,9 @@ export default function AiLiteracyPage() {
 
                 <NotifyButton
                   showToast={showToast}
-                  enrolled={newsletterStatus === true}
-                  setEnrolled={(val) => setNewsletterStatus(val)}
+                  programId={NEWSLETTER_PROGRAMS.CAIO}
+                  enrolled={notifiedPrograms.includes(NEWSLETTER_PROGRAMS.CAIO)}
+                  setEnrolled={markProgramNotified}
                 />
               </div>
 
@@ -635,8 +649,11 @@ export default function AiLiteracyPage() {
 
                 <NotifyButton
                   showToast={showToast}
-                  enrolled={newsletterStatus === true}
-                  setEnrolled={(val) => setNewsletterStatus(val)}
+                  programId={NEWSLETTER_PROGRAMS.AI_READY_TEACHER}
+                  enrolled={notifiedPrograms.includes(
+                    NEWSLETTER_PROGRAMS.AI_READY_TEACHER,
+                  )}
+                  setEnrolled={markProgramNotified}
                 />
               </div>
             </div>

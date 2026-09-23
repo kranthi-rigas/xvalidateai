@@ -3,15 +3,18 @@ import { PLAN_HIERARCHY } from "@/utils/planAccess";
 import { useContextElement } from "@/context/Context";
 import { SHOW_CREDITS } from "@/config/features";
 import { COLORS } from "@/styles/colors";
+import AwsButton from "@/components/common/AwsButton";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
 import {
   ENROLLMENT_TIERS,
   TIER_PRICING,
+  BUNDLE_LABEL,
   creditsFor,
   normalizeComponent,
   normalizeTier,
+  tierLabel,
 } from "@/data/planPricing";
 
 // Pricing is modular and tiered by enrollment: a school picks its enrollment
@@ -50,7 +53,7 @@ const PLATFORM_FEATURES = [
 ];
 const CAIO_FEATURES = [
   "Chief AI Officer (CAIO) programme",
-  "AI Analytics",
+  "Tool report",
   "Priority support",
 ];
 const TEACHER_FEATURES = ["AI-Ready Teacher enablement programme"];
@@ -65,7 +68,7 @@ const pricingPlans = [
     iconColor: COLORS.primary,
     period: "Annually",
     popular: false,
-    buttonText: "Choose Platform",
+    buttonText: "Choose this plan",
     buttonStyle: "-outline-purple-1 text-purple-1",
     features: [...PLATFORM_FEATURES.map(inc)],
   },
@@ -78,7 +81,7 @@ const pricingPlans = [
     iconColor: COLORS.primary,
     period: "Annually",
     popular: true,
-    buttonText: "Choose Platform + CAIO",
+    buttonText: "Choose this plan",
     buttonStyle: "-purple-1 text-white",
     features: [...PLATFORM_FEATURES.map(inc), ...CAIO_FEATURES.map(inc)],
   },
@@ -187,6 +190,29 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     return { ...plan, price, credits: creditsFor(price), tier: selectedTier };
   };
 
+  // The page opens on a single call to action; the bands and the plan cards
+  // come in once the person says they are shopping. Arriving from an upgrade
+  // link is already that decision, so it skips the gate.
+  const [plansOpen, setPlansOpen] = useState(
+    Boolean(location.state?.highlightPlan),
+  );
+
+  // Navigating to Pricing again — the sidebar link, even from this very page —
+  // is a fresh visit, so it returns to the call to action. location.key changes
+  // on every navigation, including one to the URL already showing.
+  useEffect(() => {
+    setPlansOpen(Boolean(location.state?.highlightPlan));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+
+  // The cards carry AOS attributes, and AOS only knows about elements that
+  // existed when it last refreshed — without this they reveal as blank.
+  useEffect(() => {
+    if (!plansOpen) return undefined;
+    const timer = setTimeout(() => AOS.refreshHard(), 50);
+    return () => clearTimeout(timer);
+  }, [plansOpen]);
+
   // ── Business card highlight state (set when Premium user clicks Upgrade) ──
   const [highlightBusiness, setHighlightBusiness] = useState(
     location.state?.highlightPlan === "business",
@@ -291,6 +317,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
           ? "free"
           : null);
 
+  // What the visitor is on today, for the landing's status chip.
+  const currentBundleLabel = BUNDLE_LABEL[currentComponent] || null;
+  const currentTierLabel = tierLabel(findPlanRecord()?.tier);
+
   const currentLevel = COMPONENT_ORDER[currentComponent] ?? 0;
 
   const isCurrentPlan = (id) => id === currentComponent;
@@ -320,7 +350,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   };
 
   return (
-    <div className="spicy-y">
+    /* Same full-height panel the My Documents page uses, so the white card
+       reaches the bottom of the viewport instead of stopping under a short
+       empty state. */
+    <div className="spicy-y" style={{ height: "100%" }}>
       <style>{`
         @keyframes pulse-business {
           0%, 100% { transform: translateY(0) scale(1); }
@@ -328,364 +361,120 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
         }
       `}</style>
 
-      <div className="row y-gap-30">
-        <div className="col-12">
-          <div className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100">
+      <div className="row y-gap-30" style={{ height: "100%" }}>
+        <div className="col-12" style={{ height: "100%" }}>
+          <div
+            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
+            style={{ minHeight: "100%", boxSizing: "border-box" }}
+          >
             <div className="py-20 px-15 md:py-30 md:px-30">
-              {/* Enrollment tier selector. Pricing is tiered by school
-                  enrollment, so the band has to be chosen before any price on
-                  this page means anything. */}
-              <div style={{ textAlign: "center", marginBottom: 28 }}>
-                <p
-                  className="text-light-1"
-                  style={{ fontSize: 14, marginBottom: 12 }}
-                >
-                  Pricing is tiered by school enrollment. Select your band to
-                  see your prices.
-                </p>
+              {!plansOpen ? (
+                /* Nothing to compare until someone asks to compare it — but
+                   the landing still has to answer "what is on offer and what
+                   am I on now" before the click. */
                 <div
                   style={{
-                    display: "inline-flex",
-                    flexWrap: "wrap",
-                    gap: 8,
+                    minHeight: "62vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                     justifyContent: "center",
+                    textAlign: "center",
+                    padding: "32px 16px",
                   }}
                 >
-                  {ENROLLMENT_TIERS.map((tier) => {
-                    const active = selectedTier === tier.id;
-                    return (
-                      <button
-                        key={tier.id}
-                        type="button"
-                        onClick={() => {
-                          setTierTouched(true);
-                          setSelectedTier(tier.id);
-                        }}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: 2,
-                          padding: "10px 22px",
-                          borderRadius: 10,
-                          cursor: "pointer",
-                          minWidth: 160,
-                          border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
-                          background: active
-                            ? COLORS.primary
-                            : COLORS.bgPrimary,
-                          color: active ? "#fff" : COLORS.textPrimary,
-                        }}
-                      >
-                        <span style={{ fontSize: 15, fontWeight: 700 }}>
-                          {tier.label}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 12,
-                            color: active
-                              ? "rgba(255,255,255,0.85)"
-                              : COLORS.textMuted,
-                          }}
-                        >
-                          {tier.detail}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: COLORS.primaryLighter,
+                      color: COLORS.primary,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 18,
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-tags"
+                      data-fa-i2svg="false"
+                      aria-hidden="true"
+                      style={{ fontSize: 20 }}
+                    ></i>
+                  </div>
 
-              {/* Pricing Cards */}
-              <div className="row y-gap-30">
-                {pricingPlans.map((rawPlan, index) => {
-                  const plan = resolvePlan(rawPlan);
-                  const isCurrent = isCurrentPlan(plan.id);
-                  const isBelowCurrent = isPlanBelowCurrent(plan.id);
-                  // plan.id is never "business" - the ids are platform / caio /
-                  // caio_teacher - so this condition never fired. The business
-                  // upgrade target is the CAIO bundle.
-                  const isHighlighted = highlightBusiness && plan.id === "caio";
+                  <h3
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: COLORS.textPrimary,
+                      marginBottom: 10,
+                    }}
+                  >
+                    Find the right plan for your school
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 15,
+                      lineHeight: 1.6,
+                      color: COLORS.textSecondary,
+                      maxWidth: 440,
+                      margin: "0 auto",
+                    }}
+                  >
+                    Pricing is tiered by school enrollment. Pick your band, then
+                    the bundle that fits.
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: COLORS.textMuted,
+                      marginTop: 6,
+                      marginBottom: 0,
+                    }}
+                  >
+                    Every plan is billed annually.
+                  </p>
 
-                  return (
+                  {/* Where they stand today, so the page is useful to a
+                      subscriber and not only to a shopper. */}
+                  {currentBundleLabel && (
                     <div
-                      className="col-12 col-sm-12 col-md-6 col-lg-4"
-                      key={plan.id}
-                      data-aos="fade-up"
-                      data-aos-delay={index * 100}
+                      style={{
+                        marginTop: 16,
+                        padding: "8px 16px",
+                        borderRadius: 999,
+                        background: COLORS.bgTertiary,
+                        border: `1px solid ${COLORS.borderLight}`,
+                        fontSize: 13,
+                        color: COLORS.textSecondary,
+                      }}
                     >
-                      <div
-                        className="priceCard -type-1 rounded-16 h-100 bg-white border-light shadow-2"
-                        style={{
-                          position: "relative",
-                          overflow: "hidden",
-                          transition: "all 0.3s ease",
-                          transform: "scale(1)",
-                          display: "flex",
-                          flexDirection: "column",
-                          border: isCurrent
-                            ? `2px solid ${COLORS.primary}`
-                            : isHighlighted
-                              ? `2px solid ${COLORS.success}`
-                              : undefined,
-                          boxShadow: isHighlighted
-                            ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
-                            : undefined,
-                          animation: isHighlighted
-                            ? "pulse-business 1s ease-in-out 3"
-                            : undefined,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-8px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 20px 40px rgba(0,0,0,0.12)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = isHighlighted
-                            ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
-                            : "";
-                        }}
-                      >
-                        {/* Current Plan Badge */}
-                        {isCurrent && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "12px",
-                              right: "12px",
-                              backgroundColor: COLORS.primary,
-                              color: "#fff",
-                              padding: "4px 12px",
-                              borderRadius: "12px",
-                              fontSize: "11px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Your Plan
-                          </div>
-                        )}
-
-                        {/* Recommended Badge for Business when Premium user */}
-                        {isHighlighted && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "12px",
-                              right: "12px",
-                              backgroundColor: COLORS.success,
-                              color: "#fff",
-                              padding: "4px 12px",
-                              borderRadius: "12px",
-                              fontSize: "11px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Recommended
-                          </div>
-                        )}
-
-                        <div
-                          className="priceCard__content py-30 px-25"
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            flex: 1,
-                          }}
-                        >
-                          {/* Plan Icon & Name */}
-                          <div className="d-flex items-center gap-3 mb-3">
-                            <div
-                              className="d-flex items-center justify-center rounded-12"
-                              style={{
-                                width: "48px",
-                                height: "48px",
-                                backgroundColor: `${plan.iconColor}15`,
-                              }}
-                            >
-                              <i
-                                className={plan.icon}
-                                style={{
-                                  fontSize: "24px",
-                                  color: plan.iconColor,
-                                }}
-                              ></i>
-                            </div>
-                            <div>
-                              <div className="text-20 fw-600 text-dark-1">
-                                {plan.name}
-                              </div>
-                              <div className="text-14 mt-5 text-light-1">
-                                {plan.description}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Price - paid plans show a dash instead of the
-                              amount; the period is hidden with it so the card
-                              doesn't read "- /yearly". The plan data still
-                              carries the real price for checkout. */}
-                          <div className="mt-25" style={{ minHeight: "50px" }}>
-                            <span className="text-40 fw-700 lh-11 text-dark-1">
-                              {plan.price === 0
-                                ? "Free"
-                                : `$${plan.price.toLocaleString()}`}
-                            </span>
-                            {plan.price > 0 && plan.period && (
-                              <span className="text-14 text-light-1">
-                                {" "}
-                                /{plan.period.toLowerCase()}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Credits Badge — hidden while credits are off, and
-                              the reserved strip goes with it so the cards do
-                              not keep an empty gap. */}
-                          {SHOW_CREDITS && (
-                          <div
-                            style={{
-                              minHeight: "45px",
-                              display: "flex",
-                              alignItems: "flex-start",
-                            }}
-                          >
-                            {plan.credits && (
-                              <div
-                                className="d-inline-block mt-15 px-15 py-8 rounded-8"
-                                style={{
-                                  fontSize: "12px",
-                                  fontWeight: 500,
-                                  backgroundColor: `${plan.iconColor}15`,
-                                  color: plan.iconColor,
-                                }}
-                              >
-                                <i className="fa-solid fa-coins mr-1"></i>
-                                {plan.credits} Credits included
-                              </div>
-                            )}
-                          </div>
-                          )}
-
-                          {/* CTA Button */}
-                          <div className="mt-25">
-                            {isCurrent ? (
-                              <button
-                                disabled
-                                className="button w-100 py-15 fw-500 rounded-8"
-                                style={{
-                                  padding: "12px 24px",
-                                  backgroundColor: "#9e9e9e",
-                                  color: "#F0F8FF",
-                                  cursor: "not-allowed",
-                                  border: "none",
-                                }}
-                              >
-                                Current Plan
-                              </button>
-                            ) : isBelowCurrent ? (
-                              <button
-                                disabled
-                                className="button w-100 py-15 fw-500 rounded-8"
-                                style={{
-                                  padding: "12px 24px",
-                                  backgroundColor: "#e0e0e0",
-                                  color: "#9e9e9e",
-                                  cursor: "not-allowed",
-                                  border: "none",
-                                }}
-                              >
-                                {plan.id === "free"
-                                  ? "Free Plan"
-                                  : plan.buttonText}
-                              </button>
-                            ) : plan.id === "free" ? (
-                              <div className=" py-25 "></div>
-                            ) : (
-                              <button
-                                onClick={() => handlePlanClick(plan)}
-                                className={`button w-100 py-15 fw-500 rounded-8 ${plan.buttonStyle}`}
-                                style={{
-                                  transition: "all 0.2s ease",
-                                  padding: "12px 24px",
-                                }}
-                              >
-                                {plan.buttonText}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Features List */}
-                          <div className="mt-25" style={{ flex: 1 }}>
-                            <div className="text-14 fw-500 mb-15 text-dark-1">
-                              What's included:
-                            </div>
-                            <div className="y-gap-10">
-                              {plan.features.map((feature, i) => (
-                                <div
-                                  key={i}
-                                  className="d-flex items-center"
-                                  style={{
-                                    opacity: feature.included ? 1 : 0.5,
-                                  }}
-                                >
-                                  {feature.included ? (
-                                    <span
-                                      className="d-flex items-center justify-center rounded-full mr-12 text-white"
-                                      style={{
-                                        width: "20px",
-                                        height: "20px",
-                                        minWidth: "20px",
-                                        fontSize: "11px",
-                                        backgroundColor: COLORS.success,
-                                      }}
-                                    >
-                                      ✓
-                                    </span>
-                                  ) : (
-                                    <span
-                                      className="d-flex items-center justify-center rounded-full mr-12 text-light-1"
-                                      style={{
-                                        width: "20px",
-                                        height: "20px",
-                                        minWidth: "20px",
-                                        fontSize: "11px",
-                                        backgroundColor: "#e5e5e5",
-                                      }}
-                                    >
-                                      ✕
-                                    </span>
-                                  )}
-                                  <span
-                                    className={`text-14 ${
-                                      feature.included
-                                        ? "text-dark-1"
-                                        : "text-light-1"
-                                    }`}
-                                    style={{
-                                      textDecoration: feature.included
-                                        ? "none"
-                                        : "line-through",
-                                    }}
-                                  >
-                                    {feature.text}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      You are on{" "}
+                      <strong style={{ color: COLORS.textPrimary }}>
+                        {currentBundleLabel}
+                      </strong>
+                      {currentTierLabel ? ` · ${currentTierLabel} band` : ""}
                     </div>
-                  );
-                })}
-              </div>
+                  )}
 
-              {/* Help Section */}
-              <div className="row justify-center text-center mt-30">
-                <div className="col-auto">
-                  <p className="text-14 text-light-1">
-                    For any questions or enterprise inquiries, contact us at{" "}
+                  <div style={{ marginTop: 26 }}>
+                    <AwsButton
+                      label="Choose your plan"
+                      variant="primary"
+                      size="lg"
+                      onClick={() => setPlansOpen(true)}
+                    />
+                  </div>
+
+                  {/* Same treatment as the support line under the plan
+                      cards, so the two read as one page. */}
+                  <p
+                    className="text-14 text-light-1"
+                    style={{ marginTop: 28, marginBottom: 0 }}
+                  >
+                    Enterprise or a question about bands?{" "}
                     <a
                       href="mailto:support@xvalidateai.com"
                       className="text-purple-1 fw-500"
@@ -694,7 +483,365 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                     </a>
                   </p>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Enrollment tier selector. Pricing is tiered by school
+                  enrollment, so the band has to be chosen before any price on
+                  this page means anything. */}
+                  <div style={{ textAlign: "center", marginBottom: 28 }}>
+                    <p
+                      className="text-light-1"
+                      style={{ fontSize: 14, marginBottom: 12 }}
+                    >
+                      Pricing is tiered by school enrollment. Select your band
+                      to see your prices.
+                    </p>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        justifyContent: "center",
+                      }}
+                    >
+                      {ENROLLMENT_TIERS.map((tier) => {
+                        const active = selectedTier === tier.id;
+                        return (
+                          <button
+                            key={tier.id}
+                            type="button"
+                            onClick={() => {
+                              setTierTouched(true);
+                              setSelectedTier(tier.id);
+                            }}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              gap: 2,
+                              padding: "10px 22px",
+                              borderRadius: 10,
+                              cursor: "pointer",
+                              minWidth: 160,
+                              border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
+                              background: active
+                                ? COLORS.primary
+                                : COLORS.bgPrimary,
+                              color: active ? "#fff" : COLORS.textPrimary,
+                            }}
+                          >
+                            <span style={{ fontSize: 15, fontWeight: 700 }}>
+                              {tier.label}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: active
+                                  ? "rgba(255,255,255,0.85)"
+                                  : COLORS.textMuted,
+                              }}
+                            >
+                              {tier.detail}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Pricing Cards */}
+                  <div className="row y-gap-30">
+                    {pricingPlans.map((rawPlan, index) => {
+                      const plan = resolvePlan(rawPlan);
+                      const isCurrent = isCurrentPlan(plan.id);
+                      const isBelowCurrent = isPlanBelowCurrent(plan.id);
+                      // plan.id is never "business" - the ids are platform / caio /
+                      // caio_teacher - so this condition never fired. The business
+                      // upgrade target is the CAIO bundle.
+                      const isHighlighted =
+                        highlightBusiness && plan.id === "caio";
+
+                      return (
+                        <div
+                          className="col-12 col-sm-12 col-md-6 col-lg-4"
+                          key={plan.id}
+                          data-aos="fade-up"
+                          data-aos-delay={index * 100}
+                        >
+                          <div
+                            className="priceCard -type-1 rounded-16 h-100 bg-white border-light shadow-2"
+                            style={{
+                              position: "relative",
+                              overflow: "hidden",
+                              transition: "all 0.3s ease",
+                              transform: "scale(1)",
+                              display: "flex",
+                              flexDirection: "column",
+                              border: isCurrent
+                                ? `2px solid ${COLORS.primary}`
+                                : isHighlighted
+                                  ? `2px solid ${COLORS.success}`
+                                  : undefined,
+                              boxShadow: isHighlighted
+                                ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
+                                : undefined,
+                              animation: isHighlighted
+                                ? "pulse-business 1s ease-in-out 3"
+                                : undefined,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform =
+                                "translateY(-8px)";
+                              e.currentTarget.style.boxShadow =
+                                "0 20px 40px rgba(0,0,0,0.12)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = isHighlighted
+                                ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
+                                : "";
+                            }}
+                          >
+                            {/* Current Plan Badge */}
+                            {isCurrent && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "12px",
+                                  right: "12px",
+                                  backgroundColor: COLORS.primary,
+                                  color: "#fff",
+                                  padding: "4px 12px",
+                                  borderRadius: "12px",
+                                  fontSize: "11px",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Your Plan
+                              </div>
+                            )}
+
+                            <div
+                              className="priceCard__content py-30 px-25"
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                flex: 1,
+                              }}
+                            >
+                              {/* Plan Icon & Name */}
+                              <div className="d-flex gap-3 mb-3">
+                                <div
+                                  className="d-flex items-center justify-center rounded-12 flex-shrink-0"
+                                  style={{
+                                    width: "48px",
+                                    height: "48px",
+                                    backgroundColor: `${plan.iconColor}15`,
+                                  }}
+                                >
+                                  <i
+                                    className={plan.icon}
+                                    style={{
+                                      fontSize: "24px",
+                                      color: plan.iconColor,
+                                    }}
+                                  ></i>
+                                </div>
+                                {/* Reserved height for a two-line description:
+                                    without it the longest card pushes its
+                                    price and button below the other two. */}
+                                <div style={{ minHeight: 76 }}>
+                                  <div className="text-20 fw-600 text-dark-1">
+                                    {plan.name}
+                                  </div>
+                                  <div
+                                    className="text-14 mt-5 text-light-1"
+                                    style={{ minHeight: 42 }}
+                                  >
+                                    {plan.description}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Price - paid plans show a dash instead of the
+                              amount; the period is hidden with it so the card
+                              doesn't read "- /yearly". The plan data still
+                              carries the real price for checkout. */}
+                              <div
+                                className="mt-25"
+                                style={{ minHeight: "50px" }}
+                              >
+                                <span className="text-40 fw-700 lh-11 text-dark-1">
+                                  {plan.price === 0
+                                    ? "Free"
+                                    : `$${plan.price.toLocaleString()}`}
+                                </span>
+                                {plan.price > 0 && plan.period && (
+                                  <span className="text-14 text-light-1">
+                                    {" "}
+                                    /{plan.period.toLowerCase()}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Credits Badge — hidden while credits are off, and
+                              the reserved strip goes with it so the cards do
+                              not keep an empty gap. */}
+                              {SHOW_CREDITS && (
+                                <div
+                                  style={{
+                                    minHeight: "45px",
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                  }}
+                                >
+                                  {plan.credits && (
+                                    <div
+                                      className="d-inline-block mt-15 px-15 py-8 rounded-8"
+                                      style={{
+                                        fontSize: "12px",
+                                        fontWeight: 500,
+                                        backgroundColor: `${plan.iconColor}15`,
+                                        color: plan.iconColor,
+                                      }}
+                                    >
+                                      <i className="fa-solid fa-coins mr-1"></i>
+                                      {plan.credits} Credits included
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* CTA Button */}
+                              <div className="mt-25">
+                                {isCurrent ? (
+                                  <button
+                                    disabled
+                                    className="button w-100 py-15 fw-500 rounded-8"
+                                    style={{
+                                      padding: "12px 24px",
+                                      backgroundColor: "#9e9e9e",
+                                      color: "#F0F8FF",
+                                      cursor: "not-allowed",
+                                      border: "none",
+                                    }}
+                                  >
+                                    Current Plan
+                                  </button>
+                                ) : isBelowCurrent ? (
+                                  <button
+                                    disabled
+                                    className="button w-100 py-15 fw-500 rounded-8"
+                                    style={{
+                                      padding: "12px 24px",
+                                      backgroundColor: "#e0e0e0",
+                                      color: "#9e9e9e",
+                                      cursor: "not-allowed",
+                                      border: "none",
+                                    }}
+                                  >
+                                    {plan.id === "free"
+                                      ? "Free Plan"
+                                      : "Included in your plan"}
+                                  </button>
+                                ) : plan.id === "free" ? (
+                                  <div className=" py-25 "></div>
+                                ) : (
+                                  <button
+                                    onClick={() => handlePlanClick(plan)}
+                                    className={`button w-100 py-15 fw-500 rounded-8 ${plan.buttonStyle}`}
+                                    style={{
+                                      transition: "all 0.2s ease",
+                                      padding: "12px 24px",
+                                    }}
+                                  >
+                                    {plan.buttonText}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Features List */}
+                              <div className="mt-25" style={{ flex: 1 }}>
+                                <div className="text-14 fw-500 mb-15 text-dark-1">
+                                  What's included:
+                                </div>
+                                <div className="y-gap-10">
+                                  {plan.features.map((feature, i) => (
+                                    <div
+                                      key={i}
+                                      className="d-flex items-center"
+                                      style={{
+                                        opacity: feature.included ? 1 : 0.5,
+                                      }}
+                                    >
+                                      {feature.included ? (
+                                        <span
+                                          className="d-flex items-center justify-center rounded-full mr-12 text-white"
+                                          style={{
+                                            width: "20px",
+                                            height: "20px",
+                                            minWidth: "20px",
+                                            fontSize: "11px",
+                                            backgroundColor: COLORS.success,
+                                          }}
+                                        >
+                                          ✓
+                                        </span>
+                                      ) : (
+                                        <span
+                                          className="d-flex items-center justify-center rounded-full mr-12 text-light-1"
+                                          style={{
+                                            width: "20px",
+                                            height: "20px",
+                                            minWidth: "20px",
+                                            fontSize: "11px",
+                                            backgroundColor: "#e5e5e5",
+                                          }}
+                                        >
+                                          ✕
+                                        </span>
+                                      )}
+                                      <span
+                                        className={`text-14 ${
+                                          feature.included
+                                            ? "text-dark-1"
+                                            : "text-light-1"
+                                        }`}
+                                        style={{
+                                          textDecoration: feature.included
+                                            ? "none"
+                                            : "line-through",
+                                        }}
+                                      >
+                                        {feature.text}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Help Section */}
+                  <div className="row justify-center text-center mt-30">
+                    <div className="col-auto">
+                      <p className="text-14 text-light-1">
+                        For any questions or enterprise inquiries, contact us at{" "}
+                        <a
+                          href="mailto:support@xvalidateai.com"
+                          className="text-purple-1 fw-500"
+                        >
+                          support@xvalidateai.com
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -25,6 +25,19 @@ import { recommendationLabel } from "@/utils/recommendationLabel";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { useContextElement } from "@/context/Context";
 
+/* Columns whose displayed field differs from the field they sort on. */
+const SORT_FIELD_BY_COLUMN = { createdtime: "created_time" };
+
+/* Fields holding timestamps rather than plain text. */
+const DATE_SORT_FIELDS = new Set(["last_scanned_time", "created_time"]);
+
+/** Parse an API timestamp, tolerating the "+00:00Z" suffix the backend sends. */
+const parseTimestamp = (value) => {
+  if (!value) return null;
+  const ms = Date.parse(String(value).replace("+00:00Z", "Z"));
+  return Number.isNaN(ms) ? null : ms;
+};
+
 export default function AIListViewModern({
   projects,
   setShowCreateModal,
@@ -70,9 +83,11 @@ export default function AIListViewModern({
   }, [showActions]);
 
   /* ---------------- SORTING ---------------- */
+  // The list is a scan log, so it opens on the most recent scan rather than
+  // whatever order the API happened to return.
   const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: "asc",
+    key: "last_scanned_time",
+    direction: "desc",
   });
 
   const requestSort = (key) => {
@@ -344,13 +359,44 @@ export default function AIListViewModern({
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
       const dir = sortConfig.direction === "asc" ? 1 : -1;
+      const field = SORT_FIELD_BY_COLUMN[sortConfig.key] || sortConfig.key;
+
+      // Dates have to compare as instants: as plain strings the "+00:00Z"
+      // suffix the API sometimes sends orders them against their real time.
+      if (DATE_SORT_FIELDS.has(field)) {
+        const ta = parseTimestamp(a[field]);
+        const tb = parseTimestamp(b[field]);
+        // Never-scanned rows sit at the bottom either way round.
+        if (ta === null || tb === null) {
+          if (ta === null && tb === null) return 0;
+          return ta === null ? 1 : -1;
+        }
+        return (ta - tb) * dir;
+      }
+
       // sort the recommendation column by the label the row actually shows,
       // otherwise "Recommended" rows order as though they still read "Approved"
       const sortValue = (row) =>
         sortConfig.key === "recommendation"
           ? recommendationLabel(row.recommendation)
-          : row[sortConfig.key];
-      return (sortValue(a) > sortValue(b) ? 1 : -1) * dir;
+          : row[field];
+
+      const va = sortValue(a);
+      const vb = sortValue(b);
+      const aEmpty = va == null || va === "";
+      const bEmpty = vb == null || vb === "";
+      if (aEmpty || bEmpty) {
+        if (aEmpty && bEmpty) return 0;
+        return aEmpty ? 1 : -1;
+      }
+      if (typeof va === "number" && typeof vb === "number")
+        return (va - vb) * dir;
+      return (
+        String(va).localeCompare(String(vb), undefined, {
+          numeric: true,
+          sensitivity: "base",
+        }) * dir
+      );
     });
 
   /* ---------------- PAGINATION DATA ---------------- */
