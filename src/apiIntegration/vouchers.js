@@ -12,7 +12,7 @@ export async function verifyVoucher(voucherCode) {
       `${API_BASE_URL}/vouchers/verify?code=${encodeURIComponent(voucherCode)}`,
       {
         method: "GET",
-      }
+      },
     );
 
     if (!response.ok) {
@@ -70,7 +70,9 @@ export async function redeemVoucher(voucherCode, planId = null) {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || error.detail || "Failed to redeem voucher");
+      throw new Error(
+        error.message || error.detail || "Failed to redeem voucher",
+      );
     }
 
     return await response.json();
@@ -100,13 +102,19 @@ export async function redeemVoucher(voucherCode, planId = null) {
 // { checkout_url, ... }. Same inputs as the PayPal call - component + tier set
 // the price, plan_type is the legacy fallback. Stripe offers Link (one-click
 // saved-card checkout) on the hosted page automatically.
-export async function createStripeCheckout(planType, tier = null, component = null) {
+export async function createStripeCheckout(
+  planType,
+  tier = null,
+  component = null,
+  billingAddress = null,
+) {
   const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/stripe`, {
     method: "POST",
     body: JSON.stringify({
       plan_type: planType,
       ...(tier ? { tier } : {}),
       ...(component ? { component: component.toUpperCase() } : {}),
+      ...(billingAddress ? { billing_address: billingAddress } : {}),
     }),
   });
 
@@ -118,13 +126,19 @@ export async function createStripeCheckout(planType, tier = null, component = nu
   return res.json();
 }
 
-export async function createPaypalSubscription(planType, tier = null, component = null) {
+export async function createPaypalSubscription(
+  planType,
+  tier = null,
+  component = null,
+  billingAddress = null,
+) {
   const res = await fetchWithAuth(`${API_BASE_URL}/subscriptions/paypal`, {
     method: "POST",
     body: JSON.stringify({
       plan_type: planType,
       ...(tier ? { tier } : {}),
       ...(component ? { component: component.toUpperCase() } : {}),
+      ...(billingAddress ? { billing_address: billingAddress } : {}),
     }),
   });
 

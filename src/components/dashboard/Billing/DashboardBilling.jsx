@@ -11,6 +11,69 @@ import { SHOW_CREDITS } from "@/config/features";
 import { useContextElement } from "@/context/Context";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
+import SearchableSelect from "@/components/common/SearchableSelect";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  getAddressFormat,
+} from "@/data/addressFormats";
+import { tierLabel, tierDetail } from "@/data/planPricing";
+
+/* The billing address follows whichever country is picked: the region and
+   postal labels, whether the region is a list or free text, and how the postal
+   code is checked all come from the country's format. */
+const EMPTY_FORM = {
+  country: DEFAULT_COUNTRY,
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  region: "",
+  postalCode: "",
+  voucherCode: "",
+};
+
+const fieldStyle = (hasError) => ({
+  border: hasError ? "1px solid #dc3545" : "1px solid #dddddd",
+  borderRadius: "8px",
+  padding: "11px 14px",
+  fontSize: "14px",
+  width: "100%",
+  height: "44px",
+  background: "#fff",
+});
+
+/** $7,500.00 rather than $7500.00 — a four-figure price needs the separator. */
+const formatUsd = (value) => {
+  if (value === null || value === undefined || value === "") return "N/A";
+  const amount = typeof value === "number" ? value : Number(value);
+  if (Number.isNaN(amount)) return `$${value}`;
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+};
+
+/**
+ * The address as the subscription endpoints want it. line2 is dropped when
+ * empty, and postal_code with it for the countries that have none, so the
+ * payload never carries blank strings.
+ */
+const toBillingAddressPayload = (form) => {
+  const line2 = form.addressLine2.trim();
+  const postalCode = form.postalCode.trim();
+
+  return {
+    country: form.country,
+    line1: form.addressLine1.trim(),
+    ...(line2 ? { line2 } : {}),
+    city: form.city.trim(),
+    ...(form.region.trim() ? { state: form.region.trim() } : {}),
+    ...(postalCode ? { postal_code: postalCode } : {}),
+  };
+};
+
+const labelClass = "text-14 fw-500 mb-5";
+const errorClass = "text-red-1 text-13 mt-5";
 
 export default function DashboardBilling() {
   const navigate = useNavigate();
@@ -21,10 +84,7 @@ export default function DashboardBilling() {
   const [isPaying, setIsPaying] = useState(false);
   const [isStripePaying, setIsStripePaying] = useState(false);
 
-  const [formData, setFormData] = useState({
-    billingAddress: "",
-    voucherCode: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +113,7 @@ export default function DashboardBilling() {
         (plan.planId || "").toUpperCase(),
         plan.tier || null,
         plan.id || null,
+        toBillingAddressPayload(formData),
       );
 
       if (response && response.approval_url) {
@@ -80,6 +141,7 @@ export default function DashboardBilling() {
         (plan.planId || "").toUpperCase(),
         plan.tier || null,
         plan.id || null,
+        toBillingAddressPayload(formData),
       );
       if (response && response.checkout_url) {
         window.location.href = response.checkout_url;
@@ -95,10 +157,7 @@ export default function DashboardBilling() {
 
   // Reset form state when navigating to this page (when location changes)
   useEffect(() => {
-    setFormData({
-      billingAddress: "",
-      voucherCode: "",
-    });
+    setFormData(EMPTY_FORM);
     setErrors({});
     setVoucherApplied(false);
     setVoucherData(null);
@@ -121,11 +180,46 @@ export default function DashboardBilling() {
     }
   };
 
+  // Region and postal code mean different things per country, so switching
+  // country clears them rather than carrying a Kansas into France.
+  const handleCountryChange = (e) => {
+    const country = e.target.value;
+    setFormData((prev) => ({ ...prev, country, region: "", postalCode: "" }));
+    setErrors((prev) => ({ ...prev, region: "", postalCode: "" }));
+  };
+
+  const addressFormat = getAddressFormat(formData.country);
+  // Subdivisions read better with their abbreviation, and it gives the search
+  // box something short to match on ("CA" → California).
+  const regionOptions =
+    addressFormat.subdivisions?.map(([code, name]) => [
+      code,
+      `${code} — ${name}`,
+    ]) || null;
+
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.billingAddress.trim()) {
-      newErrors.billingAddress = "Billing address is required";
+    if (!formData.addressLine1.trim()) {
+      newErrors.addressLine1 = "Street address is required";
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = `${addressFormat.cityLabel} is required`;
+    }
+    if (addressFormat.regionRequired && !formData.region.trim()) {
+      newErrors.region = `${addressFormat.regionLabel} is required`;
+    }
+
+    const postalCode = formData.postalCode.trim();
+    if (addressFormat.hasPostalCode) {
+      if (!postalCode) {
+        newErrors.postalCode = `${addressFormat.postalLabel} is required`;
+      } else if (
+        addressFormat.postalPattern &&
+        !addressFormat.postalPattern.test(postalCode)
+      ) {
+        newErrors.postalCode = addressFormat.postalError;
+      }
     }
 
     setErrors(newErrors);
@@ -341,38 +435,152 @@ export default function DashboardBilling() {
             <div className="py-30 px-30">
               <h2 className="text-20 fw-600 mb-30">Billing Details</h2>
               <form onSubmit={handleSubmit}>
-                {/* Billing Address */}
-                <div className="mb-30">
-                  <label
-                    htmlFor="billingAddress"
-                    className="text-16 fw-500 mb-10"
-                  >
-                    Billing Address <span className="text-red-1">*</span>
-                  </label>
-                  <textarea
-                    id="billingAddress"
-                    name="billingAddress"
-                    rows="4"
-                    value={formData.billingAddress}
-                    onChange={handleChange}
-                    className={`form-control ${
-                      errors.billingAddress ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter your complete billing address including street, city, state, and postal code"
-                    style={{
-                      border: errors.billingAddress
-                        ? "1px solid #dc3545"
-                        : "1px solid #dddddd",
-                      borderRadius: "8px",
-                      padding: "15px",
-                      fontSize: "14px",
-                      width: "100%",
-                      resize: "vertical",
-                    }}
-                  />
-                  {errors.billingAddress && (
-                    <div className="text-red-1 text-14 mt-10">
-                      {errors.billingAddress}
+                {/* Billing Address — laid out for whichever country is
+                    chosen, in three rows so the form stays short. */}
+                <div className="mb-20 d-flex gap-10 flex-wrap">
+                  <div style={{ flex: "1 1 240px" }}>
+                    <label htmlFor="country" className={labelClass}>
+                      Country <span className="text-red-1">*</span>
+                    </label>
+                    <SearchableSelect
+                      id="country"
+                      name="country"
+                      value={formData.country}
+                      options={COUNTRIES}
+                      onChange={handleCountryChange}
+                      searchPlaceholder="Search countries…"
+                      ariaLabel="Country"
+                    />
+                  </div>
+
+                  <div style={{ flex: "2 1 300px" }}>
+                    <label htmlFor="addressLine1" className={labelClass}>
+                      Street Address <span className="text-red-1">*</span>
+                    </label>
+                    <input
+                      id="addressLine1"
+                      name="addressLine1"
+                      type="text"
+                      autoComplete="address-line1"
+                      value={formData.addressLine1}
+                      onChange={handleChange}
+                      className={`form-control ${
+                        errors.addressLine1 ? "is-invalid" : ""
+                      }`}
+                      placeholder="123 Main St"
+                      style={fieldStyle(errors.addressLine1)}
+                    />
+                    {errors.addressLine1 && (
+                      <div className={errorClass}>{errors.addressLine1}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-20 d-flex gap-10 flex-wrap">
+                  <div style={{ flex: "1 1 200px" }}>
+                    <label htmlFor="addressLine2" className={labelClass}>
+                      Apt, Suite, Unit{" "}
+                      <span style={{ color: "#6b7280" }}>(optional)</span>
+                    </label>
+                    <input
+                      id="addressLine2"
+                      name="addressLine2"
+                      type="text"
+                      autoComplete="address-line2"
+                      value={formData.addressLine2}
+                      onChange={handleChange}
+                      className="form-control"
+                      placeholder="Apt 4B"
+                      style={fieldStyle(false)}
+                    />
+                  </div>
+
+                  <div style={{ flex: "2 1 260px" }}>
+                    <label htmlFor="city" className={labelClass}>
+                      {addressFormat.cityLabel}{" "}
+                      <span className="text-red-1">*</span>
+                    </label>
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      autoComplete="address-level2"
+                      value={formData.city}
+                      onChange={handleChange}
+                      className={`form-control ${errors.city ? "is-invalid" : ""}`}
+                      placeholder={addressFormat.cityLabel}
+                      style={fieldStyle(errors.city)}
+                    />
+                    {errors.city && (
+                      <div className={errorClass}>{errors.city}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-20 d-flex gap-10 flex-wrap">
+                  <div style={{ flex: "2 1 220px" }}>
+                    <label htmlFor="region" className={labelClass}>
+                      {addressFormat.regionLabel}{" "}
+                      {addressFormat.regionRequired ? (
+                        <span className="text-red-1">*</span>
+                      ) : (
+                        <span style={{ color: "#6b7280" }}>(optional)</span>
+                      )}
+                    </label>
+                    {/* A list where the abbreviations are expected, free text
+                        everywhere else. */}
+                    {regionOptions ? (
+                      <SearchableSelect
+                        id="region"
+                        name="region"
+                        value={formData.region}
+                        options={regionOptions}
+                        onChange={handleChange}
+                        hasError={Boolean(errors.region)}
+                        placeholder="Select"
+                        searchPlaceholder={`Search ${addressFormat.regionLabel.toLowerCase()}…`}
+                        ariaLabel={addressFormat.regionLabel}
+                      />
+                    ) : (
+                      <input
+                        id="region"
+                        name="region"
+                        type="text"
+                        autoComplete="address-level1"
+                        value={formData.region}
+                        onChange={handleChange}
+                        className={`form-control ${errors.region ? "is-invalid" : ""}`}
+                        placeholder={addressFormat.regionPlaceholder}
+                        style={fieldStyle(errors.region)}
+                      />
+                    )}
+                    {errors.region && (
+                      <div className={errorClass}>{errors.region}</div>
+                    )}
+                  </div>
+
+                  {/* Countries without postal codes get no dead field. */}
+                  {addressFormat.hasPostalCode && (
+                    <div style={{ flex: "1 1 160px" }}>
+                      <label htmlFor="postalCode" className={labelClass}>
+                        {addressFormat.postalLabel}{" "}
+                        <span className="text-red-1">*</span>
+                      </label>
+                      <input
+                        id="postalCode"
+                        name="postalCode"
+                        type="text"
+                        autoComplete="postal-code"
+                        maxLength={12}
+                        value={formData.postalCode}
+                        onChange={handleChange}
+                        className={`form-control ${errors.postalCode ? "is-invalid" : ""}`}
+                        placeholder={addressFormat.postalPlaceholder}
+                        style={fieldStyle(errors.postalCode)}
+                      />
+                      {errors.postalCode && (
+                        <div className={errorClass}>{errors.postalCode}</div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -580,94 +788,209 @@ export default function DashboardBilling() {
                 padding: "1rem",
               }}
             >
-              <h4 className="text-20 fw-600 mb-30">Order Summary</h4>
+              <h4 className="text-20 fw-600 mb-20">Order Summary</h4>
 
               {plan ? (
                 <>
-                  <div className="border-bottom-light pb-20 mb-20">
-                    <div className="d-flex justify-between items-center mb-10">
-                      <span className="text-15 text-light-1">Plan</span>
-                      <span className="text-16 fw-600 text-dark-1">
-                        {plan.name}
+                  {/* The plan gets the full width of the card: its name is a
+                      heading, not a value squeezed beside a label. */}
+                  <div
+                    style={{
+                      paddingBottom: 18,
+                      marginBottom: 18,
+                      borderBottom: `1px solid ${COLORS.borderLight}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: "0.07em",
+                        textTransform: "uppercase",
+                        color: COLORS.textMuted,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Your plan
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 700,
+                        lineHeight: 1.35,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      {plan.name}
+                    </div>
+                    {plan.description && (
+                      <div
+                        style={{
+                          fontSize: 13,
+                          lineHeight: 1.6,
+                          color: COLORS.textMuted,
+                          marginTop: 6,
+                        }}
+                      >
+                        {plan.description}
+                      </div>
+                    )}
+                    {tierLabel(plan.tier) && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          marginTop: 10,
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: COLORS.primary,
+                          background: COLORS.primaryLighter,
+                        }}
+                      >
+                        {tierDetail(plan.tier) || tierLabel(plan.tier)}
                       </span>
-                    </div>
-                    <div className="text-13 text-light-1">
-                      {plan.description}
-                    </div>
+                    )}
                   </div>
 
-                  <div className="border-bottom-light pb-20 mb-20">
-                    <div className="d-flex justify-between items-center mb-10">
-                      <span className="text-15 text-light-1">Price</span>
-                      <span className="text-16 text-dark-1">
+                  {/* Line items */}
+                  <div
+                    style={{
+                      paddingBottom: 18,
+                      marginBottom: 18,
+                      borderBottom: `1px solid ${COLORS.borderLight}`,
+                    }}
+                  >
+                    <div className="d-flex justify-between items-center">
+                      <span style={{ fontSize: 14, color: COLORS.textMuted }}>
+                        Subscription
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 500,
+                          color: COLORS.textPrimary,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
                         {plan.price === null || plan.price === 0
                           ? "N/A"
-                          : `$${
-                              typeof plan.price === "number"
-                                ? plan.price.toFixed(2)
-                                : plan.price
-                            }`}
+                          : formatUsd(plan.price)}
                       </span>
                     </div>
+
                     {voucherApplied && voucherData && (
                       <>
-                        <div className="d-flex justify-between items-center mb-10">
-                          <span
-                            className="text-15 "
-                            style={{ color: COLORS.success }}
-                          >
-                            Voucher Discount
+                        <div
+                          className="d-flex justify-between items-center"
+                          style={{ marginTop: 10 }}
+                        >
+                          <span style={{ fontSize: 14, color: COLORS.success }}>
+                            Voucher discount
                           </span>
                           <span
-                            className="text-16 "
-                            style={{ color: COLORS.success }}
+                            style={{
+                              fontSize: 15,
+                              fontWeight: 500,
+                              color: COLORS.success,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
                           >
                             {plan.price != null && voucherData.price != null
-                              ? `-$${(plan.price - voucherData.price).toFixed(2)}`
+                              ? `-${formatUsd(plan.price - voucherData.price)}`
                               : voucherData.price == null
-                                ? `-$${Number(plan.price).toFixed(2)}` // full discount — voucher covers 100%
+                                ? `-${formatUsd(plan.price)}` // voucher covers 100%
                                 : "N/A"}
                           </span>
                         </div>
-                        <div className="mt-10 px-10 py-8 rounded-6 bg-green-3">
+                        <div
+                          style={{
+                            marginTop: 12,
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            background: COLORS.successLight,
+                          }}
+                        >
                           <div
-                            className="text-12 "
-                            style={{ color: COLORS.success }}
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: COLORS.success,
+                            }}
                           >
-                            <strong>{voucherData.plan_name}</strong> - Voucher
-                            verified
+                            {voucherData.plan_name} — voucher verified
                           </div>
-                          <div
-                            className="text-11 "
-                            style={{ color: COLORS.success }}
-                          >
-                            <i className="fa-solid fa-coins mr-1"></i>{" "}
-                            {voucherData.credits} credits will be activated on
-                            purchase
-                          </div>
+                          {SHOW_CREDITS && voucherData.credits && (
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: COLORS.success,
+                                marginTop: 2,
+                              }}
+                            >
+                              {voucherData.credits} credits activate on purchase
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
                   </div>
 
-                  <div className="d-flex justify-between items-center">
-                    <span className="text-18 fw-600 text-dark-1">Total</span>
-                    <span className="text-24 fw-700 text-purple-1">
+                  {/* Total */}
+                  <div className="d-flex justify-between items-baseline">
+                    <span
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: COLORS.textPrimary,
+                      }}
+                    >
+                      Total due today
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 700,
+                        color: COLORS.primary,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
                       {(() => {
                         const total = calculateTotal();
-                        return total === null
-                          ? "N/A"
-                          : `$${typeof total === "number" ? total.toFixed(2) : total}`;
+                        return total === null ? "N/A" : formatUsd(total);
                       })()}
                     </span>
                   </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: COLORS.textMuted,
+                      textAlign: "right",
+                      marginTop: 4,
+                    }}
+                  >
+                    Billed annually in USD
+                  </div>
 
                   {SHOW_CREDITS && (voucherData?.credits || plan.credits) && (
-                    <div className="mt-20 px-15 py-10 rounded-8 bg-purple-3">
-                      <div className="text-13 text-purple-1 text-center">
-                        <i className="fa-solid fa-coins mr-1"></i>
-                        {voucherData?.credits || plan.credits} credits included
-                      </div>
+                    <div
+                      style={{
+                        marginTop: 18,
+                        padding: "10px 14px",
+                        borderRadius: 8,
+                        background: COLORS.primaryLighter,
+                        color: COLORS.primary,
+                        fontSize: 13,
+                        textAlign: "center",
+                      }}
+                    >
+                      <i
+                        className="fa-solid fa-coins"
+                        data-fa-i2svg="false"
+                        aria-hidden="true"
+                        style={{ marginRight: 6 }}
+                      ></i>
+                      {voucherData?.credits || plan.credits} credits included
                     </div>
                   )}
                 </>
@@ -684,18 +1007,35 @@ export default function DashboardBilling() {
                 </div>
               )}
 
-              {/* Security Badge */}
-              <div className="mt-30 pt-20 border-top-light">
-                <div className="d-flex items-center gap-10">
-                  <span style={{ fontSize: "20px" }}>🔒</span>
-                  <div>
-                    <div className="text-13 fw-500 text-dark-1">
-                      Secure Payment
-                    </div>
-                    <div className="text-12 text-light-1 mt-5">
-                      Your information is protected
-                    </div>
-                  </div>
+              {/* Security note */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  marginTop: 24,
+                  paddingTop: 16,
+                  borderTop: `1px solid ${COLORS.borderLight}`,
+                }}
+              >
+                <i
+                  className="fa-solid fa-lock"
+                  data-fa-i2svg="false"
+                  aria-hidden="true"
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 1,
+                    color: COLORS.success,
+                    flexShrink: 0,
+                  }}
+                ></i>
+                <div style={{ fontSize: 12, color: COLORS.textMuted }}>
+                  <span
+                    style={{ fontWeight: 600, color: COLORS.textSecondary }}
+                  >
+                    Secure payment
+                  </span>{" "}
+                  · Your information is protected
                 </div>
               </div>
             </div>

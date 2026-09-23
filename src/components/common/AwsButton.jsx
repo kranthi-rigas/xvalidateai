@@ -11,6 +11,7 @@ export default function AwsButton({
   variant = "primary",
   type = "button",
   size = "md", // ✅ NEW - "sm" | "md" | "lg"
+  fullWidth = false, // ✅ stretch to the container, for stacked dialog actions
 }) {
   const [hover, setHover] = useState(false);
 
@@ -48,6 +49,7 @@ export default function AwsButton({
       className="lh-1 tool-assessment-btn"
       style={{
         ...currentSize,
+        ...(fullWidth ? { width: "100%" } : {}),
         fontWeight: 500,
         borderRadius: 8,
         display: "inline-flex",
@@ -118,9 +120,7 @@ export default function AwsButton({
       {!loading && children && (
         // Children share this wrapper, so the button's own gap can't separate
         // them — an icon sat flush against its label. The gap belongs here.
-        <span
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {children}
         </span>
       )}

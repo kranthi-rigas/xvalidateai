@@ -5,6 +5,23 @@ import { getAuditTrail } from "@/apiIntegration/audittrail";
 import AwsButton from "@/components/common/AwsButton";
 import ReactDOM from "react-dom";
 
+/**
+ * Credit figures are internal accounting, so they stay out of the audit trail.
+ * Every key mentioning credits is dropped, at any depth — that covers both
+ * `credits_granted` and the nested `plan.credits`.
+ */
+const isCreditKey = (key) => /credit/i.test(key);
+
+const withoutCreditDetails = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([k]) => !isCreditKey(k))
+      .map(([k, v]) => [k, withoutCreditDetails(v)]),
+  );
+};
+
 export default function AuditLogPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,7 +181,7 @@ export default function AuditLogPage() {
       "Resource Type": row.resource_type,
       Timestamp: row.timestamp ? new Date(row.timestamp).toLocaleString() : "",
       "User Agent": row.user_agent,
-      Details: JSON.stringify(row.details),
+      Details: JSON.stringify(withoutCreditDetails(row.details)),
     }));
 
     // Dynamically import SheetJS
@@ -251,7 +268,9 @@ export default function AuditLogPage() {
       case "details": {
         if (!row.details || !Object.keys(row.details).length) return "-";
 
-        const pairs = flattenDetails(row.details);
+        const pairs = flattenDetails(withoutCreditDetails(row.details));
+        // A row whose only details were credits has nothing left to show.
+        if (!pairs.length) return "-";
 
         // Strip "changes." prefix for cleaner display labels
         const cleanLabel = (lbl) => lbl.replace(/^changes\./, "");

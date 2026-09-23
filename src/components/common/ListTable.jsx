@@ -76,12 +76,16 @@ const safeRenderCell = (renderCell, row, key) => {
 };
 
 /* ---------- SORT HELPERS ---------- */
+/** null for a blank cell, so blanks can be kept at the bottom either way. */
 function getSortableValue(row, key) {
   const v = row[key];
-  if (v == null) return "";
-  if (!isNaN(Date.parse(v))) return new Date(v).getTime();
-  if (!isNaN(v)) return Number(v);
-  return String(v).toLowerCase();
+  if (v == null || v === "") return null;
+  // The API sometimes sends "+00:00Z", which Date.parse rejects.
+  const cleaned = typeof v === "string" ? v.replace("+00:00Z", "Z") : v;
+  if (typeof cleaned === "string" && !isNaN(Date.parse(cleaned)))
+    return Date.parse(cleaned);
+  if (!isNaN(cleaned)) return Number(cleaned);
+  return String(cleaned).toLowerCase();
 }
 
 function applySorting(data, sortConfig, columns) {
@@ -93,6 +97,11 @@ function applySorting(data, sortConfig, columns) {
   return [...data].sort((a, b) => {
     const x = getSortableValue(a, sortKey);
     const y = getSortableValue(b, sortKey);
+    // Blanks last, ascending or descending — an empty cell isn't "smallest".
+    if (x === null || y === null) {
+      if (x === null && y === null) return 0;
+      return x === null ? 1 : -1;
+    }
     if (x < y) return sortConfig.direction === "asc" ? -1 : 1;
     if (x > y) return sortConfig.direction === "asc" ? 1 : -1;
     return 0;
