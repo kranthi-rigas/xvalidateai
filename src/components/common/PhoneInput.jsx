@@ -6,13 +6,14 @@ export default function PhoneInput({ phone, phoneCode, onChange, error }) {
 
   return (
     <>
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8, width: "100%" }}>
         {/* Country Code */}
         <input
           disabled
           value={phoneCode}
           style={{
             width: 80,
+            flexShrink: 0,
             height: 48,
             background: "transparent",
             textAlign: "center",
@@ -31,6 +32,10 @@ export default function PhoneInput({ phone, phoneCode, onChange, error }) {
           onBlur={() => setFocused(false)}
           style={{
             flex: 1,
+            // An <input> has an intrinsic width of ~20 characters, and a flex
+            // item will not shrink past it without this — which is what made
+            // the field overhang its card.
+            minWidth: 0,
             height: 48,
             background: "transparent",
             borderRadius: 8,

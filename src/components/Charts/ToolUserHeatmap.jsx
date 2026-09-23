@@ -122,6 +122,7 @@ const ToolUserHeatmap = ({ apiData }) => {
       <div
         style={{
           minWidth: 200,
+          flexShrink: 0,
           background: "#fff",
           borderRight: "1px solid #eee",
         }}
@@ -143,15 +144,39 @@ const ToolUserHeatmap = ({ apiData }) => {
         ))}
       </div>
 
-      {/* Heatmap */}
+      {/* Heatmap — the scroll bar is styled in, because the dashboard hides
+          ::-webkit-scrollbar globally, and minWidth:0 is what lets this flex
+          item scroll at all rather than stretching past the card. */}
+      <style>{`
+        .heatmap-scroll::-webkit-scrollbar {
+          display: block;
+          height: 8px;
+        }
+        .heatmap-scroll::-webkit-scrollbar-track {
+          background: #f1f3f5;
+          border-radius: 4px;
+        }
+        .heatmap-scroll::-webkit-scrollbar-thumb {
+          background: #c6c6c6;
+          border-radius: 4px;
+        }
+        .heatmap-scroll::-webkit-scrollbar-thumb:hover {
+          background: #9e9e9e;
+        }
+      `}</style>
       <div
         ref={containerRef}
+        className="heatmap-scroll"
         style={{
           overflowX: "auto",
           overflowY: "hidden",
-          width: "100%",
+          flex: 1,
+          minWidth: 0,
+          paddingBottom: 8,
           display: "flex",
           justifyContent: "flex-start",
+          scrollbarWidth: "thin",
+          scrollbarColor: "#c6c6c6 #f1f3f5",
           paddingLeft: tools.length <= 3 ? "40px" : "0px",
         }}
       >

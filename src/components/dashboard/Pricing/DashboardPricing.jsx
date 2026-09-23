@@ -80,9 +80,9 @@ const pricingPlans = [
     icon: "fa-solid fa-star",
     iconColor: COLORS.primary,
     period: "Annually",
-    popular: true,
+    popular: false,
     buttonText: "Choose this plan",
-    buttonStyle: "-purple-1 text-white",
+    buttonStyle: "-outline-purple-1 text-purple-1",
     features: [...PLATFORM_FEATURES.map(inc), ...CAIO_FEATURES.map(inc)],
   },
   {
@@ -213,17 +213,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     return () => clearTimeout(timer);
   }, [plansOpen]);
 
-  // ── Business card highlight state (set when Premium user clicks Upgrade) ──
-  const [highlightBusiness, setHighlightBusiness] = useState(
-    location.state?.highlightPlan === "business",
-  );
-
-  useEffect(() => {
-    if (!highlightBusiness) return;
-    const t = setTimeout(() => setHighlightBusiness(false), 3000);
-    return () => clearTimeout(t);
-  }, [highlightBusiness]);
-
   // ── Robustly find expires_at across all common storage/context patterns ──
   function getExpiresAt() {
     const contextCandidates = [user, userData, userProfile, profile];
@@ -296,12 +285,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     formattedExpiry,
   );
 
-  // Rank the three component bundles so a plan can be seen as below, equal to,
-  // or above the user's current plan. The entitlement hierarchy cannot do this:
-  // caio and caio_teacher are both "business", so it could not tell them apart
-  // and marked both as the current plan.
-  const COMPONENT_ORDER = { free: 0, platform: 1, caio: 2, caio_teacher: 3 };
-
   // The exact bundle the user is on. The profile now carries the component the
   // subscriber bought; when it is present it identifies the plan unambiguously.
   // If it is absent (a subscription created before the component was stored, or
@@ -321,10 +304,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   const currentBundleLabel = BUNDLE_LABEL[currentComponent] || null;
   const currentTierLabel = tierLabel(findPlanRecord()?.tier);
 
-  const currentLevel = COMPONENT_ORDER[currentComponent] ?? 0;
-
   const isCurrentPlan = (id) => id === currentComponent;
-  const isPlanBelowCurrent = (id) => (COMPONENT_ORDER[id] ?? 0) < currentLevel;
 
   useEffect(() => {
     AOS.init({
@@ -353,21 +333,33 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
     /* Same full-height panel the My Documents page uses, so the white card
        reaches the bottom of the viewport instead of stopping under a short
        empty state. */
-    <div className="spicy-y" style={{ height: "100%" }}>
-      <style>{`
-        @keyframes pulse-business {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50%       { transform: translateY(-6px) scale(1.02); }
-        }
-      `}</style>
-
-      <div className="row y-gap-30" style={{ height: "100%" }}>
-        <div className="col-12" style={{ height: "100%" }}>
+    /* A flex column all the way down to the panel: percentage heights cannot
+       resolve here (no ancestor has a definite height), so the panel stretches
+       with flex instead — the same height whether the page shows the intro or
+       the plan cards. */
+    <div
+      className="spicy-y"
+      style={{ minHeight: "100%", display: "flex", flexDirection: "column" }}
+    >
+      <div className="row y-gap-30" style={{ flex: 1 }}>
+        <div
+          className="col-12"
+          style={{ display: "flex", flexDirection: "column" }}
+        >
           <div
-            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4 h-100"
-            style={{ minHeight: "100%", boxSizing: "border-box" }}
+            /* No h-100: the template pins it to height:100% !important, so a
+               taller page left the last line outside the white background.
+               minHeight fills the viewport; the box still grows with content. */
+            className="rounded-16 bg-white -dark-bg-dark-1 shadow-4"
+            style={{ flex: 1, boxSizing: "border-box" }}
           >
-            <div className="py-20 px-15 md:py-30 md:px-30">
+            {/* py-20 / py-30 resolve to 10px !important in the template, so the
+                panel's own vertical padding is set here — otherwise the help
+                line sits on the panel's bottom border. */}
+            <div
+              className="px-15 md:px-30"
+              style={{ paddingTop: 32, paddingBottom: 32 }}
+            >
               {!plansOpen ? (
                 /* Nothing to compare until someone asks to compare it — but
                    the landing still has to answer "what is on offer and what
@@ -519,8 +511,9 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               flexDirection: "column",
                               alignItems: "center",
                               gap: 2,
-                              padding: "10px 22px",
+                              padding: "8px 22px",
                               borderRadius: 10,
+                              lineHeight: 1.2,
                               cursor: "pointer",
                               minWidth: 160,
                               border: `1px solid ${active ? COLORS.primary : COLORS.borderLight}`,
@@ -530,12 +523,19 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               color: active ? "#fff" : COLORS.textPrimary,
                             }}
                           >
-                            <span style={{ fontSize: 15, fontWeight: 700 }}>
+                            <span
+                              style={{
+                                fontSize: 15,
+                                fontWeight: 700,
+                                lineHeight: 1.2,
+                              }}
+                            >
                               {tier.label}
                             </span>
                             <span
                               style={{
                                 fontSize: 12,
+                                lineHeight: 1.2,
                                 color: active
                                   ? "rgba(255,255,255,0.85)"
                                   : COLORS.textMuted,
@@ -554,12 +554,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                     {pricingPlans.map((rawPlan, index) => {
                       const plan = resolvePlan(rawPlan);
                       const isCurrent = isCurrentPlan(plan.id);
-                      const isBelowCurrent = isPlanBelowCurrent(plan.id);
-                      // plan.id is never "business" - the ids are platform / caio /
-                      // caio_teacher - so this condition never fired. The business
-                      // upgrade target is the CAIO bundle.
-                      const isHighlighted =
-                        highlightBusiness && plan.id === "caio";
 
                       return (
                         <div
@@ -579,14 +573,6 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               flexDirection: "column",
                               border: isCurrent
                                 ? `2px solid ${COLORS.primary}`
-                                : isHighlighted
-                                  ? `2px solid ${COLORS.success}`
-                                  : undefined,
-                              boxShadow: isHighlighted
-                                ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
-                                : undefined,
-                              animation: isHighlighted
-                                ? "pulse-business 1s ease-in-out 3"
                                 : undefined,
                             }}
                             onMouseEnter={(e) => {
@@ -597,9 +583,7 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = isHighlighted
-                                ? `0 0 0 4px ${COLORS.success}30, 0 20px 40px rgba(0,0,0,0.12)`
-                                : "";
+                              e.currentTarget.style.boxShadow = "";
                             }}
                           >
                             {/* Current Plan Badge */}
@@ -621,12 +605,19 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               </div>
                             )}
 
+                            {/* py-30 is not 30px: the template defines it as
+                                10px !important, which is why the last feature
+                                sat on the card's edge and an inline override
+                                did nothing. The vertical padding is set here
+                                instead, and px-25 keeps the sides. */}
                             <div
-                              className="priceCard__content py-30 px-25"
+                              className="priceCard__content px-25"
                               style={{
                                 display: "flex",
                                 flexDirection: "column",
                                 flex: 1,
+                                paddingTop: 18,
+                                paddingBottom: 18,
                               }}
                             >
                               {/* Plan Icon & Name */}
@@ -717,9 +708,11 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                                 {isCurrent ? (
                                   <button
                                     disabled
-                                    className="button w-100 py-15 fw-500 rounded-8"
+                                    className="button w-100 fw-500 rounded-8"
                                     style={{
                                       padding: "12px 24px",
+                                      lineHeight: 1.4,
+                                      minHeight: 44,
                                       backgroundColor: "#9e9e9e",
                                       color: "#F0F8FF",
                                       cursor: "not-allowed",
@@ -728,31 +721,17 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                                   >
                                     Current Plan
                                   </button>
-                                ) : isBelowCurrent ? (
-                                  <button
-                                    disabled
-                                    className="button w-100 py-15 fw-500 rounded-8"
-                                    style={{
-                                      padding: "12px 24px",
-                                      backgroundColor: "#e0e0e0",
-                                      color: "#9e9e9e",
-                                      cursor: "not-allowed",
-                                      border: "none",
-                                    }}
-                                  >
-                                    {plan.id === "free"
-                                      ? "Free Plan"
-                                      : "Included in your plan"}
-                                  </button>
                                 ) : plan.id === "free" ? (
                                   <div className=" py-25 "></div>
                                 ) : (
                                   <button
                                     onClick={() => handlePlanClick(plan)}
-                                    className={`button w-100 py-15 fw-500 rounded-8 ${plan.buttonStyle}`}
+                                    className={`button w-100 fw-500 rounded-8 ${plan.buttonStyle}`}
                                     style={{
                                       transition: "all 0.2s ease",
                                       padding: "12px 24px",
+                                      lineHeight: 1.4,
+                                      minHeight: 44,
                                     }}
                                   >
                                     {plan.buttonText}
@@ -761,8 +740,11 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                               </div>
 
                               {/* Features List */}
-                              <div className="mt-25" style={{ flex: 1 }}>
-                                <div className="text-14 fw-500 mb-15 text-dark-1">
+                              <div className="mt-20" style={{ flex: 1 }}>
+                                <div
+                                  className="fw-500 text-dark-1"
+                                  style={{ fontSize: 13, marginBottom: 10 }}
+                                >
                                   What's included:
                                 </div>
                                 <div className="y-gap-10">
@@ -778,10 +760,10 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                                         <span
                                           className="d-flex items-center justify-center rounded-full mr-12 text-white"
                                           style={{
-                                            width: "20px",
-                                            height: "20px",
-                                            minWidth: "20px",
-                                            fontSize: "11px",
+                                            width: "18px",
+                                            height: "18px",
+                                            minWidth: "18px",
+                                            fontSize: "10px",
                                             backgroundColor: COLORS.success,
                                           }}
                                         >
@@ -802,12 +784,14 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                                         </span>
                                       )}
                                       <span
-                                        className={`text-14 ${
+                                        className={
                                           feature.included
                                             ? "text-dark-1"
                                             : "text-light-1"
-                                        }`}
+                                        }
                                         style={{
+                                          fontSize: 13,
+                                          lineHeight: 1.4,
                                           textDecoration: feature.included
                                             ? "none"
                                             : "line-through",
@@ -824,12 +808,15 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                         </div>
                       );
                     })}
-                  </div>
 
-                  {/* Help Section */}
-                  <div className="row justify-center text-center mt-30">
-                    <div className="col-auto">
-                      <p className="text-14 text-light-1">
+                    {/* A column of the cards' own row, so the line sits below
+                        the cards and shares their exact left and right edges
+                        rather than the panel's. */}
+                    <div className="col-12">
+                      <p
+                        className="text-14 text-light-1 text-center"
+                        style={{ margin: 0 }}
+                      >
                         For any questions or enterprise inquiries, contact us at{" "}
                         <a
                           href="mailto:support@xvalidateai.com"

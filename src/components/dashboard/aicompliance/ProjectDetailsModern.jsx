@@ -387,6 +387,37 @@ export default function ProjectDetailsModern({ project, onBack }) {
           node.style.setProperty("height", "auto", "important");
           node.style.setProperty("overflow", "visible", "important");
         });
+        // html2canvas lays flex items out on their text baseline and drops
+        // white-on-colour labels, so the severity chip is rebuilt for print:
+        // plain inline text in the severity colour, outlined rather than
+        // filled, on the same line box as the title it labels.
+        clone.querySelectorAll(".severity-pill").forEach((node) => {
+          const accent =
+            node.style.backgroundColor || node.style.background || "#111111";
+          node.style.cssText = "";
+          node.style.setProperty("display", "inline", "important");
+          node.style.setProperty("background", "#ffffff", "important");
+          node.style.setProperty("border", `1px solid ${accent}`, "important");
+          node.style.setProperty("border-radius", "10px", "important");
+          node.style.setProperty("color", accent, "important");
+          node.style.setProperty("padding", "1px 7px", "important");
+          node.style.setProperty("margin-right", "8px", "important");
+          node.style.setProperty("font-size", "10px", "important");
+          node.style.setProperty("font-weight", "700", "important");
+          node.style.setProperty("letter-spacing", "0.04em", "important");
+          node.style.setProperty("white-space", "nowrap", "important");
+        });
+        clone.querySelectorAll(".finding-heading").forEach((node) => {
+          node.style.setProperty("display", "block", "important");
+          node.style.setProperty("line-height", "18px", "important");
+        });
+        clone.querySelectorAll(".finding-title").forEach((node) => {
+          node.style.setProperty("display", "inline", "important");
+          node.style.setProperty("margin", "0", "important");
+          node.style.setProperty("font-size", "13px", "important");
+          node.style.setProperty("line-height", "18px", "important");
+        });
+
         clone.querySelectorAll(".tool-icon, .section-icon").forEach((node) => {
           node.style.setProperty("background", "#ffffff", "important");
           node.style.setProperty("border", "1px solid #111111", "important");
@@ -431,8 +462,29 @@ export default function ProjectDetailsModern({ project, onBack }) {
             cloneCharts[i].parentNode.replaceChild(img, cloneCharts[i]);
         }
 
+        const CAPTURE_SCALE = 1.5;
+
+        // Where each self-contained block sits in the rendered image. The page
+        // slicer uses these so a page break lands between findings rather than
+        // through the middle of one.
+        const cloneTop = clone.getBoundingClientRect().top;
+        const atomicBlocks = Array.from(
+          clone.querySelectorAll(
+            ".recommendation-box, .summary-card, .section-score-badge, tr",
+          ),
+        )
+          .map((node) => {
+            const r = node.getBoundingClientRect();
+            return {
+              top: (r.top - cloneTop) * CAPTURE_SCALE,
+              bottom: (r.bottom - cloneTop) * CAPTURE_SCALE,
+            };
+          })
+          .filter((b) => b.bottom > b.top)
+          .sort((a, b) => a.top - b.top);
+
         const canvas = await html2canvas(clone, {
-          scale: 1.5,
+          scale: CAPTURE_SCALE,
           backgroundColor: "#ffffff",
           useCORS: true,
           imageTimeout: 0,
@@ -441,13 +493,42 @@ export default function ProjectDetailsModern({ project, onBack }) {
         document.body.removeChild(clone);
         // ✅ No restore needed — real DOM was never touched
 
-        return canvas;
+        return { canvas, blocks: atomicBlocks };
+      };
+
+      /* ── SAFE PAGE BREAKS ──────────────────────────────────────────────—
+         Move a page break up to the top of whatever block it would otherwise
+         cut through. A block taller than a page is left alone — it has to be
+         split somewhere — and a break is never pulled so far up that it leaves
+         a nearly empty page. */
+      const findSafeCut = (blocks, position, maxCut, pageHeightPx) => {
+        const minSlice = pageHeightPx * 0.3;
+        const gap = 8;
+        let cut = maxCut;
+
+        // Moving the break up can expose an earlier block, so repeat until the
+        // break is clear of every block.
+        for (let i = 0; i < 12; i++) {
+          const straddler = blocks.find(
+            (b) =>
+              b.top < cut &&
+              b.bottom > cut &&
+              b.bottom - b.top <= pageHeightPx * 0.95 &&
+              b.top - gap > position + minSlice,
+          );
+          if (!straddler) break;
+          cut = straddler.top - gap;
+        }
+
+        return cut > position + minSlice ? cut : maxCut;
       };
 
       /* ── ADD CANVAS WITH PAGING ────────────────────────────────────────── */
       let isVeryFirstPage = true;
 
-      const addCanvasPaged = (canvas) => {
+      const addCanvasPaged = (captured) => {
+        const canvas = captured?.canvas || captured;
+        const blocks = captured?.blocks || [];
         if (!canvas || !canvas.width || !canvas.height) return;
 
         const imgWidthPx = canvas.width;
@@ -473,9 +554,18 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
           // ← footer is intentionally NOT drawn here
 
+          const remaining = imgHeightPx - position;
+          const hardCut = position + pageHeightPx;
+          // Only the breaks before the end of the image can be moved; the last
+          // slice ends at the image itself.
+          const cut =
+            hardCut < imgHeightPx
+              ? findSafeCut(blocks, position, hardCut, pageHeightPx)
+              : imgHeightPx;
+
           const sliceCanvas = document.createElement("canvas");
           sliceCanvas.width = imgWidthPx;
-          sliceCanvas.height = Math.min(pageHeightPx, imgHeightPx - position);
+          sliceCanvas.height = Math.min(cut - position, remaining);
 
           const ctx = sliceCanvas.getContext("2d");
           ctx.drawImage(
@@ -501,7 +591,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
           drawWatermark();
 
-          position += pageHeightPx;
+          position += sliceCanvas.height;
           pageIndex++;
         }
       };
@@ -1569,6 +1659,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                               }
                             : undefined
                         }
+                        className="finding-heading"
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -1581,8 +1672,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                         }}
                       >
                         <span
+                          className="severity-pill"
                           style={{
                             display: "inline-flex",
+                            alignItems: "center",
                             padding: "3px 10px",
                             borderRadius: 999,
                             fontSize: 11,
@@ -1595,7 +1688,10 @@ export default function ProjectDetailsModern({ project, onBack }) {
                         >
                           {f.severity}
                         </span>
-                        <h4 style={{ margin: 0, color: tone.label }}>
+                        <h4
+                          className="finding-title"
+                          style={{ margin: 0, color: tone.label }}
+                        >
                           {f.title}
                         </h4>
                         {monitoringCollapsible && (
