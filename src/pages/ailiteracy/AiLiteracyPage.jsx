@@ -179,10 +179,9 @@ function NotifyButton({
   enrolled,
   setEnrolled,
   locked = false,
-  lockedMessage,
+  lockedTooltip,
 }) {
   const [submitting, setSubmitting] = React.useState(false);
-  const navigate = useNavigate();
 
   const handleNotify = async () => {
     setSubmitting(true);
@@ -231,8 +230,9 @@ function NotifyButton({
   }
 
   if (locked) {
+    // A disabled button fires no mouse events, so the tooltip sits on a wrapper.
     return (
-      <div style={{ width: "100%" }}>
+      <div style={{ width: "100%" }} title={lockedTooltip}>
         <button
           disabled
           style={{
@@ -251,55 +251,12 @@ function NotifyButton({
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
+            pointerEvents: "none",
           }}
         >
           <i className="fa-solid fa-lock" style={{ fontSize: 13 }} />
           Notify Me
         </button>
-        {lockedMessage && (
-          <p
-            style={{
-              marginTop: 10,
-              marginBottom: 0,
-              fontSize: 13,
-              color: COLORS.textMuted,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-            }}
-          >
-            <i className="fa-solid fa-circle-info" style={{ fontSize: 12 }} />
-            {lockedMessage}
-          </p>
-        )}
-        {lockedMessage && (
-          <button
-            onClick={() => navigate("/dashboard/pricing")}
-            style={{
-              marginTop: 12,
-              padding: "10px 32px",
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#0F3357",
-              background: "#fff",
-              border: "1px solid #0F3357",
-              borderRadius: 8,
-              cursor: "pointer",
-              transition: "background 0.2s ease",
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "#e3edfd")}
-            onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
-          >
-            <i className="fa-solid fa-arrow-up" style={{ fontSize: 13 }} />
-            Upgrade
-          </button>
-        )}
       </div>
     );
   }
@@ -357,6 +314,7 @@ export default function AiLiteracyPage() {
   const [showPlaybook, setShowPlaybook] = useState(false);
   const showToast = useToast();
   const { userPlan, planKnown } = useContextElement();
+  const navigate = useNavigate();
   const canDownload = hasAccess("business", userPlan);
   // Free and Platform users can't sign up for the programme launches. The
   // stored plan doesn't say which "business" bundle a user has, so both
@@ -655,9 +613,7 @@ export default function AiLiteracyPage() {
                   enrolled={notifiedPrograms.includes(NEWSLETTER_PROGRAMS.CAIO)}
                   setEnrolled={markProgramNotified}
                   locked={!canNotifyPrograms}
-                  lockedMessage={
-                    planKnown ? "Upgrade to Platform + CAIO plan" : null
-                  }
+                  lockedTooltip="Upgrade your plan"
                 />
               </div>
 
@@ -745,14 +701,53 @@ export default function AiLiteracyPage() {
                   )}
                   setEnrolled={markProgramNotified}
                   locked={!canNotifyPrograms}
-                  lockedMessage={
-                    planKnown
-                      ? "Upgrade to Platform + CAIO + AI-Ready Teacher plan"
-                      : null
-                  }
+                  lockedTooltip="Upgrade your plan"
                 />
               </div>
             </div>
+
+            {/* One upgrade for both programmes: the full bundle unlocks each */}
+            {planKnown && !canNotifyPrograms && (
+              <div
+                style={{
+                  maxWidth: 900,
+                  margin: "24px auto 0",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                <button
+                  onClick={() => navigate("/dashboard/pricing")}
+                  style={{
+                    padding: "11px 32px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#fff",
+                    background: "#0F3357",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    transition: "background 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "#1a5276")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "#0F3357")
+                  }
+                >
+                  <i
+                    className="fa-solid fa-arrow-up"
+                    style={{ fontSize: 13 }}
+                  />
+                  Upgrade to Platform + CAIO + AI-Ready Teacher plan
+                </button>
+              </div>
+            )}
           </PageTransition>
         )}
 
