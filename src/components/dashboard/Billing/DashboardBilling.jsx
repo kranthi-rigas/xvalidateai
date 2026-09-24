@@ -683,7 +683,13 @@ export default function DashboardBilling() {
                     {/* Cancel */}
                     <button
                       type="button"
-                      onClick={() => navigate("/dashboard/pricing")}
+                      // Back to the plan cards, not the "Choose your plan"
+                      // landing — the person has already chosen to compare.
+                      onClick={() =>
+                        navigate("/dashboard/pricing", {
+                          state: { showPlans: true },
+                        })
+                      }
                       disabled={isSubmitting || isPaying}
                       className="w-full sm:flex-1 h-14 rounded-lg 
                bg-[#0f3053] text-white font-semibold

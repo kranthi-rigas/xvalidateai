@@ -445,14 +445,14 @@ export default function AiLiteracyPage() {
   if (pageLoading) return <PageLoader loading={true} />;
 
   return (
-    <div ref={topRef} className="spicy-y" style={{ height: "100%" }}>
+    <div ref={topRef} className="spicy-y" style={{ minHeight: "100%" }}>
       {/* minHeight keeps the white panel filling the viewport now that the
           landing holds only two cards - without it the card sized to its
           content and the page read as half-rendered. Set here rather than on
           .dashboard-body, which eight other dashboard pages share. */}
       <div
         className="dashboard-body"
-        style={{ minHeight: "100%", boxSizing: "border-box" }}
+        style={{ flex: "1 0 auto", boxSizing: "border-box" }}
       >
         {/* Header */}
         <div style={{ marginBottom: 32, textAlign: "center" }}>

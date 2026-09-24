@@ -188,7 +188,7 @@ export default function GoogleLoginPage() {
                 className="text-24 fw-700"
                 style={{ color: COLORS.textPrimary, marginBottom: 8 }}
               >
-                Add your phone number
+                Add your country and phone number
               </h3>
               <p
                 className="text-14"
@@ -198,8 +198,7 @@ export default function GoogleLoginPage() {
                   marginBottom: 24,
                 }}
               >
-                Google does not share a phone number or country. Add them to
-                finish setting up your account
+                We need these to finish setting up your account
                 {account?.email ? ` (${account.email})` : ""}.
               </p>
 
@@ -218,27 +217,17 @@ export default function GoogleLoginPage() {
                   />
                 </div>
 
-                {/* The phone field appears once a country is chosen — its dial
-                    code comes from that choice. */}
-                {selectedCountry ? (
-                  <div style={{ marginBottom: 20 }}>
-                    <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
-                      Phone Number *
-                    </label>
-                    <PhoneInput
-                      phone={phone}
-                      phoneCode={phoneCode}
-                      onChange={onPhoneChange}
-                    />
-                  </div>
-                ) : (
-                  <p
-                    className="text-14"
-                    style={{ color: COLORS.textMuted, marginBottom: 20 }}
-                  >
-                    Select your country to enter a phone number.
-                  </p>
-                )}
+                <div style={{ marginBottom: 20 }}>
+                  <label className="text-16 lh-1 fw-500 text-dark-1 mb-10">
+                    Phone Number *
+                  </label>
+                  {/* The dial code box fills in from the country above. */}
+                  <PhoneInput
+                    phone={phone}
+                    phoneCode={phoneCode}
+                    onChange={onPhoneChange}
+                  />
+                </div>
 
                 {error && (
                   <div
