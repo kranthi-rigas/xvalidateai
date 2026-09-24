@@ -275,8 +275,14 @@ export default function AIListViewModern({
 
                 // 🔒 keep immutable values
 
-                scan_approved_by: p.__scan_approved_by,
-                scan_rejected_by: p.__scan_rejected_by ?? p.scan_rejected_by,
+                scan_approved_by:
+                  updated.scan_approved_by ??
+                  p.__scan_approved_by ??
+                  p.scan_approved_by,
+                scan_rejected_by:
+                  updated.scan_rejected_by ??
+                  p.__scan_rejected_by ??
+                  p.scan_rejected_by,
               }
             : p;
         }),
