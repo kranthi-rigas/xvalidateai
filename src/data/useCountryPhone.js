@@ -34,7 +34,15 @@ export function useCountryPhone() {
   // Prefill from a saved profile: match the country by name and strip its
   // dial code off the stored phone number (phone is saved as code + number).
   const prefill = ({ country, phone: savedPhone }) => {
-    const match = FORMATTED_COUNTRIES.find((c) => c.value === country) || null;
+    // A saved country arrives either as its name ("India", from the signup
+    // form) or as its ISO code ("IN", from a social signup), so both are
+    // matched here — otherwise the field comes back empty and the dial code
+    // never gets stripped off the stored number.
+    const key = (country || "").trim().toLowerCase();
+    const match =
+      FORMATTED_COUNTRIES.find((c) => c.value.toLowerCase() === key) ||
+      FORMATTED_COUNTRIES.find((c) => (c.iso || "").toLowerCase() === key) ||
+      null;
     setCountryValue(match?.value || "");
     setPhoneCode(match?.code || "");
 
