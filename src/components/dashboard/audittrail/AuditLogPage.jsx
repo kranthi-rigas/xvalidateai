@@ -12,6 +12,15 @@ import ReactDOM from "react-dom";
  */
 const isCreditKey = (key) => /credit/i.test(key);
 
+/**
+ * Credit deductions are internal accounting, not user or system activity the
+ * audit trail is meant to report, so those entries are dropped entirely —
+ * they never reach the table, the search, the count or the export.
+ */
+const isCreditEntry = (log) =>
+  /credit/i.test(log?.resource_type || "") ||
+  /credit/i.test(log?.event_type || "");
+
 const withoutCreditDetails = (value) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
 
@@ -134,7 +143,8 @@ export default function AuditLogPage() {
         days: 30,
       });
 
-      setLogs(data?.audit_trail || []);
+      const entries = data?.audit_trail || [];
+      setLogs(entries.filter((log) => !isCreditEntry(log)));
     } catch (err) {
       console.error("Audit fetch error:", err);
       setLogs([]);

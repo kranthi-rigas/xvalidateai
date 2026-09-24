@@ -4,13 +4,15 @@ import { COUNTRIES } from "../data/countries"; // ← the file I gave you
 
 const DIAL_CODES = {
   // keep your existing DIAL_CODES object here unchanged
-  AF: "+93", AL: "+355", /* ... rest of it ... */
+  AF: "+93",
+  AL: "+355" /* ... rest of it ... */,
 };
 
 // Build the formatted list once at module load — no fetch, no useEffect
 const FORMATTED_COUNTRIES = COUNTRIES.map((c) => ({
   label: c.label,
-  value: c.label,           // your hook uses label as value (country name)
+  value: c.label, // your hook uses label as value (country name)
+  iso: c.value, // ISO 3166-1 alpha-2, for APIs that want "US"
   code: c.phoneCode,
   flag: `https://flagcdn.com/w20/${c.value.toLowerCase()}.png`,
 })).sort((a, b) => a.label.localeCompare(b.label));
@@ -57,7 +59,7 @@ export function useCountryPhone() {
   };
 
   return {
-    countries: FORMATTED_COUNTRIES,  // ← static, always ready, no loading state
+    countries: FORMATTED_COUNTRIES, // ← static, always ready, no loading state
     selectedCountry,
     phone,
     phoneCode,

@@ -109,6 +109,7 @@ export default function AIListViewModern({
     last_scanned_time: 180,
     requested_by: 220,
     approved_by: 240,
+    rejected_by: 240,
     createdtime: 180,
   });
 
@@ -265,6 +266,7 @@ export default function AIListViewModern({
                 // 🔒 keep immutable values
 
                 scan_approved_by: p.__scan_approved_by,
+                scan_rejected_by: p.__scan_rejected_by ?? p.scan_rejected_by,
               }
             : p;
         }),
@@ -487,7 +489,7 @@ export default function AIListViewModern({
   };
 
   // Get recommendation badge styling
-  const getRecommendationBadge = (recommendation) => {
+  const getRecommendationBadge = (recommendation, status) => {
     const recMap = {
       approved: {
         bg: "bg-green-50",
@@ -524,17 +526,30 @@ export default function AIListViewModern({
     };
 
     const rec = (recommendation || "").toLowerCase().trim();
+    if (recMap[rec]) return recMap[rec];
 
-    return (
-      recMap[rec] || {
-        bg: "bg-gray-50",
-        icon: "fa-clock", // ✅ default icon added
-        class: "badge-default",
-        text: "text-gray-600",
-        border: "border-gray-200",
-        label: "Pending Review",
-      }
-    );
+    // A rejected scan never produces a recommendation, so the empty value used
+    // to fall through to "Pending Review" — which reads as though the tool is
+    // still in the queue. Say what actually happened.
+    if ((status || "").toLowerCase().trim() === "rejected_for_scan") {
+      return {
+        bg: "bg-red-50",
+        icon: "fa-ban",
+        class: "badge-error",
+        text: "text-red-700",
+        border: "border-red-200",
+        label: "Scan Rejected",
+      };
+    }
+
+    return {
+      bg: "bg-gray-50",
+      icon: "fa-clock", // ✅ default icon added
+      class: "badge-default",
+      text: "text-gray-600",
+      border: "border-gray-200",
+      label: "Pending Review",
+    };
   };
 
   //search helper
@@ -557,6 +572,9 @@ export default function AIListViewModern({
       project.approved_by?.first_name,
       project.approved_by?.last_name,
       project.approved_by?.email,
+      project.scan_rejected_by?.first_name,
+      project.scan_rejected_by?.last_name,
+      project.scan_rejected_by?.email,
     ]
       .filter(Boolean)
       .join(" ")
@@ -675,6 +693,11 @@ export default function AIListViewModern({
       label: "Scan Approved By",
       resizable: true,
     },
+    {
+      key: "rejected_by",
+      label: "Scan Rejected By",
+      resizable: true,
+    },
   ];
 
   const renderCell = (project, key) => {
@@ -744,7 +767,10 @@ export default function AIListViewModern({
       }
 
       case "recommendation": {
-        const badge = getRecommendationBadge(project.recommendation);
+        const badge = getRecommendationBadge(
+          project.recommendation,
+          project.status,
+        );
 
         return (
           <span
@@ -808,6 +834,24 @@ export default function AIListViewModern({
             </span>
             <span className="text-xs text-muted-foreground truncate">
               {a.email}
+            </span>
+          </div>
+        );
+      }
+
+      case "rejected_by": {
+        const r = project.scan_rejected_by;
+        if (!r)
+          return (
+            <span className="text-sm italic text-muted-foreground">N/A</span>
+          );
+        return (
+          <div className="flex flex-col gap-0.5 truncate">
+            <span className="text-sm font-medium text-foreground truncate">
+              {`${r.first_name || ""} ${r.last_name || ""}`.trim()}
+            </span>
+            <span className="text-xs text-muted-foreground truncate">
+              {r.email}
             </span>
           </div>
         );
@@ -1305,6 +1349,14 @@ export default function AIListViewModern({
                           approvalAction === "scan_approve"
                             ? userInfo
                             : p.__scan_approved_by,
+                        scan_rejected_by:
+                          approvalAction === "scan_reject"
+                            ? userInfo
+                            : p.scan_rejected_by,
+                        __scan_rejected_by:
+                          approvalAction === "scan_reject"
+                            ? userInfo
+                            : p.__scan_rejected_by,
                       }
                     : p,
                 ),

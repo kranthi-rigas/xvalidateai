@@ -15,6 +15,13 @@ import UpgradeBanner from "./UpgradeBanner";
 import { isUpgradeBannerDismissed } from "./useUpgradeNudge";
 import { PLAN_DISPLAY_NAMES } from "@/utils/planAccess";
 import AwsButton from "@/components/common/AwsButton";
+import { COLORS } from "@/styles/colors";
+
+// Logging out is a wait-then-go, not a question: the dialog counts down and
+// signs the person out on its own, and Cancel is there to stop it.
+const LOGOUT_COUNTDOWN_SECONDS = 5;
+const RING_RADIUS = 46;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function ModernDashboardLayout() {
   const location = useLocation();
@@ -24,6 +31,7 @@ export default function ModernDashboardLayout() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(LOGOUT_COUNTDOWN_SECONDS);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [upgradeDismissed, setUpgradeDismissed] = useState(
     isUpgradeBannerDismissed,
@@ -143,7 +151,13 @@ export default function ModernDashboardLayout() {
   }, [location.pathname]);
 
   const handleLogoutClick = () => {
+    setSecondsLeft(LOGOUT_COUNTDOWN_SECONDS);
     setShowLogoutModal(true);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+    setSecondsLeft(LOGOUT_COUNTDOWN_SECONDS);
   };
 
   const handleLogout = async () => {
@@ -210,6 +224,21 @@ export default function ModernDashboardLayout() {
   useEffect(() => {
     setAccountDetailsOpen(false);
   }, [location.pathname]);
+
+  // One tick per second while the dialog is open; at zero it signs out by
+  // itself. Cancelling or the request starting stops the clock.
+  useEffect(() => {
+    if (!showLogoutModal || isLoggingOut) return undefined;
+
+    if (secondsLeft <= 0) {
+      handleLogout();
+      return undefined;
+    }
+
+    const timer = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showLogoutModal, isLoggingOut, secondsLeft]);
 
   const effectiveCollapsed = sidebarCollapsed && !mobileSidebarOpen;
 
@@ -612,32 +641,83 @@ export default function ModernDashboardLayout() {
         </div>
       </main>
 
-      {/* Logout Confirmation Modal — headline question, the account it applies
-          to, then the two actions stacked with the destructive one first. */}
+      {/* Logout dialog — a countdown that logs the person out when it runs
+          out, with Cancel underneath to stop it. */}
       {showLogoutModal && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
-          onClick={() => !isLoggingOut && setShowLogoutModal(false)}
+          onClick={() => !isLoggingOut && cancelLogout()}
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm log out"
+          aria-label="Logging out"
         >
           <div
-            className="bg-white w-full shadow-xl"
-            style={{ maxWidth: 460, padding: 32, borderRadius: 20 }}
+            className="bg-white w-full shadow-xl text-center"
+            style={{ maxWidth: 420, padding: 32, borderRadius: 20 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl font-bold text-center text-foreground leading-snug">
-              Are you sure you
-              <br />
-              want to log out?
+            <h3 className="text-xl font-bold text-foreground">
+              {isLoggingOut ? "Signing you out…" : "Logging you out"}
             </h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              {isLoggingOut
+                ? "One moment."
+                : `You will be signed out in ${secondsLeft} second${
+                    secondsLeft === 1 ? "" : "s"
+                  }.`}
+            </p>
+
+            {/* The ring empties a step a second, so the wait is visible as
+                well as counted. */}
+            <div
+              className="relative mx-auto"
+              style={{ width: 120, height: 120, marginTop: 20 }}
+            >
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={RING_RADIUS}
+                  fill="none"
+                  stroke={COLORS.borderLight}
+                  strokeWidth="8"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r={RING_RADIUS}
+                  fill="none"
+                  stroke={COLORS.primary}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={RING_CIRCUMFERENCE}
+                  strokeDashoffset={
+                    RING_CIRCUMFERENCE *
+                    (1 - Math.max(secondsLeft, 0) / LOGOUT_COUNTDOWN_SECONDS)
+                  }
+                  transform="rotate(-90 60 60)"
+                  style={{ transition: "stroke-dashoffset 1s linear" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span
+                  style={{
+                    fontSize: 38,
+                    fontWeight: 700,
+                    color: COLORS.primary,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {Math.max(secondsLeft, 0)}
+                </span>
+              </div>
+            </div>
 
             {/* Which account is being signed out — worth stating when someone
                 keeps more than one. */}
             <div
-              className="flex items-center gap-3 mt-6 p-4 border border-border"
+              className="flex items-center gap-3 mt-6 p-3 border border-border text-left"
               style={{ borderRadius: 14 }}
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
@@ -658,11 +738,9 @@ export default function ModernDashboardLayout() {
               </div>
             </div>
 
-            {/* The app's standard buttons, so these hover teal and spin
-                while logging out like every other action. */}
             <div className="mt-6 space-y-3">
               <AwsButton
-                label={isLoggingOut ? "Logging out…" : "Log out"}
+                label={isLoggingOut ? "Logging out…" : "Log out now"}
                 variant="primary"
                 size="lg"
                 fullWidth
@@ -675,7 +753,7 @@ export default function ModernDashboardLayout() {
                 size="lg"
                 fullWidth
                 disabled={isLoggingOut}
-                onClick={() => setShowLogoutModal(false)}
+                onClick={cancelLogout}
               />
             </div>
           </div>
