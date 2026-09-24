@@ -328,6 +328,8 @@ export default function MockTestListView({
       {/* ---------- Table ---------- */}
       <div style={{ position: "relative" }}>
         <ListTable
+          wrapLines={wrapLines}
+          stripedRows={stripedRows}
           columns={visibleCols}
           data={sorted.slice(0, pageSize)}
           rowKey="exam_id"

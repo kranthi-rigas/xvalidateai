@@ -132,6 +132,10 @@ export default function ListTable({
 
   columnWidths,
   startResize,
+
+  /* preferences */
+  wrapLines = false,
+  stripedRows = false,
 }) {
   const sortedData = applySorting(data, sortConfig, columns);
   const hasData = Array.isArray(data) && data.length > 0;
@@ -418,11 +422,23 @@ export default function ListTable({
               </tr>
             ) : (
               sortedData.map((row, rowIndex) => (
-                <tr key={row[rowKey] ?? rowIndex} className="hover:bg-muted/20">
+                <tr
+                  key={row[rowKey] ?? rowIndex}
+                  className={
+                    stripedRows && rowIndex % 2 === 1
+                      ? "bg-muted/40 hover:bg-muted/60"
+                      : "hover:bg-muted/20"
+                  }
+                >
                   {columns.map((col) => {
                     const width = isWidthControlled
                       ? columnWidths?.[col.key]
                       : internalWidths?.[col.key];
+
+                    // Wrap text also un-truncates the spans a cell renders itself
+                    const wrap =
+                      col.key !== "checkbox" &&
+                      (wrapLines || col.truncate === false);
 
                     return (
                       <td
@@ -430,16 +446,20 @@ export default function ListTable({
                         className={`p-4 text-center ${
                           col.key === "checkbox"
                             ? "pl-6 pr-2"
-                            : col.truncate === false
+                            : wrap
                               ? "break-words whitespace-normal"
                               : "truncate"
+                        } ${
+                          wrapLines && wrap
+                            ? "[&_.truncate]:whitespace-normal [&_.truncate]:overflow-visible [&_.truncate]:break-words"
+                            : ""
                         }`}
                         style={{
                           width,
                           minWidth: width,
                         }}
                       >
-                        {col.truncate === false ? (
+                        {wrap ? (
                           safeRenderCell(renderCell, row, col.key)
                         ) : (
                           <TruncatedCell>

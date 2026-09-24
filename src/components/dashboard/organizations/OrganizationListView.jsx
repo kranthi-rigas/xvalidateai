@@ -496,6 +496,8 @@ export default function OrganizationListView() {
             <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center"></div>
           )}
           <ListTable
+            wrapLines={wrapLines}
+            stripedRows={stripedRows}
             columns={visibleTableColumns}
             data={paginatedData}
             rowKey="org_id"
