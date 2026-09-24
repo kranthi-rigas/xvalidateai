@@ -173,7 +173,14 @@ const PLAYBOOK_MODULES = [
     ],
   },
 ];
-function NotifyButton({ showToast, programId, enrolled, setEnrolled }) {
+function NotifyButton({
+  showToast,
+  programId,
+  enrolled,
+  setEnrolled,
+  locked = false,
+  lockedMessage,
+}) {
   const [submitting, setSubmitting] = React.useState(false);
 
   const handleNotify = async () => {
@@ -219,6 +226,53 @@ function NotifyButton({ showToast, programId, enrolled, setEnrolled }) {
         <i className="fa-solid fa-circle-check" style={{ fontSize: 13 }} />
         You're Enrolled
       </button>
+    );
+  }
+
+  if (locked) {
+    return (
+      <div style={{ width: "100%" }}>
+        <button
+          disabled
+          style={{
+            marginTop: 4,
+            padding: "11px 32px",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#fff",
+            background: "#0F3357",
+            opacity: 0.5,
+            border: "none",
+            borderRadius: 8,
+            cursor: "not-allowed",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          <i className="fa-solid fa-lock" style={{ fontSize: 13 }} />
+          Notify Me
+        </button>
+        {lockedMessage && (
+          <p
+            style={{
+              marginTop: 10,
+              marginBottom: 0,
+              fontSize: 13,
+              color: COLORS.textMuted,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            <i className="fa-solid fa-circle-info" style={{ fontSize: 12 }} />
+            {lockedMessage}
+          </p>
+        )}
+      </div>
     );
   }
 
@@ -274,8 +328,12 @@ export default function AiLiteracyPage() {
   const [result, setResult] = useState(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
   const showToast = useToast();
-  const { userPlan } = useContextElement();
+  const { userPlan, planKnown } = useContextElement();
   const canDownload = hasAccess("business", userPlan);
+  // Free and Platform users can't sign up for the programme launches. The
+  // stored plan doesn't say which "business" bundle a user has, so both
+  // programmes unlock at that tier.
+  const canNotifyPrograms = planKnown && hasAccess("business", userPlan);
   const topRef = useRef(null);
   const playbookRef = useRef(null);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
@@ -568,6 +626,10 @@ export default function AiLiteracyPage() {
                   programId={NEWSLETTER_PROGRAMS.CAIO}
                   enrolled={notifiedPrograms.includes(NEWSLETTER_PROGRAMS.CAIO)}
                   setEnrolled={markProgramNotified}
+                  locked={!canNotifyPrograms}
+                  lockedMessage={
+                    planKnown ? "Upgrade to Platform + CAIO plan" : null
+                  }
                 />
               </div>
 
@@ -654,6 +716,12 @@ export default function AiLiteracyPage() {
                     NEWSLETTER_PROGRAMS.AI_READY_TEACHER,
                   )}
                   setEnrolled={markProgramNotified}
+                  locked={!canNotifyPrograms}
+                  lockedMessage={
+                    planKnown
+                      ? "Upgrade to Platform + CAIO + AI-Ready Teacher plan"
+                      : null
+                  }
                 />
               </div>
             </div>
