@@ -4,6 +4,7 @@ import { useContextElement } from "@/context/Context";
 import { SHOW_CREDITS } from "@/config/features";
 import { COLORS } from "@/styles/colors";
 import AwsButton from "@/components/common/AwsButton";
+import { isViewOnlyUser, VIEW_ONLY_MESSAGE } from "@/utils/roles";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
@@ -193,15 +194,21 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
   // The page opens on a single call to action; the bands and the plan cards
   // come in once the person says they are shopping. Arriving from an upgrade
   // link is already that decision, so it skips the gate.
-  const [plansOpen, setPlansOpen] = useState(
-    Boolean(location.state?.highlightPlan),
+  // A view-only account cannot buy a plan, so neither call to action is live
+  // for it — better a disabled button that says why than a dead end at billing.
+  const isViewOnly = isViewOnlyUser();
+
+  const plansRequested = Boolean(
+    location.state?.highlightPlan || location.state?.showPlans,
   );
+
+  const [plansOpen, setPlansOpen] = useState(plansRequested);
 
   // Navigating to Pricing again — the sidebar link, even from this very page —
   // is a fresh visit, so it returns to the call to action. location.key changes
   // on every navigation, including one to the URL already showing.
   useEffect(() => {
-    setPlansOpen(Boolean(location.state?.highlightPlan));
+    setPlansOpen(plansRequested);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
 
@@ -464,14 +471,27 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                     </div>
                   )}
 
-                  <div style={{ marginTop: 26 }}>
+                  <div
+                    style={{ marginTop: 26 }}
+                    title={isViewOnly ? VIEW_ONLY_MESSAGE : ""}
+                  >
                     <AwsButton
                       label="Choose your plan"
                       variant="primary"
                       size="lg"
+                      disabled={isViewOnly}
                       onClick={() => setPlansOpen(true)}
                     />
                   </div>
+                  {isViewOnly && (
+                    <p
+                      className="text-14 text-light-1"
+                      style={{ marginTop: 12, marginBottom: 0 }}
+                    >
+                      {VIEW_ONLY_MESSAGE}. Ask an administrator to change your
+                      plan.
+                    </p>
+                  )}
 
                   {/* Same treatment as the support line under the plan
                       cards, so the two read as one page. */}
@@ -738,13 +758,23 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
                                   <div className=" py-25 "></div>
                                 ) : (
                                   <button
-                                    onClick={() => handlePlanClick(plan)}
+                                    disabled={isViewOnly}
+                                    title={isViewOnly ? VIEW_ONLY_MESSAGE : ""}
+                                    onClick={() =>
+                                      !isViewOnly && handlePlanClick(plan)
+                                    }
                                     className={`button w-100 fw-500 rounded-8 ${plan.buttonStyle}`}
                                     style={{
                                       transition: "all 0.2s ease",
                                       padding: "12px 24px",
                                       lineHeight: 1.4,
                                       minHeight: 44,
+                                      ...(isViewOnly
+                                        ? {
+                                            opacity: 0.6,
+                                            cursor: "not-allowed",
+                                          }
+                                        : null),
                                     }}
                                   >
                                     {plan.buttonText}

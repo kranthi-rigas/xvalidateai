@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Plot from "react-plotly.js";
 import { COLORS } from "@/styles/colors";
 import { updateComplianceProject } from "../../../apiIntegration/compliance";
@@ -144,6 +144,17 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   const { userPlan } = useContextElement();
   const isFreePlan = userPlan === "free";
+
+  // A view-only account cannot take the compliance report away: the PDF is for
+  // the roles that own the record, the same rule the dashboard exports follow.
+  const isUserOnly = useMemo(() => {
+    const info = JSON.parse(localStorage.getItem("user_info") || "{}");
+    const list = Array.isArray(info.roles)
+      ? info.roles
+      : String(info.roles || "").split(",");
+    const upper = list.map((r) => r.toUpperCase().trim()).filter(Boolean);
+    return upper.length > 0 && upper.every((r) => r === "USER");
+  }, []);
 
   const handleDownloadPDF = async () => {
     try {
@@ -1006,8 +1017,15 @@ export default function ProjectDetailsModern({ project, onBack }) {
           {/* Right Side Actions */}
           <div className="flex items-center justify-end">
             <button
-              disabled={isDownloading || isFreePlan}
+              disabled={isDownloading || isFreePlan || isUserOnly}
               onClick={handleDownloadPDF}
+              title={
+                isUserOnly
+                  ? "You have view-only access"
+                  : isFreePlan
+                    ? "Upgrade plan to export"
+                    : ""
+              }
               className="inline-flex items-center gap-2 px-5 py-2.5
                text-sm font-semibold text-white
                bg-[#0F3357] rounded-xl

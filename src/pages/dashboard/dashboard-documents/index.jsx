@@ -10,14 +10,18 @@ export default function DocumentsPageWrapper() {
   return (
     <>
       <MetaComponent meta={metadata} />
-      {/* Same white panel the Programs page uses: .dashboard-body for the card
-          itself, and minHeight so it fills the viewport rather than shrinking
-          to an empty-state message. Wrapped here rather than inside
-          MyDocuments, which is a plain content component. */}
+      {/* The panel is exactly the height of the viewport and never taller:
+          the document list scrolls inside it, so the page itself does not. */}
       <div className="spicy-y" style={{ height: "100%" }}>
         <div
           className="dashboard-body"
-          style={{ minHeight: "100%", boxSizing: "border-box" }}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            boxSizing: "border-box",
+          }}
         >
           <MyDocuments />
         </div>

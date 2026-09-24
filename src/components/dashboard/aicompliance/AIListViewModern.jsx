@@ -25,11 +25,21 @@ import { recommendationLabel } from "@/utils/recommendationLabel";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { useContextElement } from "@/context/Context";
 
-/* Columns whose displayed field differs from the field they sort on. */
-const SORT_FIELD_BY_COLUMN = { createdtime: "created_time" };
+/* Columns whose displayed field differs from the field they sort on. The Last
+   Scan column sorts on the row's latest activity, so a tool that was never
+   scanned — a rejected request, say — still lands among the recent rows by the
+   time it was created instead of sinking to the bottom. */
+const SORT_FIELD_BY_COLUMN = {
+  createdtime: "created_time",
+  last_scanned_time: "last_activity_time",
+};
 
 /* Fields holding timestamps rather than plain text. */
-const DATE_SORT_FIELDS = new Set(["last_scanned_time", "created_time"]);
+const DATE_SORT_FIELDS = new Set([
+  "last_scanned_time",
+  "created_time",
+  "last_activity_time",
+]);
 
 /** Parse an API timestamp, tolerating the "+00:00Z" suffix the backend sends. */
 const parseTimestamp = (value) => {
@@ -354,6 +364,10 @@ export default function AIListViewModern({
 
   /* ---------------- SEARCH + SORT ---------------- */
   const filtered = liveProjects
+    .map((p) => ({
+      ...p,
+      last_activity_time: p.last_scanned_time || p.created_time || null,
+    }))
     .filter((p) => {
       if (!search.trim()) return true;
       return buildSearchText(p).includes(search.toLowerCase());
@@ -674,6 +688,7 @@ export default function AIListViewModern({
       key: "last_scanned_time",
       label: "Last Scan",
       sortable: true,
+      sortKey: "last_activity_time",
       resizable: true,
     },
     {
