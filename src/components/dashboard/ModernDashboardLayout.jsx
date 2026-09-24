@@ -19,7 +19,7 @@ import { COLORS } from "@/styles/colors";
 
 // Logging out is a wait-then-go, not a question: the dialog counts down and
 // signs the person out on its own, and Cancel is there to stop it.
-const LOGOUT_COUNTDOWN_SECONDS = 5;
+const LOGOUT_COUNTDOWN_SECONDS = 3;
 const RING_RADIUS = 46;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
