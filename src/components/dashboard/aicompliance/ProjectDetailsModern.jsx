@@ -1512,22 +1512,24 @@ export default function ProjectDetailsModern({ project, onBack }) {
             </div>
             <h3>Since This Assessment</h3>
 
-            {monitoringState === "ready" && monitoring.length > 0 && (
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: COLORS.textSecondary,
-                  background: COLORS.bgSecondary,
-                  borderRadius: 999,
-                  padding: "3px 10px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {monitoring.length} finding
-                {monitoring.length === 1 ? "" : "s"}
-              </span>
-            )}
+            {!isFreePlan &&
+              monitoringState === "ready" &&
+              monitoring.length > 0 && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: COLORS.textSecondary,
+                    background: COLORS.bgSecondary,
+                    borderRadius: 999,
+                    padding: "3px 10px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {monitoring.length} finding
+                  {monitoring.length === 1 ? "" : "s"}
+                </span>
+              )}
 
             <div
               style={{
@@ -1537,7 +1539,7 @@ export default function ProjectDetailsModern({ project, onBack }) {
                 gap: 14,
               }}
             >
-              {monitoringOpen && monitoringCollapsible && (
+              {!isFreePlan && monitoringOpen && monitoringCollapsible && (
                 <button
                   type="button"
                   className="admin-actions"
@@ -1582,11 +1584,27 @@ export default function ProjectDetailsModern({ project, onBack }) {
                   : "none",
             }}
           >
-            {monitoringState === "loading" && (
+            {/* Findings are a paid feature, like the recommendations above. */}
+            {isFreePlan && (
+              <div className="recommendation-locked">
+                <div className="recommendation-box locked">
+                  <i className="fa-solid fa-lock"></i>
+                  <div>
+                    <h4>Findings Locked</h4>
+                    <p>
+                      Upgrade your plan to see what has been found about this
+                      tool since the assessment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isFreePlan && monitoringState === "loading" && (
               <p className="summary-text">Checking monitoring history…</p>
             )}
 
-            {monitoringState === "unavailable" && (
+            {!isFreePlan && monitoringState === "unavailable" && (
               <p className="summary-text">
                 No tool URL is recorded, so this tool is not being monitored.
               </p>
@@ -1594,43 +1612,46 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
             {/* An error must not read as "nothing found" - that is the same
                 false all-clear the checks themselves guard against. */}
-            {monitoringState === "error" && (
+            {!isFreePlan && monitoringState === "error" && (
               <p className="summary-text">
                 Monitoring history could not be loaded. This is not a statement
                 that nothing has been found.
               </p>
             )}
 
-            {monitoringState === "ready" && monitoring.length === 0 && (
-              <div className="recommendation-box success">
-                <i className="fa-solid fa-circle-check"></i>
-                <div>
-                  <h4>Nothing found in the sources we check</h4>
-                  <p>
-                    {monitoredDomain} is checked daily against Have I Been Pwned
-                    for known breaches, the National Vulnerability Database for
-                    published CVEs, and its own policy documents and TLS
-                    certificate.
-                  </p>
-                  {/* Stating the limit rather than implying completeness.
+            {!isFreePlan &&
+              monitoringState === "ready" &&
+              monitoring.length === 0 && (
+                <div className="recommendation-box success">
+                  <i className="fa-solid fa-circle-check"></i>
+                  <div>
+                    <h4>Nothing found in the sources we check</h4>
+                    <p>
+                      {monitoredDomain} is checked daily against Have I Been
+                      Pwned for known breaches, the National Vulnerability
+                      Database for published CVEs, and its own policy documents
+                      and TLS certificate.
+                    </p>
+                    {/* Stating the limit rather than implying completeness.
                       HIBP is curated, not exhaustive - it holds around a
                       thousand breaches and only single figures for some
                       regions - so a clean result here is not the same as a
                       vendor never having been breached. */}
-                  <p
-                    className="text-light-1"
-                    style={{ fontSize: 13, marginTop: 8 }}
-                  >
-                    These sources are not exhaustive. Breach databases only
-                    contain incidents that have been reported to and curated by
-                    them, and regional coverage varies widely. This is not a
-                    statement that no breach has occurred.
-                  </p>
+                    <p
+                      className="text-light-1"
+                      style={{ fontSize: 13, marginTop: 8 }}
+                    >
+                      These sources are not exhaustive. Breach databases only
+                      contain incidents that have been reported to and curated
+                      by them, and regional coverage varies widely. This is not
+                      a statement that no breach has occurred.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {monitoringState === "ready" &&
+            {!isFreePlan &&
+              monitoringState === "ready" &&
               monitoring.map((f) => {
                 const tone = severityTone(f.severity);
                 // Forced open for the PDF so the exported report carries the
