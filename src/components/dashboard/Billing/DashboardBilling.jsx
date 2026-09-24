@@ -396,8 +396,9 @@ export default function DashboardBilling() {
           console.warn("Background plan refresh failed:", err),
         );
 
-        // Navigate immediately — context + localStorage already reflect new plan
-        navigate("/dashboard/pricing");
+        // Navigate immediately — context + localStorage already reflect new plan.
+        // Straight to the plan cards so the newly active plan is what they see.
+        navigate("/dashboard/pricing", { state: { showPlans: true } });
       } else {
         console.log(
           "No voucher applied - this should not happen as button should be disabled",

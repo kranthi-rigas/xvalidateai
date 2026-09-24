@@ -7,7 +7,7 @@ import Results from "./Results";
 import IncidentPlaybook, { incidentFlowchart } from "./IncidentPlaybook";
 import IncidentResponseExercise from "./IncidentResponseExercise";
 import MermaidDiagram from "./MermaidDiagram";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PageTransition from "@/components/common/PageTransition";
 import { downloadPdfWithWatermark } from "@/utils/docxWatermark";
 import PdfViewerModal from "./PdfViewerModal";
@@ -182,6 +182,7 @@ function NotifyButton({
   lockedMessage,
 }) {
   const [submitting, setSubmitting] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleNotify = async () => {
     setSubmitting(true);
@@ -271,6 +272,33 @@ function NotifyButton({
             <i className="fa-solid fa-circle-info" style={{ fontSize: 12 }} />
             {lockedMessage}
           </p>
+        )}
+        {lockedMessage && (
+          <button
+            onClick={() => navigate("/dashboard/pricing")}
+            style={{
+              marginTop: 12,
+              padding: "10px 32px",
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#0F3357",
+              background: "#fff",
+              border: "1px solid #0F3357",
+              borderRadius: 8,
+              cursor: "pointer",
+              transition: "background 0.2s ease",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#e3edfd")}
+            onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+          >
+            <i className="fa-solid fa-arrow-up" style={{ fontSize: 13 }} />
+            Upgrade
+          </button>
         )}
       </div>
     );
