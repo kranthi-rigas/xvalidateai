@@ -300,11 +300,24 @@ export default function DashboardPricing({ expiresAtOverride = null }) {
           ? "free"
           : null);
 
-  // What the visitor is on today, for the landing's status chip.
-  const currentBundleLabel = BUNDLE_LABEL[currentComponent] || null;
+  // What the visitor is on today, for the landing's status chip. BUNDLE_LABEL
+  // only names the paid bundles, so a free account would have had no chip at
+  // all — it says "Free plan" instead.
+  const currentBundleLabel =
+    BUNDLE_LABEL[currentComponent] ||
+    (currentComponent === "free" || currentPlan === "free"
+      ? "Free plan"
+      : null);
   const currentTierLabel = tierLabel(findPlanRecord()?.tier);
 
-  const isCurrentPlan = (id) => id === currentComponent;
+  // The band the subscription was bought at. A plan is only "current" when the
+  // bundle AND the band both match what is being viewed — a school looking at
+  // a different enrollment band is looking at a different subscription, so
+  // every card there is purchasable.
+  const currentTier = normalizeTier(findPlanRecord()?.tier);
+
+  const isCurrentPlan = (id) =>
+    id === currentComponent && (!currentTier || currentTier === selectedTier);
 
   useEffect(() => {
     AOS.init({
