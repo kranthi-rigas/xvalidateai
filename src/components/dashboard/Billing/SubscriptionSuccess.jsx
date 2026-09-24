@@ -79,7 +79,9 @@ const SubscriptionSuccess = () => {
           console.log("✅ Plan activation confirmed! Redirecting...");
           setStatusMsg("Plan activated! Redirecting...");
           setTimeout(() => {
-            navigate("/dashboard/pricing", { state: { status: "success" } });
+            navigate("/dashboard/pricing", {
+              state: { status: "success", showPlans: true },
+            });
           }, 1500);
           return;
         }
@@ -93,7 +95,9 @@ const SubscriptionSuccess = () => {
         console.warn("⚠️ Max polls reached — redirecting anyway");
         setStatusMsg("Taking longer than expected. Redirecting...");
         setTimeout(() => {
-          navigate("/dashboard/pricing", { state: { status: "success" } });
+          navigate("/dashboard/pricing", {
+            state: { status: "success", showPlans: true },
+          });
         }, 2000);
       }
     };
