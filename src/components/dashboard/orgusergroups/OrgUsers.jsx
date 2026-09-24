@@ -517,6 +517,8 @@ export default function OrgUsers({ refreshProjects }) {
             <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center" />
           )}
           <ListTable
+            wrapLines={wrapLines}
+            stripedRows={stripedRows}
             columns={visibleTableColumns}
             data={paginatedData}
             rowKey="user_id"

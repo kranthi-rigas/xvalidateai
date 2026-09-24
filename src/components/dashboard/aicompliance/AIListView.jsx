@@ -1032,6 +1032,8 @@ export default function AIListView({
         }}
       >
         <ListTable
+          wrapLines={wrapLines}
+          stripedRows={stripedRows}
           columns={visibleCols}
           data={filtered.slice(0, pageSize)}
           rowKey="project_id"
