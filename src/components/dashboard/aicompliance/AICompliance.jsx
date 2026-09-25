@@ -8,6 +8,7 @@ import EditProjectModal from "./EditProjectModal";
 import ProjectDetailsModern from "./ProjectDetailsModern";
 import { COLORS } from "../../../styles/colors";
 import StatisticsCards from "./StatisticsCards";
+import { scanStatusRecommendationLabel } from "@/utils/recommendationLabel";
 import PageLoader from "../../common/PageLoader";
 import usePageLoader from "@/data/usePageLoader";
 import { useContextElement } from "@/context/Context";
@@ -160,11 +161,21 @@ export default function AICompliance() {
     (p) => p.status?.toLowerCase() === "approved_for_usage",
   ).length;
 
-  const approvedWithLimits = statsSource.filter(
+  // Rows back in scan review (re-scan requested / rejected) still carry the
+  // previous scan's recommendation and score, but the list shows them as
+  // "Pending Review" / "Scan Rejected" — so the verdict cards must skip them
+  // too, or they count tools the table doesn't show under that verdict.
+  const currentVerdicts = statsSource.filter(
+    (p) =>
+      p.assessment_status === "completed" &&
+      !scanStatusRecommendationLabel(p.status),
+  );
+
+  const approvedWithLimits = currentVerdicts.filter(
     (p) => p.recommendation?.toLowerCase() === "approved with limitations",
   ).length;
 
-  const highRiskBlocked = statsSource.filter(
+  const highRiskBlocked = currentVerdicts.filter(
     (p) =>
       p.recommendation?.toLowerCase() === "not recommended" ||
       (p.score && Number(p.score) < 40),

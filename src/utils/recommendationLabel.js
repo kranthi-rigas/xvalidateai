@@ -17,3 +17,15 @@ export function recommendationLabel(recommendation) {
   const key = (recommendation || "").toLowerCase().trim();
   return RECOMMENDATION_DISPLAY_NAMES[key] || recommendation;
 }
+
+/**
+ * While a tool is waiting on (or was refused) a scan, any recommendation on
+ * the row belongs to a previous scan and is stale. Returns the label to show
+ * instead, or null when the recommendation itself should be shown.
+ */
+export function scanStatusRecommendationLabel(status) {
+  const key = (status || "").toLowerCase().trim();
+  if (key === "rejected_for_scan") return "Scan Rejected";
+  if (key === "requested" || key === "requested_for_scan") return "Pending Review";
+  return null;
+}
