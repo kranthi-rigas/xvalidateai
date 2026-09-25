@@ -18,6 +18,7 @@ import OrgRequiredWrapper from "@/components/common/OrgRequiredWrapper";
 import { hasOrganization } from "@/data/orgGuard";
 import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
+import SearchInput from "@/components/common/SearchInput";
 
 export default function OrgUserGroups() {
   const [groups, setGroups] = useState(null);
@@ -378,19 +379,12 @@ export default function OrgUserGroups() {
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search + mobile refresh */}
           <div className="flex items-center gap-2 w-full md:w-96">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
-              </div>
-
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
-                placeholder="Search groups by name, description..."
-              />
-            </div>
+            <SearchInput
+              className="flex-1"
+              value={search}
+              onChange={setSearch}
+              placeholder="Search groups by name, description..."
+            />
 
             {/* Refresh – mobile only */}
             <button

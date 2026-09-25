@@ -4,6 +4,7 @@ import PageLoader from "@/components/common/PageLoader";
 import { getAuditTrail } from "@/apiIntegration/audittrail";
 import AwsButton from "@/components/common/AwsButton";
 import ReactDOM from "react-dom";
+import SearchInput from "@/components/common/SearchInput";
 
 /**
  * Credit figures are internal accounting, so they stay out of the audit trail.
@@ -410,19 +411,15 @@ export default function AuditLogPage() {
         <div className="p-6 border-b border-border flex items-center justify-between gap-4">
           {/* SEARCH */}
 
-          <div className="relative w-80">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-muted-foreground text-sm"></i>
-
-            <input
-              placeholder="Search audit logs..."
-              className="pl-9 pr-3 py-2.5 border border-border rounded-lg text-sm w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
+          <SearchInput
+            className="w-80"
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder="Search audit logs..."
+          />
 
           {/* EXPORT */}
 
