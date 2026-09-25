@@ -998,44 +998,51 @@ export default function ProjectDetailsModern({ project, onBack }) {
 
   return (
     <div className="space-y">
-      {/* Top Actions */}
-      <div className="mt-1 bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Back Button */}
-          <button
-            onClick={() => onBack?.(false)}
-            className="inline-flex items-center gap-2 px-4 py-2.5
-             text-sm font-medium text-[#001d6c]
-             bg-gray-50 border border-gray-300
-             rounded-xl transition
-             hover:bg-gray-100 hover:shadow-sm"
-          >
-            <i className="fa-solid fa-arrow-left"></i>
-            <span>Back to AI Compliance</span>
-          </button>
-
-          {/* Right Side Actions */}
-          <div className="flex items-center justify-end">
+      {/* Top Actions - sticky so Back and Export stay reachable on a long report.
+          The wrapper paints the page background, and the upward shadow covers
+          the scroll container's top inset so the report can't show above the bar. */}
+      <div
+        className="sticky top-0 z-30"
+        style={{ background: "#FAFAFA", boxShadow: "0 -48px 0 0 #FAFAFA" }}
+      >
+        <div className="mt-1 bg-white border border-gray-200 rounded-2xl shadow-sm p-4 md:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Back Button */}
             <button
-              disabled={isDownloading || isFreePlan || isUserOnly}
-              onClick={handleDownloadPDF}
-              title={
-                isUserOnly
-                  ? "You have view-only access"
-                  : isFreePlan
-                    ? "Upgrade plan to export"
-                    : ""
-              }
-              className="inline-flex items-center gap-2 px-5 py-2.5
-               text-sm font-semibold text-white
-               bg-[#0F3357] rounded-xl
-               transition
-               hover:bg-[#0c2a47] hover:shadow-md
-               disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={() => onBack?.(false)}
+              className="inline-flex items-center gap-2 px-4 py-2.5
+               text-sm font-medium text-[#001d6c]
+               bg-gray-50 border border-gray-300
+               rounded-xl transition
+               hover:bg-gray-100 hover:shadow-sm"
             >
-              <i className="fa-solid fa-file-pdf"></i>
-              <span>{isDownloading ? "Exporting..." : "Export PDF"}</span>
+              <i className="fa-solid fa-arrow-left"></i>
+              <span>Back to AI Compliance</span>
             </button>
+
+            {/* Right Side Actions */}
+            <div className="flex items-center justify-end">
+              <button
+                disabled={isDownloading || isFreePlan || isUserOnly}
+                onClick={handleDownloadPDF}
+                title={
+                  isUserOnly
+                    ? "You have view-only access"
+                    : isFreePlan
+                      ? "Upgrade plan to export"
+                      : ""
+                }
+                className="inline-flex items-center gap-2 px-5 py-2.5
+                 text-sm font-semibold text-white
+                 bg-[#0F3357] rounded-xl
+                 transition
+                 hover:bg-[#0c2a47] hover:shadow-md
+                 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <i className="fa-solid fa-file-pdf"></i>
+                <span>{isDownloading ? "Exporting..." : "Export PDF"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

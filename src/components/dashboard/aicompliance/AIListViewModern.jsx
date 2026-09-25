@@ -114,7 +114,7 @@ export default function AIListViewModern({
     status: 180,
     assessment_status: 160,
     score: 220,
-    recommendation: 210,
+    recommendation: 260, // fits the longest badge, "Recommended with limitations"
     description: 260,
     last_scanned_time: 180,
     requested_by: 220,
@@ -741,7 +741,7 @@ export default function AIListViewModern({
 
         return (
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${badge.bg} ${badge.text} border ${badge.border}`}
           >
             <i
               className={`fa-solid ${badge.icon} text-[11px] ${
@@ -795,7 +795,7 @@ export default function AIListViewModern({
 
         return (
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text} border ${badge.border}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${badge.bg} ${badge.text} border ${badge.border}`}
           >
             <i className={`fa-solid ${badge.icon} text-[11px]`}></i>
             {badge.label}

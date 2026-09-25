@@ -124,6 +124,13 @@ function StatusTimeline({ history }) {
   );
 }
 
+const TRIAGE_ACTIONS = [
+  { status: "ACKNOWLEDGED", label: "Acknowledge" },
+  { status: "RESOLVED", label: "Resolve" },
+  { status: "FALSE_POSITIVE", label: "False positive" },
+  { status: "DISPUTED", label: "Vendor disputes" },
+];
+
 /**
  * Detail and triage for one finding.
  *
@@ -270,34 +277,23 @@ export default function FindingDetail({ finding, onClose, onChanged }) {
             maxLength={2000}
           />
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <AwsButton
-              label={saving === "ACKNOWLEDGED" ? "Saving…" : "Acknowledge"}
-              size="sm"
-              variant="secondary"
-              disabled={!!saving}
-              onClick={() => apply("ACKNOWLEDGED")}
-            />
-            <AwsButton
-              label={saving === "RESOLVED" ? "Saving…" : "Resolve"}
-              size="sm"
-              variant="success"
-              disabled={!!saving}
-              onClick={() => apply("RESOLVED")}
-            />
-            <AwsButton
-              label={saving === "FALSE_POSITIVE" ? "Saving…" : "False positive"}
-              size="sm"
-              variant="secondary"
-              disabled={!!saving}
-              onClick={() => apply("FALSE_POSITIVE")}
-            />
-            <AwsButton
-              label={saving === "DISPUTED" ? "Saving…" : "Vendor disputes"}
-              size="sm"
-              variant="secondary"
-              disabled={!!saving}
-              onClick={() => apply("DISPUTED")}
-            />
+            {/* Only the finding's current state is filled, so the buttons
+                double as a readout of where the finding stands. */}
+            {TRIAGE_ACTIONS.map(({ status, label }) => {
+              const current = finding.status === status;
+              return (
+                <AwsButton
+                  key={status}
+                  label={saving === status ? "Saving…" : label}
+                  size="sm"
+                  variant={current ? "primary" : "secondary"}
+                  disabled={!!saving}
+                  onClick={() => !current && apply(status)}
+                >
+                  {current && <i className="fa-solid fa-check"></i>}
+                </AwsButton>
+              );
+            })}
           </div>
           {/* The difference decides whether this returns tomorrow, so it is
                 stated rather than left to be discovered. */}
