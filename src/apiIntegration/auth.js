@@ -8,6 +8,37 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // on the same refresh instead and retries with the token it produced.
 let refreshPromise = null;
 
+// Set once the session has been ended, so a burst of failing requests
+// produces a single redirect rather than one per request.
+let sessionExpired = false;
+
+export const SESSION_EXPIRED_REASON = "session_expired";
+
+// The refresh token itself was refused — nothing can mint a new access token,
+// so the only way forward is a fresh login. Without this the page stays put
+// and renders every failed request as empty data ("No records found", 0s).
+function handleSessionExpired() {
+  if (sessionExpired) return;
+
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("user_info");
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("refresh_token");
+  sessionStorage.removeItem("user_info");
+
+  // Already on the login page — nothing to redirect to.
+  if (window.location.pathname === "/auth") return;
+
+  // The full-page redirect resets this module, so the flag only has to
+  // outlive the requests still in flight on the current page.
+  sessionExpired = true;
+  const next = window.location.pathname + window.location.search;
+  window.location.assign(
+    `/auth?mode=login&reason=${SESSION_EXPIRED_REASON}&next=${encodeURIComponent(next)}`,
+  );
+}
+
 async function refreshAccessToken() {
   if (refreshPromise) return refreshPromise;
 
@@ -32,7 +63,14 @@ async function refreshAccessToken() {
       }),
     });
 
-    if (!refreshResponse.ok) return null; // Session is gone — caller sees the 401
+    if (!refreshResponse.ok) {
+      // 401/403 means the refresh token is expired or revoked. Anything else
+      // (5xx, gateway errors) may be temporary, so keep the session.
+      if (refreshResponse.status === 401 || refreshResponse.status === 403) {
+        handleSessionExpired();
+      }
+      return null;
+    }
 
     const newToken = await refreshResponse.json().catch(() => null);
     if (!newToken?.access_token) return null;

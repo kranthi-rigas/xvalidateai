@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { login, signup, fetchUserProfile } from "@/apiIntegration/auth.js";
+import {
+  login,
+  signup,
+  fetchUserProfile,
+  SESSION_EXPIRED_REASON,
+} from "@/apiIntegration/auth.js";
 import useToast from "@/hooks/useToast";
 import { GOOGLE_OAUTH_CONFIG } from "@/data/oauth";
 import { useCountryPhone } from "@/data/useCountryPhone";
@@ -37,6 +42,16 @@ export default function AuthPage() {
     teacher: "AI-Ready Teacher Program",
   };
   const programLabel = program ? PROGRAM_LABELS[program] || null : null;
+  // Set when an expired session sent the user here. `next` is only honoured
+  // as an in-app path, so the link can't bounce people to another site.
+  const reason = searchParams.get("reason");
+  const nextParam = searchParams.get("next") || "";
+  const postLoginPath =
+    nextParam.startsWith("/") &&
+    !nextParam.startsWith("//") &&
+    !nextParam.startsWith("/auth")
+      ? nextParam
+      : "/dashboard";
   const [loading, setLoading] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
 
@@ -87,6 +102,16 @@ export default function AuthPage() {
       setEmailLocked(true);
     }
   }, [invitedEmail]);
+
+  useEffect(() => {
+    if (reason === SESSION_EXPIRED_REASON) {
+      show("Your session has expired. Please log in again.", {
+        type: "error",
+        duration: 6000,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reason]);
 
   // ⭐ SCROLL TO TOP - Watch mode changes
   useLayoutEffect(() => {
@@ -281,7 +306,7 @@ export default function AuthPage() {
         // Update Context state with new user's plan
         loadUserPlanFromStorage();
 
-        navigate("/dashboard");
+        navigate(postLoginPath);
       }
     } catch (err) {
       console.error(
