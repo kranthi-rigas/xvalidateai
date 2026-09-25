@@ -29,6 +29,28 @@ function readStoredPlanType() {
   }
 }
 
+// The commercial plan name from the backend, e.g. "Platform Only (Large)".
+// plan_type alone ("premium") loses the tier, so anything naming the plan
+// should prefer this. Older plans carry a plan_name that only echoes the
+// plan_type ("Business"), which is less useful than the display mapping, so
+// those return null and the caller falls back to it.
+function commercialPlanName(plan) {
+  const name = (plan?.plan_name || "").trim();
+  if (!name) return null;
+  return name.toLowerCase() === (plan?.plan_type || "").toLowerCase()
+    ? null
+    : name;
+}
+
+function readStoredPlanName() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("user_info") || "{}");
+    return commercialPlanName(parsed?.plan);
+  } catch {
+    return null;
+  }
+}
+
 const dataContext = React.createContext();
 export const useContextElement = () => {
   return useContext(dataContext);
@@ -42,6 +64,7 @@ export default function Context({ children }) {
 
   // User plan state: "free", "premium", or "enterprise"
   const [userPlan, setUserPlan] = useState("free");
+  const [userPlanName, setUserPlanName] = useState(null);
   // false until a plan has really been read — "free" is also the initial value
   const [planKnown, setPlanKnown] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -61,6 +84,7 @@ export default function Context({ children }) {
         currentPlan,
       );
       setUserPlan(currentPlan);
+      setUserPlanName(readStoredPlanName());
       setPlanKnown(!!readStoredPlanType());
 
       // Get credits from localStorage
@@ -84,6 +108,7 @@ export default function Context({ children }) {
     } else {
       setIsLoggedIn(false);
       setUserPlan("free");
+      setUserPlanName(null);
       setPlanKnown(false);
       setUserCredits(0);
     }
@@ -105,6 +130,7 @@ export default function Context({ children }) {
         const credits = userData?.plan?.credits_remaining ?? 0;
 
         setUserPlan(userPlanType.toLowerCase());
+        setUserPlanName(commercialPlanName(userData?.plan));
         setPlanKnown(true);
         setUserCredits(credits);
         setIsLoggedIn(true);
@@ -129,6 +155,7 @@ export default function Context({ children }) {
   const resetUserState = useCallback(() => {
     console.log("🔄 resetUserState: Resetting all user state to defaults");
     setUserPlan("free");
+    setUserPlanName(null);
     setPlanKnown(false);
     setUserCredits(0);
     setIsLoggedIn(false);
@@ -203,6 +230,7 @@ export default function Context({ children }) {
       const currentPlan = getUserPlan();
       console.log("🔄 loadUserPlanFromStorage: Loading plan:", currentPlan);
       setUserPlan(currentPlan);
+      setUserPlanName(readStoredPlanName());
       setPlanKnown(!!readStoredPlanType());
 
       try {
@@ -317,6 +345,7 @@ export default function Context({ children }) {
     // User plan and authentication
     userPlan,
     setUserPlan,
+    userPlanName,
     planKnown,
     isLoggedIn,
     setIsLoggedIn,
