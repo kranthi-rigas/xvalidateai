@@ -183,7 +183,8 @@ export default function ModernDashboardLayout() {
     }
   };
 
-  const { userCredits, setIsLoggedIn, userPlan } = useContextElement();
+  const { userCredits, setIsLoggedIn, userPlan, userPlanName } =
+    useContextElement();
 
   useEffect(() => {
     if (mobileSidebarOpen) {
@@ -196,7 +197,10 @@ export default function ModernDashboardLayout() {
     };
   }, [mobileSidebarOpen]);
 
+  // Prefer the backend's plan_name - it carries the tier ("Platform Only
+  // (Large)"), which the plan_type mapping can't.
   const planLabel =
+    userPlanName ||
     PLAN_DISPLAY_NAMES[userPlan] ||
     (userPlan ? userPlan.charAt(0).toUpperCase() + userPlan.slice(1) : "Free");
   // Enterprise is the top tier, so there is nothing left to sell it.
@@ -530,7 +534,7 @@ export default function ModernDashboardLayout() {
                   <span className="text-xs text-muted-foreground flex-shrink-0">
                     Plan
                   </span>
-                  <span className="text-xs font-semibold text-foreground text-right whitespace-nowrap">
+                  <span className="text-xs font-semibold text-foreground text-right">
                     {planLabel}
                   </span>
                 </div>
