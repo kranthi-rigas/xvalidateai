@@ -4,6 +4,7 @@ import AwsButton from "@/components/common/AwsButton";
 import PageLoader from "@/components/common/PageLoader";
 import { HiPlus } from "react-icons/hi";
 import { getIncidents, createIncident } from "@/apiIntegration/incidents";
+import SearchInput from "@/components/common/SearchInput";
 
 
 
@@ -803,21 +804,15 @@ export default function AdministrationPage() {
       <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-320px)] min-h-[500px] overflow-hidden">
         {/* Toolbar */}
         <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between flex-shrink-0">
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-              <i className="fa-solid fa-magnifying-glass text-muted-foreground text-xs" />
-            </div>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by title, email..."
-              className="w-full pl-9 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
-          </div>
+          <SearchInput
+            className="w-full sm:w-80"
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder="Search by title, email..."
+          />
 
           <div className="flex items-center gap-2 flex-wrap">
             {["all", "open", "in_review", "resolved", "rejected"].map(

@@ -375,6 +375,8 @@ export default function InviteUsersModal({ onClose, onInvite }) {
           ))}
           <input
             ref={chipInputRef}
+            name="invite-email"
+            autoComplete="off"
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
             onKeyDown={handleChipInput}

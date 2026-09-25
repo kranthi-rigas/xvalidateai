@@ -24,6 +24,7 @@ import AwsButton from "@/components/common/AwsButton";
 import { recommendationLabel } from "@/utils/recommendationLabel";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { useContextElement } from "@/context/Context";
+import SearchInput from "@/components/common/SearchInput";
 
 /* Columns whose displayed field differs from the field they sort on. The Last
    Scan column sorts on the row's latest activity, so a tool that was never
@@ -1013,19 +1014,12 @@ export default function AIListViewModern({
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search + mobile refresh */}
           <div className="flex items-center gap-2 w-full md:w-96">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
-              </div>
-
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
-                placeholder="Find tool by name, ID or requester..."
-              />
-            </div>
+            <SearchInput
+              className="flex-1"
+              value={search}
+              onChange={setSearch}
+              placeholder="Find tool by name, ID or requester..."
+            />
 
             {/* Refresh – mobile only */}
             <button

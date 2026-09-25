@@ -19,6 +19,7 @@ import TablePreferencesModal from "../../common/TablePreferencesModal";
 import AwsSettingsIconButton from "../../common/AwsSettingsIconButton";
 import EditUserModal from "./EditUserModal";
 import DeleteUsersModal from "./DeleteUsersModal";
+import SearchInput from "@/components/common/SearchInput";
 
 export default function OrgUsers({ refreshProjects }) {
   const { userPlan } = useContextElement();
@@ -410,18 +411,12 @@ export default function OrgUsers({ refreshProjects }) {
         {/* TOOLBAR */}
         <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2 w-full md:w-96">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <i className="fa-solid fa-magnifying-glass text-muted-foreground text-sm" />
-              </div>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="block w-full pl-11 pr-3 py-2.5 border border-border rounded-lg text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm appearance-none"
-                placeholder="Search users by name, email, role..."
-              />
-            </div>
+            <SearchInput
+              className="flex-1"
+              value={search}
+              onChange={setSearch}
+              placeholder="Search users by name, email, role..."
+            />
 
             {/* Refresh – mobile */}
             <button
