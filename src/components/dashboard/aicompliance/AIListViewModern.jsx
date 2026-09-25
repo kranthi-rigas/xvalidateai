@@ -21,7 +21,10 @@ import {
   deleteComplianceProject,
 } from "../../../apiIntegration/compliance";
 import AwsButton from "@/components/common/AwsButton";
-import { recommendationLabel } from "@/utils/recommendationLabel";
+import {
+  recommendationLabel,
+  scanStatusRecommendationLabel,
+} from "@/utils/recommendationLabel";
 import { fetchUserProfile } from "@/apiIntegration/auth";
 import { useContextElement } from "@/context/Context";
 import SearchInput from "@/components/common/SearchInput";
@@ -401,7 +404,8 @@ export default function AIListViewModern({
       // otherwise "Recommended" rows order as though they still read "Approved"
       const sortValue = (row) =>
         sortConfig.key === "recommendation"
-          ? recommendationLabel(row.recommendation)
+          ? scanStatusRecommendationLabel(row.status) ||
+            recommendationLabel(row.recommendation)
           : row[field];
 
       const va = sortValue(a);
@@ -546,13 +550,20 @@ export default function AIListViewModern({
       },
     };
 
-    const rec = (recommendation || "").toLowerCase().trim();
-    if (recMap[rec]) return recMap[rec];
+    const pendingReview = {
+      bg: "bg-gray-50",
+      icon: "fa-clock", // ✅ default icon added
+      class: "badge-default",
+      text: "text-gray-600",
+      border: "border-gray-200",
+      label: "Pending Review",
+    };
 
-    // A rejected scan never produces a recommendation, so the empty value used
-    // to fall through to "Pending Review" — which reads as though the tool is
-    // still in the queue. Say what actually happened.
-    if ((status || "").toLowerCase().trim() === "rejected_for_scan") {
+    // A re-scan request or a rejected re-scan leaves the previous scan's
+    // recommendation on the row, so the status has to win over it —
+    // otherwise the old verdict is shown as if it were current.
+    const statusLabel = scanStatusRecommendationLabel(status);
+    if (statusLabel === "Scan Rejected") {
       return {
         bg: "bg-red-50",
         icon: "fa-ban",
@@ -562,15 +573,12 @@ export default function AIListViewModern({
         label: "Scan Rejected",
       };
     }
+    if (statusLabel === "Pending Review") return pendingReview;
 
-    return {
-      bg: "bg-gray-50",
-      icon: "fa-clock", // ✅ default icon added
-      class: "badge-default",
-      text: "text-gray-600",
-      border: "border-gray-200",
-      label: "Pending Review",
-    };
+    const rec = (recommendation || "").toLowerCase().trim();
+    if (recMap[rec]) return recMap[rec];
+
+    return pendingReview;
   };
 
   //search helper
@@ -585,8 +593,9 @@ export default function AIListViewModern({
       scoreDisplay?.value !== "" ? scoreDisplay.value : null,
       // both the raw API value and the relabelled one, so "approved" and
       // "recommended" each match the rows the user expects
-      project.recommendation,
-      recommendationLabel(project.recommendation),
+      scanStatusRecommendationLabel(project.status) || project.recommendation,
+      scanStatusRecommendationLabel(project.status) ||
+        recommendationLabel(project.recommendation),
       project.requested_by?.first_name,
       project.requested_by?.last_name,
       project.requested_by?.email,
